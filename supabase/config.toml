@@ -1,0 +1,15 @@
+# Supabase CLI configuration for Scamly.
+#
+# Written by hand (we could not run `supabase init` in the build sandbox).
+# Every setting we leave out uses the Supabase CLI default, so this file stays
+# short. Docs: https://supabase.com/docs/guides/local-development/cli/config
+
+# Name of the local project. The CLI uses it to name its Docker containers.
+project_id = "scamly"
+
+[db]
+# Port of the local PostgreSQL started by `supabase start`.
+port = 54322
+# Must match the Postgres version of our hosted Supabase project,
+# so local tests run on the same version as production.
+major_version = 17
