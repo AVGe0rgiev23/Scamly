@@ -1,6 +1,6 @@
 # Scamly: implementation and build plan
 
-> Status: **DRAFT v1, waiting for team approval** (2 November 2026).
+> Status: **v1.1**: Q1–Q3 decided by the team on 2 November 2026 (see section 8). Other questions still use the recommended defaults.
 > Source of truth for *what* we build: [`PROJECT_BRIEF.md`](./PROJECT_BRIEF.md). This file covers *how* and *when*.
 > Anything marked **(proposal)** changes a detail of the brief or fills a gap in it. Each one is listed again in section 8 so you can approve or reject it.
 
@@ -692,7 +692,7 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 **Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count Claude's typing time. Each task = 1 GitHub issue = usually 1 PR. Owner = the person who opens the PR and must be able to explain it. The other person reviews.
 
-**Authorship in git (important).** In this cloud session, commits are currently made as `Claude <noreply@anthropic.com>`. That would hide who built what (brief D3/section 11). See question Q3 in section 8.
+**Authorship in git (decided, Q3).** Alex and Roberta push everything themselves. Claude prepares the changes and says when a piece is ready to push and to which branch. Each PR is pushed by its owner and reviewed by the other.
 
 Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. ✂ = may be cut (D12 order).
 
@@ -797,9 +797,9 @@ Likelihood / impact: L = low, M = medium, H = high.
 | R9 | **iOS Safari may log out the paired phone** if the site isn't opened for a long time (storage cleanup) | M | M | Session cookies set by the server, not by JavaScript. Installing to the home screen recommended. Re-pairing takes < 1 min. Android Chrome is the primary target |
 | R10 | **False "green" on a real scam** (worst bug, D9) | M | H | D9 wording never says "safe". Money floor (money = yes → at least yellow). Hard rules. Test suite of known scripts. AI can only raise the level |
 | R11 | **False red on legitimate calls** makes people stop trusting the app | M | M | Legitimate-call tests (grandchild, bank reminder, doctor, courier, cash on delivery → yellow, not red). Tune weights against usability-test transcripts |
-| R12 | **Name "Scamly" is already used** by an existing scam-protection app (see Q1) | H | M | All branding is in one constant + `bg.ts`, so a rename is quick. Decide by 8 Nov |
+| R12 | **Name "Scamly" is already used** by an existing scam-protection app (see Q1) | H | M | **Accepted by the team: we keep Scamly for now.** All branding stays in one constant + `bg.ts`, so a later rename is quick. In the defense, say clearly that we have no link to any company with a similar name |
 | R13 | **Vercel Hobby limits**: cron jobs only once a day; functions time out (default ~10 s) | M | L | Use GitHub Actions / Supabase `pg_cron` for frequent jobs. AI budget 7 s < function timeout. No long-running work in requests |
-| R14 | **Running local Supabase needs Docker** (CI and our laptops); Docker isn't running in this cloud container right now | M | M | CI runs `supabase start` on GitHub's Ubuntu runners (Docker included). Locally: Docker Desktop. In the cloud session: try to start the Docker daemon, or run RLS tests only in CI |
+| R14 | **Running local Supabase needs Docker** (CI and our laptops); Docker is not started automatically in the cloud session | L | M | Starting the Docker daemon in the cloud session works (checked 2 Nov). CI runs `supabase start` on GitHub's Ubuntu runners (Docker included). Locally: Docker Desktop |
 | R15 | **Bulgarian language mistakes** cost points | M | M | Single `bg.ts` file, proofread by us + a Bulgarian teacher in W4-06. AI text never shown to the protected person |
 | R16 | **Secrets leak** into git | L | H | `.env*` in `.gitignore`, GitHub secret scanning + push protection on, env vars validated at startup |
 | R17 | **GeoJSON licence / size** (too big for slow phones, or wrong attribution) | L | M | Use an OSM-derived dataset with clear ODbL terms, simplify to < 300 KB, show the attribution on the map, list it in `THIRD_PARTY_LICENSES.md` |
@@ -812,9 +812,9 @@ If you're happy with a default, just reply "approve" (or "approve except Qx"). D
 
 | # | Question | Recommended default |
 |---|---|---|
-| **Q1** | **The name "Scamly" is taken.** There is an "AI Scam Protection" iPhone app called *Scamly* from **Scamly Pty Ltd** (most likely an Australian company), plus a small Chrome extension called "Scamly Beta – AI Email Scam Detector". Same field as ours. The regulation bans company advertising, and a juror might think we're copying or promoting them. | **Rename before Week 2** (UI and docs only; keeping the repo slug is fine). Bulgarian, civic-sounding options: **„Семеен щит“** (already our alert feature name), **„Обади се първо“**, **„Стоп измама“**. My pick: **„Семеен щит“**, since it says the core idea (family + protection). Until you decide, I'll keep the name in a single constant `APP_NAME` so the rename is a one-line change. |
-| **Q2** | Device pairing: anonymous sign-in (brief's suggestion) vs server-created device user (brief's fallback)? | **Server-created device user**, for the reasons in section 5. The ADR will record both options. |
-| **Q3** | **Git authorship.** Commits from this cloud session are signed as `Claude <noreply@anthropic.com>`, so the history won't show who built what (D3, section 11). | Each of you starts **your own** Claude Code sessions for your own tasks, and at the start of each session asks me to set `git config user.name` / `user.email` to your name and your GitHub no-reply email (GitHub → Settings → Emails). I'll keep `Co-Authored-By: Claude` in every commit. That's honest, and the jury will likely ask about AI use. PRs are opened from each person's account and reviewed by the other. |
+| **Q1** | Is the name "Scamly" taken? Yes: a "Scamly – AI Scam Protection" iPhone app (Scamly Pty Ltd) and a small "Scamly Beta" Chrome extension exist. | ✅ **Decided: keep "Scamly" for now.** The name stays in one constant `APP_NAME` so a rename stays a one-line change. |
+| **Q2** | Device pairing: anonymous sign-in vs server-created device user? | ✅ **Decided: server-created device user** (section 5). The ADR records both options. |
+| **Q3** | Who pushes to GitHub? | ✅ **Decided: Alex and Roberta push everything themselves.** Claude prepares the changes and says when to push and to which branch. Commits carry only the author's name (no Claude co-author line), at the team's request. |
 | **Q4** | The questions: 3 (brief) vs **4 + 1 conditional** (section 4.1)? | 4 + 1 conditional. The usability test in W4-05 will tell us whether it's too many. |
 | **Q5** | AI may raise the verdict by **at most one level** and its text is shown **only to family** (4.10)? | Yes to both. |
 | **Q6** | Offline engine fallback on the phone (4.9)? | Yes. It's cheap because the engine is pure, and it's a strong reliability argument. |
