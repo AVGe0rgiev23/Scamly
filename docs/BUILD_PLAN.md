@@ -71,8 +71,7 @@ Three rules that the whole codebase follows. We will repeat these in the defense
 scamly/
 ├── .github/
 │   ├── workflows/            # CI (lint, types, tests, build), keep-alive cron, e2e
-│   ├── ISSUE_TEMPLATE/       # task template matching section 6 (owner, estimate, done-when)
-│   └── pull_request_template.md  # checklist: tests, bg.ts strings, screenshots, reviewer
+│   └── ISSUE_TEMPLATE/       # task template matching section 6 (owner, estimate, done-when)
 ├── docs/
 │   ├── PROJECT_BRIEF.md      # the brief (what and why)
 │   ├── BUILD_PLAN.md         # this file (how and when)
@@ -690,9 +689,9 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 ## 6. Week-by-week tasks
 
-**Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count Claude's typing time. Each task = 1 GitHub issue = usually 1 PR. Owner = the person who opens the PR and must be able to explain it. The other person reviews.
+**Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count Claude's typing time. Each task = 1 GitHub issue. Owner = the person whose name is on the commits for that task and who must be able to explain it. The other person reads the commit on GitHub before the next task starts.
 
-**Authorship in git (decided, Q3).** Alex and Roberta push everything themselves. Claude prepares the changes and says when a piece is ready to push and to which branch. Each PR is pushed by its owner and reviewed by the other.
+**Git workflow (decided, Q3 + Q16).** There is **one branch only: `main`**. No feature branches, no pull requests. Claude commits in the name of whoever is working (Alex or Roberta), with no co-author lines, and pushes to `main` only after that person says "push". Before every push, lint, type-check and tests must pass locally.
 
 Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. ✂ = may be cut (D12 order).
 
@@ -700,8 +699,8 @@ Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. ✂ = may be cut (D12 o
 
 | ID | Task | Owner | h | Depends on | Done when |
 |---|---|---|---|---|---|
-| W1-01 | Scaffold: Next.js (current stable, pinned), TS strict, Tailwind, ESLint + Prettier, Vitest, Playwright, `LICENSE` (GPL-3.0), `README`, `.env.example`, `THIRD_PARTY_LICENSES.md`, PR + issue templates | A | 4 | none | `npm run lint && npm run typecheck && npm test && npm run build` all pass on a fresh clone |
-| W1-02 | GitHub Actions CI: lint, typecheck, unit tests + coverage, build on every push/PR. Branch protection on `main` (PR + 1 review + green CI) | A | 2 | W1-01 | A PR shows a green ✓. A deliberately broken test turns it red |
+| W1-01 | Scaffold: Next.js (current stable, pinned), TS strict, Tailwind, ESLint + Prettier, Vitest, Playwright, `LICENSE` (GPL-3.0), `README`, `.env.example`, `THIRD_PARTY_LICENSES.md`, issue template | A | 4 | none | `npm run lint && npm run typecheck && npm test && npm run build` all pass on a fresh clone |
+| W1-02 | GitHub Actions CI: lint, typecheck, unit tests + coverage, build on every push to `main` | A | 2 | W1-01 | A commit on GitHub shows a green ✓. A deliberately broken test turns it red |
 | W1-03 | ADRs: 0001 stack, 0002 device pairing (D4), 0003 email provider (D5), 0004 AI chain (D6), 0005 alert channels (D7) | A (0001, 0002, 0005), R (0003, 0004) | 3 | none | 5 files in `docs/decisions/`, each with context, options, decision, consequences |
 | W1-04 | Supabase: cloud project (EU), local CLI, migration 0001 (enums, tables, indexes, districts seed), generated TS types | A | 5 | W1-01 | `supabase db reset` builds the schema from zero; `src/types/database.ts` generated |
 | W1-05 | RLS: helper functions + all policies (table 2.5) + column privileges + pgTAP tests incl. IDOR tests | A | 6 | W1-04 | `supabase test db` green; ≥ 1 test per policy row; IDOR tests prove B can't see A's data |
@@ -814,7 +813,8 @@ If you're happy with a default, just reply "approve" (or "approve except Qx"). D
 |---|---|---|
 | **Q1** | Is the name "Scamly" taken? Yes: a "Scamly – AI Scam Protection" iPhone app (Scamly Pty Ltd) and a small "Scamly Beta" Chrome extension exist. | ✅ **Decided: keep "Scamly" for now.** The name stays in one constant `APP_NAME` so a rename stays a one-line change. |
 | **Q2** | Device pairing: anonymous sign-in vs server-created device user? | ✅ **Decided: server-created device user** (section 5). The ADR records both options. |
-| **Q3** | Who pushes to GitHub? | ✅ **Decided: Alex and Roberta push everything themselves.** Claude prepares the changes and says when to push and to which branch. Commits carry only the author's name (no Claude co-author line), at the team's request. |
+| **Q3** | Who pushes to GitHub? | ✅ **Decided: Alex and Roberta push everything themselves.** Claude prepares the changes and says when to push. Commits carry only the author's name (no co-author line), at the team's request. |
+| **Q16** | Branches? | ✅ **Decided: only `main`.** No feature branches or pull requests. |
 | **Q4** | The questions: 3 (brief) vs **4 + 1 conditional** (section 4.1)? | 4 + 1 conditional. The usability test in W4-05 will tell us whether it's too many. |
 | **Q5** | AI may raise the verdict by **at most one level** and its text is shown **only to family** (4.10)? | Yes to both. |
 | **Q6** | Offline engine fallback on the phone (4.9)? | Yes. It's cheap because the engine is pure, and it's a strong reliability argument. |
@@ -830,4 +830,4 @@ If you're happy with a default, just reply "approve" (or "approve except Qx"). D
 
 ---
 
-*Next step after approval: Week 1 (section 6), one feature branch and PR per task, starting with W1-01 scaffold and W1-08 engine part 1 in parallel.*
+*Next step after approval: Week 1 (section 6), committed straight to `main`, one task at a time, starting with W1-01 scaffold and W1-08 engine part 1 in parallel.*
