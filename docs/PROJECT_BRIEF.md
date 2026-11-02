@@ -24,6 +24,10 @@ These are settled. Don't re-open them unless something blocks you; if it does, e
 | D10 | Hard rules in the detection engine | Some combinations **force a red verdict regardless of score**, e.g. caller claims to be police + asks for money or valuables; anyone asks you to throw or hand over money/valuables to a stranger or courier; "don't tell anyone" + money. Each hard rule has a name, a Bulgarian explanation and its own tests. |
 | D11 | Budget | ~€0. Free tiers only. **Ask before adding any paid service.** (Buying a cheap domain later is a possible exception, decided by us.) |
 | D12 | Cut order if we run late | AI layer → voice input → escalation logic → Telegram/Viber. The **call check, family alert, map, security and tests must not be cut.** |
+| D13 | Git workflow (added 2 Nov) | **One branch only: `main`.** No feature branches or pull requests. Commits are authored only by Alex or Roberta (no co-author lines). Claude pushes only after the author says "push". |
+| D14 | Device pairing detail (added 2 Nov) | The server creates the device's login only after a correct pairing code (the brief's fallback option in 6.1), not Supabase anonymous sign-in. See `BUILD_PLAN.md` section 5. |
+| D15 | Name check (added 2 Nov) | "Scamly" is also used by an existing scam-protection app (Scamly Pty Ltd). **We keep the name for now**; it lives in one constant so a rename stays cheap. |
+| D16 | Plan is living (added 2 Nov) | The team may change any idea or feature at any time. Process: `IMPLEMENTATION_PLAN.md` section 2. Ideas menu: `IDEAS.md`. Change history: `CHANGES.md`. |
 
 **Open items (we will decide as we go; propose a default and keep it easy to change):**
 - Final work split between Alex and Roberta (see section 11).
