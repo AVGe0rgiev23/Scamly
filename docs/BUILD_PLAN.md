@@ -338,6 +338,7 @@ Helper functions (`SECURITY DEFINER`, `STABLE`, `search_path = ''`, so policies 
 2. `deviceService.revoke()`: deletes the device's auth user, which kills its refresh token.
 3. `checkService.start()` / `checkService.submitAnswers()`: writes the check and its server-computed verdict. A phone must not be able to send its own verdict.
 4. `alertService.fanOut()`: creates alert rows for *other* users and sends push/email.
+4b. `checkService.acknowledge()`: the family member's „Обаждам ѝ се сега“ writes `acknowledged_by` on the check (no client UPDATE policy on `checks`).
 5. `reportService.submit()`: guest reports. Guests have no `INSERT` policy, so a bot can't skip our rate limiter by calling the database directly.
 6. `adminService.changeRole()` and `audit.log()`.
 7. `rateLimiter.hit()`.

@@ -93,3 +93,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           if-no-files-found: ignore
+
+  # Database tests: starts a real local Supabase database (Docker), applies every
+  # migration in supabase/migrations, then runs the pgTAP tests in supabase/tests.
+  # These prove the row level security rules (who may see which rows).
+  database:
+    name: Database and RLS tests (pgTAP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Install the Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start the local database and apply migrations
+        run: supabase db start
+
+      - name: Run pgTAP tests
+        run: supabase test db

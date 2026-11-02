@@ -109,11 +109,11 @@ Task details (dependencies, "done when") are in `BUILD_PLAN.md` section 6.
 
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| W1-01 | Scaffold (Next.js, TS strict, Tailwind, lint, tests, licence, README) | Alex | ⬜ |
-| W1-02 | GitHub Actions CI | Alex | ⬜ |
+| W1-01 | Scaffold (Next.js, TS strict, Tailwind, lint, tests, licence, README) | Alex | ✅ |
+| W1-02 | GitHub Actions CI | Alex | ✅ |
 | W1-03 | ADRs D4–D7 | Alex + Roberta | ⬜ |
-| W1-04 | Supabase schema migration | Alex | ⬜ |
-| W1-05 | RLS policies + pgTAP tests | Alex | ⬜ |
+| W1-04 | Supabase schema migration | Alex | ✅ |
+| W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
 | W1-06 | Auth for family / moderator / admin | Alex | ⬜ |
 | W1-07 | Device pairing | Alex | ⬜ |
 | W1-08 | Engine part 1: normalise, transliterate, fuzzy | Roberta | ⬜ |

@@ -40,20 +40,23 @@ them; each variable is explained in [`.env.example`](./.env.example).
 
 ## npm scripts
 
-| Command                 | What it does                                                    |
-| ----------------------- | --------------------------------------------------------------- |
-| `npm run dev`           | Starts the app in development mode on port 3000                 |
-| `npm run build`         | Builds the app for production                                   |
-| `npm run start`         | Starts the production build (run `build` first)                 |
-| `npm run lint`          | Checks the code with ESLint                                     |
-| `npm run typecheck`     | Checks the TypeScript types                                     |
-| `npm test`              | Runs the unit tests once (Vitest)                               |
-| `npm run test:watch`    | Runs the unit tests again on every file change                  |
-| `npm run test:coverage` | Runs the unit tests and writes a coverage report to `coverage/` |
-| `npm run e2e`           | Builds the app and runs the browser tests (Playwright)          |
-| `npm run format`        | Formats all files with Prettier                                 |
-| `npm run format:check`  | Checks that all files are formatted                             |
-| `npm run check`         | `lint` + `typecheck` + `format:check` + `test`: run before push |
+| Command                 | What it does                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`           | Starts the app in development mode on port 3000                                                                                             |
+| `npm run build`         | Builds the app for production                                                                                                               |
+| `npm run start`         | Starts the production build (run `build` first)                                                                                             |
+| `npm run lint`          | Checks the code with ESLint                                                                                                                 |
+| `npm run typecheck`     | Checks the TypeScript types                                                                                                                 |
+| `npm test`              | Runs the unit tests once (Vitest)                                                                                                           |
+| `npm run test:watch`    | Runs the unit tests again on every file change                                                                                              |
+| `npm run test:coverage` | Runs the unit tests and writes a coverage report to `coverage/`                                                                             |
+| `npm run e2e`           | Builds the app and runs the browser tests (Playwright)                                                                                      |
+| `npm run test:db`       | Runs the database and RLS tests (pgTAP) on a throwaway local PostgreSQL 16 with pgTAP installed (Linux; CI uses `supabase test db` instead) |
+| `npm run format`        | Formats all files with Prettier                                                                                                             |
+| `npm run format:check`  | Checks that all files are formatted                                                                                                         |
+| `npm run check`         | `lint` + `typecheck` + `format:check` + `test`: run before push                                                                             |
+
+With the Supabase CLI and Docker you can also run `supabase db start` and `supabase test db`.
 
 The first time you run `npm run e2e` on your own computer, install the browser with
 `npx playwright install chromium`.
