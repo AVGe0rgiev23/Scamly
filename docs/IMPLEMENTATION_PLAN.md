@@ -135,7 +135,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ⬜ |
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ⬜ |
 | W1-10 | Engine tests ≥ 25 + `redactPersonalData()` | Roberta (test cases) + Alex (runner, redact) | ⬜ |
-| W1-11 | Design system basics | Roberta | 🔄 implemented; npm run check passes; browser verification blocked by Windows Turbopack CSS-worker crash |
+| W1-11 | Design system basics | Roberta | ✅ checks, production build and six browser runs pass |
 | W1-12 | Seed script | Roberta (D20) | ⬜ |
 | W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | ⬜ |
 | W1-14 | `docs/learning/week-1.md` | Alex + Roberta | ⬜ |

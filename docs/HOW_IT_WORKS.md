@@ -76,7 +76,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Environment variable check | ✅ (not yet called by app code) | `src/lib/env.ts`, `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
 | Unit tests (Vitest) | ✅ 15 tests | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 1 test × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 3 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -93,7 +93,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | ADRs (decision records) | ⬜ planned (week 1, W1-03) | `docs/decisions/` | |
 | Login, register, roles in the API (`getActor`, `requireRole`, route guards) | ⬜ planned (week 1, W1-06) | `src/server/auth/`, `src/proxy.ts` | |
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
-| Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | 🔄 implemented; browser verification blocked (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check passes; browser build blocked |
+| Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
 | Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
 | Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
 | Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
@@ -359,7 +359,7 @@ Large controls and readable text support older people using small phones. Shared
 
 #### How we know it works
 
-`npm run check` passes (lint, types, formatting and 11 unit tests). WCAG sRGB contrast calculations confirm the documented text pairs exceed 4.5:1. Browser tests in `tests/e2e/ui.spec.ts` cover saved themes, system changes, keyboard answers, 360 px layout and 64 px buttons, but could not run: Turbopack crashes while starting the CSS worker on this Windows computer, both inside and outside the sandbox and under Node 22 and 24. Browser verification remains outstanding. The `/dev/ui` page is the manual review surface for both palettes, keyboard focus, answer selection, disabled controls, and saved theme choices. No database files change in this task.
+`npm run check` passes (lint, types, formatting and 15 unit tests). WCAG sRGB contrast calculations confirm the documented text pairs exceed 4.5:1. All six production browser runs pass: home, saved theme and device changes, keyboard answers, 360 px layout and 64 px buttons on desktop and phone profiles. The theme select uses an explicit label/for association so its label excludes option text. No database files change in this task.
 
 ---
 
@@ -440,7 +440,7 @@ Opens the real app in a real browser and checks what a user would see.
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/home.spec.ts` is the only test so far (section 3.1).
 
-First time on your own computer: `npx playwright install chromium`, then `npm run e2e`.
+First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
 #### Why it works like that
 
@@ -1161,3 +1161,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · added "The live database": cloud Supabase project set up with the 6 migrations via the SQL Editor; how to apply future migrations
 - 2026-11-03 · added W1-11 design tokens, reusable components, persistent system/light/dark choice and `/dev/ui` preview; static checks pass, browser verification blocked by the local Turbopack CSS worker crash. Repaired the npm lockfile's missing optional Oxide WebAssembly entry with `npm install` so clean dependency installation can proceed.
 - 2026-11-03 · added section 3.6 (detection engine types, `src/engine/types.ts`), status rows split into "types ✅" and "logic ⬜", test count 15, difference #10
+
+- 2026-11-03 · completed W1-11 browser verification: installed Chromium, diagnosed sandbox loopback restrictions, and fixed the theme selector label association. Production build and all six desktop/phone browser runs pass.

@@ -1,12 +1,13 @@
 // Remembers the chosen theme; system mode continues following the device setting.
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { bg } from "@/i18n/bg";
 
 type Theme = "system" | "light" | "dark";
 
 export function ThemeToggle() {
+  const id = useId();
   const select = useRef<HTMLSelectElement>(null);
   useEffect(() => {
     try {
@@ -31,9 +32,10 @@ export function ThemeToggle() {
   }
 
   return (
-    <label className="theme-control">
-      <span>{bg.theme.label}</span>
+    <div className="theme-control">
+      <label htmlFor={id}>{bg.theme.label}</label>
       <select
+        id={id}
         ref={select}
         defaultValue="system"
         onChange={(event) => changeTheme(event.target.value as Theme)}
@@ -42,6 +44,6 @@ export function ThemeToggle() {
         <option value="light">{bg.theme.light}</option>
         <option value="dark">{bg.theme.dark}</option>
       </select>
-    </label>
+    </div>
   );
 }

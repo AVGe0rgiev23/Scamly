@@ -509,7 +509,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed a large set of complex widgets (date pickers, data grids) fast; then a component kit would save time.
 
-### Our own design system  (status: in use; W1-11 browser verification outstanding)
+### Our own design system  (status: in use; W1-11 verified)
 
 **Used for:** `Button`, `Card`, `Verdict`, `BigChoice`, `ThemeToggle` and colour/typography tokens in `src/components/ui/`, shown on a `/dev/ui` preview page.
 
@@ -519,6 +519,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Scored directly ("original components and design").
 - Our main user needs things kits don't offer by default: very large tap targets (≥ 64 px), base font ≥ 18 px, very high contrast, three verdict colours with words, not colour alone.
 - We check WCAG AA contrast for every colour pair, in both themes.
+- The theme select uses an explicit label/for association to keep its label separate from the option text. We installed Playwright Chromium locally and verified the production build with six browser runs. Build/browser commands need approved execution outside the Codex Windows sandbox because Turbopack workers use local TCP connections; no bundler or dependency changes were needed.
 - Native buttons and fieldset/radio groups preserve keyboard and screen-reader behaviour without another UI dependency. Component props are explained as Python keyword arguments in the code.
 - A three-choice theme control allows an explicit light/dark preference or the device setting. `localStorage` remembers only this non-sensitive preference; denied storage does not stop the control working, and system mode tracks device changes.
 - Verdicts include words alongside colours and use the D9 green wording. The preview shows both palettes together so changes can be reviewed consistently.
@@ -1373,3 +1374,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)
 - 2026-11-03 · design-system entry is now implemented: native controls, accessible sizing, textual verdicts, theme persistence and both-theme preview; npm run check passes, browser verification remains blocked by a local Turbopack CSS-worker crash. Documented the npm lockfile repair for the missing optional Oxide WebAssembly entry.
 - 2026-11-03 · new entry in section 7: shared type definitions + `as const` lists (vs plain strings / TS enums), `src/engine/types.ts`
+
+- 2026-11-03 · W1-11 browser verification completed; documented explicit theme labels and the sandbox loopback restriction instead of changing the working build configuration.
