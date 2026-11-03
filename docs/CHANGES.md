@@ -3,6 +3,9 @@
 One line per change, newest first. Claude adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-03 · Alex · Two living explanation files, `HOW_IT_WORKS.md` and `WHY_WE_CHOSE.md`, updated in the same commit as every change; `CLAUDE.md` added so every session follows the rules (D19, Q19) · `PROJECT_BRIEF.md` section 0, `BUILD_PLAN.md` sections 1 and 8, `IMPLEMENTATION_PLAN.md` sections 1–3 and 6, `CLAUDE.md`
+- 2026-11-03 · Alex · Engine split: Alex builds the logic, Roberta writes `dictionary.ts`, шльокавица/typo examples and the test cases; new task W1-09b (D18, Q18) · `BUILD_PLAN.md` section 6, `IMPLEMENTATION_PLAN.md` sections 5–6
+- 2026-11-03 · Alex · Work split: Alex leads backend, Roberta leads frontend, mixed; either may change anything after telling the owner; all tasks re-assigned and hours re-totalled (D17, Q17) · `PROJECT_BRIEF.md` sections 0 and 11, `BUILD_PLAN.md` sections 6 and 8, `IMPLEMENTATION_PLAN.md` sections 1, 4–6
 - 2026-11-02 · Alex · Implementation plan, ideas list and this change log added · `IMPLEMENTATION_PLAN.md`, `IDEAS.md`, `CHANGES.md`
 - 2026-11-02 · Alex · One branch only (`main`); no feature branches or pull requests (Q16) · `BUILD_PLAN.md` sections 6 and 8
 - 2026-11-02 · Alex · Commits carry only the author's name, no co-author line (Q3) · `BUILD_PLAN.md` section 8

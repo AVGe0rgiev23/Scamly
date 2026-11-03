@@ -28,9 +28,12 @@ These are settled. Don't re-open them unless something blocks you; if it does, e
 | D14 | Device pairing detail (added 2 Nov) | The server creates the device's login only after a correct pairing code (the brief's fallback option in 6.1), not Supabase anonymous sign-in. See `BUILD_PLAN.md` section 5. |
 | D15 | Name check (added 2 Nov) | "Scamly" is also used by an existing scam-protection app (Scamly Pty Ltd). **We keep the name for now**; it lives in one constant so a rename stays cheap. |
 | D16 | Plan is living (added 2 Nov) | The team may change any idea or feature at any time. Process: `IMPLEMENTATION_PLAN.md` section 2. Ideas menu: `IDEAS.md`. Change history: `CHANGES.md`. |
+| D17 | Work split (added 3 Nov) | **Alex leads the backend, Roberta leads the frontend, but the split is mixed.** Both may work on both sides. If one of us doesn't like something on the other's side, or has a better idea, we tell the other person first and then make the change ourselves (in our own session, under our own name); the area owner reads the commit afterwards. "Owner" = the person who mainly builds it and must explain it in the defense. It does **not** mean the other person may not touch it. Details: `BUILD_PLAN.md` section 6, `IMPLEMENTATION_PLAN.md` sections 1 and 5. |
+| D18 | Detection engine split (added 3 Nov) | **Alex** builds the engine logic: types, normalise, transliterate, fuzzy, signals, scoring, hard rules, verdict, `redactPersonalData()`, and plugging it into the API. **Roberta** writes the Bulgarian keyword/phrase dictionary (`src/engine/dictionary.ts`), the шльокавица and typo examples, and the test *cases* (real scam phrases, legitimate calls that must not be red, edge cases): the scenario tables the tests run on. **Both** must be able to explain the whole engine. |
+| D19 | Two living explanation files (added 3 Nov) | `docs/HOW_IT_WORKS.md` (what works, how it works and why it works like that, for every part of the project) and `docs/WHY_WE_CHOSE.md` (for every technology, library, service, tool or design choice: why this one instead of the alternatives). **Rule: every time anything is used, added, changed or removed, both files are updated in the same commit.** By the end they explain the whole system for the documentation and the defense. Written in English. |
 
 **Open items (we will decide as we go; propose a default and keep it easy to change):**
-- Final work split between Alex and Roberta (see section 11).
+- ~~Final work split between Alex and Roberta (see section 11).~~ Decided 3 Nov: D17, D18.
 - Whether to buy a domain (would enable Resend and a nicer URL).
 - Our teacher/mentor (ръководител) details for the documentation.
 - Whether "Scamly" is already used by an existing company or product. If it clearly is, flag it to us; the regulation forbids company advertising, and we don't want to look like we're promoting one.
@@ -275,6 +278,8 @@ At least 25 unit tests in Week 1, including:
 ---
 
 ## 11. Work split (open item — propose a default)
+
+> **Updated 3 Nov:** see D17/D18; the current split is in `BUILD_PLAN.md` section 6 and `IMPLEMENTATION_PLAN.md` section 5. The original proposal is kept below for history.
 
 Both of us must be able to explain the whole architecture. A starting proposal for you to refine:
 - **Alex:** repo + CI, Supabase schema + RLS, auth and device pairing, API layer, alerts (Realtime, push, email), deployment, security hardening.
