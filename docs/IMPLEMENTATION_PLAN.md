@@ -99,7 +99,7 @@ The AI agent can't create accounts or click in web dashboards. These are all **f
 
 | When | What | Who | Where the keys go |
 |---|---|---|---|
-| Week 1, day 1–2 | **Supabase** account → new project, region **Frankfurt (eu-central-1)** | Alex | Vercel env vars + this cloud environment's settings (environment menu in the session title bar → Edit → secrets/environment variables): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
+| Week 1, day 1–2 ✅ done 3 Nov (tables created via SQL Editor, see HOW_IT_WORKS "The live database") | **Supabase** account → new project, region **Frankfurt (eu-central-1)** | Alex | Vercel env vars + this cloud environment's settings (environment menu in the session title bar → Edit → secrets/environment variables): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
 | Week 1 | Generate two random secrets for `PAIRING_PEPPER` and `HASH_PEPPER` (the agent gives you the command) | Alex | Same places |
 | Week 1, before Roberta's next session | **Roberta's computer (D21):** install Node.js 22 and git, set up Codex, clone the repo, run `npm ci`. Create her own `.env.local` by copying `.env.example`; Alex sends her the keys through a private channel (never in git, never in a chat with an AI) | Roberta (keys from Alex) | `.env.local` on her computer (git ignores every `.env*` file except `.env.example`) |
 | Mon 9 Nov (D20) | **Vercel** account (Hobby, sign in with GitHub) → import the repo, region **fra1** | Alex | Vercel dashboard |

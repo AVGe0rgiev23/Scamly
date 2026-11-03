@@ -1068,6 +1068,18 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | **PWA** | Progressive Web App: a website that can be installed on the home screen and work partly offline. Planned (W2-09). |
 | **Shim** | A small fake of something missing (our `supabase-shim.sql` fakes the parts of Supabase plain PostgreSQL lacks). |
 
+### The live database (Supabase cloud project)
+
+**What:** the real Supabase project (region Frankfurt) that the deployed app will use. Set up on 3 Nov 2026.
+
+**How it was set up:** all 6 files in `supabase/migrations/` were joined into one SQL script and run **once** in the Supabase dashboard → SQL Editor. Checked afterwards with the public key: guests see the 28 districts, guests get "permission denied" on `reports`, `get_map_stats` answers, and the server key reaches all 14 tables.
+
+**Why this way:** it needed no database password and no extra tools in the cloud session (the Supabase CLI download is blocked there).
+
+**Important for later:** because the SQL Editor was used, Supabase's migration history (`supabase_migrations.schema_migrations`) is empty. **New migrations must also be run once in the SQL Editor** (only the new file), or, if we switch to `supabase db push`, first mark the 6 existing ones as applied with `supabase migration repair --status applied <version>` so they are not run twice.
+
+**Where the keys live:** see `docs/IMPLEMENTATION_PLAN.md` section 4. Never in git.
+
 ---
 
 ## 9. Change history
@@ -1076,3 +1088,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 
 - 2026-11-03 · created, covers Week 1 foundations (scaffold, CI, database, RLS, DB tests)
 - 2026-11-03 · added section 4.5 and a status row: agent rules files (`AGENTS.md` shared by Claude Code and Codex, `CLAUDE.md` imports it, D21); seed (W1-12) and deploy (W1-13) rows updated for D20
+- 2026-11-03 · added "The live database": cloud Supabase project set up with the 6 migrations via the SQL Editor; how to apply future migrations
