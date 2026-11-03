@@ -1,0 +1,332 @@
+// Accessible forms call the existing JSON API; session cookies stay on the server.
+"use client";
+
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type InputHTMLAttributes,
+} from "react";
+import { useSearchParams } from "next/navigation";
+import { homePathForRole, ROUTES, type AppRole } from "@/config/routes";
+import { Button } from "@/components/ui/Button";
+import { bg } from "@/i18n/bg";
+import { LoginSchema, RegisterSchema } from "@/schemas/auth";
+import { RedeemCodeSchema } from "@/schemas/pairing";
+
+type Message = { text: string; kind: "error" | "success" } | null;
+type ApiData = Record<string, unknown>;
+
+function isObject(value: unknown): value is ApiData {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// A custom hook shares request state, like a small reusable Python helper object.
+function useFormRequest() {
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState<Message>(null);
+  const [invalidField, setInvalidField] = useState<string | null>(null);
+  const feedbackId = useId();
+  // A ref updates immediately, blocking two submits before React renders again.
+  const inFlight = useRef(false);
+
+  function showError(text: string, field?: unknown) {
+    setInvalidField(typeof field === "string" ? field : null);
+    setMessage({ text, kind: "error" });
+  }
+
+  async function post(url: string, body: unknown): Promise<ApiData | null> {
+    if (inFlight.current) return null;
+    inFlight.current = true;
+    setPending(true);
+    setMessage(null);
+    setInvalidField(null);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data: unknown = await response.json();
+      if (!response.ok || !isObject(data)) {
+        const error = isObject(data) && isObject(data.error) ? data.error : null;
+        showError(typeof error?.messageBg === "string" ? error.messageBg : bg.errors.internal);
+        return null;
+      }
+      return data;
+    } catch {
+      showError(bg.auth.networkError);
+      return null;
+    } finally {
+      inFlight.current = false;
+      setPending(false);
+    }
+  }
+
+  return {
+    pending,
+    message,
+    post,
+    showError,
+    setMessage,
+    feedbackId,
+    validation: { field: invalidField, messageId: feedbackId },
+  };
+}
+
+function formValues(form: HTMLFormElement): Record<string, FormDataEntryValue> {
+  // Object.fromEntries builds a dictionary from key/value pairs, like Python dict().
+  return Object.fromEntries(new FormData(form));
+}
+
+function Field({
+  label,
+  hint,
+  id,
+  validation,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  hint?: string;
+  id: string;
+  validation: { field: string | null; messageId: string };
+}) {
+  const invalid = validation.field === props.name;
+  const description =
+    [hint ? `${id}-hint` : null, invalid ? validation.messageId : null].filter(Boolean).join(" ") ||
+    undefined;
+  return (
+    <div className="auth-field">
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        aria-describedby={description}
+        aria-invalid={invalid || undefined}
+        {...props}
+      />
+      {hint ? (
+        <p id={`${id}-hint`} className="muted">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function Feedback({ message, id }: { message: Message; id: string }) {
+  const summary = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (message?.kind === "error") summary.current?.focus();
+  }, [message]);
+  if (!message) return null;
+  return (
+    <p
+      id={id}
+      ref={summary}
+      tabIndex={-1}
+      className={`form-message form-message-${message.kind}`}
+      role={message.kind === "error" ? "alert" : "status"}
+    >
+      {message.text}
+    </p>
+  );
+}
+
+function isRole(value: unknown): value is AppRole {
+  return value === "family" || value === "moderator" || value === "admin" || value === "protected";
+}
+
+export function LoginForm() {
+  const request = useFormRequest();
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (request.pending) return;
+    const input = LoginSchema.safeParse(formValues(event.currentTarget));
+    if (!input.success)
+      return request.showError(
+        input.error.issues[0]?.message ?? bg.errors.validation,
+        input.error.issues[0]?.path[0],
+      );
+    const data = await request.post("/api/auth/login", input.data);
+    if (!data) return;
+    if (isRole(data.role)) window.location.assign(homePathForRole(data.role));
+    else request.showError(bg.errors.internal);
+  }
+  return (
+    <form noValidate onSubmit={submit} aria-busy={request.pending} className="auth-form">
+      <fieldset
+        disabled={request.pending}
+        aria-describedby={request.message ? request.feedbackId : undefined}
+      >
+        <Field
+          validation={request.validation}
+          id="login-email"
+          name="email"
+          label={bg.auth.emailLabel}
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          maxLength={254}
+          required
+        />
+        <Field
+          validation={request.validation}
+          id="login-password"
+          name="password"
+          label={bg.auth.passwordLabel}
+          type="password"
+          autoComplete="current-password"
+          maxLength={200}
+          required
+        />
+        <Button type="submit" disabled={request.pending}>
+          {request.pending ? bg.auth.submitting : bg.auth.loginButton}
+        </Button>
+      </fieldset>
+      <Feedback message={request.message} id={request.feedbackId} />
+    </form>
+  );
+}
+
+export function RegisterForm() {
+  const request = useFormRequest();
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (request.pending) return;
+    const input = RegisterSchema.safeParse(formValues(event.currentTarget));
+    if (!input.success)
+      return request.showError(
+        input.error.issues[0]?.message ?? bg.errors.validation,
+        input.error.issues[0]?.path[0],
+      );
+    const data = await request.post("/api/auth/register", input.data);
+    if (!data) return;
+    if (data.needsEmailConfirmation === true)
+      request.setMessage({ text: bg.auth.checkEmail, kind: "success" });
+    else if (data.needsEmailConfirmation === false && data.role === "family")
+      window.location.assign(ROUTES.family);
+    else request.showError(bg.errors.internal);
+  }
+  return (
+    <form noValidate onSubmit={submit} aria-busy={request.pending} className="auth-form">
+      <fieldset
+        disabled={request.pending}
+        aria-describedby={request.message ? request.feedbackId : undefined}
+      >
+        <Field
+          validation={request.validation}
+          id="register-name"
+          name="displayName"
+          label={bg.auth.displayNameLabel}
+          type="text"
+          autoComplete="name"
+          maxLength={60}
+          required
+        />
+        <Field
+          validation={request.validation}
+          id="register-email"
+          name="email"
+          label={bg.auth.emailLabel}
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          maxLength={254}
+          required
+        />
+        <Field
+          validation={request.validation}
+          id="register-password"
+          name="password"
+          label={bg.auth.passwordLabel}
+          type="password"
+          autoComplete="new-password"
+          minLength={10}
+          maxLength={72}
+          hint={bg.auth.passwordHint}
+          required
+        />
+        <Button type="submit" disabled={request.pending}>
+          {request.pending ? bg.auth.submitting : bg.auth.registerButton}
+        </Button>
+      </fieldset>
+      <Feedback message={request.message} id={request.feedbackId} />
+    </form>
+  );
+}
+
+export function PairForm() {
+  const request = useFormRequest();
+  const params = useSearchParams();
+  const queryCode = params.get("kod") ?? "";
+  const initialCode = /^\d{6}$/.test(queryCode) ? queryCode : "";
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (request.pending) return;
+    const input = RedeemCodeSchema.safeParse(formValues(event.currentTarget));
+    if (!input.success)
+      return request.showError(
+        input.error.issues[0]?.message ?? bg.errors.validation,
+        input.error.issues[0]?.path[0],
+      );
+    const data = await request.post("/api/pairing/redeem", input.data);
+    if (!data) return;
+    if (data.role === "protected") window.location.assign(ROUTES.protected);
+    else request.showError(bg.errors.internal);
+  }
+  return (
+    <form
+      noValidate
+      onSubmit={submit}
+      aria-busy={request.pending}
+      className="auth-form pairing-form"
+    >
+      <fieldset
+        disabled={request.pending}
+        aria-describedby={request.message ? request.feedbackId : undefined}
+      >
+        <Field
+          validation={request.validation}
+          key={initialCode}
+          id="pairing-code"
+          name="code"
+          label={bg.pairing.codeLabel}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]{6}"
+          maxLength={6}
+          defaultValue={initialCode}
+          hint={bg.pairing.codeHint}
+          required
+        />
+        <Button type="submit" disabled={request.pending}>
+          {request.pending ? bg.pairing.submitting : bg.pairing.button}
+        </Button>
+      </fieldset>
+      <Feedback message={request.message} id={request.feedbackId} />
+      <p className="muted">{bg.pairing.retryHint}</p>
+    </form>
+  );
+}
+
+export function LogoutButton() {
+  const request = useFormRequest();
+  async function logout() {
+    const data = await request.post("/api/auth/logout", {});
+    if (!data) return;
+    if (data.ok === true) window.location.assign(ROUTES.login);
+    else request.showError(bg.errors.internal);
+  }
+  return (
+    <div className="auth-form">
+      <Button variant="secondary" disabled={request.pending} onClick={logout}>
+        {request.pending ? bg.auth.submitting : bg.auth.logoutButton}
+      </Button>
+      <Feedback message={request.message} id={request.feedbackId} />
+    </div>
+  );
+}

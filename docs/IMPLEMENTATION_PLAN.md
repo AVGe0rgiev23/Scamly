@@ -129,8 +129,8 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | 🔄 Roberta: 0005 written; Alex: 0001–0004 pending |
 | W1-04 | Supabase schema migration | Alex | ✅ |
 | W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
-| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend (pages: Roberta, Session F) |
-| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend (pages: Roberta, Session F) |
+| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
+| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
 | W1-08 | Engine part 1: types, normalise, transliterate, fuzzy | Alex | ⬜ |
 | W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ⬜ |
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ✅ data prepared; matcher integration pending |

@@ -31,11 +31,11 @@ Scamly is a web app. An older person's phone shows one big button; when a suspic
 
 The system has **layers**, and each layer only talks to the one below it: the **UI** (pages in the browser) calls our **REST API** (Next.js route handlers), which calls **services** (business logic, including the detection engine), which call **repositories** (all database queries), which talk to **PostgreSQL** on Supabase. PostgreSQL itself enforces **Row Level Security (RLS)**: even if our API had a bug, the database would still refuse to show family A the data of family B. Supabase also gives us **Auth** (logins, JWTs) and **Realtime** (live updates for the family's alert page).
 
-**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from temporary pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine logic and the real, designed screens are still planned.
+**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine logic and the Week 2 call-check/family screens are still planned.
 
 ```mermaid
 flowchart TB
-  UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, temporary auth pages · ⬜ real screens"]
+  UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
   API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing · ⬜ rest (week 2-3)"]
   SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing · ⬜ engine logic (week 1-3)"]
   REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 6 files · ⬜ more (week 2-3)"]
@@ -75,7 +75,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
 | Unit tests (Vitest) | ✅ 92 tests in 14 files | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 6 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 15 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -92,11 +92,11 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Generated TypeScript types for the database | ✅ (postgres-meta, section 3.8) | `src/types/database.ts` | `npm run typecheck` |
 | Supabase clients (user, admin, browser) + HttpOnly cookie settings | ✅ | `src/server/supabase/`, `src/lib/supabase/browser.ts` | section 3.9; live smoke test |
 | Proxy: session refresh + login guards | ✅ | `src/proxy.ts`, `src/config/routes.ts` | `routes.test.ts`, `tests/e2e/auth-guards.spec.ts` |
-| Login, register, logout, roles (`getActor`, `requireRole`, `requirePageRole`) | ✅ backend (W1-06) · pages are placeholders until Session F | `src/app/api/auth/`, `src/server/auth/`, `src/server/services/authService.ts` | `authService.test.ts`, `requireRole.test.ts` |
+| Login, register, logout, roles (`getActor`, `requireRole`, `requirePageRole`) | ✅ backend (W1-06) · designed pages; live demo-role check pending | `src/app/api/auth/`, `src/server/auth/`, `src/server/services/authService.ts` | `authService.test.ts`, `requireRole.test.ts` |
 | API basics: error shape, same-origin check (CSRF), JSON body, client IP, HMAC | ✅ | `src/server/http/`, `src/server/security/`, `src/schemas/` | `errors`, `request`, `origin`, `hash`, `schemas` tests |
 | `/api/me`, `/api/persons` (list + create) | ✅ (rest of persons: W2-08) | `src/app/api/me/`, `src/app/api/persons/`, `src/server/services/personService.ts` | live smoke test; RLS: `03_persons_contacts` |
-| Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · `/svarzhi` is a placeholder until Session F | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
-| Temporary pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ temporary (Roberta's Session F replaces them) | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
+| Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · designed `/svarzhi`; live browser pairing check pending | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
+| Auth pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ designed auth pages; area contents remain temporary | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
 | Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
 | Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
@@ -684,29 +684,31 @@ Everything the service needs from outside comes in one `PairingDeps` object (clo
 
 **Live smoke test (once, 3 Nov):** a script called the new endpoints against the real Supabase project: 33/33 checks passed. All test accounts and rows were deleted afterwards; its `audit_log` lines remain with `actor_id` null, because the log is append-only by design (5.9). The script is not in the repo.
 
-### 3.17 Temporary pages (until Roberta's Session F)
+### 3.17 Designed auth and pairing pages (Session F)
 
 #### What it does
 
-Plain pages so the API can be tried in a browser now: `/vhod` (login), `/registratsia` (sign-up), `/svarzhi` (pairing), `/403`, and the four areas `/family`, `/moderator`, `/admin`, `/protected`. Each file's header says TEMPORARY; Roberta replaces them with designed pages in Session F.
+`/vhod`, `/registratsia`, `/svarzhi` and `/403` use the shared light/dark design system. Login, registration and pairing call the existing API; the logged-in area pages remain placeholders for Week 2. The area role checks are preserved.
 
 #### How it works
 
-- `src/app/_auth-placeholders/forms.tsx` (`"use client"`): `LoginForm`, `RegisterForm`, `PairForm`, `LogoutButton`. They POST JSON to our API and show `error.messageBg`. After login the browser opens `homePathForRole(role)`. A folder starting with `_` is private in the App Router: it holds parts, not pages.
-- `RoleGate.tsx` (server component): calls `requirePageRole()`, then shows the page, „Влезли сте като …“, a "temporary page" note and a logout button (not on the phone). Each area `layout.tsx` wraps it in `<Suspense fallback={<AreaLoading />}>`, because with Cache Components anything that reads cookies must sit inside `<Suspense>`.
-- `PairForm`'s input uses `inputMode="numeric"`, `autoComplete="one-time-code"` and a 6-digit pattern. The QR link `/svarzhi?kod=…` is for Session F.
-- New text groups in `bg.ts`: `errors`, `auth`, `pairing`, `persons`, `areas`. `bg.pairing.deviceRevoked` is ready for Session F but not used yet.
+`src/components/auth/AuthPage.tsx` provides the server-rendered Card frame. Client forms in `src/components/auth/forms.tsx` reuse the API Zod schemas, labelled native fields, autocomplete, at least 18 px text and 64 px controls. Bulgarian validation identifies the invalid field and focuses an alert summary; confirmation uses a status message. Inputs and submit controls are disabled while a request is pending, with an immediate ref guard against duplicate requests. Network/API failures keep the visitor on the form.
+
+Login accepts only a known role before choosing its destination. Registration either shows the email-confirmation message or opens the family area when the API explicitly returns family with no confirmation required. Logout opens the login page only after success. Session cookies remain server-managed and HttpOnly.
+
+Pairing keeps the code as a six-character string so leading zeroes survive. A valid `/svarzhi?kod=001234` link prefills the field without submitting; malformed query values are ignored. `useSearchParams` is inside Suspense, following the installed Next.js guide. Wrong/expired/reused codes retain the backend generic error and rate-limit messages are shown clearly. No client code bypasses the API guards.
+
+`RoleGate.tsx` still checks the role server-side inside Suspense and now imports the designed logout control. The obsolete temporary forms module was removed. Bulgarian fixture wording is prepared in `bg.seed` for the local seed script.
 
 #### Why it works like that
 
-The backend could be tested end to end in a browser before the design exists, without blocking Roberta. Keeping the parts in one `_auth-placeholders` folder makes them easy to delete.
+Native inputs work with keyboards, password managers and phone autofill. Shared schemas keep browser feedback aligned with API rules; server validation remains authoritative. Generic pairing errors avoid revealing whether a code once existed. The QR link saves typing while preserving an explicit human action before pairing.
 
 #### How we know it works
 
-`tests/e2e/auth-guards.spec.ts` checks the login and pairing headings. The forms themselves have no automated test (they are temporary).
+The production build and 30 desktop/phone browser runs pass. Nine new form cases per profile cover validation without requests, pending duplicate protection, login destinations for three roles, registration confirmation, leading-zero QR codes, malformed codes, 400/429 errors and 360 px layout. Existing route-guard and theme tests still pass. Mobile light pairing and dark registration screenshots were visually reviewed. These tests use controlled API responses rather than a live database; real demo-role login and browser pairing remain a manual check after the approved demo database is seeded.
 
 ---
-
 ### 3.18 Engine dictionary and scenario data (Roberta, Session D)
 
 #### What it does
@@ -835,7 +837,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 6 tests × 2 screens = 12 runs, all passing locally on 3 Nov. The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 15 tests × 2 screens = 30 runs, all passing locally on 3 Nov. The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -1427,7 +1429,7 @@ The cloud sandbox we build in has no Docker, but we still want to run the databa
 
 ### 7.1 A new family member signs up
 
-1. The register page (`/registratsia`, temporary) sends `POST /api/auth/register` `{ email, password, displayName }`. The API checks the origin, the rate limit (5 per hour per IP) and the input, then calls `auth.signUp()` on the server with `display_name` as metadata (section 3.14). Someone calling Supabase Auth directly with the public key could add `"role": "admin"` to the sign-up data.
+1. The register page (`/registratsia`) sends `POST /api/auth/register` `{ email, password, displayName }`. The API checks the origin, the rate limit (5 per hour per IP) and the input, then calls `auth.signUp()` on the server with `display_name` as metadata (section 3.14). Someone calling Supabase Auth directly with the public key could add `"role": "admin"` to the sign-up data.
 2. Supabase Auth inserts a row into `auth.users` (its own table) with that data in `raw_user_meta_data`.
 3. In the same transaction, the trigger `on_auth_user_created` runs `handle_new_user()`.
 4. The function inserts `profiles (id, role = 'family', display_name)`. It never reads `role` from the sign-up data, so the attacker is a normal family member.
@@ -1607,3 +1609,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 
 - 2026-11-03 · added ADR 0005 for the existing D7 alert-channel choice and the Week 1 study note; delivery implementation, other ADRs and human check-in remain pending.
 - 2026-11-03 · Session E (W1-06 auth + W1-07 pairing backend): sections 3.8–3.17 (generated DB types, Supabase clients and cookies, proxy, `getActor`/`requireRole`, API basics and same-origin check, rate limiter wrapper, `/api/auth/*`, `/api/me` + `/api/persons`, pairing, temporary pages); walkthroughs 7.5 and 7.6; 7.1–7.3, 4.2, 4.3, 5.7–5.13 updated; status table, big picture, plan differences #3, #9, #11–#17 and glossary; 92 unit tests, 6 e2e tests × 2 screens
+
+- 2026-11-03 · Session F: designed auth/pairing/403 screens, accessible validation, request states, role redirects, QR-code prefill and logout handling; 30 browser runs pass with controlled API responses. Live demo-role verification remains pending.

@@ -626,6 +626,22 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** time ran out; then we'd keep our own look for the protected screens and use simpler styling for admin pages.
 
+### Shared schemas and native auth forms (status: in use, Session F)
+
+**Used for:** designed login, registration, pairing and 403 pages plus logout in `src/components/auth/`.
+
+**Alternatives we considered:** keeping the temporary forms, adding a form library, trusting browser-native validation messages, or signing in directly from the browser.
+
+**Why this one:**
+- Native labelled fields support keyboard use, password managers and phone input; our shared Button/Card and semantic tokens keep both themes consistent.
+- Reusing Zod schemas gives Bulgarian validation before submission while the API still validates every request. Focused error summaries and field descriptions make the problem discoverable.
+- Disabled controls plus a synchronous ref guard prevent accidental duplicate submissions. Failures retain the form, and logout navigates only when the server succeeds.
+- Pairing codes stay strings; a valid query prefill saves typing without automatically linking a device. Known-role checks keep login destinations controlled.
+
+**What we give up:**
+- We maintain a small request helper ourselves. Browser tests with mocked API responses verify the UI contract but do not replace live demo-account login and pairing checks.
+
+**We would reconsider if:** form complexity grows enough to justify a library; the API and server-managed session boundary remain the same.
 ### System fonts instead of web fonts  (status: in use)
 
 **Used for:** all text uses the phone's or computer's built-in font (`font-sans`); we removed the Geist web font that `create-next-app` adds.
@@ -1528,3 +1544,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 - 2026-11-03 · added ADR 0005 and Week 1 learning material as reviewable repo documents; kept planned feature delivery separate from documentation completion.
 - 2026-11-03 · Session E (auth + pairing backend): new entries generated DB types (postgres-meta), `.invalid` device e-mails, auth through our API, HttpOnly cookies with three clients (replaces "Session in HttpOnly cookies"), proxy checks login only, same-origin check (split from the CSP entry), dependency-injected fakes, `server-only`; rate limiting entry now covers HMAC'd IPs, fail-closed and our login/register limits; statuses moved to "in use" for REST API, layers, Supabase Auth, Supabase JS client + `@supabase/ssr`, two locks, server-only writes, HMAC, device pairing, Zod, `proxy.ts`
+
+- 2026-11-03 · documented the designed auth forms, shared Zod validation, accessible error handling, duplicate-request guard and explicit QR pairing action.

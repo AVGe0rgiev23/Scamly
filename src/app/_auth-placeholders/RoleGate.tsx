@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import type { AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { requirePageRole } from "@/server/auth/requireRole";
-import { LogoutButton } from "./forms";
+import { LogoutButton } from "@/components/auth/forms";
 
 type RoleGateProps = {
   allowedRoles: AppRole[];

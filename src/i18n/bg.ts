@@ -72,6 +72,12 @@ export const bg = {
   },
   // Login, registration and logout (pages /vhod and /registratsia).
   auth: {
+    loginIntro: "Влезте, за да се грижите за близките си и да следите техните сигнали.",
+    registerIntro:
+      "Създайте семеен профил. След това ще можете да свържете телефона на ваш близък.",
+    toPair: "Свързване на телефон на близък",
+    submitting: "Моля, изчакайте…",
+    networkError: "Не успяхме да се свържем. Проверете връзката си и опитайте отново.",
     loginTitle: "Вход в профила",
     loginButton: "Вход",
     registerTitle: "Регистрация",
@@ -99,6 +105,9 @@ export const bg = {
   },
   // Pairing the older person's phone (page /svarzhi, BUILD_PLAN section 5).
   pairing: {
+    codeHint: "Въведете всички цифри, включително нулите в началото.",
+    retryHint: "Ако кодът не работи, помолете близкия си да създаде нов код.",
+    submitting: "Свързване…",
     title: "Свързване на телефона",
     intro: "Въведете кода от 6 цифри, който вижда вашият близък.",
     codeLabel: "Код от 6 цифри",
@@ -116,6 +125,8 @@ export const bg = {
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
+    forbiddenHelp:
+      "Проверете дали сте влезли с правилния профил или се върнете към началната страница.",
     family: "Семеен панел",
     moderator: "Панел на модератора",
     admin: "Панел на администратора",
@@ -123,5 +134,18 @@ export const bg = {
     placeholderNote: "Временна страница. Истинският дизайн предстои.",
     forbiddenTitle: "Нямате достъп",
     forbiddenText: "Тази страница не е предназначена за вашия профил.",
+  },
+  // Fictional demo content used only when populating the agreed test database.
+  seed: {
+    familyName: "Мария Петрова",
+    contactName: "Иван Петров",
+    moderatorName: "Демо модератор",
+    adminName: "Демо администратор",
+    personName: "Елена Петрова",
+    deviceLabel: "Демо телефон на Елена",
+    policeCheckText: "Казаха, че са от полицията, и поискаха пари за акция.",
+    bankCheckText: "От банката напомниха, че документът ми е готов в клона. Не поискаха нищо.",
+    pendingReportText: "Обаждащият се поиска спешно пари и каза да не споделям с никого.",
+    approvedReportText: "Представиха се за полицаи и поискаха пари за залавяне на измамници.",
   },
 } as const;

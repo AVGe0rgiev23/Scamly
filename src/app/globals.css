@@ -236,3 +236,90 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* Auth forms reuse the theme tokens and native inputs for keyboard/mobile access. */
+.auth-page {
+  width: 100%;
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+.auth-heading {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.auth-brand {
+  color: var(--primary);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.auth-card {
+  padding: clamp(1rem, 4vw, 2rem);
+}
+.auth-form,
+.auth-form fieldset {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.auth-field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.auth-field label {
+  font-weight: 650;
+}
+.auth-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 64px;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+}
+.auth-field input:disabled {
+  opacity: 0.7;
+}
+.auth-form .button {
+  width: 100%;
+}
+.auth-footer {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.auth-footer a,
+.auth-action-link {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+.form-message {
+  padding: 1rem;
+  border: 2px solid currentColor;
+  border-radius: 0.65rem;
+  overflow-wrap: anywhere;
+}
+.form-message-error {
+  background: var(--red-bg);
+  color: var(--red-fg);
+}
+.form-message-success {
+  background: var(--green-bg);
+  color: var(--green-fg);
+}
+.pairing-form input {
+  text-align: center;
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
+}
