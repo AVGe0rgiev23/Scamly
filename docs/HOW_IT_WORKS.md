@@ -95,6 +95,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
 | Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
+| Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.8 |
 | Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
 | Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
@@ -295,7 +296,7 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 
 ### 3.6 Detection engine: types (`src/engine/types.ts`)
 
-The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. This file comes first so Roberta can write the dictionary and the test cases (Session D) against fixed shapes.
+The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. The dictionary and scenario data now use these shared shapes (section 3.8); the execution runner still awaits the engine logic.
 
 #### What it does
 
@@ -363,6 +364,27 @@ Large controls and readable text support older people using small phones. Shared
 
 ---
 
+### 3.8 Engine dictionary and scenario data (Roberta, Session D)
+
+#### What it does
+
+`src/engine/dictionary.ts` exports `DICTIONARY`: Bulgarian stems and ordered phrases for the 16 text-detectable signal categories. `identity_other` is an answer only and has no keywords. `src/engine/__tests__/scenarios.ts` exports `SCENARIOS`: plain typed inputs with expected verdicts for Alex's future runner.
+
+#### How it works
+
+Each dictionary entry has a category, stems and/or phrases, and an example. Ordinary word endings are handled by prefix matching; common Latin-script ambiguities and typo variants are included as data. The planned engine normalises and transliterates before matching. High-risk handover, safe-account and money-movement evidence uses phrases rather than a lone word such as courier or account. A phrase is ordered within six tokens; it is not a full sentence-understanding system.
+
+Scenarios start from `EMPTY_INPUT`, using object spread like Python `{**EMPTY_INPUT, "text": "..."}`. They cover scam scripts, all six hard rules, legitimate calls, answers-only, text-only, mixed input, Latin spelling, typos and edge cases. Expected results follow BUILD_PLAN 4.5–4.7. A legitimate request for money may still be yellow; it must not be labelled automatically red without further evidence.
+
+#### Why it works like that
+
+Data stays independent of scoring and database code, so Roberta can improve wording while Alex implements matching. Explicit negative cases guard against frightening users on everyday calls. The four standard answers alone cannot distinguish every official or courier scam from a legitimate payment: scenarios retain the planned yellow result when evidence is insufficient.
+
+#### How we know it works
+
+TypeScript checks the data against the shared engine types. `src/engine/data.test.ts` checks category coverage, phrase shape, contextual high-risk entries, scenario uniqueness and hard-rule expectation coverage. These are data-contract checks, **not executed verdict tests**. Alex's Session H runner, redaction tests and engine coverage evidence remain required before W1-10 is complete. No matcher is duplicated here just to make expected results pass.
+
+---
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -1163,3 +1185,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · added section 3.6 (detection engine types, `src/engine/types.ts`), status rows split into "types ✅" and "logic ⬜", test count 15, difference #10
 
 - 2026-11-03 · completed W1-11 browser verification: installed Chromium, diagnosed sandbox loopback restrictions, and fixed the theme selector label association. Production build and all six desktop/phone browser runs pass.
+
+- 2026-11-03 · added Roberta’s typed scam dictionary, scenario data and data-contract checks (section 3.8); verdict execution remains pending Alex’s engine runner.

@@ -752,6 +752,23 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we collected enough real, labelled reports (e.g. from the public report form) to train and validate a model.
 
+### Typed dictionary and scenario data (status: data in use; verdict runner pending)
+
+**Used for:** `DICTIONARY` in `src/engine/dictionary.ts` and `SCENARIOS` in `src/engine/__tests__/scenarios.ts`.
+
+**Alternatives we considered:** keywords embedded in scoring functions, an untyped JSON file, and a second temporary matcher built just for Roberta's tests.
+
+**Why this one:**
+- Shared `DictionaryEntry` and `EngineScenario` types catch spelling mistakes in category names before runtime, like checking a Python TypedDict.
+- Bulgarian stems cover inflections; explicit spelling variants document Latin ambiguity and frequent errors. Ordered phrases keep words such as courier or account from independently becoming high-risk evidence.
+- Legitimate calls and uncertain answers are recorded alongside scams so the final engine must demonstrate both detection and restraint.
+- Data-contract tests check coverage and consistency without claiming that the absent engine has analysed the scenarios.
+
+**What we give up:**
+- Types and data checks cannot prove detection accuracy. Alex must connect the real runner and investigate failures with Roberta.
+- Stem matching does not understand negation or quotations in general; hard-rule context and false-positive cases need careful review rather than more generic keywords.
+
+**We would reconsider if:** real evaluated examples show that a stem is too broad or a phrase misses common wording; adjust the data together with regression scenarios.
 ### Damerau-Levenshtein distance for typos  (status: decided, not built yet (week 1))
 
 **Used for:** matching words with typos to dictionary stems (`хварлете` ≈ `хвърл`).
@@ -1376,3 +1393,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · new entry in section 7: shared type definitions + `as const` lists (vs plain strings / TS enums), `src/engine/types.ts`
 
 - 2026-11-03 · W1-11 browser verification completed; documented explicit theme labels and the sandbox loopback restriction instead of changing the working build configuration.
+
+- 2026-11-03 · documented typed dictionary/scenario data, contextual high-risk phrases and why data checks do not replace verdict execution tests.
