@@ -75,7 +75,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ (not yet called by app code) | `src/lib/env.ts`, `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 11 tests | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 15 tests | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 1 test × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -93,8 +93,9 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | ADRs (decision records) | ⬜ planned (week 1, W1-03) | `docs/decisions/` | |
 | Login, register, roles in the API (`getActor`, `requireRole`, route guards) | ⬜ planned (week 1, W1-06) | `src/server/auth/`, `src/proxy.ts` | |
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
-| Detection engine v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
-| Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | 🔄 implemented; browser verification blocked (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.6; npm run check passes; browser build blocked |
+| Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | 🔄 implemented; browser verification blocked (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check passes; browser build blocked |
+| Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
+| Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
 | Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
@@ -166,7 +167,7 @@ Note: this is **Next.js 16.4**. Some names differ from older tutorials (see `AGE
 - **Server components by default**: less JavaScript sent to cheap Android phones, so pages load faster on slow 4G. We use `"use client"` only where a component needs interaction or browser APIs.
 - **Pre-rendering**: a static page can't break at request time and is very fast.
 - **Pages contain no text and no logic**: text lives in `bg.ts`; logic will live in `src/server/` and `src/engine/`. This keeps the UI separate from business logic (a scored criterion).
-- **Shared design tokens** in `globals.css` give screens consistent colours, type sizes and focus styles (section 3.6).
+- **Shared design tokens** in `globals.css` give screens consistent colours, type sizes and focus styles (section 3.7).
 - Why Next.js and Tailwind at all: see [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md).
 
 #### How we know it works
@@ -292,9 +293,53 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 
 `src/lib/env.test.ts`, 4 tests with fake values only: a valid set passes and gets `EMAIL_PROVIDER = "noop"`; an empty set names the missing `SUPABASE_SERVICE_ROLE_KEY`; an empty `HASH_PEPPER` counts as missing; `EMAIL_PROVIDER=gmail` is rejected.
 
+### 3.6 Detection engine: types (`src/engine/types.ts`)
+
+The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. This file comes first so Roberta can write the dictionary and the test cases (Session D) against fixed shapes.
+
+#### What it does
+
+Describes the shape of everything the engine reads and returns, and holds the engine's constants. It has **no logic and no imports**.
+
+| Name | What it is |
+|---|---|
+| `CallInput` | The answers + text (BUILD_PLAN 4.1). `null` = not answered. Optional `extraKeywords` |
+| `Verdict`, `Reason`, `ReasonCode` | The result (4.2). A reason's `code` is a hard rule id or a signal category; `evidence` holds the original words that matched |
+| `ClaimedIdentity`, `TriAnswer`, `HandoverMethod`, `RiskLevel`, `ScriptType` | Answer and result values, the same as the database enums |
+| `HardRuleId` | `HR1_POLICE_ASKS_MONEY` ... `HR6_RELATIVE_IN_TROUBLE` (4.6) |
+| `SignalCategory` | 17 ids: the 13 rows of the 4.5 table, plus `handover`, `credentials`, `safe_account`, `move_money` (no weight; they let HR2, HR4, HR5 fire from text alone) |
+| `DictionaryEntry`, `ExtraKeyword` | The shape of Roberta's `dictionary.ts` (stems, phrases, an example sentence) and of a moderator-added stem |
+| `EngineScenario`, `ScenarioExpectation` | The shape of Roberta's test cases in `__tests__/scenarios.ts` |
+| `EMPTY_INPUT` | A `CallInput` with nothing answered, to copy in tests: `{ ...EMPTY_INPUT, asksMoney: "yes" }` |
+| `ENGINE_VERSION`, `RISK_THRESHOLDS`, `MAX_TEXT_LENGTH`, `PHRASE_WINDOW` | `"1.0.0"`, `{ red: 60, yellow: 30 }`, `2000`, `6` |
+
+#### How it works
+
+- Each value list is written **once**, as a read-only array, and the type is worked out from it:
+
+  ```ts
+  export const RISK_LEVELS = ["green", "yellow", "red"] as const; // like a Python tuple of Literal values
+  export type RiskLevel = (typeof RISK_LEVELS)[number]; // "green" | "yellow" | "red", like Literal[...]
+  ```
+
+  So the code has a list to loop over or check against (tests, a future Zod schema), and the type can never drift from that list.
+- `type X = { ... }` only describes a shape (like a Python `TypedDict`); it disappears when the code runs.
+- A dictionary **stem** is a word beginning in Cyrillic lower case (`хвърл` matches хвърлете, хвърли). A **phrase** is a list of stems that must appear in order within `PHRASE_WINDOW` (6) words. Latin-script spellings may be added as extra stems. Every entry has a real `example` sentence.
+- A scenario's `expect` is checked field by field by Alex's runner (Session H step 8): `level` exactly; `scriptType` and `hardRules` (exact set, order ignored) only if given; `minScore`/`maxScore` as inclusive limits; `mustNotBeRed` marks legitimate calls that must never be red.
+
+#### Why it works like that
+
+- **No imports** (no React, Next.js, Supabase or Node): the same engine runs on the server and on the phone (BUILD_PLAN 4.9).
+- **One place for the values**: the API, the engine, the dictionary and the tests all use the same names, and TypeScript turns a typo like `"polise"` into an error before the code runs. Why `as const` lists instead of TypeScript `enum`s: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 7.
+- **Types first**: Roberta's dictionary and test cases can be written (and type-checked) before the engine logic exists.
+
+#### How we know it works
+
+`src/engine/types.test.ts`, 4 tests: the constants have the planned values (and `MAX_TEXT_LENGTH` equals the `text_redacted` limit in the SQL); the five value lists **read from the schema SQL file** are exactly `claimed_identity`, `tri`, `handover_method`, `risk_level`, `script_type`; there are six hard rules `HR1_` to `HR6_` in order; the signal category ids are unique and snake_case. `npm run typecheck` checks that every use of these types is correct.
+
 ---
 
-### 3.6 Design system (W1-11)
+### 3.7 Design system (W1-11)
 
 #### What it does
 
@@ -372,7 +417,7 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - A test looks like pytest with different words: `describe` groups tests, `it` is one test, `expect(a).toBe(b)` is `assert a == b`, `expect(() => f()).toThrow(/NAME/)` is `pytest.raises`.
 - Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no minimum percentage yet; the engine will have a ≥ 90 % goal (W1-10).
 
-Current tests: 3 files, **11 tests** (`features.test.ts` 5, `bg.test.ts` 2, `env.test.ts` 4).
+Current tests: 4 files, **15 tests** (`features.test.ts` 5, `bg.test.ts` 2, `env.test.ts` 4, `engine/types.test.ts` 4).
 
 #### Why it works like that
 
@@ -380,7 +425,7 @@ Unit tests are fast enough to run on every save, and the detection engine (plann
 
 #### How we know it works
 
-`npm test` → `Test Files 3 passed, Tests 11 passed`. CI uploads the coverage report as an artifact named `coverage`.
+`npm test` → `Test Files 4 passed, Tests 15 passed`. CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -1050,6 +1095,7 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 7 | W1-02: CI with lint, types, tests, build on push to `main` | Also runs on pull requests and by hand, and has two more jobs (e2e, database). The Supabase CLI version is `latest`, not pinned |
 | 8 | `supabase/config.toml` and CI use PostgreSQL 17 | `npm run test:db` (local) uses whatever is installed, currently 16 |
 | 9 | Folder plan has `src/middleware.ts` | In Next.js 16 this file is called `proxy.ts` |
+| 10 | 4.5 lists 13 signal categories | `types.ts` has 17: four more without a weight (`handover`, `credentials`, `safe_account`, `move_money`) so hard rules HR2, HR4 and HR5 can fire from the text alone (section 3.6). Also an extra constant `EMPTY_INPUT` for tests |
 
 ---
 
@@ -1114,3 +1160,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · added section 4.5 and a status row: agent rules files (`AGENTS.md` shared by Claude Code and Codex, `CLAUDE.md` imports it, D21); seed (W1-12) and deploy (W1-13) rows updated for D20
 - 2026-11-03 · added "The live database": cloud Supabase project set up with the 6 migrations via the SQL Editor; how to apply future migrations
 - 2026-11-03 · added W1-11 design tokens, reusable components, persistent system/light/dark choice and `/dev/ui` preview; static checks pass, browser verification blocked by the local Turbopack CSS worker crash. Repaired the npm lockfile's missing optional Oxide WebAssembly entry with `npm install` so clean dependency installation can proceed.
+- 2026-11-03 · added section 3.6 (detection engine types, `src/engine/types.ts`), status rows split into "types ✅" and "logic ⬜", test count 15, difference #10

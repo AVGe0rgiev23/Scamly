@@ -29,7 +29,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · Web Push (VAPID) · Brevo behind `EmailProvider`
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
-7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · Damerau-Levenshtein · шльокавица transliteration · offline fallback · green never says "safe"
+7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · Damerau-Levenshtein · шльокавица transliteration · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · keep-alive · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
@@ -814,6 +814,25 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never.
 
+### Shared type definitions + `as const` lists (vs plain strings / TS enums)  (status: in use (`src/engine/types.ts`))
+
+**Used for:** one file with every engine type and value list (`CallInput`, `Verdict`, `SignalCategory`, `HardRuleId`...), written as `const X = [...] as const` with the type taken from it: `type RiskLevel = (typeof RISK_LEVELS)[number]`.
+
+**Alternatives we considered:** plain `string` everywhere; TypeScript `enum`s; types written by hand next to each file that uses them.
+
+**Why this one:**
+- **Plain strings catch nothing:** `"polise"` would compile and silently never match. With literal types it's a compile error.
+- **TS `enum`s** are a TypeScript-only feature that generates extra JavaScript and makes us write `RiskLevel.Red` while the database and JSON use `"red"`. A union of strings is exactly what PostgreSQL enums and JSON already hold, so no conversion is needed.
+- **`as const` lists give us both** a type and a real list at runtime: a test reads the SQL schema and checks the lists are the same as the database enums, and the API can reuse them for validation later.
+- **One shared file** lets Roberta write the dictionary and test cases (Session D) before the engine logic exists, and it has no imports, so it works on the server and on the phone.
+- Easy to explain: it's like a Python `Literal[...]` built from a tuple.
+
+**What we give up:**
+- The lists are still copied by hand from the SQL (the test catches a difference; generated database types, W1-04, may replace part of this later).
+- `(typeof X)[number]` looks strange at first; each one has a Python comment.
+
+**We would reconsider if:** the generated Supabase types (`src/types/database.ts`) covered these enums well enough to import them in the engine without breaking the "no imports" rule.
+
 ---
 
 ## 8. Testing and quality
@@ -1353,3 +1372,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · created
 - 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)
 - 2026-11-03 · design-system entry is now implemented: native controls, accessible sizing, textual verdicts, theme persistence and both-theme preview; npm run check passes, browser verification remains blocked by a local Turbopack CSS-worker crash. Documented the npm lockfile repair for the missing optional Oxide WebAssembly entry.
+- 2026-11-03 · new entry in section 7: shared type definitions + `as const` lists (vs plain strings / TS enums), `src/engine/types.ts`
