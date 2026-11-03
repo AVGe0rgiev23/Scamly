@@ -129,8 +129,8 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | ⬜ |
 | W1-04 | Supabase schema migration | Alex | ✅ |
 | W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
-| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ⬜ |
-| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ⬜ |
+| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend (pages: Roberta, Session F) |
+| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend (pages: Roberta, Session F) |
 | W1-08 | Engine part 1: types, normalise, transliterate, fuzzy | Alex | ⬜ |
 | W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ⬜ |
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ⬜ |
@@ -175,7 +175,7 @@ Week 1 hours left after D20: **Alex ≈ 28.5 h** (26.5 h until Sun 8 Nov + 2 h d
 
 | | Alex | Roberta |
 |---|---|---|
-| Done | ✅ Session A (scaffold + CI), ✅ Session C (database + RLS) | |
+| Done | ✅ Session A (scaffold + CI), ✅ Session C (database + RLS), ✅ Session H step 1 (engine types), ✅ Session E (auth + pairing backend) | |
 | 1 | **Session H step 1 first** (engine types, about 30 min), push it right away so Roberta is not blocked | **Session B**: design system. No dependency, start now |
 | 2 | **Session E**: auth + pairing backend | **Session D**: engine dictionary + test cases (needs H step 1 on `main`) |
 | 3 | **Session H** steps 2–10: rest of the engine logic | **Session F**: login, register and `/svarzhi` pages (needs Session E's API on `main`) |
@@ -209,9 +209,9 @@ Week 1 hours left after D20: **Alex ≈ 28.5 h** (26.5 h until Sun 8 Nov + 2 h d
 | 7 | CI: add a job that starts Supabase and runs the RLS tests | `Run RLS tests in CI` |
 | ✔ | `supabase test db` green → **"push?"** | |
 
-### Session E (Alex): W1-06 auth + W1-07 pairing backend, about 11 h, over 2 sessions
+### ✅ Session E (Alex): W1-06 auth + W1-07 pairing backend, done 3 Nov
 
-The pages themselves (login, register, `/svarzhi`) are Roberta's Session F. Alex builds the logic, the API and the tests.
+The pages themselves (login, register, `/svarzhi`) are Roberta's Session F. Alex builds the logic, the API and the tests. Temporary plain pages (`/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts in `src/app/_auth-placeholders/`) exist so the API can be tried in a browser; Session F replaces them. No new migration, so `npm run test:db` is not needed. What was built: `docs/HOW_IT_WORKS.md` sections 3.8–3.17; differences from this table: section 8 there.
 
 | Step | What the agent does | Commit (in Alex's name) |
 |---|---|---|
