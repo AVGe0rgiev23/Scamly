@@ -24,16 +24,16 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 ## Contents
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
-2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · Postgres rate limiting · Zod · session cookies · CSRF/CSP · personal-data redaction
+2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · Web Push (VAPID) · Brevo behind `EmailProvider`
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · Damerau-Levenshtein · шльокавица transliteration · offline fallback · green never says "safe" · shared types + `as const` lists
-8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · ESLint + Prettier · strict TypeScript · GitHub Actions
+8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · keep-alive · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
-11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `APP_NAME` constant
+11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `APP_NAME` constant · `server-only`
 12. [How to add an entry](#12-how-to-add-an-entry)
 13. [Change history](#13-change-history)
 
@@ -116,7 +116,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a library we need requires Node 24, or the project continues after the tournament (then upgrade to the newest LTS).
 
-### REST API with route handlers  (status: decided, not built yet (week 1–2))
+### REST API with route handlers  (status: in use (auth, me, persons, pairing, devices); the rest: week 2–3)
 
 **Used for:** every read and write from the browser goes through `/api/...` (36 routes, BUILD_PLAN section 3).
 
@@ -134,7 +134,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the API were only used by our own pages and nobody cared about REST; then Server Actions would save code.
 
-### Strict layers: UI → API → services → repositories → database  (status: decided, not built yet (week 1–2))
+### Strict layers: UI → API → services → repositories → database  (status: in use (Session E: `src/app/api`, `src/server/services`, `src/server/repositories`))
 
 **Used for:** organising the code so each layer only talks to the one below (BUILD_PLAN 0 and 1).
 
@@ -154,7 +154,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 2. Database and backend services
 
-### Supabase (PostgreSQL 17, Auth, Realtime, RLS), free tier  (status: in use (schema, RLS, functions); Auth and Realtime: week 1–2)
+### Supabase (PostgreSQL 17, Auth, Realtime, RLS), free tier  (status: in use (schema, RLS, functions, Auth); Realtime: week 2)
 
 **Used for:** our database, logins, live updates to the family's alert page, and the security rules in the database.
 
@@ -277,7 +277,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we built an offline-only app on one device.
 
-### Supabase Auth vs writing our own auth  (status: decided, not built yet (week 1))
+### Supabase Auth vs writing our own auth  (status: in use (family accounts, device logins))
 
 **Used for:** family / moderator / admin sign-up and login, sessions, and the device logins for older people.
 
@@ -308,14 +308,14 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - **Additive rule:** we never edit an old migration; we add a new numbered file. The live database is never broken by a rewrite.
 
 **What we give up:**
-- No automatic TypeScript types from an ORM; we generate types from the database with the Supabase CLI instead (planned).
+- No automatic TypeScript types from an ORM; we generate them from the database instead (`src/types/database.ts`, next entry but one).
 - Renaming a column means writing the `alter table` ourselves.
 
 **We would reconsider if:** the schema grew so big that hand-written SQL became error-prone.
 
-### Supabase JS client + `@supabase/ssr`  (status: decided, not built yet (week 1))
+### Supabase JS client (2.118.0) + `@supabase/ssr` (0.12.7)  (status: in use)
 
-**Used for:** talking to Supabase from our server code and from the browser (Realtime subscriptions, login), with sessions in cookies.
+**Used for:** talking to Supabase from our server code (user and admin clients) and, from Week 2, from the browser (Realtime only), with sessions in cookies written by the server.
 
 **Alternatives we considered:** a raw PostgreSQL driver (`pg`, `postgres`), raw HTTP calls.
 
@@ -329,11 +329,29 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we left Supabase.
 
+### Generated database types with `@supabase/postgres-meta` (vs hand-written types, vs waiting for the Supabase CLI)  (status: in use (`src/types/database.ts`))
+
+**Used for:** the TypeScript shape of every table, enum and SQL function, passed to every client as `createClient<Database>()`, so every query is type-checked.
+
+**Alternatives we considered:** writing the types by hand; skipping types (`any` rows); waiting for a computer where `supabase gen types typescript` runs (the CLI can't be downloaded in the cloud session).
+
+**Why this one:**
+- **Generated = can't drift.** Hand-written types would be a second copy of the schema that we'd forget to update; a typo in a column name would only show up at runtime.
+- `postgres-meta` (0.100.0) is the generator the Supabase CLI itself runs inside its Docker image, so the output is the same format the CLI makes. We ran it once against a local PostgreSQL 16 with our 6 migrations applied.
+- It didn't block Session E: W1-04's last step was done the same day.
+- Strict TypeScript (section 8) then catches wrong columns, enum values and `null` handling in every repository.
+
+**What we give up:**
+- Regenerating is a manual step after every migration; nothing checks that the file matches the SQL.
+- The local run used PostgreSQL 16, the live project uses 17 (no difference for the types we use). `postgres-meta` is not a dependency in `package.json`; it was used once.
+
+**We would reconsider if:** the Supabase CLI works in our environment; then `npx supabase gen types typescript --local` becomes the way to regenerate (the same output).
+
 ---
 
 ## 3. Security design
 
-### Two locks: Row Level Security in the database + checks in the API  (status: RLS in use; API checks: decided, not built yet (week 1))
+### Two locks: Row Level Security in the database + checks in the API  (status: in use (RLS; API checks in `requireRole` and the services since Session E))
 
 **Used for:** making sure user A can never read or change user B's data (IDOR protection).
 
@@ -351,7 +369,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project; security is scored and our users are vulnerable.
 
-### Server-only writes for sensitive tables  (status: in use (no client write policies); API: week 1–2)
+### Server-only writes for sensitive tables  (status: in use (no client write policies; the server writes `devices`, `pairing_codes`, `audit_log`, `rate_limits`); checks, alerts, reports: week 2–3)
 
 **Used for:** `checks`, `alerts`, `reports`, `devices`, `pairing_codes`, `audit_log`, `rate_limits` have **no INSERT/UPDATE policy** for browsers; only our server (service role) writes them, after checking permissions.
 
@@ -368,7 +386,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for these tables.
 
-### HMAC-SHA256 with a secret pepper for pairing codes  (status: decided, not built yet (week 1))
+### HMAC-SHA256 with a secret pepper for pairing codes  (status: in use (pairing codes, IP addresses in the rate limiter); phone numbers: week 2–3)
 
 **Used for:** storing the 6-digit pairing codes (and caller phone numbers, IP addresses for rate limiting) as `HMAC-SHA256(value, PEPPER)`, never in plain text.
 
@@ -387,7 +405,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we ever stored long-lived secrets chosen by users; those need a slow hash like bcrypt or argon2.
 
-### Device pairing with a server-created device user  (status: decided (D4, D14), not built yet (week 1))
+### Device pairing with a server-created device user  (status: in use (D4, D14; backend in Session E, page in Session F))
 
 **Used for:** logging in the older person's phone once, with a 6-digit code or QR code, so they never see a login screen.
 
@@ -407,24 +425,46 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the usability test (W4-05) shows families can't manage the pairing step.
 
-### Rate limiting in PostgreSQL  (status: in use (`hit_rate_limit` function); API use: week 1)
+### Device e-mail addresses on `devices.scamly.invalid`  (status: in use)
 
-**Used for:** limiting pairing-code guesses, public reports and other abuse-prone endpoints.
+**Used for:** the internal login of each paired phone: `device-<random uuid>@devices.scamly.invalid`, with a random 32-byte password used once and forgotten.
 
-**Alternatives we considered:** Redis / Upstash, Vercel or Cloudflare rate limiting, in-memory counters.
+**Alternatives we considered:** an address on `example.com`; an address on a real domain we own; a made-up top-level domain like `.local` or `.test`; Supabase phone or anonymous logins.
 
 **Why this one:**
-- **No extra service or account:** a `rate_limits` table + one atomic SQL function (`INSERT ... ON CONFLICT DO UPDATE`), tested with pgTAP.
-- **In-memory counters don't work on serverless:** each Vercel function instance has its own memory.
-- Old windows are deleted automatically, so an IP hash is kept for about an hour at most (privacy).
+- **`.invalid` is reserved by RFC 2606** for exactly this: it never resolves, so no e-mail can ever be delivered and the address can never belong to a real person. A real domain could receive mail (and we'd have to own and maintain it).
+- `example.com` is reserved for documentation, and `.local` has a real meaning on home networks; `.invalid` says "not an address" clearly in the defense.
+- A random uuid per phone means two phones never collide, and the address reveals nothing about the older person.
+- Supabase Auth needs an e-mail or phone for a password login; anonymous sign-in was rejected (D14, previous entry). Checked on 3 Nov that the live project accepts the domain.
+
+**What we give up:**
+- If Supabase ever started rejecting reserved domains, pairing would break; the smoke test would show it at once.
+- Device accounts appear in the Auth user list next to real ones (they are easy to tell apart by the domain).
+
+**We would reconsider if:** Supabase offered a proper "device" login type.
+
+### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing; reports: week 3))
+
+**Used for:** limiting login (10 per 15 min per IP), registration (5 per hour per IP) and pairing-code guesses (5 per 15 min per IP + 100 per 15 min for everybody), later public reports. TypeScript wrapper: `src/server/security/rateLimit.ts`.
+
+**Alternatives we considered:** Redis / Upstash, Vercel or Cloudflare rate limiting, in-memory counters; storing the plain IP address.
+
+**Why this one:**
+- **No extra service or account:** a `rate_limits` table + one atomic SQL function (`INSERT ... ON CONFLICT DO UPDATE`), tested with pgTAP. Upstash would be one more account, key and free-tier limit (D11).
+- **In-memory counters don't work on serverless:** each Vercel function instance has its own memory, and it is lost between requests.
+- **The IP is HMAC'd with `HASH_PEPPER`** before it becomes part of a key, so the database never stores a real IP address (GDPR). Old windows are deleted automatically, so even the hash is kept for about an hour at most.
+- **Fails closed:** if the database can't count, the attempt is refused (429/500), never let through.
+- **Our own limits for login and sign-up** are needed because those go through our server (next entries): Supabase's per-IP limits see only our server's address.
 
 **What we give up:**
 - Every limited request costs one database write; Redis would be faster under heavy load.
 - Fixed windows can allow a short burst at a window's edge (fine at our scale).
+- Failing closed means a database outage also blocks logins (but without the database nothing works anyway).
+- Locally there is no `x-real-ip`, so all local requests share one counter.
 
 **We would reconsider if:** traffic grew so large that the extra database writes became a bottleneck.
 
-### Zod 4 (4.6.7) for validation  (status: in use (env check); API schemas: week 1–2)
+### Zod 4 (4.6.7) for validation  (status: in use (env check, API schemas in `src/schemas/`))
 
 **Used for:** checking every input to the API, form data, environment variables, and (week 3) AI answers.
 
@@ -441,29 +481,85 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never; it's central to "protection from common attacks".
 
-### Session in HttpOnly cookies  (status: decided, not built yet (week 1))
+### Sign-up and login through our API (vs Supabase Auth directly from the browser)  (status: in use (`/api/auth/register`, `/login`, `/logout`))
 
-**Used for:** keeping users (and paired phones) logged in.
+**Used for:** family members' sign-up, login and logout. The browser posts JSON to our route handlers; the server calls Supabase Auth and sets the cookies.
 
-**Alternatives we considered:** tokens in `localStorage`.
+**Alternatives we considered:** the plan's default: the browser calls `supabase.auth.signUp()` / `signInWithPassword()` itself through `@supabase/ssr`; Server Actions.
 
 **Why this one:**
-- JavaScript can't read HttpOnly cookies, so an XSS bug can't steal the session.
-- `Secure` + `SameSite=Lax` cookies are sent only over HTTPS and not on most cross-site requests.
+- **The cookies can be HttpOnly**, because the server writes them (next entry). With browser-side login the library must write cookies JavaScript can read.
+- **Our own rate limits run first** (login 10 per 15 min, register 5 per hour, per IP), next to the pairing limits, in one place we can test.
+- **Bulgarian errors, and no account probing:** Supabase's error codes are mapped to our messages; an unknown e-mail and a wrong password get the same 401.
+- It follows our rule "the browser never talks to the database or Auth directly, everything goes through the API" (BUILD_PLAN 0), and it's the same route shape as every other endpoint.
 
 **What we give up:**
-- Cookies need CSRF protection (next entry).
+- **Supabase sees every login coming from our server's IP**, so its own per-IP limits are useless to us; we rely on ours.
+- A little more code than calling the library from the page.
+
+**We would reconsider if:** we needed Supabase's built-in OAuth logins (Google etc.), which redirect in the browser.
+
+### Session in HttpOnly cookies, with three Supabase clients  (status: in use (`src/server/supabase/`, `src/lib/supabase/browser.ts`))
+
+**Used for:** keeping users (and paired phones) logged in, and choosing which client a piece of code may use: the **user client** (publishable key + the caller's cookies, RLS applies), the **admin client** (secret key, bypasses RLS, `server-only`, only for the BUILD_PLAN 2.4 list) and the **browser client** (publishable key, no session, Realtime from Week 2).
+
+**Alternatives we considered:** tokens in `localStorage`; `@supabase/ssr`'s default cookies, which page JavaScript can read; one admin client for all server code.
+
+**Why this one:**
+- JavaScript can't read HttpOnly cookies, so an XSS bug can't steal the session. We override the library's default with `AUTH_COOKIE_OPTIONS` (`httpOnly: true`, `secure` in production, `sameSite: "lax"`), shared by the user client and the proxy.
+- `Secure` + `SameSite=Lax` cookies are sent only over HTTPS and not on most cross-site requests.
+- **The user client by default** keeps RLS working on our own server code (two locks). One admin client everywhere would make one forgotten check a data leak.
+- `server-only` turns "the secret key must never reach a phone" into a build error.
+
+**What we give up:**
+- Cookies need CSRF protection (the same-origin check below).
+- The browser client can't see the session, so Week 2 Realtime needs a small endpoint that hands the page a short-lived access token for `realtime.setAuth()`.
 
 **We would reconsider if:** we built a native app (which would store tokens in the phone's secure storage).
 
-### CSRF same-origin check, CSP and security headers  (status: decided, not built yet (week 1–4))
+### The proxy checks only "logged in or not"; roles are checked in server code  (status: in use (`src/proxy.ts`, `requirePageRole`, `requireRole`))
+
+**Used for:** the proxy refreshes the session with `getClaims()` (local JWT signature check, no database call) and sends logged-out visitors to `/vhod` or `/svarzhi`. Roles are checked in each area layout (`requirePageRole`) and API route (`requireRole`), which use `getActor()` → `auth.getUser()` + the profile.
+
+**Alternatives we considered:** looking up the role in the database inside the proxy on every request; trusting a role stored in the JWT; checking only in the proxy.
+
+**Why this one:**
+- The proxy runs on **every** request, prefetches included. A database query each time would slow every page on a cheap phone and use up free-tier quota.
+- The Next.js 16 authentication guide recommends exactly this split: the proxy for "optimistic checks", real authorization close to the data.
+- `getUser()` in the server check rejects a **deleted** account at once, so a revoked phone is locked out on its next request.
+- A role in the JWT would stay old until the token expired after a role change; the profile row is the single source of truth.
+
+**What we give up:**
+- A revoked phone's access token (about 1 hour) still passes the proxy until it expires; only the layout and the API stop it.
+- One Auth call per protected request (in `getActor()`).
+
+**We would reconsider if:** Auth calls became a measurable delay; then a short-lived cache of the actor per request would be the next step.
+
+### Same-origin check for CSRF (vs CSRF tokens)  (status: in use (`src/server/security/origin.ts`, step 0 of every non-GET route))
+
+**Used for:** refusing any non-GET API request that another website started (403 `bad_origin`).
+
+**Alternatives we considered:** CSRF tokens (a secret in every form, or the "double-submit cookie"); relying on `SameSite=Lax` alone; checking only `Origin`.
+
+**Why this one:**
+- Browsers add `Sec-Fetch-Site` and `Origin` themselves and page JavaScript can't change them. We use the rule order of Go's `net/http` `CrossOriginProtection`: `Sec-Fetch-Site` (only `same-origin` or `none`) → else `Origin` host must equal `Host` → else (no browser headers) allow, because a request without a browser carries no victim's cookies.
+- No token to create, store, send with every form and check: less code for both of us, nothing for Roberta's pages to forget.
+- `SameSite=Lax` alone is not enough for older browsers and same-site subdomains; together the two are layered.
+- It is a pure function, so 7 unit tests prove it (foreign site → 403, own page → OK, GET never blocked).
+
+**What we give up:**
+- Very old browsers send neither header; they are treated like curl (allowed), and only `SameSite=Lax` protects them.
+- A proxy in front of us that rewrote `Host` would need care (Vercel doesn't).
+
+**We would reconsider if:** we had to accept form posts from another site of ours, which would need an allow-list.
+
+### CSP and security headers  (status: decided, not built yet (week 4); the same-origin part is the previous entry)
 
 **Used for:** blocking requests from other websites (CSRF), and limiting what scripts may run (CSP) and how our pages may be framed.
 
 **Alternatives we considered:** CSRF tokens in every form; no CSP.
 
 **Why this one:**
-- Our API only accepts JSON, and every non-GET request must come from our own origin; that's simpler than tokens and easy to test (foreign origin → 403).
 - A CSP with a nonce and headers such as HSTS and `frame-ancestors` are free extra protection, and the result can be shown with a header-scanning site.
 
 **What we give up:**
@@ -873,6 +969,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a tool we need only supported Jest.
 
+### Dependency-injected fakes in unit tests (vs `vi.mock`, vs a live Supabase)  (status: in use (`pairingService`, `authService`, `loadActor`, rate limiter))
+
+**Used for:** testing the services without Supabase. Each service gets its tools as parameters (`PairingDeps`, `AuthGateway`, `ActorReader`, `HitCounter`); tests pass small in-memory fakes, e.g. arrays that behave like our tables and what RLS would show each caller.
+
+**Alternatives we considered:** `vi.mock()` to replace imported modules; integration tests against a local or live Supabase (the plan's `tests/integration/`).
+
+**Why this one:**
+- **Plain to explain:** "the function gets its database as an argument" is like passing objects into a Python function. `vi.mock` rewrites imports behind the scenes, which is harder to defend and breaks silently when a file is renamed.
+- **Fast and offline:** 92 tests in about a second, in CI and in the cloud session (which has no Docker for a local Supabase).
+- The fake can test cases that are hard to create for real: an expired code, a failing step in the middle of redeem, 100 IPs.
+- The real SQL rules are still proven for real, by pgTAP (151 assertions), and the whole flow once by a live smoke test.
+
+**What we give up:**
+- A fake can be wrong in a way the real Supabase isn't; the glue (`createPairingDeps`, repositories) is not unit-tested. That gap is why the live smoke test was run and why API e2e tests are planned (W2-11, W4-03).
+- Slightly more code: each service needs a deps type and a real factory.
+
+**We would reconsider if:** we got a reliable local Supabase in CI for API tests; then a few integration tests would cover the glue.
+
 ### Playwright (1.63.0) for end-to-end tests  (status: in use)
 
 **Used for:** testing whole flows in a real browser, on a desktop Chrome and on a phone screen (Pixel 5), in CI.
@@ -1281,9 +1395,9 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a library we need only works with webpack.
 
-### `proxy.ts` instead of `middleware.ts` for route guards  (status: decided, not built yet (week 1, W1-06))
+### `proxy.ts` instead of `middleware.ts` for route guards  (status: in use (Session E); CSP nonce: week 4)
 
-**Used for:** refreshing the session, sending each role to its own pages, and the CSP nonce. The build plan calls it `middleware.ts`; in Next.js 16 that file name is deprecated and renamed to `proxy.ts`.
+**Used for:** refreshing the session and sending logged-out visitors to the login or pairing page (roles are checked in server code, section 3); later the CSP nonce. The build plan calls it `middleware.ts`; in Next.js 16 that file name is deprecated and renamed to `proxy.ts`.
 
 **Alternatives we considered:** the old `middleware.ts` name.
 
@@ -1338,6 +1452,21 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - One more file to update when a variable is added.
 
 **We would reconsider if:** never.
+
+### `server-only` (0.0.1) marker package  (status: in use)
+
+**Used for:** the first line of every file under `src/server/` that must never reach the browser (admin client, services, auth checks). If a client component imports one, `next build` fails.
+
+**Alternatives we considered:** relying on care and code review; a lint rule.
+
+**Why this one:**
+- The service-role key bypasses RLS; leaking it into a phone's JavaScript would undo all our security. A build error is safer than discipline.
+- It is the method the Next.js docs recommend, one tiny package (MIT).
+
+**What we give up:**
+- Tests need an alias to its empty version (`vitest.config.mts`), and the proxy can't import it (so `cookieOptions.ts` has no marker).
+
+**We would reconsider if:** Next.js built the same check in.
 
 ### App name in one constant (`APP_NAME`)  (status: in use (D15))
 
@@ -1398,3 +1527,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · documented typed dictionary/scenario data, contextual high-risk phrases and why data checks do not replace verdict execution tests.
 
 - 2026-11-03 · added ADR 0005 and Week 1 learning material as reviewable repo documents; kept planned feature delivery separate from documentation completion.
+- 2026-11-03 · Session E (auth + pairing backend): new entries generated DB types (postgres-meta), `.invalid` device e-mails, auth through our API, HttpOnly cookies with three clients (replaces "Session in HttpOnly cookies"), proxy checks login only, same-origin check (split from the CSP entry), dependency-injected fakes, `server-only`; rate limiting entry now covers HMAC'd IPs, fail-closed and our login/register limits; statuses moved to "in use" for REST API, layers, Supabase Auth, Supabase JS client + `@supabase/ssr`, two locks, server-only writes, HMAC, device pairing, Zod, `proxy.ts`

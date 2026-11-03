@@ -11,12 +11,15 @@ The versions and licences are read from each package's own `package.json` in
 
 These are part of the app that runs on the server and in the browser.
 
-| Package   | Version | Licence | What we use it for                          |
-| --------- | ------- | ------- | ------------------------------------------- |
-| next      | 16.4.4  | MIT     | Web framework (pages, API routes, build)    |
-| react     | 19.3.1  | MIT     | User-interface library                      |
-| react-dom | 19.3.1  | MIT     | Draws React components in the browser       |
-| zod       | 4.6.7   | MIT     | Checks input data and environment variables |
+| Package               | Version | Licence | What we use it for                                              |
+| --------------------- | ------- | ------- | --------------------------------------------------------------- |
+| @supabase/ssr         | 0.12.7  | MIT     | Keeps the Supabase login session in cookies (server and proxy)  |
+| @supabase/supabase-js | 2.118.0 | MIT     | Talks to our Supabase database, Auth and Realtime               |
+| next                  | 16.4.4  | MIT     | Web framework (pages, API routes, build)                        |
+| react                 | 19.3.1  | MIT     | User-interface library                                          |
+| react-dom             | 19.3.1  | MIT     | Draws React components in the browser                           |
+| server-only           | 0.0.1   | MIT     | Makes the build fail if browser code imports a server-only file |
+| zod                   | 4.6.7   | MIT     | Checks input data and environment variables                     |
 
 ## Development dependencies
 
@@ -43,11 +46,15 @@ These are only used while writing, checking, testing and building the code.
 
 Packages that our dependencies install for us, worth knowing about:
 
-| Package               | Licence           | Comes with | Note                                                         |
-| --------------------- | ----------------- | ---------- | ------------------------------------------------------------ |
-| sharp / @img/sharp-\* | Apache-2.0        | next       | Image optimisation                                           |
-| @img/sharp-libvips-\* | LGPL-3.0-or-later | next       | Image library used by sharp; LGPL is compatible with GPL-3.0 |
-| caniuse-lite          | CC-BY-4.0         | next       | Browser-support data (a dataset, not code)                   |
+| Package                                                                         | Licence           | Comes with            | Note                                                                               |
+| ------------------------------------------------------------------------------- | ----------------- | --------------------- | ---------------------------------------------------------------------------------- |
+| sharp / @img/sharp-\*                                                           | Apache-2.0        | next                  | Image optimisation                                                                 |
+| @img/sharp-libvips-\*                                                           | LGPL-3.0-or-later | next                  | Image library used by sharp; LGPL is compatible with GPL-3.0                       |
+| caniuse-lite                                                                    | CC-BY-4.0         | next                  | Browser-support data (a dataset, not code)                                         |
+| @supabase/auth-js, postgrest-js, realtime-js, storage-js, functions-js, phoenix | MIT               | @supabase/supabase-js | The parts of the Supabase client (login, database, live updates, files, functions) |
+| cookie                                                                          | MIT               | @supabase/ssr         | Reads and writes cookie headers                                                    |
+| iceberg-js                                                                      | MIT               | @supabase/supabase-js | Part of the storage client (we don't use it)                                       |
+| tslib                                                                           | 0BSD              | @supabase/\*          | TypeScript helper functions; 0BSD is compatible with GPL-3.0                       |
 
 ## Data and assets
 

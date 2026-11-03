@@ -31,16 +31,16 @@ Scamly is a web app. An older person's phone shows one big button; when a suspic
 
 The system has **layers**, and each layer only talks to the one below it: the **UI** (pages in the browser) calls our **REST API** (Next.js route handlers), which calls **services** (business logic, including the detection engine), which call **repositories** (all database queries), which talk to **PostgreSQL** on Supabase. PostgreSQL itself enforces **Row Level Security (RLS)**: even if our API had a bug, the database would still refuse to show family A the data of family B. Supabase also gives us **Auth** (logins, JWTs) and **Realtime** (live updates for the family's alert page).
 
-**Today (end of the Week 1 foundations)** the bottom and the top of this stack exist: a Bulgarian Next.js skeleton with tests and CI, and the complete database with all tables, triggers, RLS policies and 151 database tests. The middle layers (API, services, repositories, detection engine) and the real screens are planned.
+**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from temporary pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine logic and the real, designed screens are still planned.
 
 ```mermaid
 flowchart TB
-  UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton (home + 404) · ⬜ real screens"]
-  API["API layer: route handlers<br/>src/app/api/**/route.ts<br/>⬜ planned (week 1-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>⬜ planned (week 1-3)"]
-  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>⬜ planned (week 1-2)"]
+  UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, temporary auth pages · ⬜ real screens"]
+  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing · ⬜ rest (week 2-3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing · ⬜ engine logic (week 1-3)"]
+  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 6 files · ⬜ more (week 2-3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 151 tests")]
-  AUTH["Supabase Auth (JWT)<br/>✅ trigger ready · ⬜ login pages"]
+  AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
   RT["Supabase Realtime<br/>✅ publication ready · ⬜ live page"]
   CFG["Config, Bulgarian text, env check<br/>src/config, src/i18n, src/lib<br/>✅ works, unit-tested"]
 
@@ -54,9 +54,8 @@ flowchart TB
   classDef done fill:#d1fae5,stroke:#047857,color:#064e3b
   classDef planned fill:#f3f4f6,stroke:#6b7280,stroke-dasharray:5 5,color:#374151
   classDef partly fill:#fef3c7,stroke:#b45309,color:#78350f
-  class PG,CFG done
-  class API,SVC,REPO planned
-  class UI,AUTH,RT partly
+  class PG,CFG,AUTH done
+  class UI,API,SVC,REPO,RT partly
 ```
 
 Green = works now, yellow = partly built, grey dashed = planned.
@@ -73,29 +72,34 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | App name constant | ✅ | `src/config/app.ts` | `src/i18n/bg.test.ts` |
 | Feature switches | ✅ (not yet used by any page) | `src/config/features.ts` | `src/config/features.test.ts` |
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
-| Environment variable check | ✅ (not yet called by app code) | `src/lib/env.ts`, `.env.example` | `src/lib/env.test.ts` |
+| Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 15 tests | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 3 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| Unit tests (Vitest) | ✅ 92 tests in 14 files | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 6 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
 | Triggers (2): new profile, owner as contact #1 | ✅ | `..._000002_triggers.sql` | `02_profiles`, `03_persons_contacts` |
 | RLS helper functions (6) | ✅ | `..._000003_rls_helpers.sql` | `08_functions` (+ every policy test) |
 | RLS policies + column privileges | ✅ | `..._000004_rls_policies.sql` | `02` to `07` test files |
-| Append-only audit log | ✅ (DB part) | `..._000004_rls_policies.sql` | `07_admin_audit` |
+| Append-only audit log | ✅ (written by pairing; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
 | Map statistics function `get_map_stats` | ✅ (DB part) | `..._000005_functions.sql` | `06_public_reports_scripts` |
-| Rate limiter `hit_rate_limit` | ✅ (DB part) | `..._000005_functions.sql` | `08_functions` |
+| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
 | Realtime publication (checks, alerts) | ✅ (DB part) | `..._000006_realtime.sql` | `01_schema` |
-| Pairing codes and devices tables (HMAC hash column) | ✅ (DB part) | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
+| Pairing codes and devices tables (HMAC hash column) | ✅ | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
 | Database tests (pgTAP, 151 assertions) | ✅ | `supabase/tests/`, `scripts/db/` | CI job *database*; `npm run test:db` |
-| Generated TypeScript types for the database | ⬜ planned (week 1, W1-04) | `src/types/database.ts` (not there yet) | |
 | ADRs (decision records) | 🔄 0005 alert channels written; 0001–0004 pending Alex | `docs/decisions/0005-alert-channels.md` | Records D7; delivery remains planned |
-| Login, register, roles in the API (`getActor`, `requireRole`, route guards) | ⬜ planned (week 1, W1-06) | `src/server/auth/`, `src/proxy.ts` | |
-| Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
+| Generated TypeScript types for the database | ✅ (postgres-meta, section 3.8) | `src/types/database.ts` | `npm run typecheck` |
+| Supabase clients (user, admin, browser) + HttpOnly cookie settings | ✅ | `src/server/supabase/`, `src/lib/supabase/browser.ts` | section 3.9; live smoke test |
+| Proxy: session refresh + login guards | ✅ | `src/proxy.ts`, `src/config/routes.ts` | `routes.test.ts`, `tests/e2e/auth-guards.spec.ts` |
+| Login, register, logout, roles (`getActor`, `requireRole`, `requirePageRole`) | ✅ backend (W1-06) · pages are placeholders until Session F | `src/app/api/auth/`, `src/server/auth/`, `src/server/services/authService.ts` | `authService.test.ts`, `requireRole.test.ts` |
+| API basics: error shape, same-origin check (CSRF), JSON body, client IP, HMAC | ✅ | `src/server/http/`, `src/server/security/`, `src/schemas/` | `errors`, `request`, `origin`, `hash`, `schemas` tests |
+| `/api/me`, `/api/persons` (list + create) | ✅ (rest of persons: W2-08) | `src/app/api/me/`, `src/app/api/persons/`, `src/server/services/personService.ts` | live smoke test; RLS: `03_persons_contacts` |
+| Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · `/svarzhi` is a placeholder until Session F | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
+| Temporary pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ temporary (Roberta's Session F replaces them) | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
 | Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
-| Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.8 |
+| Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
 | Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
 | Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
@@ -245,7 +249,7 @@ Holds **every piece of Bulgarian text a user can see**, in one object `bg` with 
 
 #### How it works
 
-Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Current keys: `app.name`, `app.metaTitle`, `app.tagline`, `app.description`, `app.comingSoon`, `common.loading`, `common.errorGeneric`, `common.notFoundTitle`, `common.notFoundText`, `common.backHome`.
+Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Groups so far: `app`, `common`, the design-system groups, and (Session E) `errors` (API error messages), `auth`, `pairing`, `persons` and `areas` (temporary area pages).
 
 #### Why it works like that
 
@@ -287,7 +291,7 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 - **Never prints secrets**: the error names the variable and the broken rule (`issue.path`, `issue.message`), never its value, so a log or a screenshot of the error can't leak a key.
 - **Fail early and loudly**: a missing pepper should stop the server with a clear message, not cause a strange bug later.
 - **Peppers ≥ 32 characters**: short secrets can be guessed (section 5.13 explains what the pepper protects).
-- **Server only**: this file returns secret keys, so only server code may import it. Variables starting with `NEXT_PUBLIC_` are the exception: Next.js copies them into the browser code, so only public values (the Supabase URL and the anon key, which RLS makes safe) get that prefix. `SUPABASE_SERVICE_ROLE_KEY` never does.
+- **Server only**: this file returns secret keys, so only server code may import it. Code that runs in the browser or the proxy reads the two public values through `src/lib/publicEnv.ts` instead (section 3.9). Variables starting with `NEXT_PUBLIC_` are the exception: Next.js copies them into the browser code, so only public values (the Supabase URL and the anon key, which RLS makes safe) get that prefix. `SUPABASE_SERVICE_ROLE_KEY` never does.
 - Real values live in `.env.local` (ignored by git through `.env*` in `.gitignore`) and in Vercel's settings.
 
 #### How we know it works
@@ -296,7 +300,7 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 
 ### 3.6 Detection engine: types (`src/engine/types.ts`)
 
-The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. The dictionary and scenario data now use these shared shapes (section 3.8); the execution runner still awaits the engine logic.
+The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. The dictionary and scenario data now use these shared shapes (section 3.18); the execution runner still awaits the engine logic.
 
 #### What it does
 
@@ -362,9 +366,348 @@ Large controls and readable text support older people using small phones. Shared
 
 `npm run check` passes (lint, types, formatting and 15 unit tests). WCAG sRGB contrast calculations confirm the documented text pairs exceed 4.5:1. All six production browser runs pass: home, saved theme and device changes, keyboard answers, 360 px layout and 64 px buttons on desktop and phone profiles. The theme select uses an explicit label/for association so its label excludes option text. No database files change in this task.
 
+### 3.8 Generated database types: `src/types/database.ts`
+
+#### What it does
+
+Gives TypeScript the exact shape of every table, enum and SQL function in our 6 migrations. A misspelled column (`.select("rol")`) or a wrong enum value is a type error before the code runs.
+
+#### How it works
+
+- The file is **generated, not hand-written**. Normally `supabase gen types typescript` makes it, but the Supabase CLI can't be downloaded in the cloud session. So on 3 Nov we ran the generator the CLI itself uses inside its Docker image, `@supabase/postgres-meta` 0.100.0, against a local PostgreSQL 16 with our 6 migrations applied (`PG_META_GENERATE_TYPES=typescript`, schema `public`, PostgREST 14.18 like the live project). The output has the same format as the CLI's. The file's header comment records all of this.
+- Reading it: `Database["public"]["Tables"]["profiles"]["Row"]` is one row of `profiles` (like a Python `TypedDict`); `Insert` makes fields with a default optional; `Update` makes every field optional; `Database["public"]["Enums"]["app_role"]` is `"family" | "protected" | "moderator" | "admin"`.
+- Every client is created with it (`createServerClient<Database>(...)`, `createClient<Database>(...)`). `DbClient = SupabaseClient<Database>` (in `userClient.ts`) is the type every repository function takes. `AppRole` (`src/config/routes.ts`), `ProfileRow` and `PersonRow` (repositories) are taken from this file, never written again.
+- When a migration changes, regenerate it, e.g. `npx supabase gen types typescript --local > src/types/database.ts` on a computer where the CLI works.
+
+#### Why it works like that
+
+Types copied by hand would drift from the SQL. Generated types make the database the single source of truth (W1-04). Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 2.
+
+#### How we know it works
+
+`npm run typecheck` passes with every query in `src/server/repositories/` typed against this file. Nothing checks automatically that the file matches the migrations: after a new migration we must regenerate it ourselves.
+
+### 3.9 Supabase clients and login cookies
+
+#### What it does
+
+Three ways to talk to Supabase, each for one job, and one shared setting for the login cookies.
+
+| File | Function | Key | RLS | Used for |
+|---|---|---|---|---|
+| `src/server/supabase/userClient.ts` | `createUserClient()` | publishable key + the caller's cookies | applies (as the caller) | almost everything on the server |
+| `src/server/supabase/adminClient.ts` | `createAdminClient()` | secret service-role key | **bypassed** | only the 8 uses listed in its header (BUILD_PLAN 2.4) |
+| `src/lib/supabase/browser.ts` | `createBrowserSupabaseClient()` | publishable key | applies (as a guest) | Realtime in Week 2; not used yet |
+
+#### How it works
+
+1. `src/lib/publicEnv.ts`: `readPublicEnv()` checks `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` with Zod and returns `null` when they are missing (CI); `getPublicEnv()` throws instead. The names are written out in full because Next.js copies a `NEXT_PUBLIC_` value into browser code only when it sees the exact name.
+2. `createUserClient()` calls `createServerClient` from `@supabase/ssr` with the request's cookie store (`cookies()` from `next/headers`): `getAll()` hands over the request's cookies, `setAll()` writes new ones after login, logout or a token refresh. Pages (Server Components) may not set cookies, so there the error is caught and ignored; the proxy has already refreshed the session (3.10). A new client is made for every request.
+3. `createAdminClient()` calls `createClient` from `@supabase/supabase-js` with `SUPABASE_SERVICE_ROLE_KEY` from `getServerEnv()` and keeps no session. `import "server-only"` makes the build fail if a browser component ever imports it, so the secret key can't reach a phone.
+4. `src/server/supabase/cookieOptions.ts` is used by the user client **and** the proxy, so both write the cookies the same way:
+
+   ```ts
+   export const AUTH_COOKIE_OPTIONS: CookieOptionsWithName = {
+     httpOnly: true, // browser JavaScript can't read the tokens
+     secure: process.env.NODE_ENV === "production", // HTTPS only (off on http://localhost)
+     sameSite: "lax", // not sent with requests other sites start (except link clicks)
+     path: "/",
+   };
+   ```
+
+   It has no `server-only` import because the proxy can't load that package.
+5. Because the cookies are HttpOnly, the browser client can't see the session. For Week 2 Realtime the page will ask our API for a short-lived access token and pass it to `client.realtime.setAuth(token)`. That small endpoint is not built yet.
+
+#### Why it works like that
+
+- **User client by default**: queries run with the caller's JWT, so RLS checks our own server code too (the second lock). The admin client is only for what RLS must not allow a browser: creating auth users, `pairing_codes`, `audit_log`, `hit_rate_limit()`.
+- **HttpOnly**: an XSS bug can't steal a session (BUILD_PLAN R9). `@supabase/ssr`'s default cookies are readable by JavaScript (so its browser client can use them); we override that and accept the Realtime step above.
+- **SameSite=Lax** is the first CSRF layer; the same-origin check (3.12) is the second.
+
+#### How we know it works
+
+The client factories need a real Supabase, so unit tests don't call them; they were used by every call of the live smoke test (3.16). `npm run build` proves no browser bundle imports the admin client (`server-only`).
+
+### 3.10 The proxy: session refresh and login guards (`src/proxy.ts`, `src/config/routes.ts`)
+
+#### What it does
+
+Runs on the server before every page and API request (not for Next.js's own files and images). It (1) refreshes the login session, so a paired phone stays logged in without ever seeing a login screen, and (2) sends logged-out visitors away from private areas: `/family`, `/moderator`, `/admin` → `/vhod` (login), `/protected` → `/svarzhi` (pairing). It does **not** check roles.
+
+#### How it works
+
+1. `readPublicEnv()`; without Supabase settings (CI) nobody can be logged in, public pages still work.
+2. It creates a `createServerClient` with `AUTH_COOKIE_OPTIONS`. Its `setAll` puts new tokens on the **request** (so the page rendered now already sees them) and on the **response** (so the browser stores them), plus the "don't cache" headers.
+3. `supabase.auth.getClaims()` checks the access token's signature locally and, if it has expired, swaps the refresh token for a new pair. It does not query our database.
+4. `loginPageFor(pathname)` in `src/config/routes.ts` answers where a logged-out visitor must go, or `null` for public pages and the API. `isInside(pathname, area)` matches `/family` and `/family/alerts`, not `/familyx`.
+5. Logged out + private area → redirect, keeping any cookie changes (e.g. a cleared expired session).
+
+```ts
+const { data } = await supabase.auth.getClaims();
+loggedIn = Boolean(data?.claims);
+// ...
+const loginPage = loginPageFor(request.nextUrl.pathname);
+if (loginPage !== null && !loggedIn) {
+  const redirect = NextResponse.redirect(new URL(loginPage, request.url));
+```
+
+`routes.ts` also holds `ROUTES` (all page paths) and `homePathForRole(role)`, the start page opened after login or pairing. Page names are Bulgarian in Latin letters (`/vhod` = „вход“, `/registratsia`, `/svarzhi` = „свържи“).
+
+#### Why it works like that
+
+- The proxy runs on **every** request, prefetches included. A database lookup per request would be slow, and the Next.js docs say real authorization belongs in server code next to the data. `getClaims()` costs no database call.
+- So the real role check is in `requirePageRole()` / `requireRole()` (3.11), which use `auth.getUser()`. A revoked phone's access token (about 1 hour) can still pass the proxy until it expires, but the layout and every API route reject it at once.
+- A phone goes to `/svarzhi`, not `/vhod`, because the older person never has a password.
+
+#### How we know it works
+
+`src/config/routes.test.ts`, 6 tests (area matching, both login pages, public pages and `/api` left alone, start page per role). `tests/e2e/auth-guards.spec.ts`, 3 tests on desktop and phone: a guest on `/family` and `/admin` lands on `/vhod`, an unpaired phone on `/protected` lands on `/svarzhi`.
+
+### 3.11 Who is calling: `getActor()`, `requireRole()`, `requirePageRole()`
+
+#### What it does
+
+Answers "who is this, and may they be here?" for every API route and private page.
+
+#### How it works
+
+1. `getActor(client?)` (`src/server/auth/actor.ts`) returns `Actor = { userId, role, profile, device }`, or `null` for a guest. It runs `loadActor(supabaseActorReader(client))`:
+   - `getUserId()` = `client.auth.getUser()`: a call to the Supabase Auth server, so a **deleted** account (a revoked phone) is refused even while its token is still valid.
+   - `getProfile()` = `findProfileById()` with the user client (RLS: own profile only). No profile → `null`.
+   - For role `protected` only: `getOwnDevice()` = `findOwnDevice()` (`devices` row with `revoked_at is null`). No row → `null`, the phone counts as logged out.
+2. `checkRole(actor, allowedRoles)` (`src/server/auth/requireRole.ts`) is the rule itself:
+
+   ```ts
+   if (actor === null) {
+     throw unauthorized(); // 401 „Моля, влезте в профила си.“
+   }
+   if (!allowedRoles.includes(actor.role)) {
+     throw forbidden(); // 403 „Нямате достъп до тази страница.“
+   }
+   return actor;
+   ```
+
+3. `requireRole(allowedRoles, client?)`: step 1 of every protected API route; throws the errors above.
+4. `requirePageRole(allowedRoles, loginPage)`: for page layouts. It calls `await connection()` first (this check reads cookies and the clock, so Next.js must never prerender it), then a guest is `redirect()`ed to `loginPage` and a wrong role to `/403`.
+5. Area roles (in each `layout.tsx`): `/family` family; `/moderator` moderator + admin; `/admin` admin; `/protected` protected.
+
+#### Why it works like that
+
+- **`getUser()` here, `getClaims()` in the proxy**: one Auth call per real request is fine; per proxy hit it would not be.
+- `ActorReader` is three small async functions (like a Python `Protocol`), so `loadActor` and `checkRole` are tested with fakes, no Supabase (section 4.2).
+- 401 vs 403 follows BUILD_PLAN section 3.
+
+#### How we know it works
+
+`src/server/auth/requireRole.test.ts`, 8 tests: allowed role, guest → 401, wrong role → 403; guest, missing profile, family member, paired phone, revoked phone (no device row → `null`). `pairingService.test.ts` also checks that a revoked phone gets `null` from `getActor` and 401.
+
+### 3.12 The API's shared parts: route shape, errors, same-origin check
+
+#### What it does
+
+Every route handler in `src/app/api/` follows the same steps, checks that the request comes from our own site, and answers errors in one JSON shape: `{ "error": { "code": "invalid_code", "messageBg": "Кодът е грешен или е изтекъл." } }` (validation errors add `fields`).
+
+#### How it works
+
+```ts
+// src/app/api/persons/route.ts, POST (shortened)
+try {
+  assertSameOrigin(request); // 0. from our own site? (CSRF)
+  const actor = await requireRole(["family"], client); // 1. who are you? (401/403)
+  const input = CreatePersonSchema.parse(await readJsonBody(request)); // 2. valid input? (400)
+  const person = await createPerson(client, actor, input); // 3. business logic
+  return json({ person }, 201); // 4. respond
+} catch (error) {
+  return handleApiError(error);
+}
+```
+
+- **`src/server/http/errors.ts`**: `ApiError(status, code, messageBg)` (like FastAPI's `raise HTTPException`) and shortcuts `badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict`, `tooManyRequests`. `json(data, status)` adds `Cache-Control: no-store`. `handleApiError(error)`:
+  1. `unstable_rethrow(error)`: Next.js's own signals (redirect, "stop prerendering here") are thrown on, not turned into a 500.
+  2. `ApiError` → its status and body.
+  3. `ZodError` → 400 `validation`, with the first problem's Bulgarian message and the field names.
+  4. Anything else → logs only `name: message` and answers 500 `internal` „Нещо се обърка. Опитайте отново.“ No stack trace ever reaches the browser.
+- **`src/server/http/request.ts`**: `readJsonBody()` (not JSON → 400 `invalid_json`); `getClientIp()` (`x-real-ip`, else the first address of `x-forwarded-for`, else `"unknown"`).
+- **`src/server/security/origin.ts`**: `isSameOrigin(request)`. GET/HEAD/OPTIONS pass. Otherwise, in the same order as Go's `net/http` `CrossOriginProtection`: (1) if `Sec-Fetch-Site` is present, only `same-origin` or `none` pass; (2) else if `Origin` is present, its host must equal the `Host` header; (3) neither header → not a browser (curl, a script), allowed. `assertSameOrigin()` throws 403 `bad_origin`. It is step 0 of every non-GET route.
+- **`src/schemas/`** (`auth.ts`, `pairing.ts`, `persons.ts`): Zod schemas whose messages come from `bg.ts`. E-mail ≤ 254; register password 10–72 characters (72 is the most bcrypt uses); names trimmed, 1–60; code `^\d{6}$`; optional phone label 1–60; district `BG-01` … `BG-28`; URL ids `z.guid()` (a bad id answers 404, like an unknown one).
+- Personal GET routes (`/api/me`, `GET /api/persons`) call `await connection()`, so `next build` never prerenders them.
+
+#### Why it works like that
+
+- **One error shape**: the forms can always show `messageBg`; `code` stays stable English for programs and tests.
+- **No stack traces**: they reveal file paths and library versions.
+- **Same-origin check instead of CSRF tokens**: browsers set `Sec-Fetch-Site` and `Origin` themselves and page JavaScript can't fake them, so there is no token to put into every form. CSRF needs a browser carrying the victim's cookies; requests with neither header aren't that. `SameSite=Lax` cookies are a second layer. Comparison in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 3.
+- **`x-real-ip` first**: on Vercel it is set by Vercel, so a caller can't fake it. Locally it is missing and all requests share the bucket `"unknown"`.
+
+#### How we know it works
+
+`errors.test.ts` 5 tests (no-store, ApiError, shortcuts → 401/403/404/429, Zod → 400 with fields, 500 without stack), `request.test.ts` 5, `origin.test.ts` 7 (GET never blocked, own page allowed, foreign site blocked, `Sec-Fetch-Site` beats `Origin`, curl allowed, 403 `bad_origin`), `schemas.test.ts` 9.
+
+### 3.13 Rate limiter wrapper and HMAC helper (`src/server/security/`)
+
+#### What it does
+
+`rateLimit.ts` allows at most N attempts per time window for login, registration and pairing; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
+
+#### How it works
+
+- `hmacSha256(value, pepper)` = `createHmac("sha256", pepper).update(value, "utf8").digest("hex")`, in Python `hmac.new(pepper, value, hashlib.sha256).hexdigest()`.
+- `RATE_LIMITS`:
+
+  | Rule | Counter key | Limit |
+  |---|---|---|
+  | `loginPerIp` | `login:ip:<HMAC of IP>` | 10 per 15 min |
+  | `registerPerIp` | `register:ip:<HMAC of IP>` | 5 per hour |
+  | `pairPerIp` | `pair:ip:<HMAC of IP>` | 5 per 15 min |
+  | `pairGlobal` | `pair:global` | 100 per 15 min (everybody together) |
+
+- `ipKey(rule, ip, HASH_PEPPER)` builds the key, so the database never stores a real IP.
+- `HitCounter` is a function type (like Python's `Callable[[str, int, int], Awaitable[bool]]`). The real one, `databaseHitCounter(admin)`, calls `admin.rpc("hit_rate_limit", …)` (section 5.11). If the call fails it throws: the limiter **fails closed** (no counting → no attempt).
+- `enforceRateLimit()` throws 429 `rate_limited` „Твърде много опити. Опитайте след малко.“; `enforceIpRateLimit(rule, ip)` is the shortcut the auth routes use.
+- Routes count the attempt **before** reading the input, so invalid attempts count too.
+
+#### Why it works like that
+
+- The atomic SQL counter is shared by every Vercel function instance; an in-memory counter would not be.
+- Failing closed: a database outage must not open the door to guessing.
+- Our own login limit matters because the server calls Supabase Auth, so Supabase's per-IP limits see only our server's address (3.14).
+- Alternatives (Redis/Upstash, in-memory): [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 3.
+
+#### How we know it works
+
+`rateLimit.test.ts` 7 tests (no real IP in the key, different IPs → different keys, 6th pairing try blocked, keys counted separately, 429, pairing limits match BUILD_PLAN 5, windows within 1–3600 s). `hash.test.ts` 3 tests, including the official RFC 4231 test vector. The SQL function itself: `08_functions`.
+
+### 3.14 Sign-up, login and logout: `/api/auth/*`
+
+#### What it does
+
+Family members create an account, log in and log out through **our** API. The server talks to Supabase Auth and sets the HttpOnly session cookies; the browser never handles a token.
+
+#### How it works
+
+- **`POST /api/auth/register`** `{ email, password, displayName }` → same-origin → `enforceIpRateLimit(registerPerIp)` → `RegisterSchema` → `register(supabaseAuthGateway(client), input)` (`src/server/services/authService.ts`) → 201 `{ role: "family", displayName, needsEmailConfirmation }`. `signUp` passes `display_name` as metadata; the trigger `handle_new_user()` creates the profile with role `family` (section 5.4). Supabase error codes become ours: `user_already_exists`/`email_exists` → 409 `email_taken`; `weak_password`, `email_address_invalid` → 400; `over_request_rate_limit`/`over_email_send_rate_limit` → 429; anything else → 500.
+- "Confirm email" is **off** in the live Supabase project (risk R5), so `signUp` returns a session, the cookies are set and the form opens `/family`. If it is turned on, the answer is `needsEmailConfirmation: true` and the form shows „Изпратихме ви писмо…“.
+- **`POST /api/auth/login`** `{ email, password }` → same-origin → `loginPerIp` → `LoginSchema` → `login()` (`signInWithPassword`, cookies written through `setAll`) → the now logged-in client reads its own profile → 200 `{ role, displayName }`. `invalid_credentials` → 401 „Грешен имейл или парола.“, the same for an unknown e-mail and a wrong password. `email_not_confirmed` → 403 (Supabase says it only after a correct password).
+- **`POST /api/auth/logout`** → same-origin → `signOut({ scope: "local" })` (only this browser; the person's other devices stay logged in) → 200 `{ ok: true }`. A guest logging out is not an error.
+- The service gets Supabase through a small `AuthGateway` (`signUp`, `signIn`), so tests pass a fake one.
+
+#### Why it works like that
+
+The plan had sign-up and login in the browser. Through our API, the cookies are HttpOnly and written by the server, our rate limiter runs first, and every message is Bulgarian. Trade-off: Supabase sees every login coming from our server's IP. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 3.
+
+#### How we know it works
+
+`authService.test.ts`, 9 tests: logged in at once with confirmation off; "confirm your e-mail" without a session; 409 for a used e-mail; 400 weak password; 429 on Supabase's own limit; unknown codes → plain error (500); correct login; the same message for a wrong e-mail or password; e-mail not confirmed. Plus the live smoke test (3.16).
+
+### 3.15 `/api/me` and `/api/persons`
+
+#### What it does
+
+`GET /api/me`: who am I. `GET /api/persons` / `POST /api/persons`: list and create protected persons. This is the minimum pairing needs; details, renaming, deleting and contacts come with W2-08.
+
+#### How it works
+
+- `/api/me` → `getActor()`; `null` → 401; else 200 `{ userId, role, displayName, emailAlerts, deviceId, protectedPersonId }` (the last two only for a paired phone).
+- `GET /api/persons` → `requireRole(["family"])` → `listPersonsForActor()` → `listPersons()` with the **user client**, so RLS returns only people the caller owns or is a contact of. Each row becomes `{ id, displayName, districtCode, createdAt, isOwner }`.
+- `POST /api/persons` `{ displayName, districtCode }` → same-origin → family → `CreatePersonSchema` → `createPerson()` → `insertPerson()` with the user client. Privilege, policy, constraints and the "owner becomes contact #1" trigger do the rest (walkthrough 7.2). 201 `{ person }`.
+- `src/server/services/personService.ts` never uses the admin client.
+
+#### Why it works like that
+
+A person must exist before a phone can be paired to it. Using only the user client means the database itself proves ownership.
+
+#### How we know it works
+
+`schemas.test.ts` (names, the 28 districts, ids); the RLS rules behind it: `03_persons_contacts`; the live smoke test (3.16). The service has no unit test of its own (it only maps rows).
+
+### 3.16 Device pairing: create code, redeem, revoke (`src/server/services/pairingService.ts`)
+
+#### What it does
+
+D14 and BUILD_PLAN section 5: the **owner** of a protected person gets a 6-digit code valid for 10 minutes; the code is typed on grandma's phone at `/svarzhi`; the server creates a login for that phone and signs it in. The owner can later remove (revoke) the phone. Walkthrough: 7.6.
+
+#### How it works
+
+**`createPairingCode(deps, actor, personId)`**, route `POST /api/persons/:id/pairing-codes` (same-origin, family, `IdParamSchema`):
+
+1. `findPersonForCaller()` with the user client. `null` (RLS hides it) **or** `owner_id !== actor.userId` (a trusted contact who isn't the owner) → 404.
+2. `deleteUnusedCodes()` removes the person's older unused codes (admin client: browsers have no access to `pairing_codes`).
+3. `generatePairingCode()` = `randomInt(0, 1_000_000).toString().padStart(6, "0")` (the OS's secure random source, unlike `Math.random`).
+4. Stores `hmacSha256(code, PAIRING_PEPPER)` with `expires_at = now + 10 min`. If the partial unique index refuses it (`23505`: the same 6 digits are active for someone else), it draws again, up to 5 times.
+5. Audit line `pairing_code_created`; answers 201 `{ code, expiresAt }`. The code is shown once and never stored.
+
+**`redeemPairingCode(deps, body, ip)`**, route `POST /api/pairing/redeem` (guest, same-origin):
+
+1. Rate limits first: `pair:ip:<HMAC>` (5 per 15 min), then `pair:global` (100 per 15 min).
+2. `RedeemCodeSchema.parse(body)`.
+3. `consumePairingCode(admin, hash, now)` finds the code **and** marks it used in one UPDATE (time from the server's clock):
+
+   ```ts
+   .from("pairing_codes")
+   .update({ used_at: nowIso })
+   .eq("code_hash", codeHash)
+   .is("used_at", null)
+   .gt("expires_at", nowIso)
+   .select("id, protected_person_id, created_by")
+   .maybeSingle();
+   ```
+
+   No row → 400 `invalid_code` „Кодът е грешен или е изтекъл.“, the same for wrong, expired and used codes.
+4. The phone's account: e-mail `device-<randomUUID()>@devices.scamly.invalid`, password `randomBytes(32).toString("base64url")`. `createConfirmedUser()` (`auth.admin.createUser` with `email_confirm: true`, display name = the person's name). The trigger gives it role `family` at first.
+5. In a `try`: `setRoleProtected()` (admin: users can't change `role`, section 5.8), `insertDevice()` (admin: no INSERT policy on `devices`), `signInDevice()` = `signInWithPassword` on the **user** client, which writes the session cookies on this response. If any step fails, `deleteAuthUser()` removes the half-made account and the error is thrown on.
+6. Audit line `device_paired`, with `actor_id` = `created_by` of the code (the family member who allowed it).
+7. 200 `{ role: "protected", deviceId, protectedPersonId, displayName }`. The password is not stored, logged or returned; from now on only the refresh token in the HttpOnly cookie keeps the phone logged in.
+
+**`revokeDevice(deps, actor, deviceId)`**, route `DELETE /api/devices/:id` (same-origin, family):
+
+1. `findDeviceForCaller()` (user client, RLS) and then the owner check on its person; otherwise 404.
+2. `deleteAuthUser(device.user_id)` (admin). Its refresh token dies, and the database deletes its profile and `devices` row (`on delete cascade`).
+3. Audit line `device_revoked`; 200 `{ ok: true }`. The phone's next request gets 401 (API) or is sent to `/svarzhi` (pages).
+
+Everything the service needs from outside comes in one `PairingDeps` object (clock, code generator, peppers, hit counter, repository calls). `createPairingDeps(user, admin)` builds the real one from the repositories in `src/server/repositories/` (`pairingCodesRepository.ts`, `devicesRepository.ts`, `authUsersRepository.ts`, `profilesRepository.ts`, `personsRepository.ts`, `auditRepository.ts`). **No new migration**: it uses only the tables and functions from Session C.
+
+#### Why it works like that
+
+- **Nothing exists until a code is right** (no anonymous sign-in), so bots can't fill our user table.
+- **Owner only, and 404 for everyone else**: a stranger can't learn that a person exists.
+- **Old unused codes deleted**: at most one code per person can be redeemed; used codes stay as history.
+- **One atomic UPDATE**: if two phones send the same code at once, PostgreSQL locks the row and the second UPDATE finds `used_at` already set. A code can never be used twice.
+- **The same 400 for every bad code**, and limits counted before parsing: guessing gets no hints. The 0.01 % calculation is in section 5.13.
+- **`.invalid` e-mail**: a reserved top-level domain (RFC 2606) that can never receive mail or belong to a person. The live Supabase project accepts it (checked 3 Nov).
+- **Clean-up on failure**: no stray accounts with the wrong role.
+- **Audit actor = code creator**: the phone is a guest when it redeems, and the family member is the one who allowed the pairing.
+- Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 3.
+
+#### How we know it works
+
+`pairingService.test.ts`, 18 tests on an in-memory fake world (section 4.2). Create: 6-digit code expiring in 10 min; only the HMAC stored; 404 for a stranger and for a non-owner trusted contact; the older unused code is cancelled; a new code is drawn on a duplicate. Redeem: valid code → protected account, device row, session; wrong, expired and used codes → the same 400 with nothing created; 6th try from one IP → 429 even with the right code; 101st try from many IPs → 429; invalid input counted and answered with a format message; the half-made account is deleted when a later step fails. Revoke: the owner removes the phone; 404 for a stranger and a trusted contact (phone kept); 404 for an unknown device; the revoked phone gets `null` from `getActor()` and 401.
+
+**Live smoke test (once, 3 Nov):** a script called the new endpoints against the real Supabase project: 33/33 checks passed. All test accounts and rows were deleted afterwards; its `audit_log` lines remain with `actor_id` null, because the log is append-only by design (5.9). The script is not in the repo.
+
+### 3.17 Temporary pages (until Roberta's Session F)
+
+#### What it does
+
+Plain pages so the API can be tried in a browser now: `/vhod` (login), `/registratsia` (sign-up), `/svarzhi` (pairing), `/403`, and the four areas `/family`, `/moderator`, `/admin`, `/protected`. Each file's header says TEMPORARY; Roberta replaces them with designed pages in Session F.
+
+#### How it works
+
+- `src/app/_auth-placeholders/forms.tsx` (`"use client"`): `LoginForm`, `RegisterForm`, `PairForm`, `LogoutButton`. They POST JSON to our API and show `error.messageBg`. After login the browser opens `homePathForRole(role)`. A folder starting with `_` is private in the App Router: it holds parts, not pages.
+- `RoleGate.tsx` (server component): calls `requirePageRole()`, then shows the page, „Влезли сте като …“, a "temporary page" note and a logout button (not on the phone). Each area `layout.tsx` wraps it in `<Suspense fallback={<AreaLoading />}>`, because with Cache Components anything that reads cookies must sit inside `<Suspense>`.
+- `PairForm`'s input uses `inputMode="numeric"`, `autoComplete="one-time-code"` and a 6-digit pattern. The QR link `/svarzhi?kod=…` is for Session F.
+- New text groups in `bg.ts`: `errors`, `auth`, `pairing`, `persons`, `areas`. `bg.pairing.deviceRevoked` is ready for Session F but not used yet.
+
+#### Why it works like that
+
+The backend could be tested end to end in a browser before the design exists, without blocking Roberta. Keeping the parts in one `_auth-placeholders` folder makes them easy to delete.
+
+#### How we know it works
+
+`tests/e2e/auth-guards.spec.ts` checks the login and pairing headings. The forms themselves have no automated test (they are temporary).
+
 ---
 
-### 3.8 Engine dictionary and scenario data (Roberta, Session D)
+### 3.18 Engine dictionary and scenario data (Roberta, Session D)
 
 #### What it does
 
@@ -385,7 +728,7 @@ Data stays independent of scoring and database code, so Roberta can improve word
 TypeScript checks the data against the shared engine types. `src/engine/data.test.ts` checks category coverage, phrase shape, contextual high-risk entries, scenario uniqueness and hard-rule expectation coverage. These are data-contract checks, **not executed verdict tests**. Alex's Session H runner, redaction tests and engine coverage evidence remain required before W1-10 is complete. No matcher is duplicated here just to make expected results pass.
 
 ---
-### 3.9 Decision record and Week 1 study material
+### 3.19 Decision record and Week 1 study material
 
 #### What it does
 
@@ -458,8 +801,10 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - `vitest.config.mts`: tests run in plain Node.js (no browser), files are `src/**/*.test.ts(x)` and live **next to the code** they test. The `@` shortcut is set up the same way as in `tsconfig.json`.
 - A test looks like pytest with different words: `describe` groups tests, `it` is one test, `expect(a).toBe(b)` is `assert a == b`, `expect(() => f()).toThrow(/NAME/)` is `pytest.raises`.
 - Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no minimum percentage yet; the engine will have a ≥ 90 % goal (W1-10).
+- Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
+- **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: 4 files, **15 tests** (`features.test.ts` 5, `bg.test.ts` 2, `env.test.ts` 4, `engine/types.test.ts` 4).
+Current tests: 14 files, **92 tests**: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18.
 
 #### Why it works like that
 
@@ -467,7 +812,7 @@ Unit tests are fast enough to run on every save, and the detection engine (plann
 
 #### How we know it works
 
-`npm test` → `Test Files 4 passed, Tests 15 passed`. CI uploads the coverage report as an artifact named `coverage`.
+`npm test` → `Test Files 14 passed, Tests 92 passed` (3 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -480,7 +825,7 @@ Opens the real app in a real browser and checks what a user would see.
 - `playwright.config.ts` → `webServer` runs `npm run build && npm run start -- --port 3000`, so the tests hit the **production build**, exactly as it will run on Vercel. Locally an app already running on port 3000 is reused.
 - Every test runs **twice**: project `desktop-chromium` (Desktop Chrome) and project `android-phone` (Pixel 5: a 393 × 851 touch screen, like a cheap Android phone).
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
-- `tests/e2e/home.spec.ts` is the only test so far (section 3.1).
+- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
@@ -490,7 +835,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e* (2 passing runs: desktop + phone). The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 6 tests × 2 screens = 12 runs, all passing locally on 3 Nov. The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -770,8 +1115,8 @@ The second case is good for security: family B can't even find out that grandma 
 
 **The two locks.** We protect data twice:
 
-1. **Lock 1, our API (planned, W1-06 onward)**: each route checks the role and ownership in TypeScript before doing anything (BUILD_PLAN section 3).
-2. **Lock 2, the database (works now)**: RLS policies plus privileges. API handlers will use the *user's own* session wherever possible, so lock 2 also applies to our own code. Even a bug in lock 1 can't leak another family's data.
+1. **Lock 1, our API (since Session E)**: each route checks the role (`requireRole`) and ownership in TypeScript before doing anything (BUILD_PLAN section 3, sections 3.11 and 3.16 here).
+2. **Lock 2, the database (works now)**: RLS policies plus privileges. API handlers use the *user's own* session wherever possible (`createUserClient()`), so lock 2 also applies to our own code. Even a bug in lock 1 can't leak another family's data.
 
 Inside lock 2 there are again two layers (top of `20261102000004_rls_policies.sql`): **privileges** (`grant`/`revoke`) decide which *commands and columns* a role may use at all; **policies** decide which *rows*. Supabase normally grants everything to `anon` and `authenticated` and relies on RLS alone. We first `revoke all` on every table and grant back only what is needed. This also blocks `TRUNCATE`, which RLS doesn't cover.
 
@@ -823,7 +1168,7 @@ Files `02` to `07` test each role against each table, including IDOR tests (sect
 
 ### 5.7 Protected device rules
 
-A paired phone is a normal `authenticated` login whose `profiles.role` is `protected` and which has a `devices` row. It can read its own profile, its person, the contact list (for the „Обади се на Иван“ button), its person's checks and its own push subscriptions. It can't edit its profile, create people, write checks or see alerts. **A revoked device** (`revoked_at` set) sees nothing at all, not even its own device row, because `is_device_of()` and the device-row policy both require `revoked_at is null`. Real revoking (planned, W1-07) deletes the device's login, which cascades the `devices` row away. Proven by `04_devices_pairing` and `05_checks_alerts`.
+A paired phone is a normal `authenticated` login whose `profiles.role` is `protected` and which has a `devices` row. It can read its own profile, its person, the contact list (for the „Обади се на Иван“ button), its person's checks and its own push subscriptions. It can't edit its profile, create people, write checks or see alerts. **A revoked device** (`revoked_at` set) sees nothing at all, not even its own device row, because `is_device_of()` and the device-row policy both require `revoked_at is null`. Real revoking (`revokeDevice()`, section 3.16) deletes the device's login, which cascades the `devices` row away. Proven by `04_devices_pairing` and `05_checks_alerts`.
 
 ### 5.8 Column privileges: why nobody can change their own role
 
@@ -880,7 +1225,7 @@ An audit log is only worth something if it can't be rewritten, not even by a bug
 
 #### How we know it works
 
-`07_admin_audit` (12 tests): only the one SELECT policy exists; the server can insert but not update or delete; an admin can read but not update or delete; moderators and family see 0 rows; family can't insert; guests are refused; the line survives the actor's deletion. Writing to it from the API is planned (W1-07, W3-04, W3-06).
+`07_admin_audit` (12 tests): only the one SELECT policy exists; the server can insert but not update or delete; an admin can read but not update or delete; moderators and family see 0 rows; family can't insert; guests are refused; the line survives the actor's deletion. The API writes `pairing_code_created`, `device_paired` and `device_revoked` (`auditRepository.ts`, section 3.16); moderation and role changes follow (W3-04, W3-06).
 
 ### 5.10 `get_map_stats(weeks)`: the public map's only window
 
@@ -917,7 +1262,7 @@ Guests have no SELECT on `reports` at all. The function reads the table with its
 
 #### What it does
 
-`hit_rate_limit(p_key, p_max_hits, p_window_seconds)` counts one attempt for a key and returns **true** (allowed) or **false** (over the limit). Example: `hit_rate_limit('pair:ip:<hmac>', 5, 900)` allows 5 pairing attempts per 15 minutes; the 6th returns false and the API will answer 429.
+`hit_rate_limit(p_key, p_max_hits, p_window_seconds)` counts one attempt for a key and returns **true** (allowed) or **false** (over the limit). Example: `hit_rate_limit('pair:ip:<hmac>', 5, 900)` allows 5 pairing attempts per 15 minutes; the 6th returns false and the API answers 429.
 
 #### How it works
 
@@ -944,8 +1289,8 @@ Only `service_role` may execute it.
 - **In PostgreSQL**, not in a separate service like Redis: stays on free tiers (D11) and survives server restarts (Vercel functions keep no memory between requests).
 - **Clean-up after 1 hour**: keys will contain an HMAC of the IP address; we never keep it much longer than an hour (privacy).
 - **Server only**: if browsers could call it, they could fill the table with junk or use up someone else's limit.
-- Known limit of a fixed window: someone can do 5 attempts at 10:14:59 and 5 more at 10:15:00. That is acceptable for us; the global limit (100 per 15 min, planned) still holds.
-- The TypeScript wrapper and its use in pairing and reports are planned (week 1, W1-07; week 3, W3-01).
+- Known limit of a fixed window: someone can do 5 attempts at 10:14:59 and 5 more at 10:15:00. That is acceptable for us; the global limit (100 per 15 min) still holds.
+- The TypeScript wrapper (section 3.13) uses it for login, registration and pairing; reports follow (week 3, W3-01).
 
 #### How we know it works
 
@@ -978,7 +1323,7 @@ The database never stores a pairing code (like `482915`), only `HMAC-SHA256(code
 #### How it works
 
 - **Now (database)**: the `code_hash` column, the partial unique index on unused hashes, `expires_at`/`used_at`, and no browser access at all (no grants, no policies). `src/lib/env.ts` requires `PAIRING_PEPPER` and `HASH_PEPPER` to be at least 32 characters.
-- **Planned (week 1, W1-07)**: the server makes a random 6-digit code, computes the HMAC with the pepper, stores the hash with `expires_at = now + 10 min`, and on redeem finds the row by hash with `used_at is null and expires_at > now()` and marks it used in the same UPDATE. In Python the hash would be `hmac.new(pepper, code, hashlib.sha256).hexdigest()`. Flow: BUILD_PLAN section 5.
+- **Server (section 3.16)**: `createPairingCode()` makes a random 6-digit code, computes `hmacSha256(code, PAIRING_PEPPER)`, stores the hash with `expires_at = now + 10 min`; `consumePairingCode()` finds the row by hash with `used_at is null and expires_at > now` and marks it used in the same UPDATE. In Python the hash would be `hmac.new(pepper, code, hashlib.sha256).hexdigest()`. Flow: BUILD_PLAN section 5.
 
 #### Why it works like that
 
@@ -986,7 +1331,7 @@ A 6-digit code has only **1,000,000** possible values. If we stored a plain SHA-
 
 #### How we know it works
 
-`04_devices_pairing`: even the owner and an admin can't read `pairing_codes`; a guest can't insert one. `01_schema`: the partial unique index exists. Redeem, expiry, reuse and the 6th-try → 429 tests are planned with W1-07.
+`04_devices_pairing`: even the owner and an admin can't read `pairing_codes`; a guest can't insert one. `01_schema`: the partial unique index exists. Redeem, expiry, reuse and the 6th-try → 429: `pairingService.test.ts` (section 3.16).
 
 ---
 
@@ -1082,36 +1427,37 @@ The cloud sandbox we build in has no Docker, but we still want to run the databa
 
 ### 7.1 A new family member signs up
 
-1. **Planned (week 1, W1-06):** the register page calls Supabase Auth with email, password and a `display_name`. An attacker could add `"role": "admin"` to the same sign-up data.
+1. The register page (`/registratsia`, temporary) sends `POST /api/auth/register` `{ email, password, displayName }`. The API checks the origin, the rate limit (5 per hour per IP) and the input, then calls `auth.signUp()` on the server with `display_name` as metadata (section 3.14). Someone calling Supabase Auth directly with the public key could add `"role": "admin"` to the sign-up data.
 2. Supabase Auth inserts a row into `auth.users` (its own table) with that data in `raw_user_meta_data`.
 3. In the same transaction, the trigger `on_auth_user_created` runs `handle_new_user()`.
 4. The function inserts `profiles (id, role = 'family', display_name)`. It never reads `role` from the sign-up data, so the attacker is a normal family member.
-5. Later the user may update their `display_name` and `email_alerts`. `update profiles set role = 'admin'` fails with error `42501` (column privilege).
+5. "Confirm email" is off, so Supabase returns a session; the session cookies (HttpOnly) go onto the 201 answer and the page opens `/family`.
+6. Later the user may update their `display_name` and `email_alerts`. `update profiles set role = 'admin'` fails with error `42501` (column privilege).
 
-Proven by `02_profiles` ("a role in the sign-up data is ignored", "family can't change their own role").
+Proven by `authService.test.ts` and `02_profiles` ("a role in the sign-up data is ignored", "family can't change their own role").
 
 ### 7.2 A family member creates a protected person
 
-1. **Planned (week 2, W2-07):** Anna fills in „Баба Мария, Бургас“; the browser sends `POST /api/persons`; the API checks she is logged in with role `family` and validates the input with Zod.
+1. Anna fills in „Баба Мария, Бургас“ (the designed form is W2-07); the browser sends `POST /api/persons`; the API checks the origin, that she is logged in with role `family` (`requireRole`), and validates the input with `CreatePersonSchema` (section 3.15).
 2. The API inserts with Anna's own session (so RLS applies): `insert into protected_persons (owner_id, display_name, district_code) values (<Anna>, 'Баба Мария', 'BG-02') returning id`.
 3. PostgreSQL checks the **privilege**: these three columns may be inserted by `authenticated`. ✔
 4. It checks the **policy** "Family can create protected persons they own": `owner_id = auth.uid()` ✔ and `app_role() = 'family'` ✔. (With someone else's `owner_id`, or as a device, it fails with `42501`.)
 5. It checks the **constraints**: name 1–60 characters, `BG-02` exists in `districts`. ✔
 6. The row is inserted, then the trigger `on_protected_person_created` runs `add_owner_as_first_contact()`: Anna becomes trusted contact #1 (with her `user_id`, which the browser itself may not set).
 7. `returning id` must pass a SELECT policy: "Owners can read their protected persons" (`owner_id = auth.uid()`). ✔
-8. The transaction commits; the API answers 201 (planned).
+8. The transaction commits; the API answers 201 `{ person }`.
 
 Proven by `03_persons_contacts` ("family can create a protected person they own", "the owner is added automatically as trusted contact #1", "family can't create a protected person owned by somebody else", "a device can't create protected persons").
 
 ### 7.3 Family B tries to read family A's grandma
 
-1. **Planned (week 2):** Boris changes the id in the address to Баба Мария's id and the browser calls `GET /api/persons/<id>`. The API's own ownership check (lock 1) would already refuse.
+1. Boris changes the id in the address to Баба Мария's id. `GET /api/persons/<id>` is planned (week 2); the same thing works today with `POST /api/persons/<id>/pairing-codes`. The API's own check (lock 1, `findPersonForCaller()` + owner check in `createPairingCode()`) already refuses.
 2. Suppose lock 1 had a bug. The query `select * from protected_persons where id = <Мария>` runs with Boris's session.
 3. RLS combines the four SELECT policies with OR: `owner_id = auth.uid()`? no. `has_family_access(id)`? no (not owner, not a contact). `is_device_of(id)`? no. `is_admin()`? no.
 4. The row is invisible: **0 rows, no error**. The same happens for her contacts, devices, checks and alerts.
-5. **Planned:** the API turns 0 rows into **404 Not Found** (not 403), so Boris can't even learn that this id exists.
+5. The API turns 0 rows into **404 Not Found** (not 403), so Boris can't even learn that this id exists. A trusted contact who isn't the owner gets the same 404 for creating a code or revoking a phone.
 
-Proven by the `IDOR:` tests in `03`, `04` and `05`.
+Proven by the `IDOR:` tests in `03`, `04` and `05`, and the "answers 404 to a stranger" tests in `pairingService.test.ts`.
 
 ### 7.4 A phone tries to send its own "green" verdict
 
@@ -1119,6 +1465,37 @@ Proven by the `IDOR:` tests in `03`, `04` and `05`.
 2. `authenticated` has only SELECT on `checks`: error `42501`. The verdict can only come from our server's engine (planned, W2-02).
 
 Proven by `05_checks_alerts` ("a device can't write its own verdict").
+
+### 7.5 Logging in
+
+1. Anna opens `/family`. The proxy (`src/proxy.ts`) runs `getClaims()`: no valid session → redirect to `/vhod` (section 3.10).
+2. She types her e-mail and password; `LoginForm` sends `POST /api/auth/login` `{ email, password }`.
+3. `assertSameOrigin()`: the browser sent `Sec-Fetch-Site: same-origin` ✔ (from another site: 403 `bad_origin`).
+4. `enforceIpRateLimit(loginPerIp)`: counter `login:ip:<HMAC of her IP>` in `hit_rate_limit()`; the 11th try in 15 minutes → 429.
+5. `LoginSchema.parse()`: a bad e-mail → 400 with a Bulgarian message.
+6. `login()` → `auth.signInWithPassword()` on the server. Wrong password **or** unknown e-mail → the same 401 „Грешен имейл или парола.“
+7. Correct: `@supabase/ssr` calls `setAll()`, which puts the access and refresh token cookies (HttpOnly, Secure, SameSite=Lax) on the answer. The API reads her profile with the now logged-in user client (RLS: own row) → 200 `{ role: "family", displayName: "Анна" }`.
+8. The form opens `homePathForRole("family")` = `/family`. The proxy now sees a valid token; the layout's `RoleGate` runs `requirePageRole(["family"])`, which calls `getActor()` → `auth.getUser()` + her profile → role `family` ✔ → the page is shown.
+9. An hour later her access token expires. On her next request the proxy's `getClaims()` swaps the refresh token for a new pair and writes the new cookies; she notices nothing.
+
+Proven by `authService.test.ts`, `requireRole.test.ts`, `routes.test.ts`, `auth-guards.spec.ts` and the live smoke test.
+
+### 7.6 Pairing grandma's phone (end to end)
+
+1. Anna (logged in, owner of Баба Мария) asks for a code: `POST /api/persons/<Мария>/pairing-codes`.
+2. The route checks the origin and `requireRole(["family"])`; `createPairingCode()` loads Мария with Anna's **user** client (RLS) and checks `owner_id = Anna` (otherwise 404).
+3. Older unused codes of Мария are deleted; `randomInt` draws `482915`; the database gets only `hmacSha256("482915", PAIRING_PEPPER)` with `expires_at = now + 10 min`; an audit line `pairing_code_created` is written.
+4. Anna's screen gets `201 { code: "482915", expiresAt }`.
+5. On grandma's phone Anna opens `/svarzhi` (opening `/protected` first also lands there, through the proxy) and types the code. `PairForm` sends `POST /api/pairing/redeem` `{ code: "482915" }`.
+6. Origin check, then rate limits: `pair:ip:<HMAC>` (5 per 15 min) and `pair:global` (100 per 15 min). Then `RedeemCodeSchema`.
+7. One UPDATE marks the code used **only if** the hash matches, `used_at is null` and `expires_at > now`. No row (wrong, expired, already used) → 400 „Кодът е грешен или е изтекъл.“
+8. The server creates the auth user `device-<uuid>@devices.scamly.invalid` with a random 32-byte password (admin client, already confirmed); the trigger makes its profile; the server sets `role = 'protected'`, inserts the `devices` row, and signs in with that password **once** on the user client, so the session cookies go onto this answer. If a step fails, the new account is deleted.
+9. Audit line `device_paired` (actor = Anna, who made the code); answer `200 { role: "protected", deviceId, protectedPersonId, displayName: "Баба Мария" }`. The phone opens `/protected`; `requirePageRole(["protected"])` finds the profile and the device row ✔.
+10. From now on the proxy refreshes the phone's session silently; grandma never sees a login screen.
+11. **The phone is lost.** Anna sends `DELETE /api/devices/<deviceId>`. `revokeDevice()` checks with her user client that she owns the device's person, deletes the device's auth user (profile and `devices` row cascade away), writes `device_revoked`.
+12. The lost phone's next API call gets 401 from `getActor()` (Auth no longer knows the user); a page sends it to `/svarzhi`. Its old access token may still pass the proxy until it expires, but nothing behind the proxy accepts it.
+
+Proven by `pairingService.test.ts` (18 tests), `04_devices_pairing` (RLS and cascade) and the live smoke test.
 
 ---
 
@@ -1130,14 +1507,21 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 |---|---|---|
 | 1 | One schema migration "0001" (W1-04); IMPLEMENTATION_PLAN Session C lists 3 migrations | 6 migration files (schema, triggers, helpers, policies, functions, realtime) |
 | 2 | `get_map_stats` returns `district_code, script_type, week, count` (2.3) | Returns `district_code, script_type, week_start, report_count` |
-| 3 | W1-04 done when `src/types/database.ts` is generated; status board marks W1-04 ✅ | No generated database types yet |
+| 3 | W1-04: `src/types/database.ts` generated with the Supabase CLI | Generated in Session E with `@supabase/postgres-meta` 0.100.0 (the generator inside the CLI's Docker image) against a local PostgreSQL 16, because the CLI can't be downloaded in the cloud session. Same output format (section 3.8) |
 | 4 | Device reads its own row when `user_id = auth.uid()` (2.5) | Also requires `revoked_at is null` (stricter) |
 | 5 | Not in the plan | Extra protections: `owner_id` not updatable; `trusted_contacts.user_id` not writable by browsers; `audit_log` UPDATE/DELETE/TRUNCATE revoked even from `service_role`; extra indexes `push_subscriptions(user_id)`, `rate_limits(window_start)` |
 | 6 | Not in the ER diagram | Extra columns: `contact_invites.display_name`, `reports.reject_reason` (mentioned in 2.5), `scam_scripts.created_at/updated_at` |
 | 7 | W1-02: CI with lint, types, tests, build on push to `main` | Also runs on pull requests and by hand, and has two more jobs (e2e, database). The Supabase CLI version is `latest`, not pinned |
 | 8 | `supabase/config.toml` and CI use PostgreSQL 17 | `npm run test:db` (local) uses whatever is installed, currently 16 |
-| 9 | Folder plan has `src/middleware.ts` | In Next.js 16 this file is called `proxy.ts` |
+| 9 | Folder plan has `src/middleware.ts` doing session refresh, role-based route guards and the CSP nonce | In Next.js 16 this file is called `proxy.ts`. It refreshes the session and checks only "logged in or not"; roles are checked in layouts and API routes (`requirePageRole`, `requireRole`). No CSP nonce yet (W4-01) |
 | 10 | 4.5 lists 13 signal categories | `types.ts` has 17: four more without a weight (`handover`, `credentials`, `safe_account`, `move_money`) so hard rules HR2, HR4 and HR5 can fire from the text alone (section 3.6). Also an extra constant `EMPTY_INPUT` for tests |
+| 11 | API table (section 3): sign-up, login and logout use Supabase Auth from the browser, with Supabase's own rate limits | They go through our API (`/api/auth/register`, `/login`, `/logout`): HttpOnly cookies set by the server, our own rate limits (login 10 per 15 min, register 5 per hour, per IP), Bulgarian errors (section 3.14) |
+| 12 | Pairing (#14, section 5): old unused codes are "cancelled"; the answer includes a QR payload | They are **deleted**; used codes stay. The answer is `{ code, expiresAt }`; the QR (`/svarzhi?kod=…`) is built by the page (Session F) |
+| 13 | Folder plan: pages in an `(auth)` route group; Session E adds only "a plain 403 page" | Pages at `/vhod`, `/registratsia`, `/svarzhi`, `/403`, plus temporary area pages and layouts for `/family`, `/moderator`, `/admin`, `/protected`, with their parts in `src/app/_auth-placeholders/` (section 3.17) |
+| 14 | `requireRole(req, ["family"])` (section 3) | `requireRole(["family"], client?)`: the request isn't needed (the cookies come from `next/headers`); a page version `requirePageRole()` redirects instead of throwing |
+| 15 | Integration tests "Vitest against local Supabase" in `tests/integration/` | Services get their tools as one deps object, and unit tests pass in-memory fakes (section 4.2). The real flow was checked once by a live smoke test (not in the repo); no `tests/integration/` yet |
+| 16 | BUILD_PLAN 2.4 calls the revoke function `deviceService.revoke()`; revoke deletes "the binding + the device's auth user" | `pairingService.revokeDevice()`; it deletes only the auth user and the database cascade removes the `devices` row |
+| 17 | `/api/me` and `/api/persons` belong to Week 2 | `GET /api/me` and `GET`/`POST /api/persons` already exist (minimal, needed for pairing); the rest of #3–#13 is W2-08 |
 
 ---
 
@@ -1146,10 +1530,10 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | Term | Meaning |
 |---|---|
 | **App Router** | Next.js's way of turning folders in `src/app/` into URLs; `page.tsx` = a page, `layout.tsx` = the frame around pages. Like Flask routes, but defined by folders instead of decorators. |
-| **Server component** | A React component that runs only on the server and sends HTML; like a Jinja template rendered by Flask. All our components are server components so far. |
-| **Client component** | A component marked `"use client"` that also runs in the browser (for clicks, live updates). Examples: ThemeToggle, BigChoice and the UI preview. |
-| **Route handler** | A `route.ts` file that answers HTTP requests (GET, POST...) with JSON: our REST API. Like a Flask view function. Planned. |
-| **Proxy** (`proxy.ts`) | Next.js 16's name for code that runs before every request (session refresh, route guards). Called "middleware" in older versions. Planned. |
+| **Server component** | A React component that runs only on the server and sends HTML; like a Jinja template rendered by Flask. Most of our components are; e.g. `RoleGate` (the role check in the area layouts). |
+| **Client component** | A component marked `"use client"` that also runs in the browser (for clicks, live updates). Examples: ThemeToggle, BigChoice, the UI preview and the temporary login/pairing forms. |
+| **Route handler** | A `route.ts` file that answers HTTP requests (GET, POST...) with JSON: our REST API. Like a Flask view function. |
+| **Proxy** (`src/proxy.ts`) | Next.js 16's name for code that runs before every request (session refresh, login guards). Called "middleware" in older versions. Like a Flask `before_request` hook. |
 | **Pre-rendering** | Building a page's HTML once at build time instead of on every request. |
 | **Environment variable** | A setting given to the program from outside (`process.env.X` in Node, `os.environ["X"]` in Python). Secrets live here, never in git. |
 | **Feature switch** | An on/off setting for an optional feature, read from an environment variable (`src/config/features.ts`). |
@@ -1178,6 +1562,17 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | **pgTAP** | A unit-test framework for PostgreSQL; tests are SQL files. |
 | **Realtime** | Supabase service that pushes database changes to browsers live, filtered by RLS. |
 | **PWA** | Progressive Web App: a website that can be installed on the home screen and work partly offline. Planned (W2-09). |
+| **Session / access token / refresh token** | After login Supabase gives two tokens: a short-lived **access token** (a JWT, about 1 hour) sent with every request, and a long-lived **refresh token** that buys a new pair. We keep both in cookies. |
+| **Cookie flags** | `HttpOnly`: page JavaScript can't read the cookie. `Secure`: sent only over HTTPS. `SameSite=Lax`: not sent with requests that other sites start, except normal link clicks. |
+| **CSRF** | Cross-Site Request Forgery: a bad site makes your browser send a request to our site; the browser adds your cookies, so it would run as you. |
+| **Same-origin** | Same scheme + host + port (`https://scamly…`). Our same-origin check accepts a non-GET request only from our own pages (`Sec-Fetch-Site`, `Origin`). |
+| **`getClaims()` / `getUser()`** | `getClaims()` checks the access token's signature locally (fast, used by the proxy). `getUser()` asks the Supabase Auth server (catches deleted accounts, used by `getActor()`). |
+| **Admin client / service role** | Our Supabase client with the secret key; bypasses RLS. Only for the short list in BUILD_PLAN 2.4. |
+| **Repository** | A file holding all database queries for one group of tables (`src/server/repositories/`); like a Python module of SQL helper functions. |
+| **Dependency injection** | Passing a function the tools it uses (database calls, clock, random) as parameters instead of letting it import them; tests then pass fakes. |
+| **Fake** | A tiny stand-in for a real service in tests, e.g. arrays that behave like our tables. |
+| **Fail closed** | When a check can't run (e.g. the rate limiter can't reach the database), refuse instead of allowing. |
+| **`.invalid`** | A top-level domain reserved by RFC 2606; addresses on it can never receive mail. Used for device accounts. |
 | **Shim** | A small fake of something missing (our `supabase-shim.sql` fakes the parts of Supabase plain PostgreSQL lacks). |
 
 ### The live database (Supabase cloud project)
@@ -1189,6 +1584,8 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 **Why this way:** it needed no database password and no extra tools in the cloud session (the Supabase CLI download is blocked there).
 
 **Important for later:** because the SQL Editor was used, Supabase's migration history (`supabase_migrations.schema_migrations`) is empty. **New migrations must also be run once in the SQL Editor** (only the new file), or, if we switch to `supabase db push`, first mark the 6 existing ones as applied with `supabase migration repair --status applied <version>` so they are not run twice.
+
+**Auth settings:** "Confirm email" is **off** (risk R5, Q8), so a new family account can log in at once (section 3.14). Device e-mails on `devices.scamly.invalid` are accepted (checked 3 Nov).
 
 **Where the keys live:** see `docs/IMPLEMENTATION_PLAN.md` section 4. Never in git.
 
@@ -1206,6 +1603,7 @@ One line per update of this file, newest last. Format: `date · what changed`.
 
 - 2026-11-03 · completed W1-11 browser verification: installed Chromium, diagnosed sandbox loopback restrictions, and fixed the theme selector label association. Production build and all six desktop/phone browser runs pass.
 
-- 2026-11-03 · added Roberta’s typed scam dictionary, scenario data and data-contract checks (section 3.8); verdict execution remains pending Alex’s engine runner.
+- 2026-11-03 · added Roberta’s typed scam dictionary, scenario data and data-contract checks (section 3.18); verdict execution remains pending Alex’s engine runner.
 
 - 2026-11-03 · added ADR 0005 for the existing D7 alert-channel choice and the Week 1 study note; delivery implementation, other ADRs and human check-in remain pending.
+- 2026-11-03 · Session E (W1-06 auth + W1-07 pairing backend): sections 3.8–3.17 (generated DB types, Supabase clients and cookies, proxy, `getActor`/`requireRole`, API basics and same-origin check, rate limiter wrapper, `/api/auth/*`, `/api/me` + `/api/persons`, pairing, temporary pages); walkthroughs 7.5 and 7.6; 7.1–7.3, 4.2, 4.3, 5.7–5.13 updated; status table, big picture, plan differences #3, #9, #11–#17 and glossary; 92 unit tests, 6 e2e tests × 2 screens
