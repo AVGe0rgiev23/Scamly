@@ -9,7 +9,7 @@ Status: study and handover material. This note does not record a completed rehea
 
 The repository has a Next.js app skeleton, Bulgarian text/configuration files, strict TypeScript, Zod environment validation, unit/browser-test setup and CI. The database migrations define tables, helper functions, RLS policies, triggers and the Realtime publication. Shared engine types and constants are present. The reusable light/dark design system and `/dev/ui` preview are implemented.
 
-The engine's normalisation, transliteration, matching, scoring, hard-rule evaluation and runner are still planned. The dictionary and scenario data are separate from that executable logic: writing expected cases does not prove the engine passes them. Authentication, device-pairing services, real call-check screens, seed script and alert delivery must not be described as working until their implementation and checks are complete.
+The engine's normalisation, transliteration, matching, scoring, hard-rule evaluation and runner are still planned. The dictionary and scenario data are separate from that executable logic: writing expected cases does not prove the engine passes them. Authentication and device-pairing services are now implemented, and the designed login/register/pairing screens pass controlled browser tests. Seed tooling and offline tests are prepared; its real database apply and demo-account checks still need an approved empty database and local environment settings. The call-check screens and alert delivery remain planned.
 
 Use [HOW_IT_WORKS](../HOW_IT_WORKS.md) and the [status board](../IMPLEMENTATION_PLAN.md#5-status-board) for current completion evidence rather than treating this learning note as a test report.
 

@@ -61,14 +61,29 @@ With the Supabase CLI and Docker you can also run `supabase db start` and `supab
 The first time you run `npm run e2e` on your own computer, install the browser with
 `npx playwright install chromium`.
 
-## Demo accounts
+## Demo accounts and seed
 
-| Role                               | Login            | Password         |
-| ---------------------------------- | ---------------- | ---------------- |
-| Близък (family member)             | coming in Week 1 | coming in Week 1 |
-| Модератор (moderator)              | coming in Week 1 | coming in Week 1 |
-| Администратор (administrator)      | coming in Week 1 | coming in Week 1 |
-| Защитен (protected person, device) | coming in Week 1 | coming in Week 1 |
+`npm run seed` prints an offline plan and makes no database connection. To create demo data, first agree with Alex which **empty** Supabase database to use and apply all migrations. Put its keys and peppers in your ignored `.env.local`, plus a local `SEED_DEMO_PASSWORD` of 12–72 characters. Never paste that password or keys into a chat or commit.
+
+Then run the write command with that database public URL:
+
+```sh
+npm run seed -- --apply --target https://APPROVED-PROJECT.supabase.co
+```
+
+The target must match `NEXT_PUBLIC_SUPABASE_URL`. The script refuses existing Auth users or rows in user-data tables and never resets or deletes them. If a step fails after writes began, it stops; inspect the demo database with Alex before retrying. This is initial setup for an empty database, not a reset command.
+
+| Role                           | Login                                                   | Password                                               |
+| ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------ |
+| Близък (family owner)          | `family@demo.scamly.invalid`                            | Local `SEED_DEMO_PASSWORD`                             |
+| Втори близък (trusted contact) | `contact@demo.scamly.invalid`                           | Local `SEED_DEMO_PASSWORD`                             |
+| Модератор                      | `moderator@demo.scamly.invalid`                         | Local `SEED_DEMO_PASSWORD`                             |
+| Администратор                  | `admin@demo.scamly.invalid`                             | Local `SEED_DEMO_PASSWORD`                             |
+| Защитен човек (device)         | No email/password entry; pair the browser at `/svarzhi` | Random internal credentials are never printed or saved |
+
+The human accounts are confirmed automatically. The seed creates one protected person, two linked contacts (the owner plus another family member), one paired device using the existing pairing service, two sample checks and two reports. Check verdicts are synthetic fixtures marked `demo-fixture-1`; they are not detection-engine results.
+
+A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. Seed application and real-account browser verification have not yet been performed on Roberta's computer.
 
 ## Licence
 

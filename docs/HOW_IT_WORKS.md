@@ -74,7 +74,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 92 tests in 14 files | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 100 tests in 16 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 15 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -101,7 +101,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
 | Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
 | Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
-| Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
+| Seed script with demo accounts | 🔄 tooling ready; approved empty DB execution pending | `scripts/seed*.ts`, `scripts/tsconfig.seed.json` | Five offline tests and npm run seed preview; section 3.20 |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
 | Checks API + server-side verdict | ⬜ planned (week 2, W2-02) | | |
@@ -750,6 +750,31 @@ The documents were checked against D7, the current code and the Week 1/2 task li
 
 ---
 
+### 3.20 Local demo seed (W1-12)
+
+#### What it does
+
+`npm run seed` previews four confirmed human accounts, a protected person, two contacts, a paired device, two sample checks and two reports without connecting to a database. The explicit apply command in README performs initial setup only on a confirmed empty demo database.
+
+#### How it works
+
+`scripts/seed.ts` parses flags; `seed-core.ts` checks the approved origin against the configured Supabase URL and requires a local demo password. `seed-supabase.ts` refuses nonempty Auth or user-data tables before any write. The static district data must already exist from migrations. Accounts are confirmed with the Admin API; each human login and role is verified. The protected person uses the existing person service and an authenticated family client; the existing trigger adds owner contact #1. The second linked family account is contact #2.
+
+The seed calls Alex's `createPairingCode` and `redeemPairingCode` with real dependencies, so it reuses code consumption, protected account creation and auditing rather than copying pairing rules. The CLI device session is temporary and cannot set a human browser cookie; the actual phone must redeem a fresh code via `/svarzhi`. Device credentials and codes are never printed or persisted.
+
+Sample checks are explicitly synthetic (`engine_version = demo-fixture-1`), not claimed engine output. All Bulgarian fixture text comes from `bg.seed`. The script has no automatic deletion or reset. A failure may leave partial fixtures; inspect the approved database before any retry.
+
+The pinned development runner `tsx` resolves the existing TypeScript imports. `scripts/tsconfig.seed.json` maps `server-only` to its empty module only for the computer-only CLI, as Vitest does. The browser/app config is unchanged. Loading the React server condition globally would break the Next navigation import in the reused service graph, so the CLI uses its scoped config and normal React. Keys remain local environment values.
+
+#### Why it works like that
+
+Default preview makes the action reviewable before any database changes. Matching the origin and refusing existing data prevent accidental replacement of shared data. Reusing the real service keeps demo pairing consistent with production logic. Synthetic fixtures let UI work proceed while the real detection engine is incomplete.
+
+#### How we know it works
+
+Five offline tests cover flag parsing, target/password validation, failed preflight with no writes, fixture orchestration and role failure. The CLI preview and real adapter import smoke test pass without a database. `npm run check` passes with 100 executable tests. No live apply has run: the approved empty project and local environment settings are still needed. The live seed and every README demo login remain completion checks for W1-12.
+
+---
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -806,7 +831,7 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
 - **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: 14 files, **92 tests**: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18.
+Current tests: 16 files, **100 tests**: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18; plus `engine/data` 3 and `scripts/seed` 5.
 
 #### Why it works like that
 
@@ -814,7 +839,7 @@ Unit tests are fast enough to run on every save, and the detection engine (plann
 
 #### How we know it works
 
-`npm test` → `Test Files 14 passed, Tests 92 passed` (3 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npm test` → `Test Files 16 passed, Tests 100 passed` (3 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -827,6 +852,7 @@ Opens the real app in a real browser and checks what a user would see.
 - `playwright.config.ts` → `webServer` runs `npm run build && npm run start -- --port 3000`, so the tests hit the **production build**, exactly as it will run on Vercel. Locally an app already running on port 3000 is reused.
 - Every test runs **twice**: project `desktop-chromium` (Desktop Chrome) and project `android-phone` (Pixel 5: a 393 × 851 touch screen, like a cheap Android phone).
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
+- `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
 - `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
@@ -1611,3 +1637,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · Session E (W1-06 auth + W1-07 pairing backend): sections 3.8–3.17 (generated DB types, Supabase clients and cookies, proxy, `getActor`/`requireRole`, API basics and same-origin check, rate limiter wrapper, `/api/auth/*`, `/api/me` + `/api/persons`, pairing, temporary pages); walkthroughs 7.5 and 7.6; 7.1–7.3, 4.2, 4.3, 5.7–5.13 updated; status table, big picture, plan differences #3, #9, #11–#17 and glossary; 92 unit tests, 6 e2e tests × 2 screens
 
 - 2026-11-03 · Session F: designed auth/pairing/403 screens, accessible validation, request states, role redirects, QR-code prefill and logout handling; 30 browser runs pass with controlled API responses. Live demo-role verification remains pending.
+
+- 2026-11-03 · W1-12 seed tooling and five offline tests added with local-only tsx runner, empty-database preflight, real pairing-service reuse and synthetic fixtures; live seed/demo login verification remains pending.

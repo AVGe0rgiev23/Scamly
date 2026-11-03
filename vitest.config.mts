@@ -18,7 +18,7 @@ export default defineConfig({
     // Our unit tests run in plain Node.js (no browser needed).
     environment: "node",
     // Unit tests live next to the code (src/**/*.test.ts). Playwright tests (tests/e2e) are not ours.
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "scripts/**/*.test.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**"],

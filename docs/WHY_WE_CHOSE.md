@@ -1425,6 +1425,23 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never; we follow the framework's current convention.
 
+### Local TypeScript demo seed with tsx 4.23.15 (status: tooling in use; live apply pending)
+
+**Used for:** executing `scripts/seed.ts` on a computer, with existing typed service imports and a scoped CLI config.
+
+**Alternatives we considered:** copying pairing into a standalone JavaScript script, Node type stripping alone, and globally enabling the React server condition.
+
+**Why this one:**
+- tsx (MIT) resolves the existing aliases and extensionless service imports without duplicating business logic. Node stripping alone cannot resolve all existing imports.
+- A CLI-only config handles `server-only` for this trusted local process without weakening browser builds; the global React server condition breaks Next navigation imports.
+- The default is an offline preview. Applying requires an exact target, local password and empty Auth/user tables, with no automatic reset or cleanup.
+- The service-role key stays local and is used for demo setup; ordinary role sessions create the person and exercise the existing pairing service. Internal device credentials are never published.
+
+**What we give up:**
+- One pinned development dependency and a CLI config to maintain. The setup is not transactional across Supabase Auth and PostgreSQL; failures require inspection before retrying.
+- Fixtures and offline tests do not prove live login or delivery. Real demo-account checks and pairing need the approved database. A CLI session does not log a physical browser in.
+
+**We would reconsider if:** the service import structure changes enough that Node alone can execute the same shared logic without a runner.
 ### npm as the package manager  (status: in use)
 
 **Used for:** installing packages; `npm ci` in CI and for setup.
@@ -1546,3 +1563,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · Session E (auth + pairing backend): new entries generated DB types (postgres-meta), `.invalid` device e-mails, auth through our API, HttpOnly cookies with three clients (replaces "Session in HttpOnly cookies"), proxy checks login only, same-origin check (split from the CSP entry), dependency-injected fakes, `server-only`; rate limiting entry now covers HMAC'd IPs, fail-closed and our login/register limits; statuses moved to "in use" for REST API, layers, Supabase Auth, Supabase JS client + `@supabase/ssr`, two locks, server-only writes, HMAC, device pairing, Zod, `proxy.ts`
 
 - 2026-11-03 · documented the designed auth forms, shared Zod validation, accessible error handling, duplicate-request guard and explicit QR pairing action.
+
+- 2026-11-03 · documented the local-only tsx seed runner, scoped server-only alias, explicit empty-target setup and limits of offline verification.
