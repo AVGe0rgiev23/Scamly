@@ -1195,6 +1195,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Docs change in the same commit as the code they describe, so they stay true, and git shows who changed what.
 - GitHub shows Markdown and Mermaid diagrams nicely, and the jury can read them next to the code.
 - Free, no extra accounts.
+- ADR 0005 records the existing D7 alert-channel decision, including alternatives and tradeoffs; the Week 1 learning note provides Python comparisons and practice questions. Writing these documents does not mean notification delivery or the human check-in is complete.
 
 **What we give up:**
 - The official 5-page documentation still has to be a `.docx`/PDF in Times New Roman (we'll write it from these files in week 5).
@@ -1395,3 +1396,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · W1-11 browser verification completed; documented explicit theme labels and the sandbox loopback restriction instead of changing the working build configuration.
 
 - 2026-11-03 · documented typed dictionary/scenario data, contextual high-risk phrases and why data checks do not replace verdict execution tests.
+
+- 2026-11-03 · added ADR 0005 and Week 1 learning material as reviewable repo documents; kept planned feature delivery separate from documentation completion.

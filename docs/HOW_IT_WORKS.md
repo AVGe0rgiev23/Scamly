@@ -90,7 +90,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Pairing codes and devices tables (HMAC hash column) | ✅ (DB part) | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
 | Database tests (pgTAP, 151 assertions) | ✅ | `supabase/tests/`, `scripts/db/` | CI job *database*; `npm run test:db` |
 | Generated TypeScript types for the database | ⬜ planned (week 1, W1-04) | `src/types/database.ts` (not there yet) | |
-| ADRs (decision records) | ⬜ planned (week 1, W1-03) | `docs/decisions/` | |
+| ADRs (decision records) | 🔄 0005 alert channels written; 0001–0004 pending Alex | `docs/decisions/0005-alert-channels.md` | Records D7; delivery remains planned |
 | Login, register, roles in the API (`getActor`, `requireRole`, route guards) | ⬜ planned (week 1, W1-06) | `src/server/auth/`, `src/proxy.ts` | |
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
@@ -385,6 +385,26 @@ Data stays independent of scoring and database code, so Roberta can improve word
 TypeScript checks the data against the shared engine types. `src/engine/data.test.ts` checks category coverage, phrase shape, contextual high-risk entries, scenario uniqueness and hard-rule expectation coverage. These are data-contract checks, **not executed verdict tests**. Alex's Session H runner, redaction tests and engine coverage evidence remain required before W1-10 is complete. No matcher is duplicated here just to make expected results pass.
 
 ---
+### 3.9 Decision record and Week 1 study material
+
+#### What it does
+
+`docs/decisions/0005-alert-channels.md` records the already accepted D7: the family live page via Realtime is primary, with push/email as additional channels and a logged-in backup phone for the demo. `docs/learning/week-1.md` explains the implemented foundations using Python comparisons and gives practice questions.
+
+#### How it works
+
+The ADR records context, alternatives, decision and consequences. It distinguishes database readiness from the future fan-out, acknowledgement, delivery and reconnect implementation. The learning note explains erased TypeScript types versus runtime Zod checks, React props/state/ref, the API and RLS as separate access checks, and the difference between scenario data and executed engine tests.
+
+#### Why it works like that
+
+A decision record explains the reason for a choice without pretending that a planned feature exists. Study material prepares the students to explain the implementation in the defense. Neither a document nor an automated check can certify human understanding.
+
+#### How we know it works
+
+The documents were checked against D7, the current code and the Week 1/2 task list. Alex still owns ADRs 0001–0004. The learning note is written; the joint Sunday explanation/check-in and updates after remaining Week 1 work are still pending.
+
+---
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -1187,3 +1207,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · completed W1-11 browser verification: installed Chromium, diagnosed sandbox loopback restrictions, and fixed the theme selector label association. Production build and all six desktop/phone browser runs pass.
 
 - 2026-11-03 · added Roberta’s typed scam dictionary, scenario data and data-contract checks (section 3.8); verdict execution remains pending Alex’s engine runner.
+
+- 2026-11-03 · added ADR 0005 for the existing D7 alert-channel choice and the Week 1 study note; delivery implementation, other ADRs and human check-in remain pending.

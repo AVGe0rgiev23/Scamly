@@ -126,7 +126,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 |---|---|---|---|
 | W1-01 | Scaffold (Next.js, TS strict, Tailwind, lint, tests, licence, README) | Alex | ✅ |
 | W1-02 | GitHub Actions CI | Alex | ✅ |
-| W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | ⬜ |
+| W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | 🔄 Roberta: 0005 written; Alex: 0001–0004 pending |
 | W1-04 | Supabase schema migration | Alex | ✅ |
 | W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
 | W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ⬜ |
@@ -138,7 +138,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-11 | Design system basics | Roberta | ✅ checks, production build and six browser runs pass |
 | W1-12 | Seed script | Roberta (D20) | ⬜ |
 | W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | ⬜ |
-| W1-14 | `docs/learning/week-1.md` | Alex + Roberta | ⬜ |
+| W1-14 | `docs/learning/week-1.md` | Alex + Roberta | 🔄 note written; human check-in and remaining Week 1 review pending |
 
 ### Weeks 2–5
 
