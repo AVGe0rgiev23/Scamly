@@ -78,6 +78,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Unit tests (Vitest) | ✅ 11 tests | `vitest.config.mts`, `src/**/*.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 1 test × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
+| Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
 | Triggers (2): new profile, owner as contact #1 | ✅ | `..._000002_triggers.sql` | `02_profiles`, `03_persons_contacts` |
 | RLS helper functions (6) | ✅ | `..._000003_rls_helpers.sql` | `08_functions` (+ every policy test) |
@@ -94,8 +95,8 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
 | Detection engine v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
 | Design system (colours, Button, Card, Verdict...) | ⬜ planned (week 1, W1-11) | `src/components/ui/` | |
-| Seed script with demo accounts | ⬜ planned (week 1, W1-12) | `scripts/seed.ts` | |
-| Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (week 1, W1-13) | | |
+| Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
+| Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
 | Checks API + server-side verdict | ⬜ planned (week 2, W2-02) | | |
 | Family alerts: fan-out + live page via Realtime | ⬜ planned (week 2, W2-03, W2-04) | | |
@@ -411,6 +412,26 @@ Other settings: a newer push to the same branch cancels the older run (`concurre
 The green ✓ on GitHub. BUILD_PLAN W1-02 also asks for a deliberately broken test to turn it red once; do that and note it in `docs/evidence/` when we collect evidence.
 
 Note: the Supabase CLI is installed with `version: latest`, so a new CLI release could change behaviour without a change in our repo.
+
+### 4.5 Agent rules files: `AGENTS.md` and `CLAUDE.md`
+
+#### What it does
+
+Tells every AI coding agent the project rules before it does anything: who is working, git rules, which docs to update, who owns what, code style and safety. Alex uses Claude Code in the cloud, Roberta uses OpenAI Codex on her computer (D21), and both must follow the **same** rules.
+
+#### How it works
+
+- **`AGENTS.md`** holds all the rules. Codex reads it automatically.
+- At the top of `AGENTS.md` is a block between `<!-- BEGIN:nextjs-agent-rules -->` and `<!-- END:nextjs-agent-rules -->`. **Next.js writes it** (`next dev`, code in `node_modules/next/dist/server/lib/generate-agent-files.js`): it replaces only the text between the two markers and keeps everything before and after. Our rules sit below the block, so `next dev` never deletes them. We don't edit inside the markers.
+- **`CLAUDE.md`** is short. Its line `@AGENTS.md` makes Claude Code import `AGENTS.md`, like `import` in Python, so Claude Code reads the same rules. It adds only one Claude-specific note (ignore the cloud hook that asks to add AI attribution to commits).
+
+#### Why it works like that
+
+Two different AI tools look for two different file names. Copying the rules into both files would let them drift apart; one shared file means a rule changed once is changed for both of us. Comparison with the alternatives: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) section 10.
+
+#### How we know it works
+
+Running Next.js's own block writer on our `AGENTS.md` reports `unchanged` (checked on 2026-11-03), so `next dev` keeps the file as it is. `npx prettier --check .` also leaves the block untouched. In a new session, each tool should start by asking "Alex or Roberta?", which shows it read the rules.
 
 ---
 
@@ -1054,3 +1075,4 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 One line per update of this file, newest last. Format: `date · what changed`.
 
 - 2026-11-03 · created, covers Week 1 foundations (scaffold, CI, database, RLS, DB tests)
+- 2026-11-03 · added section 4.5 and a status row: agent rules files (`AGENTS.md` shared by Claude Code and Codex, `CLAUDE.md` imports it, D21); seed (W1-12) and deploy (W1-13) rows updated for D20

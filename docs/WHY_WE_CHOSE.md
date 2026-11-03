@@ -32,7 +32,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · Damerau-Levenshtein · шльокавица transliteration · offline fallback · green never says "safe"
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · keep-alive · `pg_cron` · uptime monitor · pinned versions
-10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
+10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
 11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `APP_NAME` constant
 12. [How to add an entry](#12-how-to-add-an-entry)
 13. [Change history](#13-change-history)
@@ -1060,7 +1060,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Used for:** every commit carries Alex's or Roberta's name only, no co-author lines; only they push.
 
-**Alternatives we considered:** co-author lines for the AI assistant; the assistant pushing by itself.
+**Alternatives we considered:** co-author lines for the AI assistant (Claude or Codex); the assistant pushing by itself.
 
 **Why this one:**
 - The jury looks at the git history to see **who built what** (both authors must have meaningful commits).
@@ -1071,22 +1071,42 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the competition rules asked us to mark AI-assisted commits.
 
-### Claude Code as a coding assistant  (status: in use (D3))
+### AI coding assistants: Claude Code (Alex) and OpenAI Codex (Roberta)  (status: in use (D3, D21))
 
-**Used for:** planning, writing code and tests, and explaining concepts, in a cloud session inside our GitHub repo.
+**Used for:** planning, writing code and tests, and explaining concepts. Alex uses **Claude Code** in a cloud session inside our GitHub repo; Roberta uses **OpenAI Codex** on her own computer.
 
-**Alternatives we considered:** writing everything by hand; other AI assistants.
+**Alternatives we considered:** writing everything by hand; both of us on the same tool; other AI assistants.
 
 **Why this one:**
 - Two students, four weeks and a large scope: an assistant lets us build a complete, tested product.
-- It's set up to explain every piece in Python terms and write weekly learning notes (`docs/learning/`).
+- Each of us uses the tool we're comfortable with. Both tools follow the same rules file (`AGENTS.md`, next entry), so the result is the same either way.
+- Both are set up to explain every piece in Python terms and write weekly learning notes (`docs/learning/`).
 - The brief's rule: **if we can't explain it, it isn't built that way.**
 
 **What we give up:**
 - Risk of code we don't fully understand; we test each other by explaining the other's code out loud each week.
-- Dependence on the tool's availability.
+- Two tools behave a little differently (for example, Claude Code's cloud environment can ask to add AI attribution, which our rules say to ignore).
+- Roberta works on her own computer, so her setup (Node.js 22, `.env.local`) must match the cloud, and `npm run test:db` only runs on Linux; on Windows or Mac CI's database job is the check.
+- Dependence on the tools' availability.
 
-**We would reconsider if:** we found we couldn't defend the code it produced.
+**We would reconsider if:** we found we couldn't defend the code they produced, or one tool kept ignoring the rules.
+
+### Shared rules in `AGENTS.md` (vs separate rule files per tool)  (status: in use (D21))
+
+**Used for:** one file with all project rules (git, docs, ownership, code style, safety) that every AI agent reads first.
+
+**Alternatives we considered:** separate files per tool (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) with the same rules copied into both; rules only in our heads.
+
+**Why this one:**
+- Codex reads `AGENTS.md`; Claude Code reads `CLAUDE.md`, which can import another file with the line `@AGENTS.md`. So one file serves both tools.
+- One copy of the rules can't drift apart: a rule changed once is changed for both of us.
+- Next.js 16 already writes a small managed block into `AGENTS.md` and keeps the rest of the file, so our rules can live below it safely.
+
+**What we give up:**
+- The file has a Next.js block at the top that we must not edit by hand.
+- If a tool ever stopped reading `AGENTS.md` (or `@` imports), we'd need to notice and fix it.
+
+**We would reconsider if:** a tool needed rules the other must not see, or Next.js stopped keeping our text below its block.
 
 ### GPL-3.0-only licence  (status: in use)
 
@@ -1326,3 +1346,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 ## 13. Change history
 
 - 2026-11-03 · created
+- 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)

@@ -1,6 +1,6 @@
 # Scamly: implementation and build plan
 
-> Status: **v1.2**: Q1–Q3 and Q16 decided by the team on 2 November 2026, Q17–Q19 (work split, engine split, explanation files) on 3 November (see section 8). Other questions still use the recommended defaults.
+> Status: **v1.3**: Q1–Q3 and Q16 decided by the team on 2 November 2026, Q17–Q21 (work split, engine split, explanation files, Week 1 rebalance, Codex for Roberta) on 3 November (see section 8). Other questions still use the recommended defaults.
 > Source of truth for *what* we build: [`PROJECT_BRIEF.md`](./PROJECT_BRIEF.md). This file covers *how* and *when*.
 > Anything marked **(proposal)** changes a detail of the brief or fills a gap in it. Each one is listed again in section 8 so you can approve or reject it.
 
@@ -125,7 +125,8 @@ scamly/
 ├── tests/
 │   ├── e2e/                  # Playwright: one spec per role + the full alert flow
 │   └── integration/          # Vitest against local Supabase: API + security tests
-├── CLAUDE.md                 # rules every Claude Code session reads first (git, D19, ownership)
+├── AGENTS.md                 # shared rules for every AI agent (Claude Code + Codex, D21) + Next.js's managed block
+├── CLAUDE.md                 # short: points Claude Code to AGENTS.md (`@AGENTS.md`)
 ├── .env.example              # every variable we need, with comments, no real values
 ├── LICENSE                   # GPL-3.0
 ├── THIRD_PARTY_LICENSES.md   # every library, font, icon set and dataset with its licence
@@ -693,11 +694,11 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 ## 6. Week-by-week tasks
 
-**Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count Claude's typing time. Each task = 1 GitHub issue.
+**Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count the AI agent's typing time. Each task = 1 GitHub issue.
 
-**Who owns what (D17, D18, updated 3 Nov).** Alex leads the backend, Roberta leads the frontend, but the split is mixed. **Owner** = the person who mainly builds the task and must explain it in the defense. It does **not** mean the other person may not touch it. If you want to change something the other person owns: tell them first, pull, make the change in your own session under your own name, and the owner reads the commit on GitHub afterwards. When a task is split, the Owner column names both people and the **h** column shows each person's share. In the totals, shared (A+R) tasks count half for each person.
+**Who owns what (D17, D18, D20, updated 3 Nov).** Alex leads the backend, Roberta leads the frontend, but the split is mixed. **Owner** = the person who mainly builds the task and must explain it in the defense. It does **not** mean the other person may not touch it. If you want to change something the other person owns: tell them first, pull, make the change in your own session under your own name, and the owner reads the commit on GitHub afterwards. When a task is split, the Owner column names both people and the **h** column shows each person's share. In the totals, shared (A+R) tasks count half for each person.
 
-**Git workflow (decided, Q3 + Q16).** There is **one branch only: `main`**. No feature branches, no pull requests. Claude commits in the name of whoever is working (Alex or Roberta), with no co-author lines, and pushes to `main` only after that person says "push". Before every push, lint, type-check and tests must pass locally.
+**Git workflow (decided, Q3 + Q16).** There is **one branch only: `main`**. No feature branches, no pull requests. The AI agent (Claude Code for Alex, Codex for Roberta, D21) commits in the name of whoever is working (Alex or Roberta), with no AI attribution lines of any tool, and pushes to `main` only after that person says "push". Before every push, lint, type-check and tests must pass locally.
 
 Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. "A · UI by R" = Alex owns the task, Roberta builds the named part. ✂ = may be cut (D12 order).
 
@@ -717,11 +718,11 @@ Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. "A · UI by R" = Alex o
 | W1-09b | Engine dictionary: `dictionary.ts` with Bulgarian stems and phrases per signal category (4.5), шльокавица spellings and common typos | R | 3 | W1-08 `types.ts` (pushed first) | Every category in 4.5 has entries; the 4.7 examples find the expected signals |
 | W1-10 | Engine tests to ≥ 25 (brief section 9) + `redactPersonalData()` with tests; engine coverage ≥ 90 % | R (test cases: scam phrases, legitimate calls, edge cases) + A (test runner, `redactPersonalData()`) | 5 (R 3 · A 2) | W1-09, W1-09b | `npm test` shows ≥ 25 engine tests; coverage report saved to `docs/evidence/` |
 | W1-11 | Design system: colour tokens light/dark (WCAG AA checked), typography scale, `Button`, `Card`, `Verdict`, `BigChoice`, `ThemeToggle`; `bg.ts` skeleton; a `/dev/ui` preview page | R | 6 | W1-01 | Preview page shows every component in light + dark; contrast ratios listed in a comment |
-| W1-12 | Seed script: demo accounts (family, moderator, admin), a protected person with a paired demo device, contacts, sample checks/reports | A | 3 | W1-05, W1-07 | `npm run seed` on an empty DB → README demo table logins all work |
-| W1-13 | Vercel deploy (fra1), env vars, `/api/health`, GitHub Actions keep-alive cron (every 12 h) | A | 2 | W1-04 | Production URL live; health returns `{ok: true, db: true}`; cron run visible in Actions |
+| W1-12 | Seed script: demo accounts (family, moderator, admin), a protected person with a paired demo device, contacts, sample checks/reports | R (D20) | 3 | W1-05 ✅, W1-07 (A: the seed creates an already-paired demo device) | `npm run seed` on an empty DB → README demo table logins all work |
+| W1-13 | Vercel deploy (fra1), env vars, `/api/health`, GitHub Actions keep-alive cron (every 12 h). Planned for **Mon 9 Nov** (D20) | A | 2 | W1-04 | Production URL live; health returns `{ok: true, db: true}`; cron run visible in Actions |
 | W1-14 | `docs/learning/week-1.md` (TS for Python programmers, Supabase/RLS, Zod) | A+R | 2 | all | Both of us can explain every W1 file without notes (test each other) |
 
-Week 1 totals: **A ≈ 48.5 h** (17 h already done: W1-01, W1-02, W1-04, W1-05, so ≈ 31.5 h left), **R ≈ 15.5 h**. **Honest note:** Alex's remaining Week 1 work is about twice Roberta's and well over 10–12 h. Suggestion (not yet decided): if it overflows, W1-12 (seed) and W1-13 (deploy) slip first, to Mon–Tue 9–10 Nov, then W1-07 (pairing) to Monday 9 Nov and no further, because W2-02 needs it. Roberta can use her spare hours to start W2-01 (protected UI) early.
+Week 1 totals (after D20): **A ≈ 45.5 h** (17 h already done: W1-01, W1-02, W1-04, W1-05, so ≈ 28.5 h left; 2 h of it is W1-13 deploy on Mon 9 Nov, so ≈ 26.5 h until Sun 8 Nov), **R ≈ 18.5 h**. **Decided (D20, 3 Nov):** Alex's share was about twice Roberta's (31.5 h left vs 15.5 h), so W1-12 (seed) moved to Roberta and W1-13 (deploy) stays Alex's but moves to Monday 9 Nov. Alex's part is still above 10–12 h. If more runs late, W1-07 (pairing) may slip to Monday 9 Nov and no further, because W2-02 needs it; W1-12 then moves with it. Roberta can use any spare hours to start W2-01 (protected UI) early.
 
 ### Week 2 (9–15 Nov): call check + family alert (the core of the demo)
 
@@ -831,6 +832,8 @@ If you're happy with a default, just reply "approve" (or "approve except Qx"). D
 | **Q17** | Work split between Alex and Roberta? | ✅ **Decided 3 Nov (D17): Alex leads the backend, Roberta leads the frontend, but it's mixed.** Either of us may change anything, after telling the owner; the owner reads the commit afterwards. Owners per task in section 6. |
 | **Q18** | Who builds the detection engine? | ✅ **Decided 3 Nov (D18): split.** Alex builds the logic (types, normalise, transliterate, fuzzy, signals, scoring, hard rules, verdict, `redactPersonalData()`, API wiring). Roberta writes `dictionary.ts`, the шльокавица and typo examples and the test cases. Both must explain the whole engine. |
 | **Q19** | How do we keep an explanation of the whole system for the docs and the defense? | ✅ **Decided 3 Nov (D19): two living files**, `docs/HOW_IT_WORKS.md` and `docs/WHY_WE_CHOSE.md`, updated in the same commit as every change. |
+| **Q20** | Alex's Week 1 load (≈ 31.5 h left) is about twice Roberta's (≈ 15.5 h). Rebalance? | ✅ **Decided 3 Nov (D20): option A.** W1-12 seed script moves to Roberta (3 h, after Alex's W1-07 pairing); W1-13 deploy stays Alex's but moves to Mon 9 Nov. New totals: A ≈ 45.5 h (28.5 h left), R ≈ 18.5 h. |
+| **Q21** | Roberta works with OpenAI Codex on her own computer, Alex with Claude Code in the cloud. Where do the rules live? | ✅ **Decided 3 Nov (D21): in `AGENTS.md`**, shared by both tools (Codex reads `AGENTS.md`; `CLAUDE.md` just imports it). Rules are tool-neutral; no AI attribution of any tool in commits; Roberta's commits use her own local git config. |
 | **Q4** | The questions: 3 (brief) vs **4 + 1 conditional** (section 4.1)? | 4 + 1 conditional. The usability test in W4-05 will tell us whether it's too many. |
 | **Q5** | AI may raise the verdict by **at most one level** and its text is shown **only to family** (4.10)? | Yes to both. |
 | **Q6** | Offline engine fallback on the phone (4.9)? | Yes. It's cheap because the engine is pure, and it's a strong reliability argument. |
