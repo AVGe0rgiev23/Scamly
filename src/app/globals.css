@@ -1,35 +1,238 @@
-/*
- * Global styles for the whole app.
- * Tailwind CSS gives us small utility classes (like `text-lg`); the colours below follow
- * the phone's or computer's light/dark setting. This is only a starting point:
- * the real design system (W1-11) will replace these colours.
+/* Shared accessible tokens and component styles. Ratios measured with WCAG sRGB luminance:
+ * light: text/surface 16.29, muted/surface 7.58, white/primary 7.85;
+ * dark: text/surface 13.82, muted/surface 10.19, ink/primary 9.04.
+ * Verdict foreground/surface: light red 7.30, yellow 6.61, green 6.77;
+ * dark red 10.37, yellow 11.08, green 10.61. See contrast verification.
  */
 @import "tailwindcss";
 
-:root {
-  /* Tell the browser we support both themes (scrollbars, form fields...). */
-  color-scheme: light dark;
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #525252;
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #f4f6f8;
+  --surface: #ffffff;
+  --foreground: #17212b;
+  --muted: #475569;
+  --primary: #174ea6;
+  --on-primary: #ffffff;
+  --border: #64748b;
+  --red-bg: #fff1f2;
+  --red-fg: #9f1239;
+  --yellow-bg: #fffbeb;
+  --yellow-fg: #854d0e;
+  --green-bg: #ecfdf5;
+  --green-fg: #166534;
 }
 
+/* An explicit theme overrides the device; system mode follows it automatically. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a3a3a3;
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --background: #101820;
+    --surface: #1c2733;
+    --foreground: #f1f5f9;
+    --muted: #cbd5e1;
+    --primary: #93c5fd;
+    --on-primary: #17212b;
+    --border: #94a3b8;
+    --red-bg: #461a26;
+    --red-fg: #fecdd3;
+    --yellow-bg: #382b10;
+    --yellow-fg: #fde68a;
+    --green-bg: #15382b;
+    --green-fg: #bbf7d0;
   }
 }
-
-/* Lets us write Tailwind classes such as `bg-background` or `text-muted`. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #101820;
+  --surface: #1c2733;
+  --foreground: #f1f5f9;
+  --muted: #cbd5e1;
+  --primary: #93c5fd;
+  --on-primary: #17212b;
+  --border: #94a3b8;
+  --red-bg: #461a26;
+  --red-fg: #fecdd3;
+  --yellow-bg: #382b10;
+  --yellow-fg: #fde68a;
+  --green-bg: #15382b;
+  --green-fg: #bbf7d0;
+}
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
 }
-
+html {
+  font-size: 18px;
+}
 body {
   background: var(--background);
   color: var(--foreground);
+  line-height: 1.6;
+}
+h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 750;
+  line-height: 1.15;
+}
+h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+h3,
+legend {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+p {
+  overflow-wrap: anywhere;
+}
+:where(button, select, input, a):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.button,
+.choice,
+select {
+  min-height: 64px;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  font: inherit;
+}
+.button {
+  padding: 0.7rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.button-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
+.button-secondary,
+select {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.button:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.card {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.card > * + * {
+  margin-top: 0.75rem;
+}
+.verdict {
+  border: 2px solid currentColor;
+}
+.verdict-red {
+  background: var(--red-bg);
+  color: var(--red-fg);
+}
+.verdict-yellow {
+  background: var(--yellow-bg);
+  color: var(--yellow-fg);
+}
+.verdict-green {
+  background: var(--green-bg);
+  color: var(--green-fg);
+}
+.big-choice {
+  min-width: 0;
+}
+.choice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: var(--surface);
+}
+.choice:has(:checked) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.choice input {
+  width: 1.5rem;
+  height: 1.5rem;
+  accent-color: var(--primary);
+}
+.big-choice:disabled .choice {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.theme-control {
+  display: grid;
+  gap: 0.4rem;
+}
+.theme-control select {
+  padding: 0.5rem 1rem;
+  max-width: 100%;
+}
+.muted {
+  color: var(--muted);
+}
+.ui-preview {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+.preview-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.preview-header p {
+  margin-top: 0.75rem;
+}
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.preview-panel {
+  background: var(--background);
+  color: var(--foreground);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  min-width: 0;
+}
+.preview-panel > * + * {
+  margin-top: 1.25rem;
+}
+.sample-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+@media (max-width: 800px) {
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
 }

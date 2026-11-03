@@ -499,7 +499,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why this one:**
 - The jury scores **"original components and design"**. Bootstrap and Material UI give a recognisable "default" look that's hard to make our own; Tailwind gives building blocks, not finished components.
-- Colour tokens for light/dark mode live in CSS variables (`globals.css`, `@theme`), so the whole app switches theme with no extra code.
+- Colour tokens for light/dark mode live in CSS variables (`globals.css`, `@theme`); the theme control selects a palette without duplicating component styles.
 - Only the classes we use end up in the CSS file, which keeps pages small for cheap phones.
 - Plain CSS would work too, but it's slower to keep consistent across many screens with two people.
 
@@ -509,7 +509,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed a large set of complex widgets (date pickers, data grids) fast; then a component kit would save time.
 
-### Our own design system  (status: decided, not built yet (week 1))
+### Our own design system  (status: in use; W1-11 browser verification outstanding)
 
 **Used for:** `Button`, `Card`, `Verdict`, `BigChoice`, `ThemeToggle` and colour/typography tokens in `src/components/ui/`, shown on a `/dev/ui` preview page.
 
@@ -519,9 +519,13 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Scored directly ("original components and design").
 - Our main user needs things kits don't offer by default: very large tap targets (≥ 64 px), base font ≥ 18 px, very high contrast, three verdict colours with words, not colour alone.
 - We check WCAG AA contrast for every colour pair, in both themes.
+- Native buttons and fieldset/radio groups preserve keyboard and screen-reader behaviour without another UI dependency. Component props are explained as Python keyword arguments in the code.
+- A three-choice theme control allows an explicit light/dark preference or the device setting. `localStorage` remembers only this non-sensitive preference; denied storage does not stop the control working, and system mode tracks device changes.
+- Verdicts include words alongside colours and use the D9 green wording. The preview shows both palettes together so changes can be reviewed consistently.
 
 **What we give up:**
 - More work; accessibility details (focus rings, keyboard use) are now our responsibility.
+- A saved browser preference is available after client initialization; without browser JavaScript the stylesheet can still follow the device palette, but the control cannot save a new choice.
 
 **We would reconsider if:** time ran out; then we'd keep our own look for the protected screens and use simpler styling for admin pages.
 
@@ -1261,6 +1265,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why this one:**
 - Comes with Node.js, nothing extra to install, the default in every tutorial and on Vercel.
+- Clean installs use `npm ci`. During W1-11 setup it rejected a missing optional Oxide WebAssembly lockfile entry, so `npm install` repaired the lockfile rather than replacing pinned package versions or changing package managers. An offline npm ci dry run now accepts the repaired lockfile.
 
 **What we give up:**
 - Slower installs and more disk use than pnpm.
@@ -1347,3 +1352,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 - 2026-11-03 · created
 - 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)
+- 2026-11-03 · design-system entry is now implemented: native controls, accessible sizing, textual verdicts, theme persistence and both-theme preview; npm run check passes, browser verification remains blocked by a local Turbopack CSS-worker crash. Documented the npm lockfile repair for the missing optional Oxide WebAssembly entry.

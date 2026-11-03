@@ -94,7 +94,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Login, register, roles in the API (`getActor`, `requireRole`, route guards) | ⬜ planned (week 1, W1-06) | `src/server/auth/`, `src/proxy.ts` | |
 | Device pairing (code + redeem endpoints, `/svarzhi` page, revoke) | ⬜ planned (week 1, W1-07) | `src/app/api/...`, `src/server/services/` | |
 | Detection engine v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
-| Design system (colours, Button, Card, Verdict...) | ⬜ planned (week 1, W1-11) | `src/components/ui/` | |
+| Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | 🔄 implemented; browser verification blocked (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.6; npm run check passes; browser build blocked |
 | Seed script with demo accounts | ⬜ planned (week 1, W1-12, Roberta, D20) | `scripts/seed.ts` | |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
@@ -130,14 +130,14 @@ Next.js **App Router** turns folders and files in `src/app/` into web addresses 
 | `src/app/page.tsx` | The page for `/`. Exports a function `HomePage()` that returns the page as JSX (HTML-like code). |
 | `src/app/layout.tsx` | The **root layout**: the `<html>` and `<body>` around *every* page. Sets `lang="bg"` and exports `metadata` (tab title and description). |
 | `src/app/not-found.tsx` | The root not-found page. Next.js shows it, with HTTP status 404, for every URL that matches no page. |
-| `src/app/globals.css` | Global styles: loads Tailwind CSS and defines light/dark colours (`--background`, `--foreground`, `--muted`) that follow the device's setting. |
+| `src/app/globals.css` | Global styles: loads Tailwind CSS and defines the design system's light/dark colour tokens, typography, focus styles and large controls. |
 
 Step by step, when someone opens `/`:
 
 1. The browser asks the Next.js server for `/`.
 2. App Router finds `src/app/page.tsx` for that URL and the layout above it (`src/app/layout.tsx`).
 3. It calls `RootLayout({ children: <HomePage /> })`. The page is put where the layout writes `{children}`.
-4. Both are **server components** (none of our files says `"use client"`), so React turns them into HTML on the server. No page code has to run in the browser.
+4. Both are **server components**, so React turns their static content into HTML on the server. Interactive components such as the design system's theme control use `"use client"` and add the browser code needed for their behaviour.
 5. Because `next.config.ts` turns on `cacheComponents: true` and the home page uses no request data, Next.js **pre-renders it once at build time**. After `npm run build` you can see the result as `.next/server/app/index.html`. Every visitor gets that ready-made HTML.
 6. The text comes from `bg` (the Bulgarian text file), for example `{bg.app.tagline}`.
 
@@ -163,10 +163,10 @@ Note: this is **Next.js 16.4**. Some names differ from older tutorials (see `AGE
 #### Why it works like that
 
 - **`lang="bg"`**: screen readers then read the page with Bulgarian pronunciation, and browsers offer the right spell-check and translation. The jury scores accessibility and correct Bulgarian.
-- **Server components by default**: less JavaScript sent to cheap Android phones, so pages load faster on slow 4G. We will add `"use client"` only where a page needs clicks or live updates.
+- **Server components by default**: less JavaScript sent to cheap Android phones, so pages load faster on slow 4G. We use `"use client"` only where a component needs interaction or browser APIs.
 - **Pre-rendering**: a static page can't break at request time and is very fast.
 - **Pages contain no text and no logic**: text lives in `bg.ts`; logic will live in `src/server/` and `src/engine/`. This keeps the UI separate from business logic (a scored criterion).
-- **The temporary colours** in `globals.css` are only a start; the design system (W1-11) replaces them.
+- **Shared design tokens** in `globals.css` give screens consistent colours, type sizes and focus styles (section 3.6).
 - Why Next.js and Tailwind at all: see [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md).
 
 #### How we know it works
@@ -291,6 +291,30 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 #### How we know it works
 
 `src/lib/env.test.ts`, 4 tests with fake values only: a valid set passes and gets `EMAIL_PROVIDER = "noop"`; an empty set names the missing `SUPABASE_SERVICE_ROLE_KEY`; an empty `HASH_PEPPER` counts as missing; `EMAIL_PROVIDER=gmail` is rejected.
+
+---
+
+### 3.6 Design system (W1-11)
+
+#### What it does
+
+Provides reusable `Button`, `Card`, `Verdict`, `BigChoice` and `ThemeToggle` components. The `/dev/ui` page shows interactive examples in both light and dark themes. This is a component preview, not the finished call-check flow.
+
+#### How it works
+
+- CSS variables in `src/app/globals.css` hold semantic colours for backgrounds, text, controls and the three verdict levels. The stylesheet lists the checked contrast ratios in a comment, uses a base font of at least 18 px and gives buttons at least 64 px of height.
+- Components receive **props**: named inputs such as children, disabled state or the selected answer. Think of props as Python function keyword arguments; React uses them to produce the HTML.
+- `Button` uses a native button, `Card` groups content, and `BigChoice` uses a fieldset with native radio inputs. Browser keyboard behaviour and form semantics remain available instead of being recreated with clickable divs.
+- `Verdict` displays a written level and explanation alongside its colour. Its green wording follows D9: no typical signs were found, but the person should hang up and call a familiar number if in doubt. All visible Bulgarian strings come from `src/i18n/bg.ts`.
+- `ThemeToggle` offers system, light and dark choices. It remembers the preference in `localStorage`, follows device-theme changes in system mode and continues to work if browser storage is denied. It is a client component because it needs browser settings and interaction; the static page content can remain server-rendered.
+
+#### Why it works like that
+
+Large controls and readable text support older people using small phones. Shared tokens keep both themes consistent. Native controls provide established keyboard and screen-reader behaviour. Words as well as colours communicate the verdict, and D9 avoids promising that an unfamiliar call is safe. The theme setting contains only a display preference, no personal or account data.
+
+#### How we know it works
+
+`npm run check` passes (lint, types, formatting and 11 unit tests). WCAG sRGB contrast calculations confirm the documented text pairs exceed 4.5:1. Browser tests in `tests/e2e/ui.spec.ts` cover saved themes, system changes, keyboard answers, 360 px layout and 64 px buttons, but could not run: Turbopack crashes while starting the CSS worker on this Windows computer, both inside and outside the sandbox and under Node 22 and 24. Browser verification remains outstanding. The `/dev/ui` page is the manual review surface for both palettes, keyboard focus, answer selection, disabled controls, and saved theme choices. No database files change in this task.
 
 ---
 
@@ -1035,7 +1059,7 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 |---|---|
 | **App Router** | Next.js's way of turning folders in `src/app/` into URLs; `page.tsx` = a page, `layout.tsx` = the frame around pages. Like Flask routes, but defined by folders instead of decorators. |
 | **Server component** | A React component that runs only on the server and sends HTML; like a Jinja template rendered by Flask. All our components are server components so far. |
-| **Client component** | A component marked `"use client"` that also runs in the browser (for clicks, live updates). None yet. |
+| **Client component** | A component marked `"use client"` that also runs in the browser (for clicks, live updates). Examples: ThemeToggle, BigChoice and the UI preview. |
 | **Route handler** | A `route.ts` file that answers HTTP requests (GET, POST...) with JSON: our REST API. Like a Flask view function. Planned. |
 | **Proxy** (`proxy.ts`) | Next.js 16's name for code that runs before every request (session refresh, route guards). Called "middleware" in older versions. Planned. |
 | **Pre-rendering** | Building a page's HTML once at build time instead of on every request. |
@@ -1089,3 +1113,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · created, covers Week 1 foundations (scaffold, CI, database, RLS, DB tests)
 - 2026-11-03 · added section 4.5 and a status row: agent rules files (`AGENTS.md` shared by Claude Code and Codex, `CLAUDE.md` imports it, D21); seed (W1-12) and deploy (W1-13) rows updated for D20
 - 2026-11-03 · added "The live database": cloud Supabase project set up with the 6 migrations via the SQL Editor; how to apply future migrations
+- 2026-11-03 · added W1-11 design tokens, reusable components, persistent system/light/dark choice and `/dev/ui` preview; static checks pass, browser verification blocked by the local Turbopack CSS worker crash. Repaired the npm lockfile's missing optional Oxide WebAssembly entry with `npm install` so clean dependency installation can proceed.

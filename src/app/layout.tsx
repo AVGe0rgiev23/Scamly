@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { bg } from "@/i18n/bg";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import "./globals.css";
 
 // Title and description shown in the browser tab and in search results.
@@ -17,7 +18,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="bg" className="h-full antialiased">
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <div className="mx-auto w-full max-w-7xl px-6 py-4">
+          <ThemeToggle />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }
