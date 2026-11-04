@@ -697,11 +697,13 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 **Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count the AI agent's typing time. Each task = 1 GitHub issue.
 
-**Who owns what (D17, D18, D20, updated 3 Nov).** Alex leads the backend, Roberta leads the frontend, but the split is mixed. **Owner** = the person who mainly builds the task and must explain it in the defense. It does **not** mean the other person may not touch it. If you want to change something the other person owns: tell them first, pull, make the change in your own session under your own name, and the owner reads the commit on GitHub afterwards. When a task is split, the Owner column names both people and the **h** column shows each person's share. In the totals, shared (A+R) tasks count half for each person.
+**Who owns what (D17, D18, D20, D23; updated 4 Nov).** Since D23, both of us work on backend **and** frontend. Done tasks keep their owners. For the remaining tasks (Weeks 2–5): Alex ≈ 63 % of the backend and ≈ 39 % of the frontend, Roberta ≈ 37 % of the backend and ≈ 61 % of the frontend, shared tasks half/half. **Owner** = the person who mainly builds the task and must explain it in the defense. It does **not** mean the other person may not touch it. If you want to change something the other person owns: tell them first, pull, make the change in your own session under your own name, and the owner reads the commit on GitHub afterwards. When a task is split, the Owner column names both people and the **h** column shows each person's share. In the totals, shared (A+R) tasks count half for each person. From Week 2 on, the totals count **remaining** work only.
+
+**Commit style (D23).** Roberta makes one commit per step, Alex one commit per task. Every commit is real work by its author. Expected end: about 65–70 commits each.
 
 **Git workflow (decided, Q3 + Q16).** There is **one branch only: `main`**. No feature branches, no pull requests. The AI agent (Claude Code for Alex, Codex for Roberta, D21) commits in the name of whoever is working (Alex or Roberta), with no AI attribution lines of any tool, and pushes to `main` only after that person says "push". Before every push, lint, type-check and tests must pass locally.
 
-Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. "A · UI by R" = Alex owns the task, Roberta builds the named part. ✂ = may be cut (D12 order).
+Legend: **A** = Alex, **R** = Roberta, **A+R** = shared. "A · UI by R" = Alex owns the task, Roberta builds the named part (and the other way round). ✂ = may be cut (D12 order).
 
 ### Week 1 (2–8 Nov): foundations + engine v1
 
@@ -730,68 +732,69 @@ Week 1 totals (after D20): **A ≈ 45.5 h** (17 h already done: W1-01, W1-02, W1
 | ID | Task | Owner | h | Depends on | Done when |
 |---|---|---|---|---|---|
 | W2-01 | Protected UI: home with the giant button, wizard (4 + 1 questions), optional text, result screen (red/yellow/green), `tel:` button to contact #1, start-after-call link | R | 8 | W1-11, W1-09 | Works on a cheap Android at 360 px; all text from `bg.ts`; base font ≥ 18 px, buttons ≥ 64 px |
-| W2-02 | Checks API + service: `POST /api/checks`, `PUT /answers` (engine on server), `GET` endpoints; offline fallback in the wizard | A | 6 | W1-07, W1-09 | Integration tests: device can only touch own checks; verdict stored; network-off test shows local verdict |
-| W2-03 | Alert fan-out + Realtime: alert rows on start + on verdict; family live page `/family/alerts` subscribed via Realtime with a 5 s polling fallback | A · live alert page UI by R | 6 (A 4 · R 2) | W2-02 | Pressing the button on phone A shows the alert on browser B in < 3 s |
-| W2-04 | Acknowledge: „Обаждам ѝ се сега“ → protected screen shows „Иван ще ви се обади веднага“ (Realtime on the check) | A · button UI by R | 3 (A 2 · R 1) | W2-03 | Round trip works in the e2e test W2-11 |
-| W2-05 | Web push: VAPID keys, service worker, opt-in UI, send on alert, cleanup of dead subscriptions; iOS "add to home screen" hint | A · opt-in UI + iOS hint by R | 6 (A 5 · R 1) | W2-03 | Push arrives on Android Chrome; on iOS after A2HS (manual test noted in evidence) |
-| W2-06 | `EmailProvider` interface + `BrevoEmailProvider` + `NoopEmailProvider` (+ `ResendEmailProvider` stub); alert email template in Bulgarian | A · email wording by R | 4 (A 3 · R 1) | W1-01 | Switching `EMAIL_PROVIDER=noop` needs no code change; unit tests with a fake HTTP client |
-| W2-07 | Family dashboard UI: people list, create person, contacts order (drag or ↑↓), pairing screen with QR, devices + revoke, check history | R | 8 | W1-07, W2-02 | All actions work through the API; empty/loading/error states in Bulgarian |
-| W2-08 | Contacts + invite API: `PUT contacts`, invites create/redeem | A | 4 | W1-05 | A second family account receives alerts after redeeming an invite |
-| W2-09 | PWA: manifest, icons, install prompt, offline "what to do" card | R | 3 | W2-01 | Lighthouse "installable" ✓; card shows in airplane mode |
-| W2-10 | ✂ Voice input (Web Speech API, `bg-BG`), hidden where unsupported, typing always available | R | 3 | W2-01 | Works in Chrome Android; button absent in unsupported browsers; no errors |
-| W2-11 | E2E: protected device presses the button → family context sees the alert → acknowledges → protected sees the message (2 Playwright contexts) | A+R | 4 | W2-04 | Green in CI against local Supabase |
-| W2-12 | `docs/learning/week-2.md` (Realtime, service workers, React state) | A+R | 2 | all | Written |
+| W2-02 | Checks API + service: `POST /api/checks`, `PUT /answers` (engine on server), `GET` endpoints; offline fallback in the wizard | A ✅ (offline fallback: part of W2-01) | 6 | W1-07, W1-09 | Integration tests: device can only touch own checks; verdict stored; network-off test shows local verdict |
+| W2-03 | Alert fan-out + Realtime: alert rows on start + on verdict; family live page `/family/alerts` subscribed via Realtime with a 5 s polling fallback | A (backend ✅ · live alert page UI) | 6 (backend 4 ✅ · UI 2) | W2-02 | Pressing the button on phone A shows the alert on browser B in < 3 s |
+| W2-04 | Acknowledge: „Обаждам ѝ се сега“ → protected screen shows „Иван ще ви се обади веднага“ (Realtime on the check) | A (backend ✅ · button UI) | 3 (backend 2 ✅ · UI 1) | W2-03 | Round trip works in the e2e test W2-11 |
+| W2-05 | Web push: VAPID keys, service worker, opt-in UI, send on alert, cleanup of dead subscriptions; iOS "add to home screen" hint | A (backend ✅ + real-phone test · opt-in UI + iOS hint) | 6 (backend 5 ✅ · UI 1) | W2-03 | Push arrives on Android Chrome; on iOS after A2HS (manual test noted in evidence) |
+| W2-06 | `EmailProvider` interface + `BrevoEmailProvider` + `NoopEmailProvider` (+ `ResendEmailProvider` stub); alert email template in Bulgarian | A (backend ✅ + real Brevo test) · e-mail wording by R | 4 (A 3 ✅ · R 1) | W1-01 | Switching `EMAIL_PROVIDER=noop` needs no code change; unit tests with a fake HTTP client |
+| W2-07 | Family dashboard UI: people list, create person, contacts order (drag or ↑↓), pairing screen with QR, devices + revoke, check history | A | 8 | W1-07, W2-02 | All actions work through the API; empty/loading/error states in Bulgarian |
+| W2-08 | Contacts + invite API: `PUT contacts`, invites create/redeem | A ✅ (`/pokana` page: W2-14) | 4 | W1-05 | A second family account receives alerts after redeeming an invite |
+| W2-09 | PWA: manifest, icons, install prompt, offline "what to do" card; also the push icons `/icons/icon-192.png` and `/icons/badge-72.png` and the offline card in `public/sw.js` | R | 3 | W2-01 | Lighthouse "installable" ✓; card shows in airplane mode |
+| W2-10 | ✂ Voice input (Web Speech API, `bg-BG`), hidden where unsupported, typing always available | A | 3 | W2-01 | Works in Chrome Android; button absent in unsupported browsers; no errors |
+| W2-11 | E2E: protected device presses the button → family context sees the alert → acknowledges → protected sees the message (2 Playwright contexts) | A+R (Alex leads) | 4 (A 2 · R 2) | W2-04 | Green in CI against local Supabase |
+| W2-12 | `docs/learning/week-2.md` (Realtime, service workers, React state) | A+R (half each) | 2 (A 1 · R 1) | all | Written |
 | W2-13 | **Site layout + home page (added 4 Nov, D22):** top bar with the Scamly logo, a small theme switch (replaces the full-width „Изглед“ field) and links („Вход“, „Регистрация“, „Свържи телефон“); footer; a real home page (the problem in one sentence, the 3 steps: pair the phone → press the button → the family is alerted, start buttons). Do it **before** W2-01 so every new page gets the frame | R | 4 | W1-11 | Every page shows the header and footer at 360 px and 1366 px, in light and dark; no full-width theme field; all text in `bg.ts` |
+| W2-14 | **`/pokana` invite page (added 4 Nov, D23):** the page a second family member opens from the invite link | R | 1 | W2-08 | Accepting an invite links the account; the token is POSTed immediately; `Referrer-Policy: no-referrer` |
 
-Totals: **A ≈ 27 h, R ≈ 34 h** (R includes W2-13, added 4 Nov).
+Totals, remaining work after D23: **A ≈ 18 h, R ≈ 20 h**. Alex: W2-07 (8), W2-10 ✂ (3), the UIs of W2-03 (2), W2-04 (1) and W2-05 (1), half of W2-11 (2) and W2-12 (1); plus the W2-05 real-phone test and the W2-06 real Brevo test (inside their done hours). Roberta: W2-01 (8), W2-13 (4), W2-09 (3), W2-14 (1), W2-06 wording (1), half of W2-11 (2) and W2-12 (1). Alex also has W1-13 deploy (2 h, Mon 9 Nov, D20).
 
 ### Week 3 (16–22 Nov): public side, admin, AI
 
 | ID | Task | Owner | h | Depends on | Done when |
 |---|---|---|---|---|---|
 | W3-01 | Reports API: submit (Zod, honeypot, rate limit 3/h per IP, redaction), `get_map_stats` function | A | 4 | W1-05 | Integration tests: honeypot filled → silently dropped; 4th report → 429 |
-| W3-02 | Report form UI (guest) | R | 2 | W3-01 | Form works without login, all text in Bulgarian |
+| W3-02 | Report form UI (guest) | A | 2 | W3-01 | Form works without login, all text in Bulgarian |
 | W3-03 | District map: simplify GeoJSON (< 300 KB), Leaflet choropleth, legend, "scam wave" texts, ODbL attribution | R | 7 | W3-01 | Map loads on 4G in < 3 s; attribution visible; entries added to `THIRD_PARTY_LICENSES.md` |
-| W3-04 | Moderation: queue API + UI (approve/reject with reason), audited | A (API) + R (UI) | 4 (A 2 · R 2) | W3-01 | Approved report appears on the map; rejected never does |
-| W3-05 | Education pages from `scam_scripts` + moderator script editor (incl. extra keywords fed to the engine) | R (pages + editor UI) · API by A | 6 (R 4 · A 2) | W1-05 | 4 script cards seeded; editor change appears after publish |
-| W3-06 | Admin: users + role change (audited, no self-demotion), stats charts, audit log view | A (API) + R (admin UI, charts) | 7 (A 4 · R 3) | W1-06 | Each admin action creates an audit row (tested) |
+| W3-04 | Moderation: queue API + UI (approve/reject with reason), audited | R (API) + A (UI) | 4 (R 2 · A 2) | W3-01 | Approved report appears on the map; rejected never does |
+| W3-05 | Education pages from `scam_scripts` + moderator script editor (incl. extra keywords fed to the engine) | R (API + pages + editor UI) | 6 (API 2 · UI 4) | W1-05 | 4 script cards seeded; editor change appears after publish |
+| W3-06 | Admin: users + role change (audited, no self-demotion), stats charts, audit log view | A (API + admin UI, charts) | 7 (API 4 · UI 3) | W1-06 | Each admin action creates an audit row (tested) |
 | W3-07 | ✂ AI layer: `ScamClassifier`, Gemini + Groq providers, `ClassifierChain`, `combineVerdicts`, `/ai-review` | A | 7 | W2-02 | Tests with fake providers: timeout → next; invalid JSON → next; all down → rules; AI never lowers red |
 | W3-08 | „Помощ“ pages per role (user documentation, with screenshots) | R | 3 | W2-07 | One page per role, linked from each dashboard |
-| W3-09 | ✂ Escalation: `pg_cron` every minute → `/api/cron/escalate`; contact #2 after N min; suggest 112 | A | 5 | W2-03 | Test: no acknowledgement in N min → alert to priority 2 |
+| W3-09 | ✂ Escalation: `pg_cron` every minute → `/api/cron/escalate`; contact #2 after N min; suggest 112 | R | 5 | W2-03 | Test: no acknowledgement in N min → alert to priority 2 |
 | W3-10 | ✂ Printable fridge card (A5, large text, QR) | R | 2 | W2-07 | Prints cleanly from the browser |
-| W3-11 | `docs/learning/week-3.md` | A+R | 2 | all | Written |
+| W3-11 | `docs/learning/week-3.md` | A+R | 2 (A 1 · R 1) | all | Written |
 
-Totals: **A ≈ 25 h, R ≈ 24 h**. If behind on Sunday 22 Nov: drop W3-07 (AI) first, then W3-09 (escalation), per D12. Both are Alex's, so cutting them frees Alex, not Roberta.
+Totals after D23: **A ≈ 23 h, R ≈ 26 h**. Alex: W3-01 (4), W3-02 (2), W3-04 UI (2), W3-06 (7), W3-07 ✂ (7), half of W3-11 (1). Roberta: W3-03 (7), W3-04 API (2), W3-05 (6), W3-08 (3), W3-09 ✂ (5), W3-10 ✂ (2), half of W3-11 (1). If behind on Sunday 22 Nov: drop W3-07 (AI, Alex) first, then W3-09 (escalation, Roberta), per D12.
 
 ### Week 4 (23–29 Nov): harden, test, validate, register
 
 | ID | Task | Owner | h | Depends on | Done when |
 |---|---|---|---|---|---|
 | W4-01 | Security hardening: CSP with nonce, security headers (HSTS, frame-ancestors, referrer, permissions), origin check, `npm audit`, secret scan; `docs/security.md` table | A | 6 | all | securityheaders.com grade A (screenshot in evidence) |
-| W4-02 | Security tests, one per attack: SQLi string, XSS payload rendered as text, CSRF (foreign origin → 403), brute-force pairing → 429, IDOR → 404, spam → 429/honeypot | A | 4 | W4-01 | Each row of `docs/security.md` links to a passing test |
-| W4-03 | E2E per role: guest (map, report), family (create person, pair, history), moderator (approve), admin (role change); axe accessibility checks | A+R | 8 | all | Playwright HTML report saved in `docs/evidence/` |
-| W4-04 | Lighthouse (mobile, slow 4G) on landing, protected home, map; fix issues | R | 4 | all | Scores and screenshots in `docs/evidence/` |
-| W4-05 | Usability test with 3–5 older relatives (script + consent + notes + fixes) | A+R | 5 | W2-01 | Notes in `docs/evidence/usability.md`, ≥ 3 issues found and fixed |
-| W4-06 | Bulgarian proofreading of `bg.ts` + in-app help (ask a Bulgarian-language teacher to review) | R | 3 | all | Proofread version merged; teacher's name in acknowledgements |
-| W4-07 | Privacy notice (bg), account deletion + export tested | A (delete/export API) + R (notice text) | 3 (A 2 · R 1) | W1-06 | Deleting a family account removes all its people, checks and devices (test) |
-| W4-08 | Release: freeze `main`, tag `v1.0.0`, seed production demo accounts, verify every login | A+R | 2 | all | Demo table in README verified on production |
-| W4-09 | **Register on the tournament site by 27.11** (2 days of buffer before the 29.11 deadline) | A+R | 1 | W4-08 | Confirmation email saved |
+| W4-02 | Security tests, one per attack: SQLi string, XSS payload rendered as text, CSRF (foreign origin → 403), brute-force pairing → 429, IDOR → 404, spam → 429/honeypot | R | 4 | W4-01 | Each row of `docs/security.md` links to a passing test |
+| W4-03 | E2E per role: guest (map, report), family (create person, pair, history), moderator (approve), admin (role change); axe accessibility checks | A+R (each writes the tests for their own pages) | 8 (A 4 · R 4) | all | Playwright HTML report saved in `docs/evidence/` |
+| W4-04 | Lighthouse (mobile, slow 4G) on landing, protected home, map; fix issues | A | 4 | all | Scores and screenshots in `docs/evidence/` |
+| W4-05 | Usability test with 3–5 older relatives (script + consent + notes + fixes) | A+R | 5 (A 2.5 · R 2.5) | W2-01 | Notes in `docs/evidence/usability.md`, ≥ 3 issues found and fixed |
+| W4-06 | Bulgarian proofreading of `bg.ts` + in-app help (ask a Bulgarian-language teacher to review), incl. the `bg.ts` sections marked "draft — Roberta to proofread" | R | 3 | all | Proofread version merged; teacher's name in acknowledgements |
+| W4-07 | Privacy notice (bg), account deletion + export tested | R (delete/export API + notice text) | 3 (API 2 · text 1) | W1-06 | Deleting a family account removes all its people, checks and devices (test) |
+| W4-08 | Release: freeze `main`, tag `v1.0.0`, seed production demo accounts, verify every login | A+R | 2 (A 1 · R 1) | all | Demo table in README verified on production |
+| W4-09 | **Register on the tournament site by 27.11** (2 days of buffer before the 29.11 deadline) | A+R | 1 (A 0.5 · R 0.5) | W4-08 | Confirmation email saved |
 
-Totals: **A ≈ 20 h, R ≈ 16 h**.
+Totals after D23: **A ≈ 18 h, R ≈ 18 h**. Alex: W4-01 (6), W4-04 (4), half of W4-03 (4), W4-05 (2.5), W4-08 (1), W4-09 (0.5). Roberta: W4-02 (4), W4-06 (3), W4-07 (3), half of W4-03 (4), W4-05 (2.5), W4-08 (1), W4-09 (0.5).
 
 ### Week 5 (30 Nov – 3 Dec): present
 
 | ID | Task | Owner | h | Depends on | Done when |
 |---|---|---|---|---|---|
-| W5-01 | 5-page documentation (exact regulation structure, TNR 12, 1.5 spacing), file named `Scamly.docx`/`.pdf` | A+R (A: 4.4–4.6, R: 4.1–4.3, 4.7) | 8 (A 4 · R 4) | W4 | ≤ 5 pages, checked by our teacher |
+| W5-01 | 5-page documentation (exact regulation structure, TNR 12, 1.5 spacing), file named `Scamly.docx`/`.pdf` | A+R (each writes the sections about their own parts) | 8 (A 4 · R 4) | W4 | ≤ 5 pages, checked by our teacher |
 | W5-02 | Promo leaflet (1 page, printed) | R | 3 | none | Printed copy |
-| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team) | A+R (design by R) | 4 (A 1.5 · R 2.5) | none | ≤ 12 slides, rehearsed |
+| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team) | A+R (half each) | 4 (A 2 · R 2) | none | ≤ 12 slides, rehearsed |
 | W5-04 | Demo video of all flows + local build on a labelled flash drive (with offline instructions) | A | 3 | W4-08 | Video plays from the USB drive on another laptop |
-| W5-05 | Rehearse the defense ×5 (timed), Q&A drill with section 14 questions | A+R | 6 | all | Last two runs ≤ 8 min demo, every question answered by either of us |
+| W5-05 | Rehearse the defense ×5 (timed), Q&A drill with section 14 questions | A+R | 6 (A 3 · R 3) | all | Last two runs ≤ 8 min demo, every question answered by either of us |
 
-Totals: **A ≈ 11.5 h, R ≈ 12.5 h**.
+Totals after D23: **A ≈ 12 h, R ≈ 12 h**. Alex: W5-04 (3) + half of W5-01 (4), W5-03 (2), W5-05 (3). Roberta: W5-02 (3) + half of W5-01 (4), W5-03 (2), W5-05 (3).
 
-**Whole project (3 Nov split):** A ≈ 132 h, R ≈ 98 h. Most of the gap is in Week 1 (already-done backend work plus the engine logic moving to Alex).
+**Remaining work, Weeks 2–5 (D23, 4 Nov):** **A ≈ 71 h, R ≈ 76 h** (backend A 24 h · R 15 h; frontend A 26 h · R 40 h; shared 21 h each). Roberta has slightly more because Alex did more in Weeks 1–2. *History:* the 3 Nov split (D17) was A ≈ 132 h, R ≈ 98 h for the whole project.
 
 ---
 
@@ -836,6 +839,7 @@ If you're happy with a default, just reply "approve" (or "approve except Qx"). D
 | **Q19** | How do we keep an explanation of the whole system for the docs and the defense? | ✅ **Decided 3 Nov (D19): two living files**, `docs/HOW_IT_WORKS.md` and `docs/WHY_WE_CHOSE.md`, updated in the same commit as every change. |
 | **Q20** | Alex's Week 1 load (≈ 31.5 h left) is about twice Roberta's (≈ 15.5 h). Rebalance? | ✅ **Decided 3 Nov (D20): option A.** W1-12 seed script moves to Roberta (3 h, after Alex's W1-07 pairing); W1-13 deploy stays Alex's but moves to Mon 9 Nov. New totals: A ≈ 45.5 h (28.5 h left), R ≈ 18.5 h. |
 | **Q21** | Roberta works with OpenAI Codex on her own computer, Alex with Claude Code in the cloud. Where do the rules live? | ✅ **Decided 3 Nov (D21): in `AGENTS.md`**, shared by both tools (Codex reads `AGENTS.md`; `CLAUDE.md` just imports it). Rules are tool-neutral; no AI attribution of any tool in commits; Roberta's commits use her own local git config. |
+| **Q23** | Both of us want to work on backend and frontend, and the git history should show equal, honest work. How do we split the remaining tasks? | ✅ **Decided 4 Nov (D23): mixed split.** Remaining Weeks 2–5: Alex ≈ 63 % of the backend and ≈ 39 % of the frontend, Roberta the rest; shared tasks half/half. Totals A ≈ 71 h, R ≈ 76 h. Roberta commits once per step, Alex once per task; about 65–70 commits each by the end. New task W2-14 (`/pokana`, Roberta). |
 | **Q4** | The questions: 3 (brief) vs **4 + 1 conditional** (section 4.1)? | 4 + 1 conditional. The usability test in W4-05 will tell us whether it's too many. |
 | **Q5** | AI may raise the verdict by **at most one level** and its text is shown **only to family** (4.10)? | Yes to both. |
 | **Q6** | Offline engine fallback on the phone (4.9)? | Yes. It's cheap because the engine is pure, and it's a strong reliability argument. |

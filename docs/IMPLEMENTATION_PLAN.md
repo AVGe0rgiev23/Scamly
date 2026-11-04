@@ -11,7 +11,7 @@
 > - Rules every AI agent session reads first (Claude Code and Codex): [`AGENTS.md`](../AGENTS.md) (D21); `CLAUDE.md` only points to it
 > - *How* we work, *what's next*, *what's done*: **this file**
 
-Last updated: 3 November 2026 (new work split D17–D19, Week 1 rebalance D20, Codex for Roberta D21).
+Last updated: 4 November 2026 (mixed split for all remaining work and commit style, D23; earlier: work split D17–D19, Week 1 rebalance D20, Codex for Roberta D21).
 
 ---
 
@@ -25,7 +25,8 @@ Last updated: 3 November 2026 (new work split D17–D19, Week 1 rebalance D20, C
       Roberta: it only checks that her own git config says "Roberta Hristova"
  3. Pick the next task from the status board (section 5), or say what you want to change
  4. The agent explains the plan for this task in a few lines → you say OK (or change it)
- 5. The agent builds it, in small commits, in YOUR name only (no AI attribution lines)
+ 5. The agent builds it, in YOUR name only (no AI attribution lines):
+      Roberta: one commit per step · Alex: one commit per task (D23)
  6. In the same commits, the agent updates docs/HOW_IT_WORKS.md and docs/WHY_WE_CHOSE.md (D19)
  7. The agent runs the checks: npm run check (+ npm run test:db if supabase/ changed)
  8. The agent updates the status board in this file
@@ -37,10 +38,13 @@ Last updated: 3 November 2026 (new work split D17–D19, Week 1 rebalance D20, C
 
 **Rules that keep two people safe on one `main` branch:**
 - **Pull before work, push after work.** Two people on two machines share `main`. Never leave a session with unpushed commits: in Alex's cloud session they'd be lost when the session ends, and on Roberta's computer the other person can't see them, which leads to conflicts later. If a pull has conflicts, the agent stops and explains them to you before doing anything.
-- **Who leads what (D17, D18).** Alex leads the backend, Roberta leads the frontend, but it's mixed. The owner is the person who mainly builds a part and must explain it in the defense. It is **not** a lock: either of you may change anything.
-  - **Alex (backend lead):** `supabase/`, `src/server/` (services, repositories, auth, notifications, AI, security), `src/app/api/`, `src/proxy.ts`, the engine logic in `src/engine/` (everything except `dictionary.ts` and the test-case data), CI, deploy, keep-alive, security hardening, push/email sending (`EmailProvider`), AI layer, escalation, rate limiting, GDPR delete/export API, demo video and USB build.
-  - **Roberta (frontend lead):** `src/components/`, all pages in `src/app/` (protected, family, moderator, admin, public, auth), `src/i18n/bg.ts`, design system, accessibility, light/dark, PWA (manifest, install prompt, offline card), voice input, map UI, education and help pages, fridge card, Lighthouse, Bulgarian proofreading, email text, privacy-notice text, leaflet, slide design; plus the engine dictionary (`src/engine/dictionary.ts`) and the engine test cases (D18), and the seed script `scripts/seed.ts` (W1-12, D20).
-  - **Shared:** e2e tests, ADRs, `docs/`, usability test, the 5-page documentation, slide content, rehearsals, registration.
+- **Who builds what (D23, 4 Nov; before that D17, D18, D20).** Both of us work on backend **and** frontend. Done tasks keep their owners. For the remaining tasks (Weeks 2–5): **Alex ≈ 63 % of the backend and ≈ 39 % of the frontend; Roberta ≈ 37 % of the backend and ≈ 61 % of the frontend; shared tasks half/half.** Remaining hours: Alex ≈ 71 h, Roberta ≈ 76 h. The owner is the person who mainly builds a part and must explain it in the defense. It is **not** a lock: either of you may change anything.
+  - **Alex, backend:** W2-05 web push and W2-06 e-mail (backend done; real-phone and real Brevo tests left), W3-01 reports API, W3-06 admin API, W3-07 ✂ AI layer, W4-01 security hardening, W5-04 demo video + USB build. Already done: CI, database + RLS, auth, pairing, engine logic, checks/alerts/contacts/invites APIs.
+  - **Alex, frontend:** W2-07 family dashboard, the UIs of W2-03 (live alert page), W2-04 („Обаждам ѝ се сега“ button) and W2-05 (opt-in + iOS hint), W2-10 ✂ voice input, W3-02 report form, W3-04 moderation UI, W3-06 admin dashboard + charts, W4-04 Lighthouse.
+  - **Roberta, backend:** W3-04 moderation API, W3-05 scam-script library API, W3-09 ✂ escalation, W4-02 security tests (one per attack), W4-07 account deletion/export API. Already done: seed script, engine dictionary and test cases.
+  - **Roberta, frontend:** W2-13 site layout + home page, W2-01 call-check screen, W2-14 `/pokana` invite page, W2-06 e-mail wording, W2-09 PWA (incl. push icons and the offline card in `public/sw.js`), W3-03 map, W3-05 education pages + script editor, W3-08 help pages, W3-10 ✂ fridge card, W4-06 proofreading (incl. the `bg.ts` sections marked "draft — Roberta to proofread"), W4-07 privacy-notice text, W5-02 leaflet. Already done: design system, login/register/`/svarzhi` pages.
+  - **Shared (half each):** W2-11 e2e (Alex leads), W2-12 and W3-11 learning notes, W4-03 e2e per role (each tests their own pages), W4-05 usability test, W4-08 release, W4-09 registration, W5-01 documentation (each writes about their own parts), W5-03 slides, W5-05 rehearsals.
+- **Commit style (D23): honest, equal history.** Roberta makes one commit per step; Alex makes one commit per task. Every commit is real work by its author. Expected end: about 65–70 commits each. Each of you must explain your own backend and frontend parts in the defense.
 - **Changing something on the other person's side:** (1) tell them first, with what and why; (2) pull; (3) make the change in your own session, under your own name; (4) they read the commit afterwards and say if something is wrong.
 - **Files you'll both touch** (`package.json`, `src/i18n/bg.ts`, `docs/HOW_IT_WORKS.md`, `docs/WHY_WE_CHOSE.md`, this status board): pull right before you edit and push soon after, so you rarely change the same lines at the same time.
 - **Never push red.** If checks fail, the agent fixes them first or tells you why it can't.
@@ -118,7 +122,7 @@ A new cloud session picks up environment changes, so after adding a key, start a
 ## 5. Status board
 
 Statuses: ⬜ to do · 🔄 in progress · ✅ done · ✂️ cut · 🔁 changed (see `CHANGES.md`).
-Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md` section 6. Owners follow D17/D18/D20 (updated 3 Nov).
+Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md` section 6. Owners follow D23 for all remaining work (updated 4 Nov); done tasks keep their D17/D18/D20 owners.
 
 ### Week 1 (2–8 Nov): foundations
 
@@ -144,19 +148,20 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| W2-01 | Protected UI: big button, wizard, result, `tel:` button | Roberta | ⬜ |
-| W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend (UI: Roberta) · offline fallback is part of W2-01 |
-| W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (live alert page UI: Roberta) | ✅ backend (UI: Roberta) · `GET /api/realtime/token`, `src/lib/realtime.ts` ready for the pages |
-| W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (button UI: Roberta) | ✅ backend (UI: Roberta) · round trip in e2e W2-11 |
-| W2-05 | Web push | Alex (opt-in UI + iOS hint: Roberta) | ✅ backend (UI: Roberta, `src/lib/push.ts` ready) · smoke test 22/22; real-phone test pending (iPhone only after "Add to Home Screen") |
-| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · draft wording in `bg.alertEmail` for Roberta · real Brevo e-mail pending (no account yet) |
-| W2-07 | Family dashboard UI | Roberta | ⬜ |
-| W2-08 | Contacts + invite API | Alex | ✅ backend (UI: Roberta) · migration applied 4 Nov; live smoke test 44/44 |
-| W2-09 | PWA | Roberta | ⬜ |
-| W2-10 | ✂ Voice input | Roberta | ⬜ |
-| W2-11 | E2E: button → alert → acknowledge → message | Alex + Roberta | ⬜ |
+| W2-01 | Protected UI: big button, wizard, result, `tel:` button (incl. offline fallback) | Roberta | ⬜ |
+| W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend · offline fallback is part of W2-01 (Roberta) |
+| W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ backend · ⬜ live alert page UI (Alex, D23) · `GET /api/realtime/token`, `src/lib/realtime.ts` ready |
+| W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ backend · ⬜ button UI (Alex, D23) · round trip in e2e W2-11 |
+| W2-05 | Web push | Alex (backend + opt-in UI + iOS hint) | ✅ backend (`src/lib/push.ts` ready) · smoke test 22/22 · ⬜ opt-in UI + iOS hint (Alex, D23) · ⬜ real-phone test (Alex; iPhone only after "Add to Home Screen") · push icons: W2-09 (Roberta) |
+| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ⬜ wording: Roberta, draft in `bg.alertEmail` · ⬜ real Brevo e-mail: Alex (no account yet) |
+| W2-07 | Family dashboard UI | Alex (D23) | ⬜ |
+| W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
+| W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ⬜ |
+| W2-10 | ✂ Voice input | Alex (D23) | ⬜ |
+| W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
 | W2-13 | Site layout + home page (D22) | Roberta | ⬜ |
+| W2-14 | `/pokana` invite page (D23) | Roberta | ⬜ |
 
 ### Weeks 3–5
 
@@ -166,11 +171,12 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |
 
-Owners per week (hours from `BUILD_PLAN.md` section 6; shared tasks count half each):
-- **Week 2 (A ≈ 27 h, R ≈ 30 h; Alex also has W1-13 deploy, 2 h, on Mon 9 Nov, D20).** Alex: W2-02 checks API, W2-03 alert fan-out + Realtime, W2-04 acknowledge, W2-05 web push, W2-06 `EmailProvider` + Brevo, W2-08 contacts + invites API. Roberta: W2-01 protected UI, W2-07 family dashboard, W2-09 PWA, W2-10 ✂ voice, and the UI parts of W2-03 (live alert page), W2-04 (button), W2-05 (opt-in) plus the W2-06 email wording. Roberta also: **W2-13 site layout + home page (4 h, do it first, D22)**. Both: W2-11 e2e, W2-12 learning note.
-- **Week 3 (A ≈ 25 h, R ≈ 24 h).** Alex: W3-01 reports API, W3-07 ✂ AI, W3-09 ✂ escalation, and the APIs of W3-04 (moderation), W3-05 (scripts) and W3-06 (admin). Roberta: W3-02 report form, W3-03 map, W3-08 help pages, W3-10 ✂ fridge card, W3-05 education pages + script editor, and the UIs of W3-04 and W3-06 (incl. charts). Both: W3-11 learning note.
-- **Week 4 (A ≈ 20 h, R ≈ 16 h).** Alex: W4-01 and W4-02 security, W4-07 delete/export API. Roberta: W4-04 Lighthouse, W4-06 proofreading, W4-07 privacy-notice text. Both: W4-03 e2e, W4-05 usability test, W4-08 release, W4-09 registration.
-- **Week 5 (A ≈ 11.5 h, R ≈ 12.5 h).** Alex: W5-04 video + USB. Roberta: W5-02 leaflet. Both: W5-01 documentation (Alex 4.4–4.6, Roberta 4.1–4.3 and 4.7), W5-03 slides (design: Roberta), W5-05 rehearsals.
+Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; shared tasks count half each):
+- **Week 2 (A ≈ 18 h, R ≈ 20 h; Alex also has W1-13 deploy, 2 h, on Mon 9 Nov, D20).** Alex: W2-07 family dashboard, the UIs of W2-03 (live alert page), W2-04 (button) and W2-05 (opt-in + iOS hint), W2-10 ✂ voice, the W2-05 real-phone test and the W2-06 real Brevo test. Roberta: **W2-13 site layout + home page first (D22)**, W2-01 call-check screen, W2-14 `/pokana`, W2-09 PWA, W2-06 e-mail wording. Both: W2-11 e2e (Alex leads), W2-12 learning note.
+- **Week 3 (A ≈ 23 h, R ≈ 26 h).** Alex: W3-01 reports API, W3-02 report form, W3-04 moderation UI, W3-06 admin API + UI + charts, W3-07 ✂ AI. Roberta: W3-03 map, W3-04 moderation API, W3-05 script API + education pages + editor, W3-08 help pages, W3-09 ✂ escalation, W3-10 ✂ fridge card. Both: W3-11 learning note.
+- **Week 4 (A ≈ 18 h, R ≈ 18 h).** Alex: W4-01 security hardening, W4-04 Lighthouse. Roberta: W4-02 security tests, W4-06 proofreading, W4-07 delete/export API + privacy notice. Both: W4-03 e2e (own pages), W4-05 usability test, W4-08 release, W4-09 registration.
+- **Week 5 (A ≈ 12 h, R ≈ 12 h).** Alex: W5-04 video + USB. Roberta: W5-02 leaflet. Both: W5-01 documentation (own parts), W5-03 slides, W5-05 rehearsals.
+- **Remaining total: Alex ≈ 71 h, Roberta ≈ 76 h.**
 
 ### Ideas accepted from `IDEAS.md`
 

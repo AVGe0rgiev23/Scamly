@@ -65,10 +65,12 @@ Scamly helps older people in Bulgaria check a suspicious phone call in 30 second
 - Update the status board in `docs/IMPLEMENTATION_PLAN.md` section 5 when a task's status changes.
 - Changes to the plan: a line in `docs/CHANGES.md` and a new row in the decision log (brief section 0); explain the impact first (`docs/IMPLEMENTATION_PLAN.md` section 2).
 
-## Who owns what (D17, D18, D20)
+## Who owns what (D23)
 
-- Alex leads the backend (`supabase/`, `src/server/`, `src/app/api/`, `src/proxy.ts`, engine logic, CI, deploy, security); Roberta leads the frontend (`src/components/`, pages in `src/app/`, `src/i18n/bg.ts`, design, PWA, map) plus the engine dictionary and test cases. Since D20, the seed script (W1-12, `scripts/seed.ts`) is Roberta's. Full list: `docs/IMPLEMENTATION_PLAN.md` section 1.
-- Either person may change anything. If it's the other person's area, remind them to tell the owner first; the owner reads the commit afterwards.
+- Both Alex and Roberta work on backend **and** frontend. For the remaining work, Alex builds about 63 % of the backend and 39 % of the frontend, Roberta the rest; shared tasks are split half/half. Done tasks keep their owners. Owner per task: `docs/BUILD_PLAN.md` section 6 and `docs/IMPLEMENTATION_PLAN.md` sections 1 and 5.
+- Each person must be able to explain their own backend and frontend parts in the defense.
+- Commit style: Roberta makes one commit per step, Alex one commit per task. Every commit is real work by its author. **Codex: when Roberta works, commit after each step.**
+- Either person may change anything. If it's the other person's task, remind them to tell the owner first; the owner reads the commit afterwards.
 
 ## Code style and safety
 
