@@ -142,6 +142,9 @@ export function createSeedDeps(env: ServerEnv): SeedDeps {
           score: 15,
           risk_level: "green",
           script_type: "fake_official",
+          // Batch inserts fill missing columns with NULL, not the column default,
+          // so every row must list hard_rules (NOT NULL) explicitly.
+          hard_rules: [],
           reason_codes: ["identity_official"],
           text_redacted: bg.seed.bankCheckText,
           engine_version: "demo-fixture-1",
