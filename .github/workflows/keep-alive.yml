@@ -1,0 +1,47 @@
+# Keep-alive: calls our live /api/health every 12 hours (BUILD_PLAN R1, task W1-13).
+#
+# Why: a FREE Supabase project is paused after about 7 days without activity. A paused
+# project means a dead site for the jury. /api/health runs one real database query, so
+# each call counts as activity and keeps the project awake.
+#
+# Why GitHub Actions and not a Vercel cron job: on the Vercel Hobby plan, cron jobs run
+# at most once a day (BUILD_PLAN R13); here the schedule is free and every run is
+# visible in the Actions tab.
+#
+# Setup (once, after the first Vercel deploy): GitHub → Settings → Secrets and variables
+# → Actions → New repository secret: HEALTH_URL = https://<our-app>.vercel.app/api/health
+# Until then the job prints a notice and stays green.
+#
+# Start it by hand: Actions tab → Keep-alive → Run workflow.
+
+name: Keep-alive
+
+on:
+  schedule:
+    # Minute 17 of hours 0 and 12 (UTC). Not minute 0, when GitHub is busiest and
+    # scheduled runs are often delayed.
+    - cron: "17 */12 * * *"
+  workflow_dispatch:
+
+# This job only calls a URL: it needs no write access to the repository.
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping /api/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the health endpoint
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "::notice::The HEALTH_URL secret is not set yet, so there is nothing to ping. Add it after the first Vercel deploy (see the comment at the top of this file)."
+            exit 0
+          fi
+          # --fail: a 503 (database down) turns the run red, so we see it in Actions.
+          # --retry 3: Vercel or Supabase may need a few seconds to wake up.
+          curl --fail --silent --show-error --max-time 30 --retry 3 --retry-delay 10 "$HEALTH_URL"
+          echo
