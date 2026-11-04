@@ -9,6 +9,13 @@
 
 import { z } from "zod";
 
+// Used by .catch() below: warns that an optional variable was ignored, then returns
+// the safe value (like a Python "except ValueError: warn(...); return default").
+function fallback<T>(name: string, safeValue: T): T {
+  console.warn(`[env] ${name} has an invalid value and is ignored; using the safe default.`);
+  return safeValue;
+}
+
 // The rules for every variable. A Zod schema is like a Pydantic model in Python.
 const serverEnvSchema = z.object({
   // Supabase (database + login). Needed from Week 1.
@@ -21,13 +28,37 @@ const serverEnvSchema = z.object({
   HASH_PEPPER: z.string().min(32, "must be at least 32 characters long"),
 
   // E-mail. "noop" sends nothing, which is the safe default for local work.
-  EMAIL_PROVIDER: z.enum(["brevo", "resend", "noop"]).default("noop"),
+  // Optional extras must never take the whole server down: a wrong value here only
+  // switches that extra off (with a warning naming the variable, never its value).
+  EMAIL_PROVIDER: z
+    .enum(["brevo", "resend", "noop"])
+    .default("noop")
+    .catch(() => fallback("EMAIL_PROVIDER", "noop" as const)),
   BREVO_API_KEY: z.string().min(1).optional(),
-  EMAIL_FROM: z.email().optional(),
+  EMAIL_FROM: z
+    .email()
+    .optional()
+    .catch(() => fallback("EMAIL_FROM", undefined)),
 
-  // Web push (Week 2).
+  // The site's public address, for links in alert e-mails, e.g. https://scamly.vercel.app
+  // Optional: without it we use Vercel's own VERCEL_PROJECT_PRODUCTION_URL (Vercel sets
+  // it automatically, without "https://"), and locally http://localhost:3000.
+  SITE_URL: z
+    .url()
+    .optional()
+    .catch(() => fallback("SITE_URL", undefined)),
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().min(1).optional(),
+
+  // Web push (W2-05). Optional: without both keys, push is simply off.
   VAPID_PUBLIC_KEY: z.string().min(1).optional(),
   VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  // Who runs the push sender: a "mailto:" or "https:" address the push services
+  // (Google, Mozilla, Apple) may contact if our messages cause trouble.
+  VAPID_SUBJECT: z
+    .string()
+    .regex(/^(mailto:|https:\/\/)\S+$/, 'must start with "mailto:" or "https://"')
+    .default("mailto:scamly-demo@example.invalid")
+    .catch(() => fallback("VAPID_SUBJECT", "mailto:scamly-demo@example.invalid")),
 
   // AI providers (Week 3, optional feature).
   GEMINI_API_KEY: z.string().min(1).optional(),

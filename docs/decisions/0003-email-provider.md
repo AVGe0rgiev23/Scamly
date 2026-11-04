@@ -1,9 +1,9 @@
-<!-- Records D5; the email provider is configured in env.ts but no sender is implemented yet. -->
+<!-- Records D5; implemented in Week 2 (W2-06), real Brevo e-mail test pending the Brevo account. -->
 # ADR 0003: Brevo free tier behind an `EmailProvider` interface
 
 Date: 4 November 2026
 
-Status: accepted (D5); implementation planned for Week 2 (W2-06).
+Status: accepted (D5); implemented 4 November 2026 (W2-06); a real e-mail from the Brevo sender is still pending the Brevo account.
 
 ## Context
 
@@ -40,8 +40,14 @@ Bad: e-mails from a single sender without our own domain may go to spam, so test
 
 ## Current implementation and completion evidence
 
-Present now: only the configuration. `src/lib/env.ts` accepts `EMAIL_PROVIDER` (`brevo`, `resend`, `noop`, default `noop`) and an optional `BREVO_API_KEY`; `.env.example` documents `EMAIL_PROVIDER`, `BREVO_API_KEY` and `EMAIL_FROM`. **No e-mail is sent by the app yet**; the interface, the providers and the Bulgarian alert template are not implemented.
+**Implemented (W2-06 backend, 4 November 2026), tested with fakes; the real e-mail is still pending.**
 
-W2-06 is the implementation task (Alex; e-mail wording by Roberta). It is done when switching `EMAIL_PROVIDER=noop` needs no code change, unit tests with a fake HTTP client pass, and one real e-mail has been received from the configured Brevo sender.
+- `src/server/notifications/email/`: the `EmailProvider` interface (`emailProvider.ts`); `BrevoEmailProvider` (one `fetch` POST to Brevo's transactional e-mail API, 5 s timeout, errors keep only the HTTP status and Brevo's short error code, never the key, address or text); `NoopEmailProvider`; the `ResendEmailProvider` stub, which refuses with "needs our own domain"; `createEmailProvider()`, which falls back to `noop` with a warning when `EMAIL_PROVIDER=brevo` lacks `BREVO_API_KEY` or `EMAIL_FROM`.
+- `emailChannel.ts` is an `AlertChannel` (ADR 0005), switched on by `FEATURE_EMAIL`. Only linked contacts with `profiles.email_alerts` on and a real address (never `.invalid`) get mail: one e-mail when the check starts and a follow-up only when the verdict is red. Nothing to send, or `noop`, writes no `alerts` row.
+- `alertEmail.ts` builds the Bulgarian e-mail from `bg.alertEmail` (draft, Roberta to proofread): the person's display name, Sofia time, risk level and a link to `/family/alerts?check=<id>`, with every value HTML-escaped. The link's base comes from `getSiteUrl()` (`SITE_URL` → `VERCEL_PROJECT_PRODUCTION_URL` → `http://localhost:3000`).
+- `src/lib/env.ts`: an invalid `EMAIL_PROVIDER` or `EMAIL_FROM` falls back to `noop` / nothing with a warning instead of stopping the server.
+- Unit tests with a fake `fetch` and fake recipients: `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3).
+
+Done-when status: switching `EMAIL_PROVIDER=noop` needs no code change ✅; unit tests with a fake HTTP client pass ✅; **one real e-mail received from the configured Brevo sender: pending** (there is no Brevo account yet). Details: [HOW_IT_WORKS 3.30](../HOW_IT_WORKS.md).
 
 Sources within the repository: [brief D5](../PROJECT_BRIEF.md), [risks R4, R5 and questions Q8, Q13](../BUILD_PLAN.md#7-risk-register), [notification choices](../WHY_WE_CHOSE.md#5-notifications).

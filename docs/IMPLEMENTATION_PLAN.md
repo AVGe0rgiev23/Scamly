@@ -148,8 +148,8 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend (UI: Roberta) · offline fallback is part of W2-01 |
 | W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (live alert page UI: Roberta) | ✅ backend (UI: Roberta) · `GET /api/realtime/token`, `src/lib/realtime.ts` ready for the pages |
 | W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (button UI: Roberta) | ✅ backend (UI: Roberta) · round trip in e2e W2-11 |
-| W2-05 | Web push | Alex (opt-in UI + iOS hint: Roberta) | ⬜ |
-| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ⬜ |
+| W2-05 | Web push | Alex (opt-in UI + iOS hint: Roberta) | ✅ backend (UI: Roberta, `src/lib/push.ts` ready) · smoke test 22/22; real-phone test pending (iPhone only after "Add to Home Screen") |
+| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · draft wording in `bg.alertEmail` for Roberta · real Brevo e-mail pending (no account yet) |
 | W2-07 | Family dashboard UI | Roberta | ⬜ |
 | W2-08 | Contacts + invite API | Alex | ✅ backend (UI: Roberta) · migration applied 4 Nov; live smoke test 44/44 |
 | W2-09 | PWA | Roberta | ⬜ |

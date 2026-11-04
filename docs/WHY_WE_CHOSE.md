@@ -25,15 +25,15 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · push endpoint allowlist · push upsert = delete + insert
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
-5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · Web Push (VAPID) · Brevo behind `EmailProvider`
+5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
-11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `APP_NAME` constant · `server-only`
+11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `.catch()` fallback for optional env vars · `APP_NAME` constant · `server-only`
 12. [How to add an entry](#12-how-to-add-an-entry)
 13. [Change history](#13-change-history)
 
@@ -443,7 +443,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** Supabase offered a proper "device" login type.
 
-### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing, invite links, call checks per phone; reports: week 3))
+### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing, invite links, call checks per phone, push subscriptions per account; reports: week 3))
 
 **Used for:** limiting login (10 per 15 min per IP), registration (5 per hour per IP) and pairing-code guesses (5 per 15 min per IP + 100 per 15 min for everybody), later public reports. TypeScript wrapper: `src/server/security/rateLimit.ts`.
 
@@ -694,6 +694,39 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never; pairing doesn't need it because a refused code there is simply asked for again in a minute.
 
+### Push endpoint allowlist (vs accepting any `https` URL)  (status: in use (`isAllowedPushEndpoint()` in `src/schemas/push.ts`, W2-05))
+
+**Used for:** `POST /api/push/subscriptions` accepts an endpoint only if it is `https`, port 443, without user/password, on `fcm.googleapis.com`, `push.services.mozilla.com`, `push.apple.com` or `notify.windows.com` (or a sub-domain of one).
+
+**Alternatives we considered:** any `https` URL (what the browser sends is normally fine); blocking only private IP ranges.
+
+**Why this one:**
+- **The server later POSTs to the stored endpoint.** Without a check, any logged-in user could store any address and make our server send requests there (SSRF), e.g. to internal services or as a weapon against another site.
+- An allowlist of four known hosts is short, easy to test (`schemas/push.test.ts`, look-alike hosts included) and easy to explain; a private-IP blocklist misses DNS tricks.
+- These four services cover every browser we support (Chrome/Samsung/Opera/Brave, Firefox, Safari, Edge).
+
+**What we give up:**
+- A browser with another push service can't subscribe until we add its host.
+
+**We would reconsider if:** a supported browser used a new push host; then one line in `PUSH_SERVICE_HOSTS`.
+
+### Push subscription upsert = delete own row + insert (vs an UPDATE grant)  (status: in use (`pushSubscriptionService.saveSubscription()`, W2-05))
+
+**Used for:** saving the same browser again (new keys after a key change) deletes the caller's row for that endpoint and inserts it again, both with the **user** client under RLS.
+
+**Alternatives we considered:** a new migration with an UPDATE right (or a real `upsert`) on `push_subscriptions`; the service role for the write.
+
+**Why this one:**
+- The table already has the rights it needs (SELECT/INSERT/DELETE own rows); no migration, no new right to test, and RLS stays the second lock.
+- `user_id` comes only from the session; the browser can't choose it.
+- If the endpoint belongs to **another** account (a shared browser), RLS hides that row, the insert hits the unique endpoint and we answer 409; `subscribeToPush()` then makes a fresh subscription (a new endpoint) and retries once, so the new person still gets push.
+
+**What we give up:**
+- Two statements instead of one: between them the browser has no row for a moment (harmless, an alert in that millisecond just finds no subscription).
+- The old account's row for that endpoint stays until the push service calls it gone (404/410) and the channel deletes it.
+
+**We would reconsider if:** subscriptions changed often enough that the two steps mattered.
+
 ---
 
 ## 4. Frontend
@@ -859,7 +892,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** Realtime's free-tier connection limits became a problem (check current limits).
 
-### `AlertChannel` interface, one `alerts` row per (contact, channel)  (status: in use (`alertService.ts`, realtime channel only; push W2-05, e-mail W2-06))
+### `AlertChannel` interface, one `alerts` row per (contact, channel)  (status: in use (`alertService.ts`: realtime, push since W2-05, e-mail since W2-06))
 
 **Used for:** the fan-out when the button is pressed: every trusted contact with an account, on every channel, written as one row each in one INSERT (HOW_IT_WORKS 3.24).
 
@@ -873,7 +906,8 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - A queue would be one more service (cost, D11) for a handful of messages.
 
 **What we give up:**
-- Sending happens inside the request; with push and e-mail added, a slow provider makes the phone's answer slower (errors never block it).
+- Sending happens inside the request: a slow provider makes the phone's answer slower, at most by its 5 s timeout because the sends run in parallel (errors never block it).
+- A channel with nothing to send answers `"skipped"` and writes no row, so the table shows real deliveries only, not "who could have been told".
 - On the verdict, channels are called again without new rows, so the table records only the first alert.
 
 **We would reconsider if:** sending started to take seconds; then a background job (e.g. `pg_cron` or a queue).
@@ -911,24 +945,60 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** `@supabase/ssr`'s browser client could take an external token source.
 
-### Web Push with VAPID  (status: decided, not built yet (week 2))
+### `Promise.all` for the alert sends (vs one after the other, vs a background job)  (status: in use (`fanOut()`, `notifyVerdict()`, W2-05/W2-06))
 
-**Used for:** a notification on the family member's phone even when Scamly isn't open.
+**Used for:** every (family member, channel) send starts at once and the fan-out waits for all of them (`Promise.all`, like Python's `asyncio.gather`); the rows still go into one INSERT.
 
-**Alternatives we considered:** Firebase Cloud Messaging (FCM) SDK, SMS, Viber/Telegram bots (stretch goal).
+**Alternatives we considered:** a `for` loop with `await` (the W2-03 version); a background job or queue.
 
 **Why this one:**
-- **VAPID web push is an open web standard**; it works in Chrome, Firefox, Edge and Safari (iOS after home-screen install) without an extra account. (Chrome uses Google's push service underneath, but we don't need the Firebase SDK or a Firebase project.)
-- **Free**, unlike SMS, which costs money per message.
-- Our server signs messages with our own key pair (`VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`).
+- Brevo and the push services each have a 5 s timeout. One after the other, 2 family members × 2 slow channels could hold grandma's phone for 20 s; in parallel the slowest single send decides.
+- Every channel already catches its own errors into a `failed` row, so one failure can't reject the whole `Promise.all`.
+- A queue would be another service (D11) and more to explain for a handful of messages.
+
+**What we give up:**
+- The phone's answer still waits for the slowest send (up to about 5 s when a service hangs).
+- Many sends at the same moment (not a problem for one family).
+
+**We would reconsider if:** families got large or sends slow; then a background job (`pg_cron` or a queue).
+
+### Web Push with VAPID through `web-push` 3.6.7 (vs hand-written encryption, vs Firebase FCM)  (status: in use (W2-05 backend; opt-in button: Roberta; real-phone test pending))
+
+**Used for:** a notification on the family member's phone even when Scamly isn't open (`src/server/notifications/pushSender.ts`, `pushChannel.ts`, `public/sw.js`).
+
+**Alternatives we considered:** writing the encryption (RFC 8291) and the VAPID signature ourselves with Node's `crypto`; the Firebase Cloud Messaging SDK; SMS; Viber/Telegram bots (stretch goal).
+
+**Why this one:**
+- **VAPID web push is an open web standard**; it works in Chrome, Firefox, Edge and Safari (iOS after home-screen install) without an extra account. Chrome uses Google's push service underneath, but we need no Firebase project or SDK.
+- **`web-push` does the hard part**: the message encryption with the browser's keys and the signed VAPID token. Hand-written crypto is easy to get subtly wrong and hard to defend; the library is the standard Node choice, small, and we wrap it in one function (`createWebPushSender`) so tests pass a fake.
+- **FCM** would mean a Firebase project, its SDK in the browser and a second set of keys, and Safari/Firefox still need web push.
+- **Free**, unlike SMS. Licence MPL-2.0, compatible with GPL-3.0; used unchanged from npm (`THIRD_PARTY_LICENSES.md`).
 
 **What we give up:**
 - iPhone support needs iOS 16.4+ and "Add to Home Screen" (risk R2), which is why Realtime is primary.
-- Delivery isn't guaranteed (the phone may be offline or in battery-saving mode).
+- Delivery isn't guaranteed (phone offline, battery saving); TTL 10 min means a late phone gets nothing rather than an old alert.
+- One more dependency (with a few small sub-dependencies) to keep updated.
 
 **We would reconsider if:** we built a native app (then FCM/APNs directly).
 
-### Brevo free tier behind an `EmailProvider` interface  (status: decided (D5), not built yet (week 2))
+### VAPID public key from a route (vs `NEXT_PUBLIC_VAPID_PUBLIC_KEY`)  (status: in use (`GET /api/push/public-key`, W2-05))
+
+**Used for:** the browser asks `GET /api/push/public-key` for `{ enabled, publicKey }` before subscribing.
+
+**Alternatives we considered:** a `NEXT_PUBLIC_VAPID_PUBLIC_KEY` variable (copied into the JavaScript at build time); hard-coding the key.
+
+**Why this one:**
+- **Read at request time:** turning push off (`FEATURE_PUSH`) or changing the keys on Vercel works without a rebuild; with `NEXT_PUBLIC_` the old key would stay in the built JavaScript.
+- **One variable, not two:** the server needs `VAPID_PUBLIC_KEY` anyway for signing; a copy under another name could drift.
+- **`enabled` comes free:** the same answer tells the page whether to show „Включи известията“ at all.
+- The public key is public by design, so an open GET route leaks nothing.
+
+**What we give up:**
+- One extra request before subscribing (only when someone taps the button).
+
+**We would reconsider if:** never for this project.
+
+### Brevo free tier behind an `EmailProvider` interface  (status: in use (D5, W2-06 backend); real test e-mail pending a Brevo account)
 
 **Used for:** alert emails to family members (third channel); possibly sign-up confirmation emails (Q8).
 
@@ -939,13 +1009,61 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - **Resend** is nice for developers but needs **our own domain** to send to other people.
 - **SendGrid's** free offer has changed over time; we couldn't rely on a lasting free plan (check current terms).
 - **Gmail SMTP** would mean putting a personal Google account's credentials on our server, with low sending limits and a risk of the account being blocked.
-- **The interface** (`EmailProvider`, like a Python abstract base class) lets us switch Brevo → Resend → `noop` by changing one environment variable (`EMAIL_PROVIDER`).
+- **The interface** (`EmailProvider`, like a Python abstract base class) lets us switch Brevo → Resend → `noop` by changing one environment variable (`EMAIL_PROVIDER`); `createEmailProvider()` falls back to `noop` with a warning when Brevo's key or sender is missing.
 
 **What we give up:**
 - Emails from a single sender without our own domain are more likely to land in spam (risk R4).
 - Another account with an API key to protect.
 
 **We would reconsider if:** we buy a domain; then Resend (or Brevo with our domain) for better delivery.
+
+### Plain `fetch` for Brevo (vs Brevo's Node SDK)  (status: in use (`brevoEmailProvider.ts`, W2-06))
+
+**Used for:** sending one e-mail = one `POST https://api.brevo.com/v3/smtp/email` with the built-in `fetch` and a 5 s `AbortSignal.timeout`.
+
+**Alternatives we considered:** Brevo's official SDK package; SMTP with a mail library.
+
+**Why this one:**
+- We use **one** endpoint; an SDK would add a dependency (and its licence and updates) for one request.
+- **We control every error message:** only the HTTP status and Brevo's short error code are kept, never the key, the address or the text (they end up in `alerts.error` and logs).
+- Tests pass a fake `fetch`, so no test ever sends real mail.
+- The timeout is ours: a slow Brevo can't hold the alert longer than 5 s.
+
+**What we give up:**
+- We write the request body ourselves; if Brevo changes its API, we change it by hand.
+
+**We would reconsider if:** we needed many Brevo features (templates, contact lists).
+
+### Resend as a stub only  (status: in use (`resendEmailProvider.ts`, W2-06))
+
+**Used for:** `EMAIL_PROVIDER=resend` gives a provider that always throws "Resend is not configured: it needs our own domain, see ADR 0003", so those rows are `failed` and the other channels still work.
+
+**Alternatives we considered:** a full Resend sender; leaving `resend` out of `EMAIL_PROVIDER`.
+
+**Why this one:**
+- Resend sends to other people only from our own verified domain, which we don't have (Q13, D11). A real sender now would be code we can't run or test.
+- Keeping the name in the interface (ADR 0003) shows where a second provider plugs in, and the error says exactly what is missing.
+
+**What we give up:**
+- A value of `EMAIL_PROVIDER` that doesn't send anything.
+
+**We would reconsider if:** we buy a domain.
+
+### No `alerts` row when nothing was sent (`noop`, `"skipped"`)  (status: in use (`"skipped"` in `alertService.ts`, W2-05/W2-06))
+
+**Used for:** a channel answers `"skipped"` (no push subscription, e-mail alerts off, no real address, a verdict that is not red, `EMAIL_PROVIDER=noop`), and the fan-out writes no row for it.
+
+**Alternatives we considered:** a `sent` row anyway; a new `skipped` value in the `alert_status` enum.
+
+**Why this one:**
+- **The `alerts` table is our evidence of who was told how.** A `sent` e-mail row with `noop` (nothing left the server) would be false.
+- No migration: `alert_status` keeps its values, and "no row" already means "not sent on this channel".
+- Every family member still has the realtime row, so they still see the alert on the page.
+
+**What we give up:**
+- We can't see in the table *why* a channel had nothing to send (only in tests and logs).
+
+**We would reconsider if:** we needed a per-member delivery report (then a `skipped` status with a reason).
 
 ---
 
@@ -1233,7 +1351,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a tool we need only supported Jest.
 
-### Dependency-injected fakes in unit tests (vs `vi.mock`, vs a live Supabase)  (status: in use (`pairingService`, `authService`, `loadActor`, rate limiter, and the Week 2 check, alert, person, contact and invite services))
+### Dependency-injected fakes in unit tests (vs `vi.mock`, vs a live Supabase)  (status: in use (`pairingService`, `authService`, `loadActor`, rate limiter, and the Week 2 check, alert, push, e-mail, person, contact and invite services))
 
 **Used for:** testing the services without Supabase. Each service gets its tools as parameters (`PairingDeps`, `AuthGateway`, `ActorReader`, `HitCounter`); tests pass small in-memory fakes, e.g. arrays that behave like our tables and what RLS would show each caller.
 
@@ -1759,6 +1877,22 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never.
 
+### `.catch()` fallback for optional environment variables (vs failing fast for every variable)  (status: in use (`src/lib/env.ts`: `EMAIL_PROVIDER`, `EMAIL_FROM`, `SITE_URL`, `VAPID_SUBJECT`))
+
+**Used for:** a wrong value in an optional extra (e.g. `EMAIL_PROVIDER=gmail`, an `EMAIL_FROM` without `@`) logs `[env] NAME has an invalid value and is ignored; using the safe default.` and uses the safe value (`noop`, nothing, the default subject). Required values (Supabase keys, peppers) still stop with a clear error.
+
+**Alternatives we considered:** failing fast for every variable (the earlier version); reading optional variables without Zod.
+
+**Why this one:**
+- `getServerEnv()` runs in almost every API route (admin client, rate limiter). With fail-fast, a typo in an **e-mail** setting would make those routes answer 500, including grandma's big button. An extra must at most switch itself off.
+- The warning names the variable, never its value (same rule as the main check), so the mistake is still easy to find in the Vercel logs.
+- Zod's `.catch()` keeps one schema and one type; no second hand-written check.
+
+**What we give up:**
+- A wrong optional value no longer stops the deploy; someone has to read the warning (`src/lib/env.test.ts` covers each fallback).
+
+**We would reconsider if:** never for extras; required values stay fail-fast.
+
 ### `server-only` (0.0.1) marker package  (status: in use)
 
 **Used for:** the first line of every file under `src/server/` that must never reach the browser (admin client, services, auth checks). If a client component imports one, `next build` fails.
@@ -1841,3 +1975,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-04 · Session H (engine logic): new entries in section 7 (deterministic pure function, prefix stems vs a full stemmer, transliterate-then-fuzzy vs a Latin dictionary, weights table + max per category, hard rules as data objects); Damerau-Levenshtein entry explains OSA vs plain Levenshtein; redaction entry now compares regex + Luhn with an NLP library; statuses of the engine, dictionary/scenarios, Damerau-Levenshtein, transliteration, D9 wording and redaction moved to "in use"
 - 2026-11-04 · Session I (W1-13 code): new entry "Health check on a public table with the publishable key (vs the service-role key)"; keep-alive entry rewritten as GitHub Actions vs Vercel cron vs only an uptime monitor, now in use; Frankfurt entry explains `vercel.json` `regions` vs the deprecated `preferredRegion`; Vercel Hobby status updated (project pending)
 - 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new entries in section 3 (server-side verdict; redact before storing; Realtime token endpoint vs readable cookies; contact list through one SQL function, SECURITY INVOKER, vs REST calls / upsert / more column rights / SECURITY DEFINER; invite tokens 256 bits + HMAC + 7 days; refusals don't burn invites) and section 5 (`AlertChannel` interface; Realtime as a doorbell + 5 s polling fallback; own Realtime client with `accessToken` vs `setAuth`); statuses updated for REST API, Supabase Realtime, server-only writes, HMAC, rate limiting, redaction, DI fakes, pgTAP
+- 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): Web Push entry now in use and compares `web-push` 3.6.7 with hand-written encryption and Firebase FCM; Brevo entry now in use (real e-mail pending a Brevo account); new entries: VAPID public key from a route vs `NEXT_PUBLIC_`, push endpoint allowlist (SSRF), push upsert = delete + insert vs an UPDATE grant, plain `fetch` vs Brevo's SDK, Resend as a stub, no `alerts` row when nothing was sent (`noop`, `"skipped"`), `Promise.all` for the alert sends, `.catch()` fallback for optional env vars vs failing fast; `AlertChannel`, rate limiting and DI-fakes statuses updated

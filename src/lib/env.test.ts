@@ -28,7 +28,26 @@ describe("getServerEnv", () => {
     expect(() => getServerEnv({ ...validEnv, HASH_PEPPER: "" })).toThrow(/HASH_PEPPER/);
   });
 
-  it("rejects an unknown e-mail provider", () => {
-    expect(() => getServerEnv({ ...validEnv, EMAIL_PROVIDER: "gmail" })).toThrow(/EMAIL_PROVIDER/);
+  // A wrong optional e-mail/push setting must never take the whole server down:
+  // it falls back to the safe value and only that extra is switched off.
+  it("falls back to noop for an unknown e-mail provider instead of crashing", () => {
+    expect(getServerEnv({ ...validEnv, EMAIL_PROVIDER: "gmail" }).EMAIL_PROVIDER).toBe("noop");
+  });
+
+  it("ignores a badly formatted EMAIL_FROM instead of crashing", () => {
+    const env = getServerEnv({ ...validEnv, EMAIL_FROM: "Scamly <someone@example.com>" });
+    expect(env.EMAIL_FROM).toBeUndefined();
+  });
+
+  it("ignores a bad SITE_URL and VAPID_SUBJECT instead of crashing", () => {
+    const env = getServerEnv({ ...validEnv, SITE_URL: "not a url", VAPID_SUBJECT: "nope" });
+    expect(env.SITE_URL).toBeUndefined();
+    expect(env.VAPID_SUBJECT).toBe("mailto:scamly-demo@example.invalid");
+  });
+
+  it("still keeps a valid EMAIL_FROM", () => {
+    expect(getServerEnv({ ...validEnv, EMAIL_FROM: "alerts@example.com" }).EMAIL_FROM).toBe(
+      "alerts@example.com",
+    );
   });
 });

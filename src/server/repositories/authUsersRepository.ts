@@ -1,5 +1,7 @@
-// Supabase Auth admin calls: creating and deleting login accounts (auth.users).
-// Only for device pairing and revoking (BUILD_PLAN 2.4 uses 1 and 2), admin client.
+// Supabase Auth admin calls: creating and deleting login accounts (auth.users), and
+// reading a family member's e-mail address for alert e-mails.
+// Only for device pairing and revoking (BUILD_PLAN 2.4 uses 1 and 2) and alert e-mails
+// (use 4), admin client.
 
 import type { DbClient } from "@/server/supabase/userClient";
 
@@ -30,4 +32,15 @@ export async function deleteAuthUser(admin: DbClient, userId: string): Promise<v
   if (error) {
     throw new Error(`deleteAuthUser failed: ${error.message}`);
   }
+}
+
+// The login e-mail address of an account, or null when it has none. Only for alert
+// e-mails to family members (BUILD_PLAN 2.4 use 4, admin client): the address lives in
+// auth.users, which no browser and no RLS policy can read.
+export async function findAuthUserEmail(admin: DbClient, userId: string): Promise<string | null> {
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error) {
+    throw new Error(`findAuthUserEmail failed: ${error.message}`);
+  }
+  return data.user.email ?? null;
 }

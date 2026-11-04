@@ -212,6 +212,47 @@ export const bg = {
     // The same, when we don't know the name (the family member is no longer in the list).
     acknowledgedBySomeone: "Ваш близък ще ви се обади веднага.",
   },
+  // Alert e-mails to family members (W2-06, src/server/notifications/email/alertEmail.ts).
+  // draft — Roberta to proofread (W2-06 wording)
+  // {name} = the protected person's name, {time} = e.g. „9 ноември в 12:05 ч.“,
+  // {link} = the address of the alert page. No phone numbers or call details, ever.
+  alertEmail: {
+    startedSubject: `${APP_NAME}: {name} проверява съмнително обаждане`,
+    redSubject: `${APP_NAME}: Внимание! Проверката на {name} показва признаци на измама`,
+    greeting: "Здравейте!",
+    startedText: `{name} получи съмнително обаждане и започна проверка в ${APP_NAME} на {time}.`,
+    redText: "Проверката на {name} завърши на {time} и показва признаци на телефонна измама.",
+    riskLabel: "Ниво на риска:",
+    risk: {
+      pending: "още не е известно – проверката продължава",
+      red: "високо – признаци на измама",
+      yellow: "средно – има съмнителни признаци",
+      green: "ниско – няма типични признаци на измама",
+    },
+    callNow: "Обадете се веднага на {name} на номера, който знаете.",
+    openText: "Вижте подробностите тук: {link}",
+    openButton: "Вижте сигнала",
+    footer: `Получавате това писмо, защото сте сред близките на {name} в ${APP_NAME}. Можете да спрете тези писма от настройките на профила си.`,
+    // {date} = „9 ноември“, {time} = „12:05“ (Bulgarian time).
+    timeFormat: "{date} в {time} ч.",
+  },
+  // Web push notifications to family members (W2-05, src/server/notifications/pushChannel.ts).
+  // draft — Roberta to proofread (W2-05 wording)
+  // {name} = the protected person's name, always at the start of a phrase (so the
+  // fallback `someone` fits too). Short: a phone shows about 40 characters of the title.
+  // No phone numbers or call details, ever.
+  push: {
+    startedTitle: "{name}: съмнително обаждане",
+    startedBody: `Започна проверка в ${APP_NAME}. Докоснете, за да видите подробностите.`,
+    redTitle: "Внимание! {name}: признаци на измама",
+    redBody:
+      "Проверката показва признаци на телефонна измама. Обадете се веднага на близкия си на номера, който знаете.",
+    // Used for {name} when the person's name is unknown (e.g. the person was deleted).
+    someone: "Ваш близък",
+    // Errors of POST /api/push/subscriptions.
+    subscriptionInvalid: "Известията не могат да бъдат включени от този браузър. Опитайте отново.",
+    endpointTaken: "Този браузър вече получава известия за друг профил. Опитайте отново.",
+  },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
     forbiddenHelp:

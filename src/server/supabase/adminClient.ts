@@ -13,6 +13,10 @@
 //      (also personService.deletePerson(): signs out every phone of a deleted person)
 //   3. checkService.start() / submitAnswers(): store the server-computed verdict (Week 2)
 //   4. alertService.fanOut(): alert rows for other users, push and e-mail (Week 2)
+//      (e-mail, W2-06: emailChannel.ts reads a family member's profiles.email_alerts
+//      and, only if it is on, their address from auth.users)
+//      (push, W2-05: pushChannel.ts reads a family member's push_subscriptions and
+//      deletes the ones the push service calls gone, HTTP 404 / 410)
 //   4b. checkService.acknowledge(): write acknowledged_by on the check (Week 2)
 //   5. reportService.submit(): anonymous guest reports (Week 3)
 //   6. adminService.changeRole() and writing the audit_log

@@ -19,6 +19,7 @@ These are part of the app that runs on the server and in the browser.
 | react                 | 19.3.1  | MIT     | User-interface library                                          |
 | react-dom             | 19.3.1  | MIT     | Draws React components in the browser                           |
 | server-only           | 0.0.1   | MIT     | Makes the build fail if browser code imports a server-only file |
+| web-push              | 3.6.7   | MPL-2.0 | Encrypts, signs (VAPID) and sends web push notifications        |
 | zod                   | 4.6.7   | MIT     | Checks input data and environment variables                     |
 
 ## Development dependencies
@@ -32,6 +33,7 @@ These are only used while writing, checking, testing and building the code.
 | @types/node            | 22.20.5 | MIT        | TypeScript types for Node.js                              |
 | @types/react           | 19.3.0  | MIT        | TypeScript types for React                                |
 | @types/react-dom       | 19.3.0  | MIT        | TypeScript types for React DOM                            |
+| @types/web-push        | 3.6.4   | MIT        | TypeScript types for web-push                             |
 | @vitest/coverage-v8    | 5.1.0   | MIT        | Test coverage reports                                     |
 | eslint                 | 9.39.5  | MIT        | Finds bugs and bad patterns in the code                   |
 | eslint-config-next     | 16.4.4  | MIT        | Next.js, React and TypeScript lint rules                  |
@@ -56,8 +58,13 @@ Packages that our dependencies install for us, worth knowing about:
 | cookie                                                                          | MIT               | @supabase/ssr         | Reads and writes cookie headers                                                    |
 | iceberg-js                                                                      | MIT               | @supabase/supabase-js | Part of the storage client (we don't use it)                                       |
 | tslib                                                                           | 0BSD              | @supabase/\*          | TypeScript helper functions; 0BSD is compatible with GPL-3.0                       |
+| http_ece, asn1.js, bn.js, jws, jwa, https-proxy-agent, agent-base, minimist     | MIT               | web-push              | Message encryption, key handling, the VAPID signature, proxy support               |
 
 The seed runner tsx also uses esbuild (MIT) for TypeScript transformation.
+
+web-push uses the Mozilla Public License 2.0 (MPL-2.0). MPL-2.0 is compatible with
+GPL-3.0 (its section 3.3 allows combining it with GPL code), and we use the library
+unchanged from npm.
 
 ## Data and assets
 

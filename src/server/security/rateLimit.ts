@@ -39,6 +39,9 @@ export const RATE_LIMITS = {
   inviteRedeemPerIp: { name: "invite:ip", maxHits: 10, windowSeconds: FIFTEEN_MINUTES },
   // Call checks: at most 10 per paired phone per hour (stops alert spam to the family).
   checkPerDevice: { name: "check:device", maxHits: 10, windowSeconds: ONE_HOUR },
+  // Turning push notifications on/off: at most 20 times per account per hour (a real
+  // person does it a few times; this stops a script from filling the table).
+  pushPerUser: { name: "push:user", maxHits: 20, windowSeconds: ONE_HOUR },
 } satisfies Record<string, RateLimitRule>;
 
 // The one thing the limiter needs from the outside world: "count one hit for this

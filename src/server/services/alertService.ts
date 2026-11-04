@@ -6,22 +6,34 @@
 //   notifyVerdict(checkId) the answers arrived: tell the channels about the verdict
 //
 // Channels: an AlertChannel is anything with a `name` and a `send(recipient, payload)`
-// function (like a Python Protocol with one method). Today there is only one:
+// function (like a Python Protocol with one method). send() may answer "skipped" when
+// it has nothing to send to this person (e.g. e-mails switched off): then no alerts
+// row is written for that channel. The channels:
 //
 //   realtime  The family member's open page subscribes to Supabase Realtime. The
 //             alerts row we INSERT (and the checks row the check service UPDATEs)
 //             IS the message: Realtime sees the change and pushes it to the page,
 //             filtered by RLS. So its send() has nothing left to do.
 //
-// Web push (W2-05) and e-mail (W2-06) will be two more AlertChannel objects added to
-// the list in createAlertDeps(); fanOut() and notifyVerdict() don't change.
+//   email     (W2-06, FEATURE_EMAIL) src/server/notifications/email/emailChannel.ts:
+//             one e-mail when the check starts, a follow-up only for a red verdict.
+//
+//   push      (W2-05, FEATURE_PUSH + VAPID keys) src/server/notifications/pushChannel.ts:
+//             a notification to every browser the family member switched on, when the
+//             check starts, and a second one only for a red verdict.
+//
+// All (family member, channel) pairs are tried at the same time, so one slow service
+// (an e-mail can take up to 5 s) does not hold back the others.
 //
 // The service role is used here (BUILD_PLAN 2.4, use 4): the alerts rows belong to
 // OTHER users, which no RLS policy lets the phone write. fanOut() is only called by
 // the check service, after it has checked that the phone owns the check.
 
 import "server-only";
+import { getFeatures } from "@/config/features";
 import type { RiskLevel } from "@/engine";
+import { createRealEmailChannel } from "@/server/notifications/email/emailChannel";
+import { createRealPushChannel } from "@/server/notifications/pushChannel";
 import {
   insertAlerts,
   type AlertChannelName,
@@ -58,10 +70,12 @@ export type AlertPayload = {
   riskLevel: RiskLevel | null; // null while the check is only "started"
 };
 
-// One way of reaching a family member. send() throws when delivery fails.
+// One way of reaching a family member. send() throws when delivery fails, and answers
+// "skipped" when there was nothing to send to this person (no alerts row then).
+// `void | "skipped"` means: returns nothing, or the text "skipped".
 export type AlertChannel = {
   name: AlertChannelName;
-  send: (recipient: AlertRecipient, payload: AlertPayload) => Promise<void>;
+  send: (recipient: AlertRecipient, payload: AlertPayload) => Promise<void | "skipped">;
 };
 
 // The realtime channel (D7, the primary one). See the top of this file: the database
@@ -125,6 +139,38 @@ function describeError(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
 
+// Tries ONE channel for ONE family member and returns the alerts row to write, or
+// null when the channel answered "skipped".
+async function deliver(
+  deps: AlertDeps,
+  checkId: string,
+  recipient: AlertRecipient,
+  channel: AlertChannel,
+  payload: AlertPayload,
+): Promise<NewAlert | null> {
+  // One channel failing (e.g. an expired push subscription) must not stop the
+  // other channels or the other family members: we write "failed" and go on.
+  let status: AlertStatus = "sent";
+  let errorText: string | null = null;
+  try {
+    const result = await channel.send(recipient, payload);
+    if (result === "skipped") {
+      return null;
+    }
+  } catch (error) {
+    status = "failed";
+    errorText = describeError(error);
+  }
+  return {
+    checkId,
+    recipientId: recipient.userId,
+    channel: channel.name,
+    status,
+    error: errorText,
+    sentAt: status === "sent" ? deps.now() : null,
+  };
+}
+
 // ---------------------------------------------------------------------------------
 // fanOut: called right after POST /api/checks created the check.
 // Returns how many alerts rows were written.
@@ -135,27 +181,18 @@ export async function fanOut(deps: AlertDeps, checkId: string): Promise<number> 
     return 0;
   }
 
-  const rows: NewAlert[] = [];
+  // Start every (family member, channel) delivery, then wait for all of them at once
+  // (Promise.all is like asyncio.gather in Python; the results keep the same order).
+  const deliveries: Promise<NewAlert | null>[] = [];
   for (const recipient of context.recipients) {
     for (const channel of deps.channels) {
-      // One channel failing (e.g. an expired push subscription) must not stop the
-      // other channels or the other family members: we write "failed" and go on.
-      let status: AlertStatus = "sent";
-      let errorText: string | null = null;
-      try {
-        await channel.send(recipient, context.payload);
-      } catch (error) {
-        status = "failed";
-        errorText = describeError(error);
-      }
-      rows.push({
-        checkId,
-        recipientId: recipient.userId,
-        channel: channel.name,
-        status,
-        error: errorText,
-        sentAt: status === "sent" ? deps.now() : null,
-      });
+      deliveries.push(deliver(deps, checkId, recipient, channel, context.payload));
+    }
+  }
+  const rows: NewAlert[] = [];
+  for (const row of await Promise.all(deliveries)) {
+    if (row !== null) {
+      rows.push(row);
     }
   }
   // All rows in ONE insert: one trip to the database, and every family member's
@@ -169,27 +206,52 @@ export async function fanOut(deps: AlertDeps, checkId: string): Promise<number> 
 // ---------------------------------------------------------------------------------
 // notifyVerdict: called after PUT /api/checks/:id/answers stored the verdict.
 // No new alerts rows (there is one per check, member and channel); the realtime page
-// already got the UPDATE of the checks row. Push and e-mail will send "it is red".
+// already got the UPDATE of the checks row. E-mail and push follow up only when red.
 // ---------------------------------------------------------------------------------
 export async function notifyVerdict(deps: AlertDeps, checkId: string): Promise<void> {
   const context = await loadAlertContext(deps, checkId, "verdict");
   if (context === null) {
     return;
   }
+  const deliveries: Promise<void>[] = [];
   for (const recipient of context.recipients) {
     for (const channel of deps.channels) {
-      try {
-        await channel.send(recipient, context.payload);
-      } catch (error) {
-        console.error(`[alerts] ${channel.name} verdict failed:`, describeError(error));
-      }
+      deliveries.push(notifyOne(recipient, channel, context.payload));
     }
+  }
+  await Promise.all(deliveries); // all at the same time, like asyncio.gather
+}
+
+// One verdict message; a failure is only logged (there is no row to mark).
+async function notifyOne(
+  recipient: AlertRecipient,
+  channel: AlertChannel,
+  payload: AlertPayload,
+): Promise<void> {
+  try {
+    await channel.send(recipient, payload);
+  } catch (error) {
+    console.error(`[alerts] ${channel.name} verdict failed:`, describeError(error));
   }
 }
 
 // ---------------------------------------------------------------------------------
 // The real deps: everything through the admin client (service role, use 4).
 // ---------------------------------------------------------------------------------
+// The channels that are switched on (src/config/features.ts). Realtime is always on.
+function alertChannels(admin: DbClient): AlertChannel[] {
+  const channels: AlertChannel[] = [realtimeChannel];
+  if (getFeatures().email) {
+    channels.push(createRealEmailChannel(admin));
+  }
+  // null when FEATURE_PUSH is off or the VAPID keys are missing: then no push at all.
+  const push = createRealPushChannel(admin);
+  if (push !== null) {
+    channels.push(push);
+  }
+  return channels;
+}
+
 export function createAlertDeps(admin: DbClient): AlertDeps {
   return {
     now: () => new Date(),
@@ -200,6 +262,6 @@ export function createAlertDeps(admin: DbClient): AlertDeps {
     },
     listContacts: (personId) => listContacts(admin, personId),
     insertAlerts: (alerts) => insertAlerts(admin, alerts),
-    channels: [realtimeChannel],
+    channels: alertChannels(admin),
   };
 }

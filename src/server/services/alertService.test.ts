@@ -137,6 +137,14 @@ describe("fanOut", () => {
     expect(inserted.filter((a) => a.status === "sent")).toHaveLength(3);
   });
 
+  it("writes no row for a channel that answers 'skipped' (e.g. e-mails switched off)", async () => {
+    const skipping: AlertChannel = { name: "email", send: async () => "skipped" };
+    const { deps, inserted } = fakeDeps([realtimeChannel, skipping]);
+
+    expect(await fanOut(deps, CHECK)).toBe(2);
+    expect(inserted.map((a) => a.channel)).toEqual(["realtime", "realtime"]);
+  });
+
   it("does nothing for a check that doesn't exist", async () => {
     const { deps, inserted } = fakeDeps([realtimeChannel], false);
     expect(await fanOut(deps, CHECK)).toBe(0);

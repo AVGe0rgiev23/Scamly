@@ -33,14 +33,14 @@ The system has **layers**, and each layer only talks to the one below it: the **
 
 **Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. `/api/health` and the keep-alive workflow are ready for the first deploy (section 3.22).
 
-**Week 2 backend (4 Nov, ahead of plan):** the call-check API runs the engine on the server and stores only redacted text (3.23); the family is alerted through `alerts` rows and Supabase Realtime, with a 5 s polling fallback (3.24, 3.25); „Обаждам ѝ се сега“ works end to end (3.23); persons, the contact list and invites are complete (3.26–3.28, 5.14). 171 database tests, 369 unit tests. Roberta's Week 2 screens that use them are still to come.
+**Week 2 backend (4 Nov, ahead of plan):** the call-check API runs the engine on the server and stores only redacted text (3.23); the family is alerted through `alerts` rows and Supabase Realtime, with a 5 s polling fallback (3.24, 3.25); „Обаждам ѝ се сега“ works end to end (3.23); persons, the contact list and invites are complete (3.26–3.28, 5.14). Web push (3.29) and e-mail (3.30) are two more alert channels, each behind its feature switch; a real phone and a real Brevo e-mail are still to be tested. 171 database tests, 449 unit tests. Roberta's Week 2 screens that use them are still to come.
 
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
-  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health, checks, realtime token, contacts, invites · ⬜ rest (week 2-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, engine, checks, alerts (realtime), contacts, invites · ⬜ push, e-mail (week 2)"]
-  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 11 files · ⬜ more (week 2-3)"]
+  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health, checks, realtime token, contacts, invites, push · ⬜ rest (week 2-3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, engine, checks, alerts (realtime, push, e-mail), contacts, invites · ⬜ rest (week 3)"]
+  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 12 files · ⬜ more (week 3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 171 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
   RT["Supabase Realtime<br/>✅ publication, token endpoint, src/lib/realtime.ts · ⬜ live pages"]
@@ -72,11 +72,11 @@ Green = works now, yellow = partly built, grey dashed = planned.
 |---|---|---|---|
 | App skeleton (layout, home page, 404 page) | ✅ | `src/app/layout.tsx`, `page.tsx`, `not-found.tsx`, `globals.css` | `tests/e2e/home.spec.ts`; CI jobs *checks* (build) and *e2e* |
 | App name constant | ✅ | `src/config/app.ts` | `src/i18n/bg.test.ts` |
-| Feature switches | ✅ (not yet used by any page) | `src/config/features.ts` | `src/config/features.test.ts` |
+| Feature switches | ✅ (`push`, `email` used by the alert channels) | `src/config/features.ts` | `src/config/features.test.ts` |
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 369 tests in 35 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 449 tests in 44 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 16 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -86,12 +86,12 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | RLS policies + column privileges | ✅ | `..._000004_rls_policies.sql` | `02` to `07` test files |
 | Append-only audit log | ✅ (written by pairing, checks, persons, invites; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
 | Map statistics function `get_map_stats` | ✅ (DB part) | `..._000005_functions.sql` | `06_public_reports_scripts` |
-| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
+| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks, push subscriptions) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
 | Realtime publication (checks, alerts) | ✅ (DB part; browser side: 3.25) | `..._000006_realtime.sql` | `01_schema` |
 | Contact list function `replace_trusted_contacts` (5.14) | ✅ tested · ✅ applied in the live project (4 Nov) | `20261104000002_replace_contacts.sql` | `11_replace_contacts` |
 | Pairing codes and devices tables (HMAC hash column) | ✅ | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
 | Database tests (pgTAP, 171 assertions) | ✅ | `supabase/tests/`, `scripts/db/` | CI job *database*; `npm run test:db` |
-| ADRs (decision records) | 🔄 0005 alert channels written; 0001–0004 pending Alex | `docs/decisions/0005-alert-channels.md` | Records D7; delivery remains planned |
+| ADRs (decision records) | ✅ 0001–0005 written (stack, device pairing, e-mail provider, AI chain, alert channels) | `docs/decisions/0001`–`0005` | Records D4–D7; AI chain still planned (Week 3) |
 | Generated TypeScript types for the database | ✅ (postgres-meta, section 3.8) | `src/types/database.ts` | `npm run typecheck` |
 | Supabase clients (user, admin, browser, Realtime) + HttpOnly cookie settings | ✅ | `src/server/supabase/`, `src/lib/supabase/browser.ts`, `src/lib/realtime.ts` | section 3.9; live smoke test |
 | Proxy: session refresh + login guards | ✅ | `src/proxy.ts`, `src/config/routes.ts` | `routes.test.ts`, `tests/e2e/auth-guards.spec.ts` |
@@ -109,8 +109,8 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
 | Checks API + server-side verdict + acknowledge (3.23) | ✅ backend (W2-02, W2-04) · UI: Roberta | `src/app/api/checks/`, `src/server/services/checkService.ts`, `src/schemas/checks.ts` | `checkService.test.ts` (24), `schemas/checks.test.ts`; live smoke test 38/38 |
 | Family alerts: fan-out + Realtime token + live-watch helper (3.24, 3.25) | ✅ backend (W2-03) · live alert page UI: Roberta | `src/server/services/alertService.ts`, `realtimeService.ts`, `src/app/api/realtime/token/`, `src/lib/realtime.ts` | `alertService`, `realtimeService`, `realtime`, `origin` tests; live: alert via Realtime in 111 ms |
-| Web push | ⬜ planned (week 2, W2-05) | | |
-| Email (`EmailProvider`, Brevo) | ⬜ planned (week 2, W2-06) | | |
+| Web push (3.29) | ✅ backend (W2-05) · opt-in button + iOS hint: Roberta · real-phone test pending | `src/app/api/push/`, `src/server/services/pushSubscriptionService.ts`, `src/server/notifications/push{Channel,Sender}.ts`, `src/schemas/push.ts`, `src/lib/push.ts`, `public/sw.js` | `pushChannel` (19), `pushSender` (4), `pushSubscriptionService` (7), `schemas/push` (7), `lib/push` (9); live smoke test 22/22 |
+| Email (`EmailProvider`, Brevo) (3.30) | ✅ backend (W2-06) · wording draft: Roberta · real Brevo e-mail pending (no account yet) | `src/server/notifications/email/`, `src/server/notifications/siteUrl.ts` | `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3); fakes only |
 | Contacts + invites API (3.27, 3.28) | ✅ backend (W2-08) · migration applied 4 Nov; live smoke test 44/44 | `src/app/api/persons/[id]/{contacts,invites}/`, `src/app/api/invites/redeem/`, `contactService.ts`, `inviteService.ts` | `contactService` (12), `inviteService` (17), `11_replace_contacts`; live 35/44 |
 | Family dashboard UI (people, contacts, pairing, history) | ⬜ planned (week 2, W2-07, Roberta) | | |
 | PWA (install, offline card), voice input | ⬜ planned (week 2, W2-09, W2-10) | | |
@@ -233,7 +233,7 @@ export function parseBoolean(value: string | undefined, defaultValue: boolean): 
 }
 ```
 
-No page or API uses a switch yet; the first users come with push/email in Week 2.
+The first users are the alert channels (3.24): `email` adds the e-mail channel (3.30), and `push` adds the push channel **only if the VAPID keys are valid too** (3.29); `GET /api/push/public-key` answers `enabled: false` when either is missing.
 
 #### Why it works like that
 
@@ -253,7 +253,7 @@ Holds **every piece of Bulgarian text a user can see**, in one object `bg` with 
 
 #### How it works
 
-Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Groups so far: `app`, `common`, the design-system groups, and (Session E) `errors` (API error messages), `auth`, `pairing`, `persons` and `areas` (temporary area pages).
+Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Groups so far: `app`, `common`, the design-system groups, and (Session E) `errors` (API error messages), `auth`, `pairing`, `persons` and `areas` (temporary area pages); Week 2 added `alertEmail` (3.30) and `push` (3.29), both marked **draft, Roberta to proofread**.
 
 #### Why it works like that
 
@@ -272,9 +272,10 @@ Checks that the server's settings and secrets (Supabase keys, peppers, email set
 #### How it works
 
 1. `serverEnvSchema` is a **Zod** schema (like a Pydantic model): for example `NEXT_PUBLIC_SUPABASE_URL: z.url()`, `PAIRING_PEPPER: z.string().min(32, ...)`, `EMAIL_PROVIDER: z.enum(["brevo", "resend", "noop"]).default("noop")`. Keys for later features (VAPID, Gemini, Groq, `CRON_SECRET`) are `.optional()`.
-2. `dropEmptyValues(env)` removes empty values, so a line `HASH_PEPPER=` in `.env.local` counts as missing (not as a valid empty string).
-3. `getServerEnv(env = process.env)` runs `safeParse`. If something is wrong it throws one error listing **every** problem as `- NAME: rule message`.
-4. The type `ServerEnv` is worked out from the schema with `z.infer` (no type written twice).
+2. **Optional extras never take the server down.** `EMAIL_PROVIDER`, `EMAIL_FROM`, `SITE_URL` and `VAPID_SUBJECT` end with `.catch(() => fallback(NAME, safeValue))`: a wrong value (e.g. `EMAIL_PROVIDER=gmail`) logs `[env] EMAIL_PROVIDER has an invalid value and is ignored; using the safe default.` (the name, never the value) and uses the safe value (`noop`, nothing, the default subject). That extra is then off; the rest of the server works. Required values (Supabase keys, peppers) still fail loudly. `VERCEL_PROJECT_PRODUCTION_URL` (set by Vercel itself) is read for `getSiteUrl()` (3.30).
+3. `dropEmptyValues(env)` removes empty values, so a line `HASH_PEPPER=` in `.env.local` counts as missing (not as a valid empty string).
+4. `getServerEnv(env = process.env)` runs `safeParse`. If something is wrong it throws one error listing **every** problem as `- NAME: rule message`.
+5. The type `ServerEnv` is worked out from the schema with `z.infer` (no type written twice).
 
 ```ts
 export function getServerEnv(env: Env = process.env): ServerEnv {
@@ -293,14 +294,15 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 
 - **Lazy validation**: the check runs only when `getServerEnv()` is called, not when the file is imported. So `next build` and CI work on a machine with no `.env.local`, and each server function checks the settings at the moment it needs them.
 - **Never prints secrets**: the error names the variable and the broken rule (`issue.path`, `issue.message`), never its value, so a log or a screenshot of the error can't leak a key.
-- **Fail early and loudly**: a missing pepper should stop the server with a clear message, not cause a strange bug later.
+- **Fail early and loudly** for what every route needs: a missing pepper should stop the server with a clear message, not cause a strange bug later.
+- **But not for extras**: `getServerEnv()` runs in almost every API route (the admin client and the rate limiter call it), so without the fallback one typo in `EMAIL_FROM` would make those routes answer 500, including the big button. An e-mail setting must at most switch e-mail off. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`.catch()` fallback for optional environment variables".
 - **Peppers ≥ 32 characters**: short secrets can be guessed (section 5.13 explains what the pepper protects).
 - **Server only**: this file returns secret keys, so only server code may import it. Code that runs in the browser or the proxy reads the two public values through `src/lib/publicEnv.ts` instead (section 3.9). Variables starting with `NEXT_PUBLIC_` are the exception: Next.js copies them into the browser code, so only public values (the Supabase URL and the anon key, which RLS makes safe) get that prefix. `SUPABASE_SERVICE_ROLE_KEY` never does.
 - Real values live in `.env.local` (ignored by git through `.env*` in `.gitignore`) and in Vercel's settings.
 
 #### How we know it works
 
-`src/lib/env.test.ts`, 4 tests with fake values only: a valid set passes and gets `EMAIL_PROVIDER = "noop"`; an empty set names the missing `SUPABASE_SERVICE_ROLE_KEY`; an empty `HASH_PEPPER` counts as missing; `EMAIL_PROVIDER=gmail` is rejected.
+`src/lib/env.test.ts`, 7 tests with fake values only: a valid set passes and gets `EMAIL_PROVIDER = "noop"`; an empty set names the missing `SUPABASE_SERVICE_ROLE_KEY`; an empty `HASH_PEPPER` counts as missing; `EMAIL_PROVIDER=gmail` falls back to `noop`; a bad `EMAIL_FROM` is ignored; a bad `SITE_URL` and `VAPID_SUBJECT` are ignored (default subject); a valid `EMAIL_FROM` is kept.
 
 ### 3.6 Detection engine: types (`src/engine/types.ts`)
 
@@ -552,7 +554,7 @@ try {
 
 #### What it does
 
-`rateLimit.ts` allows at most N attempts per time window for login, registration, pairing, invite links and call checks; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
+`rateLimit.ts` allows at most N attempts per time window for login, registration, pairing, invite links, call checks and push subscriptions; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
 
 #### How it works
 
@@ -567,6 +569,7 @@ try {
   | `pairGlobal` | `pair:global` | 100 per 15 min (everybody together) |
   | `inviteRedeemPerIp` | `invite:ip:<HMAC of IP>` | 10 per 15 min (3.28) |
   | `checkPerDevice` | `check:device:<device id>` | 10 per hour per phone (3.23; a device id is not personal data, so no HMAC) |
+  | `pushPerUser` | `push:user:<user id>` | 20 per hour per account (3.29; counted after the body is valid) |
 
 - `ipKey(rule, ip, HASH_PEPPER)` builds the key, so the database never stores a real IP.
 - `HitCounter` is a function type (like Python's `Callable[[str, int, int], Awaitable[bool]]`). The real one, `databaseHitCounter(admin)`, calls `admin.rpc("hit_rate_limit", …)` (section 5.11). If the call fails it throws: the limiter **fails closed** (no counting → no attempt).
@@ -927,27 +930,29 @@ Routes in `src/app/api/checks/**`, logic in `src/server/services/checkService.ts
 
 #### What it does
 
-When the button is pressed, every trusted contact **with a Scamly account** gets an alert on every channel, and each delivery is written as one row of `alerts` (who, which channel, `sent`/`failed`, error). Contacts without an account (phone only) get no alert; they are only in the „Обади се на …“ list. When the answers arrive, the channels hear about the verdict too.
+When the button is pressed, every trusted contact **with a Scamly account** gets an alert on every switched-on channel (realtime always; push 3.29 and e-mail 3.30 when on), and each real delivery attempt is written as one row of `alerts` (who, which channel, `sent`/`failed`, error). Contacts without an account (phone only) get no alert; they are only in the „Обади се на …“ list. When the answers arrive, the channels hear about the verdict too.
 
 #### How it works
 
-- **`AlertChannel`** = `{ name, send(recipient, payload) }` (like a Python `Protocol` with one method). `send()` throws when delivery fails. `AlertPayload` = `{ kind: "started" | "verdict", checkId, protectedPersonId, personName, riskLevel }`.
-- **Today there is one channel, `realtimeChannel`, and its `send()` does nothing:** the `alerts` row we insert (and the `checks` row the check service updates) **is** the message. Supabase Realtime sees the change and delivers it to the open page, filtered by RLS (3.25).
-- **`fanOut(deps, checkId)`**: loads the check, the person's name and the contacts (admin client), keeps only contacts with `user_id` (`recipientsFrom()`), calls every channel for every recipient. A channel that throws → that row is `failed` with the error text (cut to 500 characters, no stack); the others go on. **All rows in one INSERT** (`insertAlerts()` in `alertsRepository.ts`): one trip to the database, and every family member's page rings at the same moment. A missing check → nothing.
-- **`notifyVerdict(deps, checkId)`**: calls the channels again with `kind: "verdict"` but writes **no new rows** (there is one row per check, member and channel); failures are only logged.
-- `createAlertDeps(admin)` builds the real deps with `channels: [realtimeChannel]`. **Web push (W2-05) and e-mail (W2-06) will be two more objects in that list**; `fanOut()` and `notifyVerdict()` won't change.
+- **`AlertChannel`** = `{ name, send(recipient, payload) }` (like a Python `Protocol` with one method). `send()` throws when delivery fails, and may answer **`"skipped"`** when it has nothing to send to this person: no push subscription, e-mail alerts off, no real address, a verdict that is not red, or `EMAIL_PROVIDER=noop`. Then **no row** is written for that channel. `AlertPayload` = `{ kind: "started" | "verdict", checkId, protectedPersonId, personName, riskLevel }`.
+- **`realtimeChannel`'s `send()` does nothing:** the `alerts` row we insert (and the `checks` row the check service updates) **is** the message. Supabase Realtime sees the change and delivers it to the open page, filtered by RLS (3.25).
+- **`fanOut(deps, checkId)`**: loads the check, the person's name and the contacts (admin client), keeps only contacts with `user_id` (`recipientsFrom()`), starts `deliver()` for every (recipient, channel) pair and waits for **all of them at once** with `Promise.all` (like `asyncio.gather`; results keep their order). A channel that throws → that row is `failed` with the error text (cut to 500 characters, no stack); `"skipped"` → no row; the others go on. **All rows in one INSERT** (`insertAlerts()` in `alertsRepository.ts`): one trip to the database, and every family member's page rings at the same moment. A missing check → nothing.
+- **`notifyVerdict(deps, checkId)`**: calls the channels again with `kind: "verdict"`, also all in parallel, but writes **no new rows** (there is one row per check, member and channel); failures are only logged. Push and e-mail send a follow-up only when the verdict is red.
+- `createAlertDeps(admin)` builds the real deps; `alertChannels(admin)` makes the list: `realtimeChannel` always, `createRealEmailChannel()` when `FEATURE_EMAIL` is on, `createRealPushChannel()` when `FEATURE_PUSH` is on **and** both VAPID keys are valid (otherwise it returns `null` and push is not in the list at all). Adding them changed only this list, `deliver()` and the `"skipped"` answer.
 - Service role (BUILD_PLAN 2.4, use 4): the rows belong to **other** users, which no RLS policy lets a phone write. `fanOut()` is called only by the check service, after its checks.
 
 #### Why it works like that
 
 - **One interface for every channel** (D7 and ADR 0005): adding push or e-mail is a new object, not a change of the fan-out. Tests pass fake channels that fail on purpose.
 - **A failed channel never stops the others:** an expired push subscription must not keep Anna's sister from getting the alert.
+- **Parallel sends:** Brevo and the push services may each take up to 5 s (their timeouts). One after the other, 2 members × 2 slow channels could hold the phone's answer for 20 s; in parallel the slowest one decides. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`Promise.all` for the alert sends".
+- **`"skipped"` writes no row:** the table then says only what really went out (or really failed). A `sent` e-mail row with `noop` would be a lie in our evidence. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "No `alerts` row when nothing was sent".
 - **The row is the message** for Realtime: nothing to send twice, and the row is also the record of who was alerted.
 - Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`AlertChannel` interface".
 
 #### How we know it works
 
-`alertService.test.ts`, 7 tests: only contacts with an account; one `sent` realtime row per such contact; every channel gets the same payload; a failing channel → `failed` and everybody else still alerted; nothing for a missing check; the verdict goes to every channel with no new rows; a failing verdict channel is logged. Live: 3.23.
+`alertService.test.ts`, 8 tests: only contacts with an account; one `sent` realtime row per such contact; every channel gets the same payload; a failing channel → `failed` and everybody else still alerted; a `"skipped"` channel writes no row; nothing for a missing check; the verdict goes to every channel with no new rows; a failing verdict channel is logged. The push and e-mail channels inside a real `fanOut()`: 3.29, 3.30. Live: 3.23.
 
 ### 3.25 Realtime in the browser: `GET /api/realtime/token` and `src/lib/realtime.ts` (W2-03 backend)
 
@@ -1064,6 +1069,77 @@ How a second relative (e.g. Иван) joins Баба Мария's contact list *
 
 **Live smoke test (4 Nov, not in the repo):** persons, contacts and invites, first run **35 of 44 steps passed**: all 9 failures came from `replace_trusted_contacts` missing before its migration was applied. After Alex applied it (4 Nov), the re-run passed **44 of 44** (see "The live database").
 
+### 3.29 Web push: `/api/push/*`, `pushChannel.ts`, `public/sw.js` (W2-05 backend)
+
+#### What it does
+
+A family member who switched notifications on gets a notification on their phone or computer **even when Scamly is not open**: „Мария: съмнително обаждане“ when the button is pressed, and, only if the verdict is red, „Внимание! Мария: признаци на измама“, which **replaces** the first. Tapping it opens `/family/alerts?check=<id>`. It fills the gap of the Realtime page (3.25), which works only while the page is open.
+
+| Endpoint | Who | Answer |
+|---|---|---|
+| `GET /api/push/public-key` | anyone | 200 `{ enabled, publicKey }`; `enabled: false, publicKey: null` when `FEATURE_PUSH` is off or the VAPID keys are missing/malformed |
+| `POST /api/push/subscriptions` `{ endpoint, keys: { p256dh, auth } }` | any logged-in role | 201 `{ ok: true }`; 400 bad subscription; 409 `push_endpoint_taken`; 429 after 20 changes per hour |
+| `DELETE /api/push/subscriptions` `{ endpoint }` | any logged-in role | 200 `{ ok: true, removed }` (only the caller's own row) |
+
+The „Включи известията“ button and the iPhone hint are Roberta's (W2-05 UI); `src/lib/push.ts` gives her the functions.
+
+#### How it works
+
+1. **Keys.** One VAPID key pair, made once with `npx web-push generate-vapid-keys`: `VAPID_PUBLIC_KEY` (public), `VAPID_PRIVATE_KEY` (secret), and optional `VAPID_SUBJECT` (`mailto:…` or `https://…`, default `mailto:scamly-demo@example.invalid`). `getPushConfig(env, features)` (`pushChannel.ts`) returns `null` (push off) when `FEATURE_PUSH` is off, a key is missing, or a key has the wrong shape (87 / 43 base64url characters; the warning names the variables, never the values).
+2. **Subscribing in the browser** (`src/lib/push.ts`). `subscribeToPush()` must be called **directly in the tap handler** (Safari asks for permission only in answer to a tap). In order: iPhone/iPad outside the home-screen app → `"ios_home_screen"` (an iPad says "Macintosh", so "Macintosh" + touch screen counts as iPad); no service worker / `PushManager` / `Notification` → `"unsupported"`; `Notification.requestPermission()` (no → `"denied"`); register `/sw.js` with scope `/` and `updateViaCache: "none"`; fetch the public key (`null` → `"disabled"`); reuse this browser's subscription unless it was made for another key; else `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`; POST `subscription.toJSON()`. On **409** it unsubscribes, makes a **fresh** subscription (new endpoint) and tries **once** more. Other helpers: `isPushEnabledOnServer()`, `isPushSupported()`, `isIosNeedsHomeScreen()`, `getPushPermission()`, `isSubscribedToPush()`, and `unsubscribeFromPush()` (server DELETE first, then the browser; call it on logout).
+3. **Saving on the server.** Route: same-origin check, `requireRole([all four roles])`, `PushSubscriptionSchema` (`src/schemas/push.ts`): the endpoint must be `https`, port 443, no user/password, ≤ 1000 characters, on an **allowlisted host** or a sub-domain of it (`fcm.googleapis.com`, `push.services.mozilla.com`, `push.apple.com`, `notify.windows.com`); `p256dh` 43–200 and `auth` 16–100 base64url characters; other keys (`expirationTime`) dropped. `saveSubscription()` (`pushSubscriptionService.ts`): rate limit `push:user:<user id>` (3.13); then an **upsert without an UPDATE right**: `deleteOwn(userId, endpoint)`, then `insertOwn()`, both with the **user** client (RLS: `user_id = auth.uid()`). `user_id` always comes from the session. If the insert hits the unique endpoint (`23505`), the endpoint belongs to **another** account, whose row RLS hides → 409 `push_endpoint_taken`. `removeSubscription()` deletes only the caller's row and always answers 200.
+4. **Sending** (`pushChannel.ts`, an `AlertChannel` named `push`, 3.24). `buildPushMessage(payload)` → `{ title, body, url, tag }` from `bg.push` (name, or „Ваш близък“ when it is empty); `url` = `/family/alerts?check=<id>`, `tag` = `check-<id>`; a verdict that is not red → `null` → `"skipped"`. `listSubscriptions(userId)` (admin client, use 4); none → `"skipped"`. Each of the member's browsers in turn gets `createWebPushSender(config)` (`pushSender.ts`) → `webpush.sendNotification(target, JSON, { TTL: 600, urgency: "high", timeout: 5000, vapidDetails })`. HTTP **404/410** → `"gone"` → the row is deleted at once (a failed delete is only logged). Another status → an error with **only the status code** (the body could echo the endpoint). At least one browser reached → `sent` row; none → the channel throws (`"all N push subscription(s) expired and were removed"` or `"push failed for N subscription(s): …"`) → `failed` row; the fan-out goes on.
+5. **The service worker** `public/sw.js` (plain JavaScript; the browser loads it from `/sw.js` without our build). `next.config.ts` gives `/sw.js` the headers `Content-Type: application/javascript`, `Cache-Control: no-cache, no-store, must-revalidate` and its own CSP `default-src 'self'; script-src 'self'`. `install` → `skipWaiting()`, `activate` → `clients.claim()` (a fix reaches phones at once). `push` → `readMessage()` (anything malformed becomes a general „Scamly“ alert; `url` must be a path of our own site, `/` but not `//`) → `showNotification()` with the same `tag`, `renotify: true`, `requireInteraction: true`. `notificationclick` → focus an open Scamly tab and navigate it, else open a new one. **No caching yet:** the offline "what to do" card comes with W2-09 (Roberta).
+
+#### Why it works like that
+
+- **Secondary channel (D7):** push needs permission, and on iPhone only works from the home-screen app on iOS 16.4+ (risk R2). Realtime stays primary; push covers the closed page.
+- **The `web-push` library** (3.6.7, MPL-2.0, compatible with GPL-3.0, `THIRD_PARTY_LICENSES.md`) does the message encryption and the VAPID signature; we don't write crypto ourselves, and no Firebase project is needed.
+- **Public key from a route, not `NEXT_PUBLIC_VAPID_PUBLIC_KEY`:** `NEXT_PUBLIC_` values are copied into the JavaScript at build time, so turning push off or changing the key would need a rebuild and the key would live in two variables. The route reads it at request time, and its `enabled` flag also tells the page whether to show the button. The public key is public by design.
+- **Endpoint allowlist (SSRF):** the server POSTs to whatever endpoint is stored. Without the allowlist any logged-in user could make our server send requests to any address, including internal ones.
+- **Delete + insert:** `push_subscriptions` has only SELECT/INSERT/DELETE grants for logged-in users (`…_rls_policies.sql`); we didn't add a migration and an UPDATE right for one refresh case. The fresh-subscription retry on 409 means a shared browser moves to the new account instead of failing.
+- **Same tag per check, TTL 10 min, urgency high:** one notification per check (the red one replaces the first and rings again); an alert about a call happening now is useless an hour later; "high" wakes a phone in battery saving.
+- **Only fixed texts, a name and an id:** a lock screen can be read by anyone nearby. Wording is a draft for Roberta to proofread.
+- Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Web Push with VAPID through `web-push`", "VAPID public key from a route", "Push endpoint allowlist", "Push subscription upsert = delete + insert".
+
+#### How we know it works
+
+`pushChannel.test.ts`, 19 tests: when push is on (switch, both keys, subject, malformed key warns without the value, no channel at all when off); the message (who, link and tag of this check, second message only for red, „Ваш близък“, no free text); sending (every browser of the recipient and nobody else, 404/410 deleted and still `sent`, all gone → throws, nobody reached → throws without the endpoint, `"skipped"`, a failed delete is only logged); inside a real `fanOut()` (only linked contacts, `sent`/`failed` per member, no row without a subscription, red follow-up). `pushSender.test.ts`, 4 (TTL, urgency and VAPID keys; 404/410 → gone; other status → status only; network errors passed on). `pushSubscriptionService.test.ts`, 7 (stored for the caller with the rate limit, own endpoint refreshed, 409 leaves the other account's row, 429; delete own, someone else's endpoint untouched but 200, 429). `schemas/push.test.ts`, 7 (the four push services; other and look-alike hosts, `http`, odd ports and garbage refused; `toJSON()` accepted with unknown keys dropped; Bulgarian message; length; keys). `lib/push.test.ts`, 9 (support detection, iPhone/iPad detection, hint only outside the home screen, base64url decoding, an 87-character key → 65 bytes starting `0x04`, `sameBytes`).
+
+**Live smoke test (4 Nov, not in the repo): 22/22 steps passed.** **Not yet tested:** delivery to a real phone (needs a real Android phone with Chrome; on iPhone only after "Add to Home Screen"), which is W2-05's "done when" in BUILD_PLAN.
+
+### 3.30 E-mail alerts: `EmailProvider`, Brevo and the e-mail channel (W2-06 backend)
+
+#### What it does
+
+A family member in the contact list **with an account**, with `profiles.email_alerts` on (default true) and a real address, gets **one e-mail when the check starts** and a **short follow-up only when the verdict is red**. The e-mail says only the person's display name, the time (Bulgarian time), the risk level so far and a link to `/family/alerts?check=<id>`. Which service sends it is chosen by one variable, `EMAIL_PROVIDER` (ADR 0003, D5).
+
+#### How it works
+
+1. **The interface** (`email/emailProvider.ts`): `EmailProvider` = `{ name, send(message) }`, `EmailMessage` = `{ to, subject, text, html? }` (like a Python `Protocol` and `TypedDict`). `send()` throws when the e-mail was not accepted.
+2. **Choosing** (`createEmailProvider(env)`): `noop` (default) logs `[email] email skipped (noop)` and sends nothing; `brevo` with `BREVO_API_KEY` **and** `EMAIL_FROM` → Brevo, with one missing → a warning naming the variables and `noop`; `resend` → a stub that always throws `RESEND_NOT_CONFIGURED` (it needs our own domain), so those rows are `failed` and the other channels still work.
+3. **Brevo** (`brevoEmailProvider.ts`): one built-in `fetch` POST to `https://api.brevo.com/v3/smtp/email` with header `api-key` and body `{ sender: { name: APP_NAME, email: EMAIL_FROM }, to, subject, textContent, htmlContent }`, `AbortSignal.timeout(5000)`. 201 = accepted. Anything else throws `Brevo answered HTTP <status> (<code>)`, keeping only Brevo's short error code (`^[a-z_]{1,40}$`); no answer in 5 s → `Brevo did not answer within 5000 ms`; network error → only the error's name. The key, the address and the text never appear in an error (errors go into `alerts.error` and logs).
+4. **The channel** (`email/emailChannel.ts`, an `AlertChannel` named `email`, 3.24), in order: verdict not red → `"skipped"`; empty person name (deleted meanwhile) → `"skipped"`; `findRecipient(userId)`: `findProfileById()` (admin); `email_alerts` off → `"skipped"` **without** reading the address; else `findAuthUserEmail()` (new in `authUsersRepository.ts`, `auth.admin.getUserById`, use 4); no address, no `@`, or an address ending in `.invalid` (device accounts) → `"skipped"`. Then `buildAlertEmail()` and `provider.send()`. With the `noop` provider the answer is `"skipped"` too, so no `sent` row claims an e-mail that never went out.
+5. **The content** (`email/alertEmail.ts`, texts in `bg.alertEmail`): `fillTemplate()` fills `{name}`, `{time}`, `{link}` in **one pass** (a name containing `{time}` is not filled again); `cleanName()` turns control characters into spaces (no fake extra lines in the subject); `formatBulgarianTime()` gives „9 ноември в 12:05 ч.“ in `Europe/Sofia` whatever the server's zone; the risk line is „още не е известно…“ while started, and for green „ниско – няма типични признаци на измама“ (never "safe", D9); simple HTML with inline styles and one button link, **every value through `escapeHtml()`**. Plain text and HTML always both.
+6. **The link's address** (`siteUrl.ts`, `getSiteUrl(env)`): `SITE_URL` if set → else `https://` + `VERCEL_PROJECT_PRODUCTION_URL` (Vercel sets it on every deployment) → else `http://localhost:3000`; slashes at the end removed.
+
+#### Why it works like that
+
+- **Brevo free tier behind an interface** (ADR 0003, D5): sends from one verified address with no domain of our own; `EMAIL_PROVIDER=noop` switches it off without code, also during the demo; `FEATURE_EMAIL=false` removes the channel entirely.
+- **Plain `fetch` instead of Brevo's SDK:** one HTTPS request; no extra dependency or licence to check; the tests pass a fake `fetch`.
+- **Resend only as a stub:** without our own domain a real Resend sender can't work or be tested.
+- **Content kept minimal:** an e-mail can be forwarded, printed or read by someone else, so no phone numbers or call details. The display name is typed by a user, so it is escaped against HTML injection.
+- **Errors without secrets:** `alerts.error` is readable by the recipient (RLS), and logs can end up in screenshots.
+- **Site URL fallback:** links work on Vercel without setting anything; `SITE_URL` is only needed for a custom address.
+- Wording is a draft for Roberta to proofread (W2-06).
+- Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Brevo free tier behind an `EmailProvider` interface", "Plain `fetch` for Brevo", "Resend as a stub only", "No `alerts` row when nothing was sent".
+
+#### How we know it works
+
+`emailProviders.test.ts`, 10 tests: `noop` by default; Brevo with key and sender; `noop` with a warning when the key or the sender is missing; the Resend stub refuses with a clear message; `noop` logs one line without the address; Brevo POSTs with the key in the `api-key` header; an HTTP error keeps only Brevo's short code; timeout; network failure. `alertEmail.test.ts`, 9 (HTML escaping, one-pass templates, one-line names, Bulgarian time; who/when/risk/link; red wording; never "safe"; a malicious name escaped; no phone numbers or call details). `emailChannel.test.ts`, 8 (through real `fanOut()`/`notifyVerdict()`: one e-mail and a `sent` row per linked contact who wants e-mails; nothing when switched off; never a `.invalid` address or an account without one; a Brevo failure → `failed` while realtime rows are still written; no row with `noop`; no phone numbers; follow-up only for red). `siteUrl.test.ts`, 3.
+
+**Tested only with fakes so far.** There is no Brevo account yet, so the real test e-mail of ADR 0003's "done when" is still pending.
+
 ---
 ## 4. Code quality, tests and CI
 
@@ -1119,9 +1195,9 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - A test looks like pytest with different words: `describe` groups tests, `it` is one test, `expect(a).toBe(b)` is `assert a == b`, `expect(() => f()).toThrow(/NAME/)` is `pytest.raises`.
 - Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no global minimum; the engine has a ≥ 90 % goal (W1-10) and reaches 100 % of lines (`docs/evidence/engine-coverage-2026-11-04.md`).
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
-- **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `CheckDeps`, `AlertDeps`, `PersonDeps`, `ContactDeps`, `InviteDeps` (Week 2; the last three share the fake world `src/server/services/__tests__/familyWorld.ts`), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
+- **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `CheckDeps`, `AlertDeps`, `PushChannelDeps`, `PushSubscriptionDeps`, `EmailChannelDeps` (a fake `fetch` for Brevo), `PersonDeps`, `ContactDeps`, `InviteDeps` (Week 2; the last three share the fake world `src/server/services/__tests__/familyWorld.ts`), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7; and from Week 2 (W2-02/03/04/08) `checkService` 24, `inviteService` 17, `contactService` 12, `schemas/contacts` 11, `personService` 10, `schemas/checks` 8, `alertService` 7, `realtime` 6, `realtimeService` 3 and 2 more in `origin` (now 9). Total: 35 files, **369 tests**.
+Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7; and from Week 2 (W2-02/03/04/08) `checkService` 24, `inviteService` 17, `contactService` 12, `schemas/contacts` 11, `personService` 10, `schemas/checks` 8, `alertService` 7, `realtime` 6, `realtimeService` 3 and 2 more in `origin` (now 9); from W2-05/W2-06 `pushChannel` 19, `emailProviders` 10, `lib/push` 9, `alertEmail` 9, `emailChannel` 8, `pushSubscriptionService` 7, `schemas/push` 7, `pushSender` 4, `siteUrl` 3, and 1 more in `alertService` (now 8) and 3 more in `env` (now 7). Total: 44 files, **449 tests**.
 
 #### Why it works like that
 
@@ -1129,7 +1205,7 @@ Unit tests are fast enough to run on every save, and the detection engine is a p
 
 #### How we know it works
 
-`npx vitest run` → `Test Files 35 passed, Tests 369 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npx vitest run` → `Test Files 44 passed, Tests 449 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -1855,9 +1931,9 @@ Proven by `pairingService.test.ts` (18 tests), `04_devices_pairing` (RLS and cas
 1. **The page subscribes.** `GET /api/realtime/token` (same-origin, `getUser()`, the cookie session must be Анна's) → `{ userId, accessToken, expiresAt }`. `realtime.ts` opens a channel with `postgres_changes` on `checks` (`protected_person_id=eq.<Мария>`) and `alerts` INSERT (`recipient_id=eq.<Анна>`), and polls `GET /api/checks?personId=<Мария>` every 5 s until the channel says `SUBSCRIBED` (3.25).
 2. **A stranger calls grandma about money; she presses „Обаждат ми се за пари!“.** The phone sends `POST /api/checks` with no body. Same-origin check, `requireRole(["protected"])`: `getActor()` gives her device and person.
 3. Rate limit `check:device:<device>` (10 per hour). `insertCheck()` (service role): `protected_person_id` = Мария from the phone's pairing, `status 'started'` (3.23).
-4. **Fan-out** (3.24): recipients = contacts with an account = Анна and Иван (not Гергана). One INSERT of two `alerts` rows (`realtime`, `sent`). The phone gets `201 { checkId }` and opens the questions.
+4. **Fan-out** (3.24): recipients = contacts with an account = Анна and Иван (not Гергана). One INSERT of two `alerts` rows (`realtime`, `sent`), plus a `push` and an `email` row for each of them who switched those on (3.29, 3.30; all sends run in parallel). The phone gets `201 { checkId }` and opens the questions.
 5. **The family sees it.** Realtime checks RLS (`recipient_id = auth.uid()` for `alerts`, `has_family_access()` for `checks`) and rings Анна's page; the page fetches `GET /api/checks?personId=<Мария>` and shows the new check, still without a verdict. In the live smoke test this took 111 ms after the API answer. On a network without WebSockets the 5 s polling shows it instead.
-6. **Grandma answers** (police, money: yes, courier, rushing: yes, secret: unsure, and the caller's words). `PUT /api/checks/<id>/answers`. The server: `loadOwnCheck()` (her phone started it), `status 'started'` ✔; `analyseCall()` on the original words → **red**, HR1 + HR2; the text is redacted with the known names (Мария, Анна, Иван, Гергана) and stored; one `UPDATE … WHERE status = 'started'` saves answers and verdict; `notifyVerdict()`.
+6. **Grandma answers** (police, money: yes, courier, rushing: yes, secret: unsure, and the caller's words). `PUT /api/checks/<id>/answers`. The server: `loadOwnCheck()` (her phone started it), `status 'started'` ✔; `analyseCall()` on the original words → **red**, HR1 + HR2; the text is redacted with the known names (Мария, Анна, Иван, Гергана) and stored; one `UPDATE … WHERE status = 'started'` saves answers and verdict; `notifyVerdict()` (red, so push and e-mail send their follow-up).
 7. The phone gets `200 { verdict: red, „ТОВА Е ИЗМАМА.“, reasons with the caller's words, callContact: { "Иван", "+359888123456" } }`: Иван is the first contact with a phone, so the big `tel:` button says „Обади се на Иван“. At the same moment Realtime delivers the `checks` UPDATE to Анна's page, which re-reads and shows red.
 8. **Анна presses „Обаждам ѝ се сега“.** `POST /api/checks/<id>/acknowledge`: RLS read ✔, then one `UPDATE … SET acknowledged_by = Анна WHERE acknowledged_by IS NULL` wins → audit `check_acknowledged` → `{ first: true, acknowledgement: { displayName: "Анна", messageBg: "Анна ще ви се обади веднага." } }`. If Иван presses a second later, his UPDATE changes nothing and he gets `first: false` with Анна's name, so he knows she is on it.
 9. **Grandma sees the name.** Her result screen runs `watchCheck(<id>)`: Realtime delivers the `checks` UPDATE, the phone fetches `GET /api/checks/<id>` (its own check) and shows `acknowledgement.messageBg`: „Анна ще ви се обади веднага.“
@@ -1902,6 +1978,13 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 28 | API #12: "Invite another relative (link + code)" | Link only: `/pokana?t=<43-character token>` (`ROUTES.invite`), 7 days, single use, HMAC with `PAIRING_PEPPER`. Redeem links an existing phone-only row with the same name at the invite's place, otherwise takes the next free place up to 5; refusals don't use up the invite (3.28) |
 | 29 | API #22 / 4.2: one check "with its verdict and reasons" (reasons carry `evidence`) | `GET /api/checks/:id` rebuilds the reasons from the stored codes through `bg.ts`; the caller's matched words are not stored, so `evidence` is only in the answer to `PUT …/answers` (3.23) |
 | 30 | API #10: delete the person, "revoke devices" | Every paired phone's auth user is deleted **before** the person (otherwise the cascade loses the account ids), with `device_revoked` (reason `person_deleted`) and `person_deleted` audit lines (3.26) |
+| 31 | API table: only #23/#24 for push; how the browser gets the VAPID public key is not specified | Extra route `GET /api/push/public-key` → `{ enabled, publicKey }`, read at request time, instead of a build-time `NEXT_PUBLIC_` variable; also tells the page whether to show the button (3.29) |
+| 32 | #23 `PushSubscriptionSchema {endpoint, keys}`: any endpoint | The endpoint must be `https` on an allowlisted push service host (FCM, Mozilla, Apple, Windows) or its sub-domain, against SSRF (3.29) |
+| 33 | #23 "save a subscription" (no word on a repeat) | Upsert = delete own row + insert (no UPDATE grant on `push_subscriptions`); 409 `push_endpoint_taken` when the endpoint belongs to another account, and `subscribeToPush()` retries once with a fresh subscription (3.29) |
+| 34 | W2-03 / #18: one alert row per (contact, channel) | A channel may answer `"skipped"` (no subscription, e-mail alerts off, no real address, verdict not red, `noop` provider): then **no row** (3.24) |
+| 35 | 2.4 use 4: fan-out (order of sends not specified) | All (contact, channel) sends run in parallel with `Promise.all`, in `fanOut()` and `notifyVerdict()`; push and e-mail are in the list only when their switch is on (push also needs valid VAPID keys) (3.24) |
+| 36 | ADR 0003 / R4: "at most one e-mail per alert per recipient" | One e-mail when the check starts, plus one follow-up **only when red**: at most 2 per check, 1 for yellow/green (3.30) |
+| 37 | R16: "env vars validated at startup" (fail fast) | Required values still fail loudly; the optional extras `EMAIL_PROVIDER`, `EMAIL_FROM`, `SITE_URL`, `VAPID_SUBJECT` fall back to a safe value with a warning naming the variable (3.5) |
 
 ---
 
@@ -1945,6 +2028,10 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | **Polling fallback** | When the live connection isn't up, the page simply asks the API again every 5 seconds; like a `while True: fetch(); sleep(5)` loop that stops once Realtime works. |
 | **Atomic update** | One SQL `UPDATE … WHERE <condition>` that checks and changes in one step, e.g. `where status = 'started'` or `where acknowledged_by is null`. Two requests at the same moment can't both pass: PostgreSQL locks the row and the second finds the condition false. |
 | **SECURITY INVOKER** | The opposite of SECURITY DEFINER (and PostgreSQL's default): the function runs with the **caller's** rights, so RLS and column privileges still apply inside it (`replace_trusted_contacts`, 5.14). |
+| **Web push** | A notification sent by our server through the browser's push service (Google, Mozilla, Apple, Microsoft) to a phone or computer, even when the site is closed (3.29). |
+| **VAPID** | "Voluntary Application Server Identification": our key pair for web push. The browser subscribes with our **public** key; we sign every message with the **private** key, so the push service knows it comes from the server the browser trusted. |
+| **Service worker** | A small script (`public/sw.js`) the browser keeps in the background for our site, even with no tab open; it shows push notifications (and, from W2-09, the offline card). Like a tiny background daemon per website. |
+| **SSRF** | Server-Side Request Forgery: tricking a server into sending requests to an address the attacker chooses (e.g. an internal service). Stopped by the push endpoint allowlist (3.29). |
 | **PWA** | Progressive Web App: a website that can be installed on the home screen and work partly offline. Planned (W2-09). |
 | **Session / access token / refresh token** | After login Supabase gives two tokens: a short-lived **access token** (a JWT, about 1 hour) sent with every request, and a long-lived **refresh token** that buys a new pair. We keep both in cookies. |
 | **Cookie flags** | `HttpOnly`: page JavaScript can't read the cookie. `Secure`: sent only over HTTPS. `SameSite=Lax`: not sent with requests that other sites start, except normal link clicks. |
@@ -2003,3 +2090,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new sections 3.23 (checks API, server-side verdict, redact-before-store, acknowledge), 3.24 (alert fan-out, `AlertChannel`), 3.25 (Realtime token endpoint, `src/lib/realtime.ts`, polling fallback), 3.26–3.28 (person details/rename/delete, contact list, invites), 5.14 (`replace_trusted_contacts`, SECURITY INVOKER) and walkthrough 7.7; big picture, status table, 3.9, 3.12, 3.13, 3.15, 4.2, 4.4, 5, 5.9, 5.12, 5.13, 6.1, 6.2, 6.4, 7.3, 7.4, "The live database" updated; plan differences #23–#30; glossary (`postgres_changes`, polling fallback, atomic update, SECURITY INVOKER); 369 unit tests, 171 pgTAP assertions; live smoke tests 38/38 (checks, alerts) and 35/44 (persons, contacts, invites; 9 re-run after the migration: passed after the migration)
 - 2026-11-04 · migration `20261104000002` applied in the live project; contacts/invites live smoke test re-run: 44/44 passed.
 - 2026-11-04 · W1-12 seed applied to the live Supabase project; all four demo logins verified through `/api/auth/login`. Fix: the second sample check now lists `hard_rules: []`, because a batch insert fills missing columns with NULL instead of the column default. Note: in a Claude Code cloud session Node needs `NODE_USE_ENV_PROXY=1` to reach Supabase.
+- 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): new sections 3.29 (public-key route, subscriptions API with endpoint allowlist and delete + insert, `pushChannel`/`pushSender` with `web-push` 3.6.7, TTL 10 min, 404/410 cleanup, `public/sw.js`, `src/lib/push.ts`) and 3.30 (`EmailProvider`, Brevo via `fetch` with 5 s timeout, `noop`, Resend stub, e-mail channel, `alertEmail.ts`, `getSiteUrl()`); 3.24 updated (`"skipped"` writes no row, parallel sends, channels by feature switch); 3.5 env fallback for optional extras; 3.3, 3.4, 3.13, 4.2, 7.7, big picture and status table updated; plan differences #31–#37; glossary (web push, VAPID, service worker, SSRF); 449 unit tests in 44 files; push smoke test 22/22; real-phone push and a real Brevo e-mail pending
