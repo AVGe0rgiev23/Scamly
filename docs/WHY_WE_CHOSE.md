@@ -31,7 +31,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
-9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · keep-alive · `pg_cron` · uptime monitor · pinned versions
+9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
 11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `APP_NAME` constant · `server-only`
 12. [How to add an entry](#12-how-to-add-an-entry)
@@ -1177,7 +1177,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ### GitHub Actions for CI  (status: in use)
 
-**Used for:** on every push to `main`: lint, type check, format check, unit tests with coverage, production build, Playwright tests, and database/RLS tests (`.github/workflows/ci.yml`).
+**Used for:** on every push to `main`: lint, type check, format check, unit tests with coverage, production build, Playwright tests, and database/RLS tests (`.github/workflows/ci.yml`). A second workflow keeps Supabase awake (`keep-alive.yml`, section 9).
 
 **Alternatives we considered:** GitLab CI, Jenkins, CircleCI, no CI (just running checks locally).
 
@@ -1198,7 +1198,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 9. Hosting and operations
 
-### Vercel Hobby (free)  (status: decided, not built yet (week 1, W1-13))
+### Vercel Hobby (free)  (status: decided; `vercel.json` ready, Vercel project pending (W1-13, Mon 9 Nov))
 
 **Used for:** hosting the Next.js app (pages + API) on the internet.
 
@@ -1218,35 +1218,60 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the app became a real service with users (then a paid plan or another host).
 
-### Region Frankfurt (Supabase `eu-central-1`, Vercel `fra1`)  (status: decided, not built yet (week 1))
+### Region Frankfurt (Supabase `eu-central-1`, Vercel `fra1`)  (status: in use for Supabase; Vercel: set in `vercel.json`, applies from the first deploy)
 
-**Used for:** where our database and server functions run.
+**Used for:** where our database and server functions run. The Vercel part is one line in `vercel.json`: `"regions": ["fra1"]`.
 
-**Alternatives we considered:** the default US regions, other EU regions.
+**Alternatives we considered:** the default US regions (new Vercel projects default to Washington, D.C., `iad1`), other EU regions; for *how* to set it: Next.js's `export const preferredRegion` in each route, or the setting in the Vercel dashboard.
 
 **Why this one:**
 - **GDPR:** personal data of Bulgarian users stays in the EU.
-- **Low latency to Bulgaria**, and the database and functions are in the same city, so each query is fast.
+- **Low latency to Bulgaria**, and the database and functions are in the same city, so each query is fast. With the default `iad1`, every database query from a function would cross the Atlantic and back.
+- **`vercel.json` instead of `preferredRegion`:** `preferredRegion` is deprecated in Next.js 16 and on Vercel only accepts `auto`, `global` or `home` (Next.js docs in `node_modules/next/dist/docs/`). `vercel.json` is Vercel's project-wide setting, lives in git (so it can't be forgotten in a dashboard) and the `$schema` line lets editors check it.
+- On Hobby, functions run in exactly **one** region, which is what we set.
 
 **What we give up:**
-- Nothing important for us.
+- Visitors far from Europe get slower answers (not our users).
+- `vercel.json` is Vercel-specific; another host would ignore it.
 
 **We would reconsider if:** a Bulgarian or closer region became available on the free tier.
 
-### Keep-alive cron against Supabase pausing  (status: decided, not built yet (week 1, W1-13))
+### Health check on a public table with the publishable key (vs the service-role key)  (status: in use (`GET /api/health`, `src/server/services/healthService.ts`))
 
-**Used for:** a GitHub Actions scheduled job calls `/api/health` (which touches the database) every 12 hours, so the free Supabase project never pauses.
+**Used for:** `/api/health` proves the database answers by reading one row of the public `districts` table, as a guest (user client, no login cookie, publishable key only). 200 `{ok:true, db:true, time}` or 503 `{ok:false, db:false}`, never cached, 5 s timeout.
 
-**Alternatives we considered:** Vercel cron, upgrading Supabase, hoping someone visits the site.
+**Alternatives we considered:** the admin client with the service-role key (BUILD_PLAN 2.4 had listed it); `select 1` through a database function; returning `{ok:true}` without touching the database; Supabase's own status endpoints.
+
+**Why this one:**
+- **Least privilege:** the route is public and called by machines. With the service-role key a bug here could read or change everything (RLS bypassed); with the publishable key the worst case is reading the 28 district names, which are public anyway.
+- **A real query through PostgREST and RLS** is what keeps the free project awake and also proves our whole path works (URL, key, network, database). `{ok:true}` without a query would keep Vercel busy but let Supabase pause.
+- `districts` already exists and is readable by `anon` (migration 4), so no new database function or migration is needed. `select 1` would need an RPC function just for this.
+- The error answer has no details, so the public endpoint can't leak hosts or settings; the reason goes to the server log.
+
+**What we give up:**
+- It proves that *reading* works, not that writing or Auth works. That is enough for "is the site alive"; the e2e and smoke tests cover the rest.
+- If someone removed the public read policy on `districts`, health would turn red (which we'd notice at once).
+
+**We would reconsider if:** we needed a deeper check (e.g. Auth and e-mail too); that would be a separate, secret-protected endpoint.
+
+### Keep-alive: GitHub Actions schedule (vs Vercel cron, vs only an external uptime monitor)  (status: in use (`.github/workflows/keep-alive.yml`); `HEALTH_URL` secret pending the first deploy)
+
+**Used for:** a GitHub Actions scheduled job (`cron: "17 */12 * * *"`, plus a manual *Run workflow* button) calls `/api/health`, which touches the database, every 12 hours, so the free Supabase project never pauses (risk R1). It reads the URL from the repository secret `HEALTH_URL`; while that is empty it prints a notice and stays green.
+
+**Alternatives we considered:** a Vercel cron job (`crons` in `vercel.json`); only an external uptime monitor; upgrading Supabase; hoping someone visits the site.
 
 **Why this one:**
 - The rules say the site must be online for the whole judging period (risk R1).
-- GitHub Actions schedules are free and visible in the Actions tab.
+- **Vercel Hobby cron jobs run at most once a day** (risk R13) and their timing is not exact; once a day would still beat the ~7-day limit, but it gives no run history we can show and it runs *inside* Vercel, so it can't tell us when the whole deployment is broken. It would also need a `CRON_SECRET` check.
+- **Only an uptime monitor** (UptimeRobot etc.) depends on a third-party account staying active and its free terms; its settings live outside our repo. We still plan one (next entry) for alerts, but the keep-alive itself is code in git that anyone can read.
+- **GitHub Actions schedules are free**, the schedule is a file in our repo, and every run is listed in the Actions tab (evidence for the jury). `curl --fail` turns a 503 into a red run.
+- Every 12 hours is far more often than needed, so a few delayed or skipped runs don't matter.
 
 **What we give up:**
-- GitHub may delay scheduled runs, and it disables scheduled workflows in public repos after a long time without activity; we check the dashboard daily from 29.11 to 6.12.
+- GitHub may delay scheduled runs, and it **disables scheduled workflows in public repos after 60 days without commits** (not a risk during the competition); we check the dashboard daily from 29.11 to 6.12.
+- Someone must set the `HEALTH_URL` secret once after the first deploy, or the job pings nothing (it says so in its log).
 
-**We would reconsider if:** Supabase changed its pausing rules (check current limits).
+**We would reconsider if:** Supabase changed its pausing rules (check current limits), or we moved to a paid plan that never pauses.
 
 ### External uptime monitor (e.g. UptimeRobot, free)  (status: decided, not built yet (week 4))
 
@@ -1654,3 +1679,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 - 2026-11-03 · documented the local-only tsx seed runner, scoped server-only alias, explicit empty-target setup and limits of offline verification.
 - 2026-11-04 · Session H (engine logic): new entries in section 7 (deterministic pure function, prefix stems vs a full stemmer, transliterate-then-fuzzy vs a Latin dictionary, weights table + max per category, hard rules as data objects); Damerau-Levenshtein entry explains OSA vs plain Levenshtein; redaction entry now compares regex + Luhn with an NLP library; statuses of the engine, dictionary/scenarios, Damerau-Levenshtein, transliteration, D9 wording and redaction moved to "in use"
+- 2026-11-04 · Session I (W1-13 code): new entry "Health check on a public table with the publishable key (vs the service-role key)"; keep-alive entry rewritten as GitHub Actions vs Vercel cron vs only an uptime monitor, now in use; Frankfurt entry explains `vercel.json` `regions` vs the deprecated `preferredRegion`; Vercel Hobby status updated (project pending)

@@ -16,7 +16,8 @@
 //   5. reportService.submit(): anonymous guest reports (Week 3)
 //   6. adminService.changeRole() and writing the audit_log
 //   7. the rate limiter (src/server/security/rateLimit.ts): hit_rate_limit()
-//   8. GET /api/health (keep-alive, Week 1 Session I)
+// (BUILD_PLAN 2.4 also listed 8. GET /api/health. It does NOT need this client: it
+// reads the public districts table with the publishable key; see HOW_IT_WORKS 3.22.)
 // Anything else must use the user client (userClient.ts).
 
 import "server-only";

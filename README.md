@@ -85,6 +85,28 @@ The human accounts are confirmed automatically. The seed creates one protected p
 
 A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. Seed application and real-account browser verification have not yet been performed on Roberta's computer.
 
+## Deployment (Vercel)
+
+Free Vercel Hobby plan, Frankfurt region. Done once by Alex (task W1-13).
+
+1. On [vercel.com](https://vercel.com/), **Add New → Project** and import this GitHub repo.
+   The framework (Next.js) is detected automatically; keep the default build settings.
+2. Region: `vercel.json` already pins the functions to **`fra1`** (Frankfurt). Check it under
+   Project → Settings → Functions after the first deploy.
+3. Under **Environment Variables**, add these 5 (values from the Supabase dashboard and from
+   `openssl rand -hex 32`; see [`.env.example`](./.env.example)):
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `PAIRING_PEPPER`, `HASH_PEPPER`. Never put them in git or in a chat.
+4. **Deploy.** Then open `https://<project>.vercel.app/api/health`: it must answer
+   `{"ok":true,"db":true,…}`. (After changing a variable, redeploy: Vercel applies variables to new
+   deployments only.)
+5. On GitHub: Settings → Secrets and variables → Actions → **New repository secret**
+   `HEALTH_URL` = the full URL from step 4. Then Actions → **Keep-alive** → Run workflow, and check
+   that the run is green. From then on it runs every 12 hours and keeps the free Supabase project
+   from pausing.
+6. In Supabase: **Authentication → URL Configuration → Site URL** = the production URL
+   (`https://<project>.vercel.app`), so links in sign-up e-mails point to the live site.
+
 ## Licence
 
 Scamly is free software, released under the

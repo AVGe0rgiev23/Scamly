@@ -31,14 +31,14 @@ Scamly is a web app. An older person's phone shows one big button; when a suspic
 
 The system has **layers**, and each layer only talks to the one below it: the **UI** (pages in the browser) calls our **REST API** (Next.js route handlers), which calls **services** (business logic, including the detection engine), which call **repositories** (all database queries), which talk to **PostgreSQL** on Supabase. PostgreSQL itself enforces **Row Level Security (RLS)**: even if our API had a bug, the database would still refuse to show family A the data of family B. Supabase also gives us **Auth** (logins, JWTs) and **Realtime** (live updates for the family's alert page).
 
-**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. The Week 2 call-check/family screens that use it are still planned.
+**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. `/api/health` and the keep-alive workflow are ready for the first deploy (section 3.22). The Week 2 call-check/family screens that use the engine are still planned.
 
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
-  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing · ⬜ rest (week 2-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, detection engine · ⬜ checks service (week 2)"]
-  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 6 files · ⬜ more (week 2-3)"]
+  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health · ⬜ rest (week 2-3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, detection engine · ⬜ checks service (week 2)"]
+  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 7 files · ⬜ more (week 2-3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 151 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
   RT["Supabase Realtime<br/>✅ publication ready · ⬜ live page"]
@@ -74,9 +74,9 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 263 tests in 25 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 15 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
-| CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
+| Unit tests (Vitest) | ✅ 269 tests in 26 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 16 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
 | Triggers (2): new profile, owner as contact #1 | ✅ | `..._000002_triggers.sql` | `02_profiles`, `03_persons_contacts` |
@@ -102,7 +102,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Engine dictionary and scenario data | ✅ all 51 scenarios run and pass (section 3.21) | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
 | Detection engine logic v1 + `redactPersonalData()` (section 3.21) | ✅ (W1-08 to W1-10) | `src/engine/` (`index.ts` is the public API) | 170 engine tests incl. 51/51 scenarios; 100 % line coverage (`docs/evidence/engine-coverage-2026-11-04.md`) |
 | Seed script with demo accounts | 🔄 tooling ready; approved empty DB execution pending | `scripts/seed*.ts`, `scripts/tsconfig.seed.json` | Five offline tests and npm run seed preview; section 3.20 |
-| Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
+| `/api/health`, keep-alive workflow, Vercel region (section 3.22) | 🔄 code ready, live check against Supabase OK; Vercel project + `HEALTH_URL` secret pending (W1-13, Mon 9 Nov) | `src/app/api/health/`, `src/server/services/healthService.ts`, `src/server/repositories/districtsRepository.ts`, `.github/workflows/keep-alive.yml`, `vercel.json` | `healthService.test.ts`, `tests/e2e/health.spec.ts`; local live check |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
 | Checks API + server-side verdict | ⬜ planned (week 2, W2-02) | | |
 | Family alerts: fan-out + live page via Realtime | ⬜ planned (week 2, W2-03, W2-04) | | |
@@ -827,6 +827,41 @@ The four steps of `analyseCall`, with the worked example „politsiyata, dayte p
 
 **Known limits** (honest answers for the defense): stem matching does not understand negation in general (only through phrases like `не казвай … никого`). The 1-typo tolerance of 5–8 letter stems (BUILD_PLAN 4.4) also creates rare false matches such as „политиката“ ≈ `полиц`, „колегата“ ≈ `колет`, „песни“ ≈ `пенси`; they add points but are not covered by a scenario, so tuning them is a later decision for both of us. Phrases may cross sentence boundaries. Names are redacted only in the exact known form (not the vocative „Иване“).
 
+### 3.22 Health check, keep-alive and the Vercel region (W1-13)
+
+#### What it does
+
+- **`GET /api/health`** answers "is the app running **and** can it reach the database?". `200 {"ok":true,"db":true,"time":"<ISO time>"}` when a real query worked, `503 {"ok":false,"db":false}` when it didn't. Open to anyone, no login.
+- **`.github/workflows/keep-alive.yml`** calls it every 12 hours, so our **free Supabase project is never paused** for inactivity (BUILD_PLAN risk R1: a paused project means a dead site for the jury).
+- **`vercel.json`** pins our server functions to Vercel's **`fra1`** region (Frankfurt).
+
+#### How it works
+
+- **Route** `src/app/api/health/route.ts` → `checkHealth()` in `src/server/services/healthService.ts` → `pingDistricts()` in `src/server/repositories/districtsRepository.ts`, the usual layers (section 1).
+- **The query:** `select code from districts limit 1`. `districts` is public (RLS policy "Anyone can read districts", migration 4), so it runs with the **user client and no login cookie**, i.e. as a guest with only the publishable key. **No secret key is used.** One tiny row: the cheapest real query we have.
+- **Timeout:** the query carries `AbortSignal.timeout(5000)`, so a broken or paused database gives a 503 after 5 seconds instead of keeping the request open until Vercel stops the function.
+- **Errors:** `checkHealth()` catches everything (also "Supabase settings missing", because creating the client happens inside the check). The reason goes only to the server log (`[health] database check failed: …`, visible in Vercel → Logs); the answer is always just `{ok:false, db:false}`, so it can't reveal hosts or settings.
+- **Never cached:** the route first calls `await connection()`, which tells Next.js to wait for a real request (with Cache Components on, a GET route without it could be built once at `next build` and then served forever). The build output marks it `ƒ /api/health` (dynamic). Our `json()` helper adds `Cache-Control: no-store`, so no browser or CDN keeps an old answer either.
+- **Dependency injection** as in the other services: `checkHealth({ pingDatabase, now })` gets the query and the clock from outside, so the unit test passes fakes.
+- **Keep-alive workflow:** `schedule: cron "17 */12 * * *"` (00:17 and 12:17 UTC; minute 17 because GitHub is busiest at minute 0) and `workflow_dispatch` (Actions → Keep-alive → *Run workflow*). It reads the repository secret **`HEALTH_URL`** (the full production URL of `/api/health`). Secret empty → it prints a notice and exits green, so the job isn't red before the first deploy. Otherwise `curl --fail --silent --show-error --max-time 30 --retry 3 --retry-delay 10 "$HEALTH_URL"` prints the JSON; a 503 (after the retries) turns the run red. Permissions: `contents: read` only.
+- **Region:** `vercel.json` = `{"$schema": …, "regions": ["fra1"]}`. A JSON file can't have comments, so the explanation lives here. Next.js's own way (`export const preferredRegion` in a route) is **deprecated** in Next.js 16 (`node_modules/next/dist/docs/.../preferredRegion.md`) and on Vercel only accepts `auto`/`global`/`home`; the project-wide `regions` setting in `vercel.json` is Vercel's way. On the Hobby plan functions run in **one** region, which is exactly what we set.
+- **Deploy steps** for Alex (Vercel project, 5 env vars, `HEALTH_URL`, Supabase Site URL): README → "Deployment (Vercel)".
+
+#### Why it works like that
+
+- **A real database query, not just "the server answers":** Supabase pauses a free project when the *database* sees no activity. A route that only returns `{ok:true}` would keep Vercel busy but let the database fall asleep.
+- **Publishable key instead of the service-role key:** the health check is public and called by machines. With the secret key, any bug in it could read or change everything (RLS bypassed). With the publishable key, the worst a bug could do is read the 28 district names, which are public anyway. This is why it was taken off BUILD_PLAN 2.4's admin-client list (difference #22). Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Health check".
+- **GitHub Actions instead of a Vercel cron job:** Vercel Hobby runs cron jobs at most once a day (risk R13) and gives no history we can show; GitHub's schedule is free, every run is listed in the Actions tab (evidence for the jury) and it runs outside Vercel, so it also notices when the whole deployment is down.
+- **Every 12 hours** is far more often than the ~7-day pause limit, so even several missed runs (GitHub delays or skips scheduled runs when busy) are harmless.
+- **`fra1`:** Frankfurt is the Vercel region closest to Bulgaria and to our Supabase project, so each API call travels a short distance to the database. Without it, new Vercel projects default to Washington, D.C. (`iad1`), and every query would cross the Atlantic twice.
+
+#### How we know it works
+
+- `src/server/services/healthService.test.ts`, 6 tests: ok with the time; exactly one query; database error → `{ok:false, db:false}`; the error text never appears in the answer but does reach the log; missing settings → 503 shape; a thrown non-Error value.
+- `tests/e2e/health.spec.ts` (× 2 screens): status is 200 or 503, `application/json`, `Cache-Control: no-store`, and the body has the right shape for that status. CI has no Supabase keys, so there it checks the 503 shape.
+- **Live check (4 Nov, cloud session, `npm run build` + `next start -p 3200`):** against the live Supabase project → `200 {"ok":true,"db":true,"time":"2026-11-04T20:10:13.208Z"}`, a new time on each call, `cache-control: no-store`. With the database unreachable → `503 {"ok":false,"db":false}` after 5.06 s, with the reason (`TimeoutError`) only in the server log.
+- **Still to do (Alex, Session I steps 2–3):** create the Vercel project, call the production `/api/health`, set the `HEALTH_URL` secret and see a green Keep-alive run in Actions.
+
 ---
 ## 4. Code quality, tests and CI
 
@@ -884,7 +919,7 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
 - **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18; plus `engine/data` 3 and `scripts/seed` 5; and from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7. Total: 25 files, **263 tests**.
+Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; and from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7. Total: 26 files, **269 tests**.
 
 #### Why it works like that
 
@@ -892,7 +927,7 @@ Unit tests are fast enough to run on every save, and the detection engine is a p
 
 #### How we know it works
 
-`npm test` → `Test Files 25 passed, Tests 263 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npm test` → `Test Files 26 passed, Tests 269 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -906,7 +941,7 @@ Opens the real app in a real browser and checks what a user would see.
 - Every test runs **twice**: project `desktop-chromium` (Desktop Chrome) and project `android-phone` (Pixel 5: a 393 × 851 touch screen, like a cheap Android phone).
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
-- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session.
+- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
@@ -916,7 +951,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 15 tests × 2 screens = 30 runs, all passing locally on 3 Nov. The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 16 tests × 2 screens = 32 runs, all passing locally on 4 Nov. The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -935,6 +970,8 @@ On every push to `main`, every pull request and on a manual start (Actions tab �
 | **database** ("Database and RLS tests (pgTAP)") | checkout → install Supabase CLI → `supabase db start` → `supabase test db` | All migrations apply on a real Supabase database and all 151 RLS/schema tests pass |
 
 Other settings: a newer push to the same branch cancels the older run (`concurrency`), and the workflow can only read the repo (`permissions: contents: read`). `npm ci` installs exactly what `package-lock.json` says.
+
+A second workflow, `.github/workflows/keep-alive.yml`, is not a check: it calls the live `/api/health` every 12 hours (section 3.22).
 
 **What a red ✗ means:** at least one step in one job failed, so that commit is broken (or a test caught a real problem). Click the ✗ → the failed job → the red step to see the error. Download the `coverage` or `playwright-report` artifact for details. Fix it before pushing anything else; per our rules, `main` should never stay red.
 
@@ -1607,6 +1644,7 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 19 | Engine 4.6, HR6: relative + money **`yes`** + (urgency or relative scenario) | Money may also come from the text (any *firm* evidence, the general rule under the 4.6 table). Needed by the scenario „Синът ви е в болница. Трябват пари.“ |
 | 20 | Engine 4.7: script type = identity + scenario + "the hard rule linked to it" (no number given) | A linked hard rule adds 20 points of script evidence (`HARD_RULE_SCRIPT_BONUS`): HR1 → police, HR5 → fake official, HR6 → relative in trouble; HR2, HR3, HR4 are not linked to one script |
 | 21 | Engine 4.2/4.7: `adviceBg` example is script-specific („Затворете телефона. Полицията никога не иска пари.“) | `headlineBg`/`adviceBg` are `bg.verdict[level]` (title, description), the same texts the `Verdict` component shows; script-specific explanations are in the hard-rule reasons. `combineVerdicts()` (4.10) comes with the AI layer in Week 3 |
+| 22 | 2.4 lists `GET /api/health` (use 8) among the service-role (admin client) uses; IMPLEMENTATION_PLAN Session I commits health and keep-alive separately | `/api/health` uses the user client with no cookie (publishable key only): `districts` is public, so no secret key is needed (section 3.22). `src/server/supabase/adminClient.ts` notes this |
 
 ---
 
@@ -1698,3 +1736,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · W1-12 seed tooling and five offline tests added with local-only tsx runner, empty-database preflight, real pairing-service reuse and synthetic fixtures; live seed/demo login verification remains pending.
 - 2026-11-04 · ADRs 0001–0004 added in `docs/decisions/` (technology stack, device pairing, e-mail provider, AI classifier chain); W1-03 done.
 - 2026-11-04 · Session H steps 2–10 (W1-08, W1-09, W1-10 engine logic): new section 3.21 (normalise, transliterate, fuzzy, signals, scoring, hard rules, verdict, `analyseCall`, `redactPersonalData`, worked example, known limits); 3.6, 3.18, 4.2, big picture and status table updated; plan differences #18–#21; 263 unit tests (170 engine, 51/51 scenarios), engine line coverage 100 %
+- 2026-11-04 · Session I code (W1-13): new section 3.22 (`/api/health` on the public `districts` table with the publishable key, 5 s timeout, `connection()` + `no-store`; keep-alive workflow every 12 h with `HEALTH_URL`; `vercel.json` region `fra1`); status table, 4.2, 4.3, 4.4, plan difference #22; 269 unit tests, 16 e2e tests × 2 screens; live check 200 / unreachable 503. Vercel project and `HEALTH_URL` pending
