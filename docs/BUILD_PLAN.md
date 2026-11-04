@@ -740,8 +740,9 @@ Week 1 totals (after D20): **A ≈ 45.5 h** (17 h already done: W1-01, W1-02, W1
 | W2-10 | ✂ Voice input (Web Speech API, `bg-BG`), hidden where unsupported, typing always available | R | 3 | W2-01 | Works in Chrome Android; button absent in unsupported browsers; no errors |
 | W2-11 | E2E: protected device presses the button → family context sees the alert → acknowledges → protected sees the message (2 Playwright contexts) | A+R | 4 | W2-04 | Green in CI against local Supabase |
 | W2-12 | `docs/learning/week-2.md` (Realtime, service workers, React state) | A+R | 2 | all | Written |
+| W2-13 | **Site layout + home page (added 4 Nov, D22):** top bar with the Scamly logo, a small theme switch (replaces the full-width „Изглед“ field) and links („Вход“, „Регистрация“, „Свържи телефон“); footer; a real home page (the problem in one sentence, the 3 steps: pair the phone → press the button → the family is alerted, start buttons). Do it **before** W2-01 so every new page gets the frame | R | 4 | W1-11 | Every page shows the header and footer at 360 px and 1366 px, in light and dark; no full-width theme field; all text in `bg.ts` |
 
-Totals: **A ≈ 27 h, R ≈ 30 h**.
+Totals: **A ≈ 27 h, R ≈ 34 h** (R includes W2-13, added 4 Nov).
 
 ### Week 3 (16–22 Nov): public side, admin, AI
 

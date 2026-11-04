@@ -144,13 +144,13 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 
 | ID range | Theme | Status |
 |---|---|---|
-| W2-01 … W2-12 | Call check, family alert, push, email, family dashboard | ⬜ |
+| W2-01 … W2-13 | Call check, family alert, push, email, family dashboard, site layout (W2-13) | ⬜ |
 | W3-01 … W3-11 | Reports, map, moderation, education, admin, AI ✂, escalation ✂ | ⬜ |
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |
 
 Owners per week (hours from `BUILD_PLAN.md` section 6; shared tasks count half each):
-- **Week 2 (A ≈ 27 h, R ≈ 30 h; Alex also has W1-13 deploy, 2 h, on Mon 9 Nov, D20).** Alex: W2-02 checks API, W2-03 alert fan-out + Realtime, W2-04 acknowledge, W2-05 web push, W2-06 `EmailProvider` + Brevo, W2-08 contacts + invites API. Roberta: W2-01 protected UI, W2-07 family dashboard, W2-09 PWA, W2-10 ✂ voice, and the UI parts of W2-03 (live alert page), W2-04 (button), W2-05 (opt-in) plus the W2-06 email wording. Both: W2-11 e2e, W2-12 learning note.
+- **Week 2 (A ≈ 27 h, R ≈ 30 h; Alex also has W1-13 deploy, 2 h, on Mon 9 Nov, D20).** Alex: W2-02 checks API, W2-03 alert fan-out + Realtime, W2-04 acknowledge, W2-05 web push, W2-06 `EmailProvider` + Brevo, W2-08 contacts + invites API. Roberta: W2-01 protected UI, W2-07 family dashboard, W2-09 PWA, W2-10 ✂ voice, and the UI parts of W2-03 (live alert page), W2-04 (button), W2-05 (opt-in) plus the W2-06 email wording. Roberta also: **W2-13 site layout + home page (4 h, do it first, D22)**. Both: W2-11 e2e, W2-12 learning note.
 - **Week 3 (A ≈ 25 h, R ≈ 24 h).** Alex: W3-01 reports API, W3-07 ✂ AI, W3-09 ✂ escalation, and the APIs of W3-04 (moderation), W3-05 (scripts) and W3-06 (admin). Roberta: W3-02 report form, W3-03 map, W3-08 help pages, W3-10 ✂ fridge card, W3-05 education pages + script editor, and the UIs of W3-04 and W3-06 (incl. charts). Both: W3-11 learning note.
 - **Week 4 (A ≈ 20 h, R ≈ 16 h).** Alex: W4-01 and W4-02 security, W4-07 delete/export API. Roberta: W4-04 Lighthouse, W4-06 proofreading, W4-07 privacy-notice text. Both: W4-03 e2e, W4-05 usability test, W4-08 release, W4-09 registration.
 - **Week 5 (A ≈ 11.5 h, R ≈ 12.5 h).** Alex: W5-04 video + USB. Roberta: W5-02 leaflet. Both: W5-01 documentation (Alex 4.4–4.6, Roberta 4.1–4.3 and 4.7), W5-03 slides (design: Roberta), W5-05 rehearsals.
