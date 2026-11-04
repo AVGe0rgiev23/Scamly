@@ -75,15 +75,19 @@ The target must match `NEXT_PUBLIC_SUPABASE_URL`. The script refuses existing Au
 
 | Role                           | Login                                                   | Password                                               |
 | ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------ |
-| Близък (family owner)          | `family@demo.scamly.invalid`                            | Local `SEED_DEMO_PASSWORD`                             |
-| Втори близък (trusted contact) | `contact@demo.scamly.invalid`                           | Local `SEED_DEMO_PASSWORD`                             |
-| Модератор                      | `moderator@demo.scamly.invalid`                         | Local `SEED_DEMO_PASSWORD`                             |
-| Администратор                  | `admin@demo.scamly.invalid`                             | Local `SEED_DEMO_PASSWORD`                             |
+| Близък (family owner)          | `family@demo.scamly.invalid`                            | Demo password (given to the jury privately)            |
+| Втори близък (trusted contact) | `contact@demo.scamly.invalid`                           | Demo password (given to the jury privately)            |
+| Модератор                      | `moderator@demo.scamly.invalid`                         | Demo password (given to the jury privately)            |
+| Администратор                  | `admin@demo.scamly.invalid`                             | Demo password (given to the jury privately)            |
 | Защитен човек (device)         | No email/password entry; pair the browser at `/svarzhi` | Random internal credentials are never printed or saved |
 
 The human accounts are confirmed automatically. The seed creates one protected person, two linked contacts (the owner plus another family member), one paired device using the existing pairing service, two sample checks and two reports. Check verdicts are synthetic fixtures marked `demo-fixture-1`; they are not detection-engine results.
 
-A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. Seed application and real-account browser verification have not yet been performed on Roberta's computer.
+A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. **Status (4 Nov 2026):** the seed has been applied to the live Supabase project. All four human demo accounts log in through `/api/auth/login` with the expected roles (family, family, moderator, admin), and the protected person, two contacts, the paired demo device, two sample checks and two reports exist.
+
+The demo password is **not** written in this public repository: anyone could then log in as the demo administrator on the live site. It is given to the jury privately (registration form and printed documentation).
+
+In a Claude Code cloud session, Node's built-in `fetch` only uses the session's network proxy when the command starts with `NODE_USE_ENV_PROXY=1` (for example `NODE_USE_ENV_PROXY=1 npm run seed -- --apply --target …`). On a normal computer and on Vercel this is not needed.
 
 ## Deployment (Vercel)
 
