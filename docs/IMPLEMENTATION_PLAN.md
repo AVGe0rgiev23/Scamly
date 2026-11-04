@@ -136,7 +136,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ✅ data prepared; matcher integration pending |
 | W1-10 | Engine tests ≥ 25 + `redactPersonalData()` | Roberta (test cases) + Alex (runner, redact) | ✅ 170 engine tests (51/51 scenarios), `redactPersonalData()`, coverage 100 % lines (`docs/evidence/engine-coverage-2026-11-04.md`); Roberta: run the scenarios together (Session D step 5) |
 | W1-11 | Design system basics | Roberta | ✅ checks, production build and six browser runs pass |
-| W1-12 | Seed script | Roberta (D20) | 🔄 code + offline tests ready; approved empty DB apply and demo logins pending |
+| W1-12 | Seed script | Roberta (D20) | ✅ applied to the live project 4 Nov; all four demo logins verified; batch-insert `hard_rules` fix |
 | W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | 🔄 code ready; Vercel project + HEALTH_URL secret pending (Alex) |
 | W1-14 | `docs/learning/week-1.md` | Alex + Roberta | 🔄 note written; human check-in and remaining Week 1 review pending |
 
