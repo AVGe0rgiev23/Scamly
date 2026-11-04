@@ -173,6 +173,44 @@ export const bg = {
   persons: {
     displayNameInvalid: "Въведете име от 1 до 60 знака.",
     districtInvalid: "Изберете област от списъка.",
+    nothingToChange: "Променете поне името или областта.",
+  },
+  // The ordered list of people to call (trusted contacts) of a protected person.
+  contacts: {
+    listInvalid: "Списъкът трябва да съдържа от 1 до 5 близки.",
+    displayNameInvalid: "Въведете име от 1 до 60 знака.",
+    phoneInvalid: "Въведете телефонен номер, например 0888 123 456 или +359 888 123 456.",
+    priorityInvalid: "Изберете място в списъка от 1 до 5.",
+    priorityTaken: "Двама близки не може да са на едно и също място в списъка.",
+    contactTwice: "Един и същ близък е въведен два пъти.",
+    unknownContact:
+      "Списъкът е бил променен междувременно. Презаредете страницата и опитайте отново.",
+    ownerRequired: "Вие трябва да останете в списъка с близки.",
+    phoneRequired: `Въведете телефонен номер за всеки близък, който няма профил в ${APP_NAME}.`,
+  },
+  // Invites for other relatives to become trusted contacts (link /pokana?t=…).
+  invites: {
+    displayNameInvalid: "Въведете име от 1 до 60 знака.",
+    priorityInvalid: "Изберете място в списъка от 1 до 5.",
+    // The same message for a wrong, expired or already used invite: it reveals nothing.
+    invalidInvite: "Поканата е грешна, изтекла или вече е използвана.",
+    ownInvite: "Това е ваша покана. Изпратете връзката на близкия, когото каните.",
+    alreadyLinked: "Вече сте в списъка с близки на този човек.",
+    noFreePlace:
+      "В списъка с близки няма свободно място. Помолете човека, който ви е поканил, да освободи място, и отворете връзката отново.",
+    tryAgain: "Списъкът с близки се промени в същия момент. Опитайте отново.",
+  },
+  // Call checks: the answers of the older person and the family's „Обаждам ѝ се сега“.
+  checks: {
+    answerInvalid: "Изберете един от отговорите.",
+    handoverOnlyWithMoney: "Начинът на предаване на парите се посочва само когато искат пари.",
+    textTooLong: "Текстът може да е най-много 2000 знака.",
+    alreadyAnswered: "На тази проверка вече е отговорено.",
+    // Shown on the older person's phone after a family member presses „Обаждам ѝ се сега“.
+    // {name} is replaced with the name of the family member, e.g. „Иван“.
+    acknowledgedBy: "{name} ще ви се обади веднага.",
+    // The same, when we don't know the name (the family member is no longer in the list).
+    acknowledgedBySomeone: "Ваш близък ще ви се обади веднага.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

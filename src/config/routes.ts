@@ -15,6 +15,7 @@ export const ROUTES = {
   login: "/vhod",
   register: "/registratsia",
   pair: "/svarzhi",
+  invite: "/pokana", // accept an invite to become a trusted contact („покана“), W2-08
   forbidden: "/403",
   family: "/family",
   moderator: "/moderator",

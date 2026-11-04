@@ -31,17 +31,19 @@ Scamly is a web app. An older person's phone shows one big button; when a suspic
 
 The system has **layers**, and each layer only talks to the one below it: the **UI** (pages in the browser) calls our **REST API** (Next.js route handlers), which calls **services** (business logic, including the detection engine), which call **repositories** (all database queries), which talk to **PostgreSQL** on Supabase. PostgreSQL itself enforces **Row Level Security (RLS)**: even if our API had a bug, the database would still refuse to show family A the data of family B. Supabase also gives us **Auth** (logins, JWTs) and **Realtime** (live updates for the family's alert page).
 
-**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. `/api/health` and the keep-alive workflow are ready for the first deploy (section 3.22). The Week 2 call-check/family screens that use the engine are still planned.
+**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. `/api/health` and the keep-alive workflow are ready for the first deploy (section 3.22).
+
+**Week 2 backend (4 Nov, ahead of plan):** the call-check API runs the engine on the server and stores only redacted text (3.23); the family is alerted through `alerts` rows and Supabase Realtime, with a 5 s polling fallback (3.24, 3.25); „Обаждам ѝ се сега“ works end to end (3.23); persons, the contact list and invites are complete (3.26–3.28, 5.14). 171 database tests, 369 unit tests. Roberta's Week 2 screens that use them are still to come.
 
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
-  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health · ⬜ rest (week 2-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, detection engine · ⬜ checks service (week 2)"]
-  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 7 files · ⬜ more (week 2-3)"]
-  PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 151 tests")]
+  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health, checks, realtime token, contacts, invites · ⬜ rest (week 2-3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, engine, checks, alerts (realtime), contacts, invites · ⬜ push, e-mail (week 2)"]
+  REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 11 files · ⬜ more (week 2-3)"]
+  PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 171 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
-  RT["Supabase Realtime<br/>✅ publication ready · ⬜ live page"]
+  RT["Supabase Realtime<br/>✅ publication, token endpoint, src/lib/realtime.ts · ⬜ live pages"]
   CFG["Config, Bulgarian text, env check<br/>src/config, src/i18n, src/lib<br/>✅ works, unit-tested"]
 
   UI --> API --> SVC --> REPO --> PG
@@ -74,7 +76,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 269 tests in 26 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 369 tests in 35 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 16 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -82,19 +84,20 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Triggers (2): new profile, owner as contact #1 | ✅ | `..._000002_triggers.sql` | `02_profiles`, `03_persons_contacts` |
 | RLS helper functions (6) | ✅ | `..._000003_rls_helpers.sql` | `08_functions` (+ every policy test) |
 | RLS policies + column privileges | ✅ | `..._000004_rls_policies.sql` | `02` to `07` test files |
-| Append-only audit log | ✅ (written by pairing; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
+| Append-only audit log | ✅ (written by pairing, checks, persons, invites; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
 | Map statistics function `get_map_stats` | ✅ (DB part) | `..._000005_functions.sql` | `06_public_reports_scripts` |
-| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
-| Realtime publication (checks, alerts) | ✅ (DB part) | `..._000006_realtime.sql` | `01_schema` |
+| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
+| Realtime publication (checks, alerts) | ✅ (DB part; browser side: 3.25) | `..._000006_realtime.sql` | `01_schema` |
+| Contact list function `replace_trusted_contacts` (5.14) | ✅ tested · ✅ applied in the live project (4 Nov) | `20261104000002_replace_contacts.sql` | `11_replace_contacts` |
 | Pairing codes and devices tables (HMAC hash column) | ✅ | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
-| Database tests (pgTAP, 151 assertions) | ✅ | `supabase/tests/`, `scripts/db/` | CI job *database*; `npm run test:db` |
+| Database tests (pgTAP, 171 assertions) | ✅ | `supabase/tests/`, `scripts/db/` | CI job *database*; `npm run test:db` |
 | ADRs (decision records) | 🔄 0005 alert channels written; 0001–0004 pending Alex | `docs/decisions/0005-alert-channels.md` | Records D7; delivery remains planned |
 | Generated TypeScript types for the database | ✅ (postgres-meta, section 3.8) | `src/types/database.ts` | `npm run typecheck` |
-| Supabase clients (user, admin, browser) + HttpOnly cookie settings | ✅ | `src/server/supabase/`, `src/lib/supabase/browser.ts` | section 3.9; live smoke test |
+| Supabase clients (user, admin, browser, Realtime) + HttpOnly cookie settings | ✅ | `src/server/supabase/`, `src/lib/supabase/browser.ts`, `src/lib/realtime.ts` | section 3.9; live smoke test |
 | Proxy: session refresh + login guards | ✅ | `src/proxy.ts`, `src/config/routes.ts` | `routes.test.ts`, `tests/e2e/auth-guards.spec.ts` |
 | Login, register, logout, roles (`getActor`, `requireRole`, `requirePageRole`) | ✅ backend (W1-06) · designed pages; live demo-role check pending | `src/app/api/auth/`, `src/server/auth/`, `src/server/services/authService.ts` | `authService.test.ts`, `requireRole.test.ts` |
 | API basics: error shape, same-origin check (CSRF), JSON body, client IP, HMAC | ✅ | `src/server/http/`, `src/server/security/`, `src/schemas/` | `errors`, `request`, `origin`, `hash`, `schemas` tests |
-| `/api/me`, `/api/persons` (list + create) | ✅ (rest of persons: W2-08) | `src/app/api/me/`, `src/app/api/persons/`, `src/server/services/personService.ts` | live smoke test; RLS: `03_persons_contacts` |
+| `/api/me`, `/api/persons` (list, create, details, rename, delete) | ✅ (details/rename/delete: W2-08, 3.26) | `src/app/api/me/`, `src/app/api/persons/`, `src/server/services/personService.ts` | `personService.test.ts`; live smoke test; RLS: `03_persons_contacts` |
 | Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · designed `/svarzhi`; live browser pairing check pending | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
 | Auth pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ designed auth pages; area contents remain temporary | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
@@ -104,11 +107,12 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Seed script with demo accounts | 🔄 tooling ready; approved empty DB execution pending | `scripts/seed*.ts`, `scripts/tsconfig.seed.json` | Five offline tests and npm run seed preview; section 3.20 |
 | `/api/health`, keep-alive workflow, Vercel region (section 3.22) | 🔄 code ready, live check against Supabase OK; Vercel project + `HEALTH_URL` secret pending (W1-13, Mon 9 Nov) | `src/app/api/health/`, `src/server/services/healthService.ts`, `src/server/repositories/districtsRepository.ts`, `.github/workflows/keep-alive.yml`, `vercel.json` | `healthService.test.ts`, `tests/e2e/health.spec.ts`; local live check |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
-| Checks API + server-side verdict | ⬜ planned (week 2, W2-02) | | |
-| Family alerts: fan-out + live page via Realtime | ⬜ planned (week 2, W2-03, W2-04) | | |
+| Checks API + server-side verdict + acknowledge (3.23) | ✅ backend (W2-02, W2-04) · UI: Roberta | `src/app/api/checks/`, `src/server/services/checkService.ts`, `src/schemas/checks.ts` | `checkService.test.ts` (24), `schemas/checks.test.ts`; live smoke test 38/38 |
+| Family alerts: fan-out + Realtime token + live-watch helper (3.24, 3.25) | ✅ backend (W2-03) · live alert page UI: Roberta | `src/server/services/alertService.ts`, `realtimeService.ts`, `src/app/api/realtime/token/`, `src/lib/realtime.ts` | `alertService`, `realtimeService`, `realtime`, `origin` tests; live: alert via Realtime in 111 ms |
 | Web push | ⬜ planned (week 2, W2-05) | | |
 | Email (`EmailProvider`, Brevo) | ⬜ planned (week 2, W2-06) | | |
-| Family dashboard, contacts, invites | ⬜ planned (week 2, W2-07, W2-08) | | |
+| Contacts + invites API (3.27, 3.28) | ✅ backend (W2-08) · migration applied 4 Nov; live smoke test 44/44 | `src/app/api/persons/[id]/{contacts,invites}/`, `src/app/api/invites/redeem/`, `contactService.ts`, `inviteService.ts` | `contactService` (12), `inviteService` (17), `11_replace_contacts`; live 35/44 |
+| Family dashboard UI (people, contacts, pairing, history) | ⬜ planned (week 2, W2-07, Roberta) | | |
 | PWA (install, offline card), voice input | ⬜ planned (week 2, W2-09, W2-10) | | |
 | Public reports + scam map | ⬜ planned (week 3, W3-01 to W3-03) | | |
 | Moderation, education pages | ⬜ planned (week 3, W3-04, W3-05) | | |
@@ -396,8 +400,9 @@ Three ways to talk to Supabase, each for one job, and one shared setting for the
 | File | Function | Key | RLS | Used for |
 |---|---|---|---|---|
 | `src/server/supabase/userClient.ts` | `createUserClient()` | publishable key + the caller's cookies | applies (as the caller) | almost everything on the server |
-| `src/server/supabase/adminClient.ts` | `createAdminClient()` | secret service-role key | **bypassed** | only the 8 uses listed in its header (BUILD_PLAN 2.4) |
-| `src/lib/supabase/browser.ts` | `createBrowserSupabaseClient()` | publishable key | applies (as a guest) | Realtime in Week 2; not used yet |
+| `src/server/supabase/adminClient.ts` | `createAdminClient()` | secret service-role key | **bypassed** | only the uses listed in its header (BUILD_PLAN 2.4) |
+| `src/lib/supabase/browser.ts` | `createBrowserSupabaseClient()` | publishable key | applies (as a guest) | not used yet; **not** for Realtime (see 3.25) |
+| `src/lib/realtime.ts` | its own `createClient(…, { accessToken })` | publishable key + the user's access token from `GET /api/realtime/token` | applies (as the user) | Realtime subscriptions only (3.25) |
 
 #### How it works
 
@@ -416,11 +421,11 @@ Three ways to talk to Supabase, each for one job, and one shared setting for the
    ```
 
    It has no `server-only` import because the proxy can't load that package.
-5. Because the cookies are HttpOnly, the browser client can't see the session. For Week 2 Realtime the page will ask our API for a short-lived access token and pass it to `client.realtime.setAuth(token)`. That small endpoint is not built yet.
+5. Because the cookies are HttpOnly, the browser client can't see the session. For Realtime the page asks `GET /api/realtime/token` for the short-lived access token, and `src/lib/realtime.ts` gives it to its own client through an `accessToken` function (3.25). `setAuth(token)` on the normal browser client would not work: its heartbeat would replace the token with the publishable key.
 
 #### Why it works like that
 
-- **User client by default**: queries run with the caller's JWT, so RLS checks our own server code too (the second lock). The admin client is only for what RLS must not allow a browser: creating auth users, `pairing_codes`, `audit_log`, `hit_rate_limit()`.
+- **User client by default**: queries run with the caller's JWT, so RLS checks our own server code too (the second lock). The admin client is only for what RLS must not allow a browser: creating and deleting auth users, `pairing_codes`, `audit_log`, `hit_rate_limit()`, writing `checks` and `alerts` (3.23, 3.24), invites and `trusted_contacts.user_id` (3.28).
 - **HttpOnly**: an XSS bug can't steal a session (BUILD_PLAN R9). `@supabase/ssr`'s default cookies are readable by JavaScript (so its browser client can use them); we override that and accept the Realtime step above.
 - **SameSite=Lax** is the first CSRF layer; the same-origin check (3.12) is the second.
 
@@ -528,9 +533,9 @@ try {
   3. `ZodError` → 400 `validation`, with the first problem's Bulgarian message and the field names.
   4. Anything else → logs only `name: message` and answers 500 `internal` „Нещо се обърка. Опитайте отново.“ No stack trace ever reaches the browser.
 - **`src/server/http/request.ts`**: `readJsonBody()` (not JSON → 400 `invalid_json`); `getClientIp()` (`x-real-ip`, else the first address of `x-forwarded-for`, else `"unknown"`).
-- **`src/server/security/origin.ts`**: `isSameOrigin(request)`. GET/HEAD/OPTIONS pass. Otherwise, in the same order as Go's `net/http` `CrossOriginProtection`: (1) if `Sec-Fetch-Site` is present, only `same-origin` or `none` pass; (2) else if `Origin` is present, its host must equal the `Host` header; (3) neither header → not a browser (curl, a script), allowed. `assertSameOrigin()` throws 403 `bad_origin`. It is step 0 of every non-GET route.
-- **`src/schemas/`** (`auth.ts`, `pairing.ts`, `persons.ts`): Zod schemas whose messages come from `bg.ts`. E-mail ≤ 254; register password 10–72 characters (72 is the most bcrypt uses); names trimmed, 1–60; code `^\d{6}$`; optional phone label 1–60; district `BG-01` … `BG-28`; URL ids `z.guid()` (a bad id answers 404, like an unknown one).
-- Personal GET routes (`/api/me`, `GET /api/persons`) call `await connection()`, so `next build` never prerenders them.
+- **`src/server/security/origin.ts`**: `isSameOrigin(request)`. GET/HEAD/OPTIONS pass. Otherwise, in the same order as Go's `net/http` `CrossOriginProtection`: (1) if `Sec-Fetch-Site` is present, only `same-origin` or `none` pass; (2) else if `Origin` is present, its host must equal the `Host` header; (3) neither header → not a browser (curl, a script), allowed. `assertSameOrigin()` throws 403 `bad_origin`. It is step 0 of every non-GET route. `assertSameOriginRead()` applies rules (1)–(3) to a GET too; it is used only by `GET /api/realtime/token`, whose answer is itself a secret (3.25).
+- **`src/schemas/`** (`auth.ts`, `pairing.ts`, `persons.ts`; since W2-02/W2-08 also `checks.ts`, `contacts.ts`, `invites.ts`, sections 3.23–3.28): Zod schemas whose messages come from `bg.ts`. E-mail ≤ 254; register password 10–72 characters (72 is the most bcrypt uses); names trimmed, 1–60; code `^\d{6}$`; optional phone label 1–60; district `BG-01` … `BG-28`; URL ids `z.guid()` (a bad id answers 404, like an unknown one).
+- Personal GET routes (`/api/me`, `GET /api/persons`, `/api/persons/:id`, `/api/checks`, `/api/realtime/token`) call `await connection()`, so `next build` never prerenders them.
 
 #### Why it works like that
 
@@ -541,13 +546,13 @@ try {
 
 #### How we know it works
 
-`errors.test.ts` 5 tests (no-store, ApiError, shortcuts → 401/403/404/429, Zod → 400 with fields, 500 without stack), `request.test.ts` 5, `origin.test.ts` 7 (GET never blocked, own page allowed, foreign site blocked, `Sec-Fetch-Site` beats `Origin`, curl allowed, 403 `bad_origin`), `schemas.test.ts` 9.
+`errors.test.ts` 5 tests (no-store, ApiError, shortcuts → 401/403/404/429, Zod → 400 with fields, 500 without stack), `request.test.ts` 5, `origin.test.ts` 9 (GET never blocked, own page allowed, foreign site blocked, `Sec-Fetch-Site` beats `Origin`, curl allowed, 403 `bad_origin`; `assertSameOriginRead`: own GET allowed, foreign GET blocked), `schemas.test.ts` 9.
 
 ### 3.13 Rate limiter wrapper and HMAC helper (`src/server/security/`)
 
 #### What it does
 
-`rateLimit.ts` allows at most N attempts per time window for login, registration and pairing; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
+`rateLimit.ts` allows at most N attempts per time window for login, registration, pairing, invite links and call checks; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
 
 #### How it works
 
@@ -560,6 +565,8 @@ try {
   | `registerPerIp` | `register:ip:<HMAC of IP>` | 5 per hour |
   | `pairPerIp` | `pair:ip:<HMAC of IP>` | 5 per 15 min |
   | `pairGlobal` | `pair:global` | 100 per 15 min (everybody together) |
+  | `inviteRedeemPerIp` | `invite:ip:<HMAC of IP>` | 10 per 15 min (3.28) |
+  | `checkPerDevice` | `check:device:<device id>` | 10 per hour per phone (3.23; a device id is not personal data, so no HMAC) |
 
 - `ipKey(rule, ip, HASH_PEPPER)` builds the key, so the database never stores a real IP.
 - `HitCounter` is a function type (like Python's `Callable[[str, int, int], Awaitable[bool]]`). The real one, `databaseHitCounter(admin)`, calls `admin.rpc("hit_rate_limit", …)` (section 5.11). If the call fails it throws: the limiter **fails closed** (no counting → no attempt).
@@ -603,7 +610,7 @@ The plan had sign-up and login in the browser. Through our API, the cookies are 
 
 #### What it does
 
-`GET /api/me`: who am I. `GET /api/persons` / `POST /api/persons`: list and create protected persons. This is the minimum pairing needs; details, renaming, deleting and contacts come with W2-08.
+`GET /api/me`: who am I. `GET /api/persons` / `POST /api/persons`: list and create protected persons. This was the minimum pairing needed; details, renaming and deleting are in 3.26, contacts and invites in 3.27–3.28 (W2-08).
 
 #### How it works
 
@@ -862,6 +869,201 @@ The four steps of `analyseCall`, with the worked example „politsiyata, dayte p
 - **Live check (4 Nov, cloud session, `npm run build` + `next start -p 3200`):** against the live Supabase project → `200 {"ok":true,"db":true,"time":"2026-11-04T20:10:13.208Z"}`, a new time on each call, `cache-control: no-store`. With the database unreachable → `503 {"ok":false,"db":false}` after 5.06 s, with the reason (`TimeoutError`) only in the server log.
 - **Still to do (Alex, Session I steps 2–3):** create the Vercel project, call the production `/api/health`, set the `HEALTH_URL` secret and see a green Keep-alive run in Actions.
 
+### 3.23 Call checks API: `/api/checks` (W2-02, W2-04 backend)
+
+#### What it does
+
+The heart of the demo. Grandma's paired phone presses the big button, the family is alerted at once, she answers the questions, and **our server** computes the verdict. A family member can press „Обаждам ѝ се сега“, and grandma's phone then shows „Анна ще ви се обади веднага.“ Walkthrough: 7.7. The screens (wizard, result, alert page, button) are Roberta's (W2-01, W2-03/W2-04 UI).
+
+| Endpoint | Who | Answer |
+|---|---|---|
+| `POST /api/checks` (no body) | phone (`protected`) | 201 `{ checkId }`; 429 after 10 checks per phone per hour |
+| `PUT /api/checks/:id/answers` | phone, **own** check, **once** | 200 `{ checkId, verdict, callContact }`; 404 not my check, 409 already answered, 400 bad answers |
+| `GET /api/checks/:id` | family with access, or the phone that started it | 200 `{ check }` |
+| `GET /api/checks?personId=…&cursor=…` | family with access | 200 `{ checks, nextCursor }`, newest first, 20 per page |
+| `POST /api/checks/:id/acknowledge` | family with access | 200 `{ checkId, first, acknowledgement }` |
+
+Anything the caller may not see answers **404**, as everywhere (7.3).
+
+#### How it works
+
+Routes in `src/app/api/checks/**`, logic in `src/server/services/checkService.ts`, queries in `src/server/repositories/checksRepository.ts`, input rules and answer types in `src/schemas/checks.ts` (no server-only code, so Roberta's pages and `src/lib/realtime.ts` import the same types). Like pairing, the service gets the outside world as one `CheckDeps` object (fakes in tests).
+
+**The two locks in every endpoint.** (1) The check is first loaded with the caller's **user** client, so RLS proves the caller may see it. (2) Then the stricter rules in code: `loadOwnCheck()` answers 404 unless `check.device_id` is **this** phone (a check of the same person started on another phone is also 404); answers only while `status = 'started'`. Only then do the writes use the **admin** client, because `checks` has no INSERT/UPDATE policy at all (BUILD_PLAN 2.4, uses 3 and 4b).
+
+- **`startCheck()`**: the phone's device comes from `getActor()` (never from the request). Rate limit `check:device:<deviceId>`, 10 per hour (a device id is not personal data, so no HMAC). `insertCheck()` (admin) with `protected_person_id` from the phone's pairing, `status 'started'`. Then `fanOut()` (3.24). If the fan-out throws, `[checks] alert fan-out failed: …` is logged and the phone still gets its 201: grandma must always reach the questions.
+- **`submitAnswers()`**:
+  1. `AnswersSchema` (route): each answer is one of the engine's lists or `null` (skipped); `handover` only when `asksMoney = "yes"`; text trimmed, ≤ 2000 characters. Unknown keys (e.g. a `riskLevel` from a hacked phone) are dropped.
+  2. `loadOwnCheck()`; `status !== 'started'` → 409 `already_answered` „На тази проверка вече е отговорено.“
+  3. Known names = the person's name + every contact's name (user client).
+  4. `analyseCall()` on the **original** text, exactly like the phone's offline fallback (BUILD_PLAN 4.9), so both show the same verdict. The original text stays only in memory.
+  5. Stored text = `redactPersonalData(text, knownNames).slice(0, 2000)`: a label can be longer than what it replaces („Ив“ → „[ИМЕ]“), so it is cut to the column's limit. Empty text → `null`.
+  6. `saveCheckAnswers()` (admin), **one atomic UPDATE**: `update checks set …, status = 'answered' where id = $1 and status = 'started'`. Two answers at the same moment: PostgreSQL runs them one after the other, the second finds `answered` and changes nothing → 409. Stored: the answers, `score`, `risk_level`, `script_type`, `hard_rules`, `reason_codes` (codes only), `engine_version`, `answered_at`.
+  7. `notifyVerdict()` (3.24); errors only logged.
+  8. Answer: the full verdict (reasons **with** the caller's matched words) and `callContact` = the **first contact in calling order who has a phone** (`firstCallContact()`), for the `tel:` button. Contact #1 is often the owner, who may have no phone in the list.
+- **`getCheck()`**: a phone → `loadOwnCheck()`; family → RLS. **Reasons are rebuilt from the stored codes** through `bg.ts` (`bg.engine.hardRules[id].explanation`, `bg.engine.reasons[category]`; unknown codes are skipped). The matched words are not stored, so `evidence` exists only in the answer to step 8. Headline and advice: `bg.verdict[level]`. While `started`, `verdict` is `null`.
+- **`listChecks()`**: `findPersonForCaller()` (RLS, else 404), then 20 checks `order by started_at desc`. **Cursor = `started_at`** of the page's last check; the next page asks `started_at < cursor`. `nextCursor` is `null` when the page wasn't full.
+- **`acknowledge()`**: RLS read (else 404), then `acknowledgeCheck()` (admin), **one atomic UPDATE**: `update checks set acknowledged_by = $me, acknowledged_at = now where id = $1 and acknowledged_by is null`. The winner gets `first: true`, an audit line `check_acknowledged` and the message `bg.checks.acknowledgedBy` with the name grandma knows (the name in **her contact list**, else the profile name). Everybody else (or the same person pressing twice) re-reads the check: `first` is true only for the winner, and `acknowledgement` names who it was. If the acknowledger is no longer in the list, the text is „Ваш близък ще ви се обади веднага.“
+
+**Not built yet:** `callerNumber` (BUILD_PLAN #18, the HMAC'd caller number) and the moderators' `extraKeywords` (the engine accepts them; the service doesn't load them yet, W3-05).
+
+#### Why it works like that
+
+- **The verdict is computed on the server only.** If the phone sent its verdict, a modified phone (or a scammer guiding grandma) could store "green". The phone sends only answers; Zod drops anything else; the database refuses browser writes on `checks` (7.4). A database trigger computing the verdict was rejected because the engine is TypeScript (and must also run offline on the phone). Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Server-side verdict".
+- **Redact before storing:** the family and later the AI see the text without phone numbers, IBANs or names; the original is never written anywhere.
+- **Atomic UPDATE with a condition** instead of "read, check, write": between a read and a write another request can slip in; one conditional UPDATE can't be split.
+- **Codes, not texts, in the database:** fewer bytes, and a better Bulgarian wording in `bg.ts` shows up in old checks too.
+- **Fan-out errors never block the phone:** the family page also sees the check row itself through Realtime.
+- **Rate limit per phone:** a broken or hacked phone can't flood the family with alerts.
+- **Cursor on `started_at`** instead of page numbers: a new check arriving while scrolling doesn't shift the pages. Known limit: two checks of one person started in the very same microsecond on a page boundary could skip one; not realistic for one older person.
+
+#### How we know it works
+
+`checkService.test.ts`, 24 tests: start (only a phone, 10 per hour then 429, check returned even when the fan-out fails); answers (police + money → red with HR1 stored by the server, `tel:` contact = first with a phone, personal data removed **before** the repository, another phone of the same person → 404, a phone of another person → 404, a family member → 403, second answer → 409, two at once → only one passes); get (stored verdict with Bulgarian reasons, 404 without access, `started` has no verdict); list (newest first, 20 per page, cursor, 404 without access); acknowledge (first wins and the second learns who, pressing twice, 404 without access and nothing changed, the phone reads „Анна ще ви се обади веднага.“, general text without a name). `schemas/checks.test.ts`, 8 tests (skipped answers, own verdict dropped, handover only with money, 2000 characters, cursor format). RLS behind it: `05_checks_alerts`.
+
+**Live smoke test (4 Nov, not in the repo):** the checks and alerts script against the live Supabase project, **38/38 steps passed**. The alert arrived through Realtime **111 ms** after the API answered; a whole button press took ≈ 2.4 s through the cloud sandbox's proxy. Test rows were deleted afterwards (their audit lines stay, 5.9).
+
+### 3.24 Family alerts: `alertService.ts` and the `AlertChannel` interface (W2-03 backend)
+
+#### What it does
+
+When the button is pressed, every trusted contact **with a Scamly account** gets an alert on every channel, and each delivery is written as one row of `alerts` (who, which channel, `sent`/`failed`, error). Contacts without an account (phone only) get no alert; they are only in the „Обади се на …“ list. When the answers arrive, the channels hear about the verdict too.
+
+#### How it works
+
+- **`AlertChannel`** = `{ name, send(recipient, payload) }` (like a Python `Protocol` with one method). `send()` throws when delivery fails. `AlertPayload` = `{ kind: "started" | "verdict", checkId, protectedPersonId, personName, riskLevel }`.
+- **Today there is one channel, `realtimeChannel`, and its `send()` does nothing:** the `alerts` row we insert (and the `checks` row the check service updates) **is** the message. Supabase Realtime sees the change and delivers it to the open page, filtered by RLS (3.25).
+- **`fanOut(deps, checkId)`**: loads the check, the person's name and the contacts (admin client), keeps only contacts with `user_id` (`recipientsFrom()`), calls every channel for every recipient. A channel that throws → that row is `failed` with the error text (cut to 500 characters, no stack); the others go on. **All rows in one INSERT** (`insertAlerts()` in `alertsRepository.ts`): one trip to the database, and every family member's page rings at the same moment. A missing check → nothing.
+- **`notifyVerdict(deps, checkId)`**: calls the channels again with `kind: "verdict"` but writes **no new rows** (there is one row per check, member and channel); failures are only logged.
+- `createAlertDeps(admin)` builds the real deps with `channels: [realtimeChannel]`. **Web push (W2-05) and e-mail (W2-06) will be two more objects in that list**; `fanOut()` and `notifyVerdict()` won't change.
+- Service role (BUILD_PLAN 2.4, use 4): the rows belong to **other** users, which no RLS policy lets a phone write. `fanOut()` is called only by the check service, after its checks.
+
+#### Why it works like that
+
+- **One interface for every channel** (D7 and ADR 0005): adding push or e-mail is a new object, not a change of the fan-out. Tests pass fake channels that fail on purpose.
+- **A failed channel never stops the others:** an expired push subscription must not keep Anna's sister from getting the alert.
+- **The row is the message** for Realtime: nothing to send twice, and the row is also the record of who was alerted.
+- Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`AlertChannel` interface".
+
+#### How we know it works
+
+`alertService.test.ts`, 7 tests: only contacts with an account; one `sent` realtime row per such contact; every channel gets the same payload; a failing channel → `failed` and everybody else still alerted; nothing for a missing check; the verdict goes to every channel with no new rows; a failing verdict channel is logged. Live: 3.23.
+
+### 3.25 Realtime in the browser: `GET /api/realtime/token` and `src/lib/realtime.ts` (W2-03 backend)
+
+#### What it does
+
+Gives Roberta's pages two functions that keep a check (or a person's list of checks) up to date live:
+
+- `watchCheck(checkId, onCheck)`: grandma's phone after the verdict (waiting for „Анна ще ви се обади веднага.“) and the family's alert page.
+- `watchPersonChecks(personId, onChecks)`: the family's live list of one person's checks.
+
+Both return `stop()` (call it in the cleanup of `useEffect`).
+
+#### How it works
+
+1. **Realtime is only a doorbell.** The channel listens to `postgres_changes`: `watchCheck` to `UPDATE` on `checks` with `id=eq.<checkId>`; `watchPersonChecks` to every change on `checks` with `protected_person_id=eq.<personId>` **and** `INSERT` on `alerts` with `recipient_id=eq.<my user id>`. On any event the page fetches the fresh data **from our API** (`GET /api/checks/:id` or `GET /api/checks?personId=…`), so it always gets the same `CheckDto` shape with Bulgarian reasons and names. RLS decides whether a subscriber receives an event at all.
+2. **Polling fallback.** `startLiveWatch()` loads the data at once and polls our API **every 5 s until Realtime says `SUBSCRIBED`**, then stops polling and loads once more (to catch what changed while connecting). If the channel drops (`TIMED_OUT`, `CLOSED`, `CHANNEL_ERROR`) polling starts again; if Realtime can't start at all (no token, WebSockets blocked) polling simply goes on.
+3. **The token.** Realtime needs the user's access token so RLS knows who is listening, but our session cookies are HttpOnly (3.9). So the page asks **`GET /api/realtime/token`**: `assertSameOriginRead()` (403 if another site started the request, although GET routes are otherwise never checked), `requireRole([...all four roles])` (→ `getUser()`, so a deleted account is refused), then `auth.getSession()` from the cookies. `issueRealtimeToken()` (`src/server/services/realtimeService.ts`) answers 401 unless the session exists, **belongs to the same account** and has an expiry; else 200 `{ userId, accessToken, expiresAt }` with `Cache-Control: no-store`.
+4. **Its own Supabase client.** `realtime.ts` creates one client per page with `createClient(url, publishableKey, { accessToken: async () => (await getToken()).accessToken })`. supabase-js asks this function for the token again on every heartbeat (about every 25 s). `getToken()` keeps the token in a module variable and fetches a new one **60 s before `expiresAt`** (`tokenNeedsRefresh()`). Before joining a channel it calls `realtime.setAuth()` once, so the first join already carries the token.
+5. **Why not `setAuth(token)` on the normal browser client?** That client has no session (HttpOnly cookies), so on the next heartbeat it would hand Realtime the **publishable key** instead and replace our token; RLS would then see a guest. The header of `src/lib/supabase/browser.ts` now says it is not used for Realtime.
+6. The Realtime client only listens; every read and write still goes through our API (BUILD_PLAN section 0).
+
+#### Why it works like that
+
+- **Doorbell + our API:** one place builds the answer (Bulgarian reasons from codes, names, the acknowledgement message); Realtime payloads would be raw database rows.
+- **Polling fallback:** pressing the button must reach the family even on a network that blocks WebSockets (D7). 5 s is fast enough for a phone call and cheap for the server.
+- **Trade-off of the token endpoint:** page JavaScript now sees the short-lived **access** token (about 1 hour). The **refresh** token, which keeps a session alive for weeks, stays in the HttpOnly cookie and never reaches the page. The alternative, readable session cookies (`@supabase/ssr`'s default), would expose both tokens to any XSS bug. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Realtime token endpoint".
+- **Same-origin check on a GET:** the answer itself is a secret, so another site must not even try to fetch it with the victim's cookies.
+
+#### How we know it works
+
+`realtime.test.ts`, 6 tests: a token is fetched when there is none and kept until one minute before it expires; loads at once and polls every 5 s until connected; polls again when Realtime drops; keeps polling when Realtime can't start; `stop()` ends polling and closes the channel. `realtimeService.test.ts`, 3 tests: token of the same account; 401 without a session or for another account; 401 without an expiry. `origin.test.ts`: 2 new tests for `assertSameOriginRead()`. Live: the alert arrived through Realtime 111 ms after the API answer (3.23).
+
+### 3.26 One protected person: `GET`/`PATCH`/`DELETE /api/persons/:id` (W2-08 backend)
+
+#### What it does
+
+- `GET` (owner or trusted contact): `{ person, contacts, devices }`: the person, the contact list (place 1 first) and the paired phones.
+- `PATCH` (owner): rename and/or change the district → `{ person }`.
+- `DELETE` (owner): delete the person and **all** their data, and sign out every paired phone → `{ ok: true, devicesRevoked }`.
+
+A trusted contact who isn't the owner gets 404 for `PATCH`/`DELETE`, a stranger 404 for all three.
+
+#### How it works
+
+- `personService.ts` (`getPersonDetails`, `updatePerson`, `deletePerson`) with `PersonDeps` (user client) and, only for delete, `PersonAdminDeps` (service role). `UpdatePersonSchema` needs at least one field („Променете поне името или областта.“).
+- **Nothing secret goes out:** a contact is `{ id, displayName, phone, priority, hasAccount, isOwner }` and a device `{ id, label, pairedAt, revoked }`; the account ids (`user_id`) are never sent.
+- `updatePerson()`: RLS + owner check, then an UPDATE with the user client (policy: owner only; column privileges: only `display_name`, `district_code`).
+- **`deletePerson()`** in this order: (1) owner check; (2) for every device of the person: `deleteAuthUser()` (service role, like revoking one phone, 3.16) and an audit line `device_revoked` with `reason: "person_deleted"`; (3) delete the person with the **user** client (RLS: owner only); the database deletes contacts, invites, pairing codes, devices, checks and alerts with it (`on delete cascade`); (4) audit line `person_deleted` with only the number of phones, **no name** (GDPR).
+
+#### Why it works like that
+
+- **Phones first:** the cascade would delete the `devices` rows, and with them the only record of which auth accounts to delete. Those phones would stay logged in to an empty account.
+- The delete itself uses the user client, so RLS is a second lock even in the one place that needs the service role.
+
+#### How we know it works
+
+`personService.test.ts`, 10 tests on the in-memory fake world `src/server/services/__tests__/familyWorld.ts` (shared with the contact and invite tests): details for the owner and for a trusted contact (marked not owner), no `user_id` in the answer, 404 for a stranger; rename and district change, 404 for a non-owner contact and a stranger, an empty change refused; delete signs out every phone first, then deletes everything; audit lines per phone and one for the person without names; 404 and nothing deleted for a non-owner and a stranger. `schemas.test.ts`: the update schema.
+
+### 3.27 The contact list: `PUT /api/persons/:id/contacts` (W2-08 backend)
+
+#### What it does
+
+The owner saves the whole ordered list of people to call at once (1 to 5): rename, change phones, swap places, add and remove. Body: a **bare JSON array** `[{ id?, displayName, phone?, priority }, …]` (no `id` = new contact; contacts left out are deleted). Answer: `{ contacts }`, place 1 first.
+
+#### How it works
+
+1. `ContactsSchema` (`src/schemas/contacts.ts`): 1–5 items, places 1–5 each used once, no contact twice, names 1–60. Phones become **E.164** with `normalizePhone()`: „0888 123 456“, „00359…“, „+359 (88) 812-3456“ → `+359888123456`; Bulgarian numbers need 8–9 digits after `+359`; other countries `+` and 8–15 digits. Empty or missing phone = `null`. Any other key (e.g. a `userId`) is dropped.
+2. `contactService.replaceContacts()` with the **user client only**: owner check (else 404); every `id` must be a contact of **this** person (400 `unknown_contact`); the owner's own row must stay (400 `owner_required`); a contact **without an account** needs a phone (400 `phone_required`); contacts with an account (e.g. the owner) may have none, they get alerts in the app.
+3. One call: `rpc("replace_trusted_contacts", { p_person_id, p_contacts })`, the SQL function of 5.14, in **one transaction**. If the database refuses because the list changed in between (another tab), codes `23505`/`22023`/`23514` → 409 `contacts_changed` „Списъкът е бил променен междувременно…“.
+4. The saved list is read again and returned.
+
+#### Why it works like that
+
+- **One function call = all or nothing**, and it can **swap places even with all 5 places full**: the unique rule "one contact per place" is checked at the end of the statement, and the function moves every remaining row in one UPDATE.
+- **`user_id` can never come from the browser:** the schema drops it, `ContactWrite` has no field for it, and inside the SECURITY INVOKER function the column privileges still forbid writing it. An account is attached only by redeeming an invite (3.28).
+- Rejected alternatives: several REST calls in a safe order (a half-saved list on failure; still clashes on swaps), an upsert by `id` (needs INSERT rights on `id`, which browsers don't have), more column rights, SECURITY DEFINER (would bypass RLS). Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Contact list through one SQL function".
+
+#### How we know it works
+
+`contactService.test.ts`, 12 tests: 404 for a non-owner contact and a stranger (list unchanged); swap keeps every account; left-out contacts deleted, new ones without an account; a browser-sent account id ignored; 400 without the owner's row, for another person's contact id, for a contact without account and phone; contacts with an account may have no phone; 409 when the database refuses; same place twice and same contact twice refused. `schemas/contacts.test.ts`, 11 tests (phone spellings, abroad, 1–5, places, dropped account id, plus invite token and person update). The SQL function: `11_replace_contacts` (5.14).
+
+### 3.28 Invites: `POST /api/persons/:id/invites` and `POST /api/invites/redeem` (W2-08 backend)
+
+#### What it does
+
+How a second relative (e.g. Иван) joins Баба Мария's contact list **with his own account**, so he sees her checks and gets alerts. The owner creates a link `/pokana?t=<token>` (`ROUTES.invite`), valid **7 days, single use**; Иван logs in (or registers) and opens it; the page sends the token to the API.
+
+#### How it works
+
+**`createInvite()`** (family, owner only, `CreateInviteSchema { displayName, priority }`): RLS + owner check (else 404) → `generateInviteToken()` = 32 random bytes as 43 URL-safe characters (256 bits) → stores only `hmacSha256(token, PAIRING_PEPPER)` with `expires_at = now + 7 days` (admin: browsers have no INSERT right on `contact_invites`) → audit `invite_created` → 201 `{ inviteId, invitePath: "/pokana?t=<token>", expiresAt }`. The token is shown once and never stored.
+
+**`redeemInvite()`** (any logged-in family member):
+
+1. Rate limit **first**: `invite:ip:<HMAC of IP>`, 10 per 15 min.
+2. `RedeemInviteSchema`: exactly 43 base64url characters; anything else gets the same message as a wrong token.
+3. `findOpenInvite()` by hash, `used_at is null`, `expires_at > now`. Wrong, expired and used → the **same** 400 `invalid_invite` „Поканата е грешна, изтекла или вече е използвана.“
+4. **Checks before the invite is used up**, so a refusal doesn't burn the link: own invite → 409 `own_invite`; already in the list → 409 `already_linked`; `choosePlacement()`: if the owner already added this relative by phone (a row **without account** at the invite's place with the **same name**, case-insensitive) the account is **linked** to that row; otherwise the first free place from the invite's place up to 5; none → 409 `no_free_place`.
+5. `consumeInvite()`: **one atomic UPDATE** `set used_at = now where id = $1 and used_at is null and expires_at > now`. Lost the race → the same 400.
+6. Add or link with the service role (only the server may set `trusted_contacts.user_id`): `insertLinkedContact()` or `linkContact()` (`… where user_id is null`). If that fails or the place was taken at the same moment (`23505`), `releaseInvite()` gives the invite back (`used_at = null`, only if it still carries **our** timestamp) → 409 `contacts_changed` or the error.
+7. Audit `invite_redeemed` (contact id, invite id, place, whether an existing row was linked) → 200 `{ protectedPersonId, personName, priority }`.
+
+#### Why it works like that
+
+- **Same ideas as pairing** (3.16, 5.13): token shown once, only its HMAC stored, single use through one UPDATE, the same answer for every bad token, rate limit counted before parsing, audit lines.
+- **256-bit token, 7 days:** unlike a 6-digit code it can't be guessed even without the rate limit, so it may live long enough for a relative to open it from a message. `PAIRING_PEPPER` is reused: it is the secret for "codes that let someone join a protected person", and no new environment variable is needed.
+- **Refusals don't burn the link;** a failed add gives it back. The owner tapping their own link by mistake doesn't cost a new invite.
+- **Linking the same-name phone-only row:** Иван is not in the list twice.
+- **Risk for the page (note for Roberta, W2-07):** the token is in the `/pokana` URL, so it can end up in the browser history or a `Referer` header. The page should POST it at once and set `Referrer-Policy: no-referrer`.
+- Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Invite tokens" and "Refusals don't burn invites".
+
+#### How we know it works
+
+`inviteService.test.ts`, 17 tests: 43 URL-safe characters, different every time; 7-day `/pokana` link, only the HMAC stored; 404 for a non-owner and a stranger; joins at the invite's place with the account; only once (second person → 400); expired and wrong → the same 400; already listed / own invite → 409 and the invite **not** used up; next free place; 409 when places up to 5 are full; links the same-name phone-only row; doesn't link a different name or a row with an account; gives the invite back on a race and on a database error; 11th try from one IP → 429 even with a valid token.
+
+**Live smoke test (4 Nov, not in the repo):** persons, contacts and invites, first run **35 of 44 steps passed**: all 9 failures came from `replace_trusted_contacts` missing before its migration was applied. After Alex applied it (4 Nov), the re-run passed **44 of 44** (see "The live database").
+
 ---
 ## 4. Code quality, tests and CI
 
@@ -917,9 +1119,9 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - A test looks like pytest with different words: `describe` groups tests, `it` is one test, `expect(a).toBe(b)` is `assert a == b`, `expect(() => f()).toThrow(/NAME/)` is `pytest.raises`.
 - Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no global minimum; the engine has a ≥ 90 % goal (W1-10) and reaches 100 % of lines (`docs/evidence/engine-coverage-2026-11-04.md`).
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
-- **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
+- **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `CheckDeps`, `AlertDeps`, `PersonDeps`, `ContactDeps`, `InviteDeps` (Week 2; the last three share the fake world `src/server/services/__tests__/familyWorld.ts`), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; and from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7. Total: 26 files, **269 tests**.
+Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7; and from Week 2 (W2-02/03/04/08) `checkService` 24, `inviteService` 17, `contactService` 12, `schemas/contacts` 11, `personService` 10, `schemas/checks` 8, `alertService` 7, `realtime` 6, `realtimeService` 3 and 2 more in `origin` (now 9). Total: 35 files, **369 tests**.
 
 #### Why it works like that
 
@@ -927,7 +1129,7 @@ Unit tests are fast enough to run on every save, and the detection engine is a p
 
 #### How we know it works
 
-`npm test` → `Test Files 26 passed, Tests 269 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npx vitest run` → `Test Files 35 passed, Tests 369 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -967,7 +1169,7 @@ On every push to `main`, every pull request and on a manual start (Actions tab �
 |---|---|---|
 | **checks** ("Lint, types, unit tests, build") | checkout → Node from `.nvmrc` → `npm ci` → lint → typecheck → format:check → `test:coverage` → `build` → upload coverage | Code is clean, typed, formatted, unit tests pass, the app builds |
 | **e2e** ("End-to-end tests (Playwright)") | checkout → Node → `npm ci` → install Chromium → `npm run e2e` → upload report | The real app works in a browser on desktop and phone |
-| **database** ("Database and RLS tests (pgTAP)") | checkout → install Supabase CLI → `supabase db start` → `supabase test db` | All migrations apply on a real Supabase database and all 151 RLS/schema tests pass |
+| **database** ("Database and RLS tests (pgTAP)") | checkout → install Supabase CLI → `supabase db start` → `supabase test db` | All migrations apply on a real Supabase database and all 171 RLS/schema tests pass |
 
 Other settings: a newer push to the same branch cancels the older run (`concurrency`), and the workflow can only read the repo (`permissions: contents: read`). `npm ci` installs exactly what `package-lock.json` says.
 
@@ -1021,6 +1223,7 @@ Everything in this section is SQL in `supabase/migrations/`, applied in file-nam
 | `20261102000004_rls_policies.sql` | RLS on, privileges, all policies |
 | `20261102000005_functions.sql` | `get_map_stats`, `hit_rate_limit` |
 | `20261102000006_realtime.sql` | Realtime publication |
+| `20261104000002_replace_contacts.sql` | `replace_trusted_contacts()` (section 5.14); applied in the live project on 4 Nov via the SQL Editor |
 
 A **migration** is a numbered SQL file that changes the database one step. We never edit an old migration; a change is a new file. `supabase db reset` (with Docker) or the CI job rebuild the whole database from zero by running them in order.
 
@@ -1343,7 +1546,7 @@ An audit log is only worth something if it can't be rewritten, not even by a bug
 
 #### How we know it works
 
-`07_admin_audit` (12 tests): only the one SELECT policy exists; the server can insert but not update or delete; an admin can read but not update or delete; moderators and family see 0 rows; family can't insert; guests are refused; the line survives the actor's deletion. The API writes `pairing_code_created`, `device_paired` and `device_revoked` (`auditRepository.ts`, section 3.16); moderation and role changes follow (W3-04, W3-06).
+`07_admin_audit` (12 tests): only the one SELECT policy exists; the server can insert but not update or delete; an admin can read but not update or delete; moderators and family see 0 rows; family can't insert; guests are refused; the line survives the actor's deletion. The API writes `pairing_code_created`, `device_paired`, `device_revoked` (3.16; also with reason `person_deleted`, 3.26), `person_deleted`, `check_acknowledged` (3.23), `invite_created` and `invite_redeemed` (3.28) through `auditRepository.ts`; moderation and role changes follow (W3-04, W3-06).
 
 ### 5.10 `get_map_stats(weeks)`: the public map's only window
 
@@ -1426,17 +1629,17 @@ Supabase Realtime sends live database changes to subscribed browsers. Only `chec
 
 #### Why it works like that
 
-The family's live alert page (D7, primary channel) needs new alerts and check updates instantly, and the older person's phone needs to see when a family member acknowledges („Иван ще ви се обади веднага“). Because RLS filters what each subscriber gets, a family member only receives events for people they are linked to. Fewer published tables = less that could leak. The browser side is planned (week 2, W2-03 and W2-04).
+The family's live alert page (D7, primary channel) needs new alerts and check updates instantly, and the older person's phone needs to see when a family member acknowledges („Иван ще ви се обади веднага“). Because RLS filters what each subscriber gets, a family member only receives events for people they are linked to. Fewer published tables = less that could leak. The browser side is `src/lib/realtime.ts` with the token endpoint (3.25).
 
 #### How we know it works
 
-`01_schema`: exactly `alerts` and `checks` are in the publication. Live delivery will be proven by the e2e test W2-11.
+`01_schema`: exactly `alerts` and `checks` are in the publication. Live delivery: the smoke test of 4 Nov (alert via Realtime 111 ms after the API answer, 3.23); the e2e test W2-11 will prove it in CI.
 
 ### 5.13 HMAC-hashed pairing codes
 
 #### What it does
 
-The database never stores a pairing code (like `482915`), only `HMAC-SHA256(code, PAIRING_PEPPER)` in `pairing_codes.code_hash`. The same idea is used for `contact_invites.token_hash` and the `caller_number_hash` columns (with `HASH_PEPPER`).
+The database never stores a pairing code (like `482915`), only `HMAC-SHA256(code, PAIRING_PEPPER)` in `pairing_codes.code_hash`. The same idea is used for `contact_invites.token_hash` (also with `PAIRING_PEPPER`, section 3.28) and the `caller_number_hash` columns (with `HASH_PEPPER`, not built yet).
 
 #### How it works
 
@@ -1450,6 +1653,34 @@ A 6-digit code has only **1,000,000** possible values. If we stored a plain SHA-
 #### How we know it works
 
 `04_devices_pairing`: even the owner and an admin can't read `pairing_codes`; a guest can't insert one. `01_schema`: the partial unique index exists. Redeem, expiry, reuse and the 6th-try → 429: `pairingService.test.ts` (section 3.16).
+
+### 5.14 `replace_trusted_contacts(person, contacts)`: the whole contact list in one transaction
+
+#### What it does
+
+Migration `20261104000002_replace_contacts.sql`. Saves the new ordered contact list of one person (the JSON array from `PUT /api/persons/:id/contacts`, 3.27) in **one transaction**: either the whole list is saved or nothing changes.
+
+#### How it works
+
+`language plpgsql`, **`security invoker`** (written out on purpose), `search_path = ''`. Steps:
+
+1. `is_owner_of(p_person_id)` or error `42501`; `p_contacts` must be a JSON array (`22023`).
+2. The owner's own row (`user_id = owner_id`) must be among the listed ids, else `23514`.
+3. `delete` the person's contacts that are not listed.
+4. **One `update … from jsonb_to_recordset(p_contacts)`** sets name, phone and place of every listed contact. The unique rule "one contact per place" (`trusted_contacts_person_priority_key`) is DEFERRABLE, so PostgreSQL checks it at the end of the statement: Анна 1 ↔ Иван 2, or even a rotation of all 5 places, works. If fewer rows were updated than ids listed, an id was unknown → `22023`.
+5. `insert` the new contacts (rows without `id`), **without `user_id`**.
+
+`execute` is revoked from `public` and `anon` and granted to `authenticated`. `src/types/database.ts` got the function entry by hand, in the generator's format (`Args: { p_contacts: Json; p_person_id: string }`, `Returns: undefined`).
+
+#### Why it works like that
+
+- **SECURITY INVOKER:** the function runs with the caller's rights, so RLS (only the owner writes contacts) and the column privileges (browsers may write only `display_name`, `phone`, `priority`) still apply inside it. Existing contacts keep their `user_id`; a new one never gets one. SECURITY DEFINER would bypass RLS and make the function itself the only guard.
+- **Its own checks** (owner, owner's row stays, ids belong to the person) give clear errors and protect the list even if a browser calls the function directly.
+- Through PostgREST one request can't give different rows different values (except an upsert, which needs INSERT rights on `id`).
+
+#### How we know it works
+
+`11_replace_contacts` (20 assertions): swap + rename + add in one call; a browser-sent `user_id` ignored; a full rotation of 5 places; accounts kept, new rows without one; the owner's row can't be removed; unknown ids and a place used twice refused; a non-owner trusted contact, a stranger and a guest can't use it; it is SECURITY INVOKER with `search_path = ''`; `anon` can't execute it.
 
 ---
 
@@ -1490,7 +1721,7 @@ A policy is only proven by trying it as each role. Pretending exactly the way Su
 
 #### How we know it works
 
-All 8 files pass (151 assertions), locally and in CI.
+All 9 files pass (171 assertions) locally (4 Nov); CI runs the same files.
 
 ### 6.2 What each test file proves
 
@@ -1504,6 +1735,7 @@ All 8 files pass (151 assertions), locally and in CI.
 | `06_public_reports_scripts.test.sql` | 22 | Guests read districts and published scripts, can't read or insert reports, can call `get_map_stats` (counting rules, clamping, Monday weeks); family can't see or approve reports; moderator approves but can't rewrite or delete reports, manages scripts; admin deletes reports and scripts |
 | `07_admin_audit.test.sql` | 12 | The audit log is append-only and admin-only, even against `service_role`; the line survives the actor's deletion |
 | `08_functions.test.sql` | 18 | `hit_rate_limit` behaviour and permissions; who may execute which function; helper functions answer correctly per role; every SECURITY DEFINER function pins `search_path` |
+| `11_replace_contacts.test.sql` | 20 | `replace_trusted_contacts()` (5.14): swap, rename, add, remove in one call; full 5-place rotation; accounts kept, a sent `user_id` ignored; owner's row required; unknown ids and double places refused; non-owner contact, stranger and guest refused; SECURITY INVOKER with empty `search_path`; no `anon` execute |
 
 **IDOR tests.** Every "only own rows" rule has a test where user B (or another device) tries to reach user A's data by its id: profile, protected person, contacts, adding a contact, renaming/deleting the person, devices, checks, alerts. Each one must give 0 rows or an error, and the superuser check afterwards confirms nothing changed. In the test files they are named `IDOR: ...`.
 
@@ -1537,7 +1769,7 @@ The cloud sandbox we build in has no Docker, but we still want to run the databa
 
 #### How we know it works
 
-`npm run test:db` → `Files=8, Tests=151 ... Result: PASS` (checked on 2026-11-03).
+`npm run test:db` → `Files=9, Tests=171 ... Result: PASS` (checked on 2026-11-04).
 
 ---
 
@@ -1569,7 +1801,7 @@ Proven by `03_persons_contacts` ("family can create a protected person they own"
 
 ### 7.3 Family B tries to read family A's grandma
 
-1. Boris changes the id in the address to Баба Мария's id. `GET /api/persons/<id>` is planned (week 2); the same thing works today with `POST /api/persons/<id>/pairing-codes`. The API's own check (lock 1, `findPersonForCaller()` + owner check in `createPairingCode()`) already refuses.
+1. Boris changes the id in the address to Баба Мария's id: `GET /api/persons/<id>` (3.26). The same works for `/pairing-codes`, `/contacts`, `/invites` and `/api/checks?personId=<id>`. The API's own check (lock 1, `findPersonForCaller()` with his user client, plus an owner check where only the owner may act) already refuses.
 2. Suppose lock 1 had a bug. The query `select * from protected_persons where id = <Мария>` runs with Boris's session.
 3. RLS combines the four SELECT policies with OR: `owner_id = auth.uid()`? no. `has_family_access(id)`? no (not owner, not a contact). `is_device_of(id)`? no. `is_admin()`? no.
 4. The row is invisible: **0 rows, no error**. The same happens for her contacts, devices, checks and alerts.
@@ -1580,9 +1812,10 @@ Proven by the `IDOR:` tests in `03`, `04` and `05`, and the "answers 404 to a st
 ### 7.4 A phone tries to send its own "green" verdict
 
 1. A paired phone (role `protected`) runs `update checks set score = 0, risk_level = 'green' where id = <its check>`.
-2. `authenticated` has only SELECT on `checks`: error `42501`. The verdict can only come from our server's engine (planned, W2-02).
+2. `authenticated` has only SELECT on `checks`: error `42501`. The verdict can only come from our server's engine (3.23).
+3. Through our API it can't either: `PUT /api/checks/:id/answers` accepts only answers; `AnswersSchema` drops a `riskLevel` or `score` key, and the server runs `analyseCall()` itself.
 
-Proven by `05_checks_alerts` ("a device can't write its own verdict").
+Proven by `05_checks_alerts` ("a device can't write its own verdict"), `schemas/checks.test.ts` ("drops fields the phone must not send, such as its own verdict") and `checkService.test.ts`.
 
 ### 7.5 Logging in
 
@@ -1615,6 +1848,22 @@ Proven by `authService.test.ts`, `requireRole.test.ts`, `routes.test.ts`, `auth-
 
 Proven by `pairingService.test.ts` (18 tests), `04_devices_pairing` (RLS and cascade) and the live smoke test.
 
+### 7.7 Grandma presses the button → the family sees the alert → „Обаждам ѝ се сега“ → grandma sees the name
+
+Баба Мария's phone is paired (7.6). Her contact list: 1 Анна (owner, account), 2 Иван (account, joined by invite, 3.28, phone +359 888 123 456), 3 neighbour Гергана (phone only). Анна has the family page open; it runs `watchPersonChecks(<Мария>)`. The screens are Roberta's (W2-01, W2-03, W2-04); the endpoints below exist today.
+
+1. **The page subscribes.** `GET /api/realtime/token` (same-origin, `getUser()`, the cookie session must be Анна's) → `{ userId, accessToken, expiresAt }`. `realtime.ts` opens a channel with `postgres_changes` on `checks` (`protected_person_id=eq.<Мария>`) and `alerts` INSERT (`recipient_id=eq.<Анна>`), and polls `GET /api/checks?personId=<Мария>` every 5 s until the channel says `SUBSCRIBED` (3.25).
+2. **A stranger calls grandma about money; she presses „Обаждат ми се за пари!“.** The phone sends `POST /api/checks` with no body. Same-origin check, `requireRole(["protected"])`: `getActor()` gives her device and person.
+3. Rate limit `check:device:<device>` (10 per hour). `insertCheck()` (service role): `protected_person_id` = Мария from the phone's pairing, `status 'started'` (3.23).
+4. **Fan-out** (3.24): recipients = contacts with an account = Анна and Иван (not Гергана). One INSERT of two `alerts` rows (`realtime`, `sent`). The phone gets `201 { checkId }` and opens the questions.
+5. **The family sees it.** Realtime checks RLS (`recipient_id = auth.uid()` for `alerts`, `has_family_access()` for `checks`) and rings Анна's page; the page fetches `GET /api/checks?personId=<Мария>` and shows the new check, still without a verdict. In the live smoke test this took 111 ms after the API answer. On a network without WebSockets the 5 s polling shows it instead.
+6. **Grandma answers** (police, money: yes, courier, rushing: yes, secret: unsure, and the caller's words). `PUT /api/checks/<id>/answers`. The server: `loadOwnCheck()` (her phone started it), `status 'started'` ✔; `analyseCall()` on the original words → **red**, HR1 + HR2; the text is redacted with the known names (Мария, Анна, Иван, Гергана) and stored; one `UPDATE … WHERE status = 'started'` saves answers and verdict; `notifyVerdict()`.
+7. The phone gets `200 { verdict: red, „ТОВА Е ИЗМАМА.“, reasons with the caller's words, callContact: { "Иван", "+359888123456" } }`: Иван is the first contact with a phone, so the big `tel:` button says „Обади се на Иван“. At the same moment Realtime delivers the `checks` UPDATE to Анна's page, which re-reads and shows red.
+8. **Анна presses „Обаждам ѝ се сега“.** `POST /api/checks/<id>/acknowledge`: RLS read ✔, then one `UPDATE … SET acknowledged_by = Анна WHERE acknowledged_by IS NULL` wins → audit `check_acknowledged` → `{ first: true, acknowledgement: { displayName: "Анна", messageBg: "Анна ще ви се обади веднага." } }`. If Иван presses a second later, his UPDATE changes nothing and he gets `first: false` with Анна's name, so he knows she is on it.
+9. **Grandma sees the name.** Her result screen runs `watchCheck(<id>)`: Realtime delivers the `checks` UPDATE, the phone fetches `GET /api/checks/<id>` (its own check) and shows `acknowledgement.messageBg`: „Анна ще ви се обади веднага.“
+
+Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `05_checks_alerts` and the live smoke test (38/38). The two-browser e2e test of exactly this story is W2-11.
+
 ---
 
 ## 8. Where the code differs from the plan
@@ -1639,12 +1888,20 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 14 | `requireRole(req, ["family"])` (section 3) | `requireRole(["family"], client?)`: the request isn't needed (the cookies come from `next/headers`); a page version `requirePageRole()` redirects instead of throwing |
 | 15 | Integration tests "Vitest against local Supabase" in `tests/integration/` | Services get their tools as one deps object, and unit tests pass in-memory fakes (section 4.2). The real flow was checked once by a live smoke test (not in the repo); no `tests/integration/` yet |
 | 16 | BUILD_PLAN 2.4 calls the revoke function `deviceService.revoke()`; revoke deletes "the binding + the device's auth user" | `pairingService.revokeDevice()`; it deletes only the auth user and the database cascade removes the `devices` row |
-| 17 | `/api/me` and `/api/persons` belong to Week 2 | `GET /api/me` and `GET`/`POST /api/persons` already exist (minimal, needed for pairing); the rest of #3–#13 is W2-08 |
+| 17 | `/api/me` and `/api/persons` belong to Week 2 | `GET /api/me` and `GET`/`POST /api/persons` were built in Week 1 (minimal, needed for pairing); #8–#13 followed with W2-08 on 4 Nov (3.26–3.28); #3–#5 (`/api/me` PATCH, DELETE, export) are still to do |
 | 18 | Engine 4.4: a stem matches the start of a token; stems ≤ 4 letters with 0 edits | Stems of 3–4 letters must be the whole word or the word + an article/plural ending (`-а, -я, -ът, -ят, -та, -то, -те, -и, -ите, -ове, -овете`); stems of 1–2 letters (`не`, `до`) must be the whole word. Stops `нап` ≈ „напомняме“, `евро` ≈ „европейски“, `не` ≈ „нещо“; matches the rule written in Roberta's dictionary (section 3.21) |
 | 19 | Engine 4.6, HR6: relative + money **`yes`** + (urgency or relative scenario) | Money may also come from the text (any *firm* evidence, the general rule under the 4.6 table). Needed by the scenario „Синът ви е в болница. Трябват пари.“ |
 | 20 | Engine 4.7: script type = identity + scenario + "the hard rule linked to it" (no number given) | A linked hard rule adds 20 points of script evidence (`HARD_RULE_SCRIPT_BONUS`): HR1 → police, HR5 → fake official, HR6 → relative in trouble; HR2, HR3, HR4 are not linked to one script |
 | 21 | Engine 4.2/4.7: `adviceBg` example is script-specific („Затворете телефона. Полицията никога не иска пари.“) | `headlineBg`/`adviceBg` are `bg.verdict[level]` (title, description), the same texts the `Verdict` component shows; script-specific explanations are in the hard-rule reasons. `combineVerdicts()` (4.10) comes with the AI layer in Week 3 |
 | 22 | 2.4 lists `GET /api/health` (use 8) among the service-role (admin client) uses; IMPLEMENTATION_PLAN Session I commits health and keep-alive separately | `/api/health` uses the user client with no cookie (publishable key only): `districts` is public, so no secret key is needed (section 3.22). `src/server/supabase/adminClient.ts` notes this |
+| 23 | API #18: `AnswersSchema` has `callerNumber?`; the engine uses the moderators' `extraKeywords` (4.4, W3-05) | Not built yet: `callerNumber` is not accepted (Zod drops it) and no `caller_number_hash` is stored; the check service calls `analyseCall()` without `extraKeywords` (section 3.23) |
+| 24 | W2-03: "alert rows on start + on verdict"; #18 "update the alerts"; Q7: contacts without an account "can get email alerts" | Rows only on start: one per (contact **with an account**, channel). On the verdict `notifyVerdict()` calls the channels again without new rows; the realtime page sees the `checks` UPDATE. Contacts without an account get no alert (the table has no e-mail column); they are in the `tel:` list only (3.24) |
+| 25 | 3.9 (Session E) and W2-03: the page passes a token to `client.realtime.setAuth(token)` on the browser client; the API table has no token route | New route `GET /api/realtime/token` (any logged-in role, same-origin even for GET); `src/lib/realtime.ts` makes its **own** client with an `accessToken` function, because `setAuth` alone is overwritten by the publishable key on the next heartbeat. Realtime events only trigger a re-read from our API (3.25) |
+| 26 | W2-02 "done when": integration tests; offline fallback in the wizard | Unit tests with in-memory fakes (`checkService.test.ts`, 24) + a live smoke test (38/38), as in #15. The offline fallback is part of the wizard UI (W2-01, Roberta) |
+| 27 | API #11: `ContactsSchema [{id?, displayName, phone, priority}]`; how the list is saved is not specified | The body is a bare JSON array; `phone` is optional for contacts with an account and turned into E.164. Saved by one call of the new SQL function `replace_trusted_contacts()` (migration `20261104000002`, SECURITY INVOKER, 5.14). 409 when the list changed in between (3.27) |
+| 28 | API #12: "Invite another relative (link + code)" | Link only: `/pokana?t=<43-character token>` (`ROUTES.invite`), 7 days, single use, HMAC with `PAIRING_PEPPER`. Redeem links an existing phone-only row with the same name at the invite's place, otherwise takes the next free place up to 5; refusals don't use up the invite (3.28) |
+| 29 | API #22 / 4.2: one check "with its verdict and reasons" (reasons carry `evidence`) | `GET /api/checks/:id` rebuilds the reasons from the stored codes through `bg.ts`; the caller's matched words are not stored, so `evidence` is only in the answer to `PUT …/answers` (3.23) |
+| 30 | API #10: delete the person, "revoke devices" | Every paired phone's auth user is deleted **before** the person (otherwise the cascade loses the account ids), with `device_revoked` (reason `person_deleted`) and `person_deleted` audit lines (3.26) |
 
 ---
 
@@ -1683,7 +1940,11 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | **Pepper** | The secret key used in our HMACs (`PAIRING_PEPPER`, `HASH_PEPPER`); kept in environment variables, never in the database. |
 | **Rate limiting** | Allowing only N attempts per time window (e.g. 5 pairing tries per 15 minutes). |
 | **pgTAP** | A unit-test framework for PostgreSQL; tests are SQL files. |
-| **Realtime** | Supabase service that pushes database changes to browsers live, filtered by RLS. |
+| **Realtime** | Supabase service that pushes database changes to browsers live over a WebSocket, filtered by RLS. |
+| **`postgres_changes`** | The kind of Realtime subscription we use: "tell me when a row of this table changes" (INSERT/UPDATE/DELETE, optionally with a filter like `id=eq.<uuid>`). For us it is only a doorbell; the data is re-read from our API (3.25). |
+| **Polling fallback** | When the live connection isn't up, the page simply asks the API again every 5 seconds; like a `while True: fetch(); sleep(5)` loop that stops once Realtime works. |
+| **Atomic update** | One SQL `UPDATE … WHERE <condition>` that checks and changes in one step, e.g. `where status = 'started'` or `where acknowledged_by is null`. Two requests at the same moment can't both pass: PostgreSQL locks the row and the second finds the condition false. |
+| **SECURITY INVOKER** | The opposite of SECURITY DEFINER (and PostgreSQL's default): the function runs with the **caller's** rights, so RLS and column privileges still apply inside it (`replace_trusted_contacts`, 5.14). |
 | **PWA** | Progressive Web App: a website that can be installed on the home screen and work partly offline. Planned (W2-09). |
 | **Session / access token / refresh token** | After login Supabase gives two tokens: a short-lived **access token** (a JWT, about 1 hour) sent with every request, and a long-lived **refresh token** that buys a new pair. We keep both in cookies. |
 | **Cookie flags** | `HttpOnly`: page JavaScript can't read the cookie. `Secure`: sent only over HTTPS. `SameSite=Lax`: not sent with requests that other sites start, except normal link clicks. |
@@ -1702,13 +1963,15 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 
 **What:** the real Supabase project (region Frankfurt) that the deployed app will use. Set up on 3 Nov 2026.
 
-**How it was set up:** all 6 files in `supabase/migrations/` were joined into one SQL script and run **once** in the Supabase dashboard → SQL Editor. Checked afterwards with the public key: guests see the 28 districts, guests get "permission denied" on `reports`, `get_map_stats` answers, and the server key reaches all 14 tables.
+**How it was set up:** all 6 files then in `supabase/migrations/` were joined into one SQL script and run **once** in the Supabase dashboard → SQL Editor. Checked afterwards with the public key: guests see the 28 districts, guests get "permission denied" on `reports`, `get_map_stats` answers, and the server key reaches all 14 tables.
 
 **Why this way:** it needed no database password and no extra tools in the cloud session (the Supabase CLI download is blocked there).
 
 **Important for later:** because the SQL Editor was used, Supabase's migration history (`supabase_migrations.schema_migrations`) is empty. **New migrations must also be run once in the SQL Editor** (only the new file), or, if we switch to `supabase db push`, first mark the 6 existing ones as applied with `supabase migration repair --status applied <version>` so they are not run twice.
 
 **Auth settings:** "Confirm email" is **off** (risk R5, Q8), so a new family account can log in at once (section 3.14). Device e-mails on `devices.scamly.invalid` are accepted (checked 3 Nov).
+
+**Applied (4 Nov):** migration `20261104000002_replace_contacts.sql` (5.14) was run once in the SQL Editor. The live smoke test for contacts and invites was re-run afterwards: **44/44 steps passed**, and all test data was deleted (only the demo data remains).
 
 **Where the keys live:** see `docs/IMPLEMENTATION_PLAN.md` section 4. Never in git.
 
@@ -1737,3 +2000,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-04 · ADRs 0001–0004 added in `docs/decisions/` (technology stack, device pairing, e-mail provider, AI classifier chain); W1-03 done.
 - 2026-11-04 · Session H steps 2–10 (W1-08, W1-09, W1-10 engine logic): new section 3.21 (normalise, transliterate, fuzzy, signals, scoring, hard rules, verdict, `analyseCall`, `redactPersonalData`, worked example, known limits); 3.6, 3.18, 4.2, big picture and status table updated; plan differences #18–#21; 263 unit tests (170 engine, 51/51 scenarios), engine line coverage 100 %
 - 2026-11-04 · Session I code (W1-13): new section 3.22 (`/api/health` on the public `districts` table with the publishable key, 5 s timeout, `connection()` + `no-store`; keep-alive workflow every 12 h with `HEALTH_URL`; `vercel.json` region `fra1`); status table, 4.2, 4.3, 4.4, plan difference #22; 269 unit tests, 16 e2e tests × 2 screens; live check 200 / unreachable 503. Vercel project and `HEALTH_URL` pending
+- 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new sections 3.23 (checks API, server-side verdict, redact-before-store, acknowledge), 3.24 (alert fan-out, `AlertChannel`), 3.25 (Realtime token endpoint, `src/lib/realtime.ts`, polling fallback), 3.26–3.28 (person details/rename/delete, contact list, invites), 5.14 (`replace_trusted_contacts`, SECURITY INVOKER) and walkthrough 7.7; big picture, status table, 3.9, 3.12, 3.13, 3.15, 4.2, 4.4, 5, 5.9, 5.12, 5.13, 6.1, 6.2, 6.4, 7.3, 7.4, "The live database" updated; plan differences #23–#30; glossary (`postgres_changes`, polling fallback, atomic update, SECURITY INVOKER); 369 unit tests, 171 pgTAP assertions; live smoke tests 38/38 (checks, alerts) and 35/44 (persons, contacts, invites; 9 re-run after the migration: passed after the migration)
+- 2026-11-04 · migration `20261104000002` applied in the live project; contacts/invites live smoke test re-run: 44/44 passed.

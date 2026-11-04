@@ -25,9 +25,9 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library)
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
-5. [Notifications](#5-notifications): Supabase Realtime · Web Push (VAPID) · Brevo behind `EmailProvider`
+5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · Web Push (VAPID) · Brevo behind `EmailProvider`
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
@@ -116,7 +116,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a library we need requires Node 24, or the project continues after the tournament (then upgrade to the newest LTS).
 
-### REST API with route handlers  (status: in use (auth, me, persons, pairing, devices); the rest: week 2–3)
+### REST API with route handlers  (status: in use (auth, me, persons, pairing, devices, checks, realtime token, contacts, invites); the rest: week 2–3)
 
 **Used for:** every read and write from the browser goes through `/api/...` (36 routes, BUILD_PLAN section 3).
 
@@ -154,7 +154,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 2. Database and backend services
 
-### Supabase (PostgreSQL 17, Auth, Realtime, RLS), free tier  (status: in use (schema, RLS, functions, Auth); Realtime: week 2)
+### Supabase (PostgreSQL 17, Auth, Realtime, RLS), free tier  (status: in use (schema, RLS, functions, Auth, Realtime since W2-03))
 
 **Used for:** our database, logins, live updates to the family's alert page, and the security rules in the database.
 
@@ -369,7 +369,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project; security is scored and our users are vulnerable.
 
-### Server-only writes for sensitive tables  (status: in use (no client write policies; the server writes `devices`, `pairing_codes`, `audit_log`, `rate_limits`); checks, alerts, reports: week 2–3)
+### Server-only writes for sensitive tables  (status: in use (no client write policies; the server writes `devices`, `pairing_codes`, `audit_log`, `rate_limits`, `checks`, `alerts`, `contact_invites`); reports: week 3)
 
 **Used for:** `checks`, `alerts`, `reports`, `devices`, `pairing_codes`, `audit_log`, `rate_limits` have **no INSERT/UPDATE policy** for browsers; only our server (service role) writes them, after checking permissions.
 
@@ -386,7 +386,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for these tables.
 
-### HMAC-SHA256 with a secret pepper for pairing codes  (status: in use (pairing codes, IP addresses in the rate limiter); phone numbers: week 2–3)
+### HMAC-SHA256 with a secret pepper for pairing codes  (status: in use (pairing codes, invite tokens, IP addresses in the rate limiter); phone numbers: not built yet)
 
 **Used for:** storing the 6-digit pairing codes (and caller phone numbers, IP addresses for rate limiting) as `HMAC-SHA256(value, PEPPER)`, never in plain text.
 
@@ -443,7 +443,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** Supabase offered a proper "device" login type.
 
-### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing; reports: week 3))
+### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing, invite links, call checks per phone; reports: week 3))
 
 **Used for:** limiting login (10 per 15 min per IP), registration (5 per hour per IP) and pairing-code guesses (5 per 15 min per IP + 100 per 15 min for everybody), later public reports. TypeScript wrapper: `src/server/security/rateLimit.ts`.
 
@@ -567,7 +567,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we added third-party embeds; each one needs to be allowed in the CSP.
 
-### `redactPersonalData()` with regular expressions + the Luhn check (vs an NLP library)  (status: in use (`src/engine/redact.ts`); called by the checks API in week 2)
+### `redactPersonalData()` with regular expressions + the Luhn check (vs an NLP library)  (status: in use (`src/engine/redact.ts`); called by the checks API since W2-02)
 
 **Used for:** removing phone numbers, emails, IBANs, card numbers, ЕГН and known names from free text before it's saved or sent to AI.
 
@@ -585,6 +585,114 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Any 10-digit number becomes `[ЕГН]` even if it isn't one: we prefer removing too much.
 
 **We would reconsider if:** never; we'd only extend the patterns.
+
+### Server-side verdict: the phone sends only answers  (status: in use (`checkService.submitAnswers()`, W2-02))
+
+**Used for:** `PUT /api/checks/:id/answers` takes the older person's answers and text; the server runs `analyseCall()` and stores the verdict with the service role (HOW_IT_WORKS 3.23).
+
+**Alternatives we considered:** the phone computes the verdict and sends it (it has the same engine for the offline fallback); a database trigger that computes the verdict on insert.
+
+**Why this one:**
+- **The phone could lie.** A modified phone, or a scammer talking grandma through the browser's tools, could send "green". The family must see a verdict nobody outside our server could change. Zod drops any `riskLevel`/`score` key, and the database has no browser write right on `checks` at all.
+- **A database trigger can't run our engine:** the engine is TypeScript (fuzzy matching, transliteration, hard rules as data). Rewriting it in PL/pgSQL would give two engines to keep identical, and it must also run on the phone offline.
+- The engine is a deterministic pure function, so the server's verdict and the phone's offline fallback are the same for the same input.
+
+**What we give up:**
+- One more round trip before grandma sees the verdict online (the offline fallback covers no network).
+- The server is a single place that must be up; Vercel + keep-alive cover that.
+
+**We would reconsider if:** never for the stored verdict.
+
+### Redact personal data before storing the call text  (status: in use (`checkService.submitAnswers()`, W2-02))
+
+**Used for:** the engine reads the original words in memory; only `redactPersonalData(text, knownNames)` (known names = the person + their contacts), cut to 2000 characters, reaches `checks.text_redacted`.
+
+**Alternatives we considered:** storing the original and redacting when showing it; storing no text at all; redacting on the phone before sending.
+
+**Why this one:**
+- **GDPR data minimisation:** what is never stored can't leak, be exported by mistake or be sent to an AI later (Week 3).
+- Redacting only when showing would keep the raw data in the database and in every backup.
+- No text at all would lose the evidence the family (and the moderators' statistics) need.
+- The engine still sees the full words, so the verdict is not weakened; redacting on the phone would let a modified phone skip it.
+- The cut to 2000 is needed because a label can be longer than the name it replaces.
+
+**What we give up:**
+- The caller's exact phone number or IBAN is gone (useful for a police report; the family can still ask grandma).
+- Names we don't know (a neighbour not in the list) stay in the text.
+
+**We would reconsider if:** never; we would only extend what counts as personal data.
+
+### Realtime token endpoint (vs readable session cookies)  (status: in use (`GET /api/realtime/token`, W2-03))
+
+**Used for:** giving the browser the user's short-lived access token so Supabase Realtime (which runs in the browser) can apply RLS to this user (HOW_IT_WORKS 3.25).
+
+**Alternatives we considered:** `@supabase/ssr`'s default cookies, which page JavaScript can read; no Realtime, only polling; a separate Realtime-only token signed by us.
+
+**Why this one:**
+- **Only the access token reaches the page, for about 1 hour.** The refresh token, which keeps a session alive for weeks, stays in the HttpOnly cookie. With readable cookies an XSS bug could steal both.
+- The endpoint checks the caller with the Auth server (`getUser()`), requires the cookie session to belong to the same account, answers `no-store`, and refuses a request another site started even though it is a GET.
+- Only polling would mean a 5 s delay every time and more load; the demo needs the alert in under 3 s.
+- Signing our own tokens would need the project's JWT secret on our server and more code to defend.
+
+**What we give up:**
+- During that hour an XSS bug could read the access token and call Supabase as the user (still limited by RLS). The CSP (W4-01) is the next layer.
+- One more request when a live page opens and about once an hour after.
+
+**We would reconsider if:** Supabase Realtime could authenticate from HttpOnly cookies directly.
+
+### Contact list through one SQL function, `SECURITY INVOKER`  (status: in use (`replace_trusted_contacts()`, migration `20261104000002`; not yet applied in the live project))
+
+**Used for:** `PUT /api/persons/:id/contacts` saves the whole ordered list (rename, phones, swap places, add, remove) in one call and one transaction (HOW_IT_WORKS 3.27, 5.14).
+
+**Alternatives we considered:** several REST calls in a "safe" order (delete, update one by one, insert); an upsert by `id`; giving browsers more column rights; the same function as `SECURITY DEFINER`; doing it with the service role.
+
+**Why this one:**
+- **All or nothing:** one transaction, so a failure never leaves half a list.
+- **Swaps work even with all 5 places full:** the "one contact per place" rule is DEFERRABLE and checked at the end of a statement, and the function moves every row in **one** UPDATE. One-by-one updates clash in the middle (two contacts on place 1), and there is no free place to park one.
+- **An upsert** would need INSERT rights on the `id` column; **more column rights** would weaken the rule that browsers can never set `user_id`.
+- **`SECURITY INVOKER`:** RLS (owner only) and the column privileges still apply inside the function, so `user_id` can't be set or changed through it. `SECURITY DEFINER` (or the service role) would bypass RLS and make our own checks the only guard.
+- The function also checks the owner, keeps the owner's row and refuses foreign ids itself, so even a direct call from a browser can't break the list. 20 pgTAP tests.
+
+**What we give up:**
+- A migration and some PL/pgSQL to explain, instead of only TypeScript.
+- The function had to be added to `src/types/database.ts` by hand (in the generator's format) until the types are generated again.
+- It must be run in the live project's SQL Editor before the endpoint works there.
+
+**We would reconsider if:** PostgREST let one request update different rows with different values.
+
+### Invite tokens: 256 random bits, HMAC with `PAIRING_PEPPER`, 7 days, single use  (status: in use (`inviteService.ts`, W2-08))
+
+**Used for:** the link `/pokana?t=<token>` that lets another relative join a person's contact list with their own account (HOW_IT_WORKS 3.28).
+
+**Alternatives we considered:** a 6-digit code like pairing; storing the token in plain text; a reusable link; a shorter lifetime; a new environment variable for the pepper.
+
+**Why this one:**
+- **The link travels through Viber, SMS or e-mail and may be opened days later**, so it must live longer than a 10-minute code. That is only safe if it can't be guessed: 32 random bytes (43 URL-safe characters) make guessing hopeless even without the rate limit (which we still have: 10 per 15 min per IP).
+- **Only the HMAC is stored**, as with pairing codes: a leaked database doesn't contain working links.
+- **Single use through one atomic UPDATE**, and the same 400 for wrong, expired and used, so nothing is revealed.
+- `PAIRING_PEPPER` is already the secret for "codes that let someone join a protected person"; no new variable to set in Vercel.
+
+**What we give up:**
+- The token is in the URL, so it can land in the browser history or a `Referer` header. The page (W2-07, Roberta) must POST it at once and set `Referrer-Policy: no-referrer`.
+- Whoever gets the link first (e.g. a forwarded message) joins; the owner sees the new contact in the list and can remove them.
+
+**We would reconsider if:** relatives had to join without an account (then a different flow).
+
+### Refusals don't burn invites (check first, then use up; give back on failure)  (status: in use (`redeemInvite()`, W2-08))
+
+**Used for:** redeeming an invite checks "own invite", "already in the list" and "a free place" **before** the atomic UPDATE that uses it up; if adding the contact then fails, `releaseInvite()` makes the link work again.
+
+**Alternatives we considered:** use the invite up first and then check (the pattern pairing uses).
+
+**Why this one:**
+- **A mistake shouldn't cost a new link:** the owner tapping their own link, or a relative who is already listed, gets a clear 409 and the invite still works for the right person.
+- A race (two people at once, or a place taken at the same moment) is still safe: only one UPDATE can use the invite, and the unique rules on `trusted_contacts` refuse a double place or account.
+- Giving back only works if the invite still carries **our** `used_at` time, so we never re-open an invite someone else used.
+
+**What we give up:**
+- A few more steps than "use up, then check", and two more tests to explain.
+
+**We would reconsider if:** never; pairing doesn't need it because a refused code there is simply asked for again in a minute.
 
 ---
 
@@ -734,7 +842,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 5. Notifications
 
-### Supabase Realtime live alert page as the primary channel  (status: in use (publication on `checks`, `alerts`); page: week 2)
+### Supabase Realtime live alert page as the primary channel  (status: in use (publication on `checks`, `alerts`; token endpoint and `src/lib/realtime.ts` since W2-03); pages: Roberta, week 2)
 
 **Used for:** the family member's alert page updates within seconds when grandma presses the button, and grandma's screen shows „Иван ще ви се обади веднага“ when Ivan acknowledges.
 
@@ -750,6 +858,58 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Only works while the page is open; if the family member's phone is locked with the page closed, they need push or email.
 
 **We would reconsider if:** Realtime's free-tier connection limits became a problem (check current limits).
+
+### `AlertChannel` interface, one `alerts` row per (contact, channel)  (status: in use (`alertService.ts`, realtime channel only; push W2-05, e-mail W2-06))
+
+**Used for:** the fan-out when the button is pressed: every trusted contact with an account, on every channel, written as one row each in one INSERT (HOW_IT_WORKS 3.24).
+
+**Alternatives we considered:** one function per channel called directly from the check service; a single row per contact with the channels as columns; a job queue.
+
+**Why this one:**
+- **Adding push or e-mail = adding one object to a list** (`{ name, send() }`, like a Python `Protocol`); `fanOut()` doesn't change. It is the same idea as `EmailProvider` (D5, ADR 0005).
+- **One failed channel never stops the others:** that row becomes `failed` with the reason, and the rest are delivered and recorded.
+- One row per (contact, channel) matches the `alerts` table and is the evidence of who was told how.
+- The realtime channel's `send()` does nothing: the row itself is what Realtime delivers, so nothing is sent twice.
+- A queue would be one more service (cost, D11) for a handful of messages.
+
+**What we give up:**
+- Sending happens inside the request; with push and e-mail added, a slow provider makes the phone's answer slower (errors never block it).
+- On the verdict, channels are called again without new rows, so the table records only the first alert.
+
+**We would reconsider if:** sending started to take seconds; then a background job (e.g. `pg_cron` or a queue).
+
+### Realtime as a doorbell + 5 s polling fallback  (status: in use (`src/lib/realtime.ts`, W2-03))
+
+**Used for:** a Realtime event only tells the page "something changed"; the page then re-reads from our API. Until the channel is `SUBSCRIBED` (or after it drops) the page polls our API every 5 seconds (HOW_IT_WORKS 3.25).
+
+**Alternatives we considered:** using the Realtime payload (the raw row) directly; polling only; Realtime only.
+
+**Why this one:**
+- **One shape for the page:** our API turns rows into `CheckDto` with Bulgarian reasons from `bg.ts`, names and the acknowledgement message; a raw row has codes and account ids.
+- **Polling covers networks that block WebSockets** (some workplaces, mobile networks), so the alert always arrives, just a few seconds later (D7).
+- Realtime alone would silently show nothing when it fails; polling alone would be slower and cost more requests.
+
+**What we give up:**
+- Every event costs one extra API request.
+- Two mechanisms to explain and test (`realtime.test.ts`, with fake timers).
+
+**We would reconsider if:** never for the alert page; the fallback is what makes D7 reliable.
+
+### Own Realtime client with an `accessToken` function (vs `setAuth` on the browser client)  (status: in use (`src/lib/realtime.ts`, W2-03))
+
+**Used for:** the page's Realtime connection gets the user's token from `GET /api/realtime/token` through a function supabase-js calls on every heartbeat; it is refreshed 60 s before it expires.
+
+**Alternatives we considered:** `client.realtime.setAuth(token)` on the normal browser client (the Session E plan).
+
+**Why this one:**
+- **`setAuth` alone fails:** supabase-js asks the client for a token on every heartbeat, and a browser client without a session (our cookies are HttpOnly) answers with the publishable key, replacing our token. RLS then sees a guest and delivers nothing.
+- With `accessToken`, supabase-js always asks **our** function, which also renews the token before it expires, so a page open for hours keeps working.
+- This client only listens; all reads and writes still go through our API.
+
+**What we give up:**
+- A second Supabase client in the browser bundle (the same library, so little extra size).
+
+**We would reconsider if:** `@supabase/ssr`'s browser client could take an external token source.
 
 ### Web Push with VAPID  (status: decided, not built yet (week 2))
 
@@ -1073,7 +1233,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a tool we need only supported Jest.
 
-### Dependency-injected fakes in unit tests (vs `vi.mock`, vs a live Supabase)  (status: in use (`pairingService`, `authService`, `loadActor`, rate limiter))
+### Dependency-injected fakes in unit tests (vs `vi.mock`, vs a live Supabase)  (status: in use (`pairingService`, `authService`, `loadActor`, rate limiter, and the Week 2 check, alert, person, contact and invite services))
 
 **Used for:** testing the services without Supabase. Each service gets its tools as parameters (`PairingDeps`, `AuthGateway`, `ActorReader`, `HitCounter`); tests pass small in-memory fakes, e.g. arrays that behave like our tables and what RLS would show each caller.
 
@@ -1109,7 +1269,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project.
 
-### pgTAP for database and RLS tests  (status: in use (8 test files))
+### pgTAP for database and RLS tests  (status: in use (9 test files, 171 assertions))
 
 **Used for:** proving in SQL that each role sees exactly the rows it should (`supabase/tests/*.test.sql`), including IDOR tests (family B can't see family A's data).
 
@@ -1680,3 +1840,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · documented the local-only tsx seed runner, scoped server-only alias, explicit empty-target setup and limits of offline verification.
 - 2026-11-04 · Session H (engine logic): new entries in section 7 (deterministic pure function, prefix stems vs a full stemmer, transliterate-then-fuzzy vs a Latin dictionary, weights table + max per category, hard rules as data objects); Damerau-Levenshtein entry explains OSA vs plain Levenshtein; redaction entry now compares regex + Luhn with an NLP library; statuses of the engine, dictionary/scenarios, Damerau-Levenshtein, transliteration, D9 wording and redaction moved to "in use"
 - 2026-11-04 · Session I (W1-13 code): new entry "Health check on a public table with the publishable key (vs the service-role key)"; keep-alive entry rewritten as GitHub Actions vs Vercel cron vs only an uptime monitor, now in use; Frankfurt entry explains `vercel.json` `regions` vs the deprecated `preferredRegion`; Vercel Hobby status updated (project pending)
+- 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new entries in section 3 (server-side verdict; redact before storing; Realtime token endpoint vs readable cookies; contact list through one SQL function, SECURITY INVOKER, vs REST calls / upsert / more column rights / SECURITY DEFINER; invite tokens 256 bits + HMAC + 7 days; refusals don't burn invites) and section 5 (`AlertChannel` interface; Realtime as a doorbell + 5 s polling fallback; own Realtime client with `accessToken` vs `setAuth`); statuses updated for REST API, Supabase Realtime, server-only writes, HMAC, rate limiting, redaction, DI fakes, pgTAP

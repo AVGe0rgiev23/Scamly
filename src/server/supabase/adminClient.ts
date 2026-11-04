@@ -10,14 +10,18 @@
 //      (also pairingService.createCode(): pairing_codes has no browser access at all)
 //   2. pairingService.revokeDevice() (deviceService.revoke() in BUILD_PLAN):
 //      delete the device's auth user
+//      (also personService.deletePerson(): signs out every phone of a deleted person)
 //   3. checkService.start() / submitAnswers(): store the server-computed verdict (Week 2)
 //   4. alertService.fanOut(): alert rows for other users, push and e-mail (Week 2)
 //   4b. checkService.acknowledge(): write acknowledged_by on the check (Week 2)
 //   5. reportService.submit(): anonymous guest reports (Week 3)
 //   6. adminService.changeRole() and writing the audit_log
 //   7. the rate limiter (src/server/security/rateLimit.ts): hit_rate_limit()
-// (BUILD_PLAN 2.4 also listed 8. GET /api/health. It does NOT need this client: it
-// reads the public districts table with the publishable key; see HOW_IT_WORKS 3.22.)
+//   (BUILD_PLAN 2.4 also listed 8. GET /api/health. It does NOT need this client: it
+//   reads the public districts table with the publishable key; see HOW_IT_WORKS 3.22.)
+//   9. inviteService (W2-08): store an invite (browsers have no INSERT right on
+//      contact_invites) and redeem it: read the invite and the person's list, use the
+//      invite up, add/link the contact with user_id (only the server may set it)
 // Anything else must use the user client (userClient.ts).
 
 import "server-only";

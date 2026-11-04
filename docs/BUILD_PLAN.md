@@ -339,14 +339,15 @@ Helper functions (`SECURITY DEFINER`, `STABLE`, `search_path = ''`, so policies 
 
 **The service role (bypasses RLS) is used only in these server functions**, each covered by tests:
 1. `pairingService.redeem()`: creates the device's auth user and binds it.
-2. `deviceService.revoke()`: deletes the device's auth user, which kills its refresh token.
-3. `checkService.start()` / `checkService.submitAnswers()`: writes the check and its server-computed verdict. A phone must not be able to send its own verdict.
-4. `alertService.fanOut()`: creates alert rows for *other* users and sends push/email.
-4b. `checkService.acknowledge()`: the family member's „Обаждам ѝ се сега“ writes `acknowledged_by` on the check (no client UPDATE policy on `checks`).
+2. `deviceService.revoke()` (in the code: `pairingService.revokeDevice()`): deletes the device's auth user, which kills its refresh token. Also `personService.deletePerson()`: deletes the auth user of every phone of a person being deleted, before the cascade removes the `devices` rows (and writes `device_revoked` / `person_deleted` audit lines).
+3. `checkService.startCheck()` / `checkService.submitAnswers()`: writes the check (`insertCheck`) and its server-computed verdict (`saveCheckAnswers`, one `UPDATE … WHERE status = 'started'`). A phone must not be able to send its own verdict.
+4. `alertService.fanOut()` / `notifyVerdict()`: reads the check, the person and the contacts and creates alert rows for *other* users (one INSERT); push/email will plug in as `AlertChannel`s (W2-05, W2-06).
+4b. `checkService.acknowledge()`: the family member's „Обаждам ѝ се сега“ writes `acknowledged_by` on the check (one `UPDATE … WHERE acknowledged_by IS NULL`; no client UPDATE policy on `checks`) and the `check_acknowledged` audit line.
 5. `reportService.submit()`: guest reports. Guests have no `INSERT` policy, so a bot can't skip our rate limiter by calling the database directly.
 6. `adminService.changeRole()` and `audit.log()`.
 7. `rateLimiter.hit()`.
 8. `GET /api/health` (keep-alive).
+9. `inviteService.createInvite()` / `redeemInvite()`: stores an invite (browsers have no INSERT right on `contact_invites`); on redeem reads the invite, the person and the contact list, uses the invite up (one atomic UPDATE, given back if adding fails) and adds or links the contact **with `user_id`**, which only the server may set. The owner check before creating uses the user client.
 
 Every one of these first checks permission in code. Where the caller is logged in, it also loads the target with the **user-scoped** client, so RLS proves the caller may see it. That gives us two locks.
 

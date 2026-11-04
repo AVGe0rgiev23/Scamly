@@ -61,3 +61,29 @@ export async function insertDevice(
   }
   return data.id;
 }
+
+// The phones of one person, as the family sees them on the person's page.
+export type PersonDeviceRow = {
+  id: string;
+  user_id: string;
+  label: string | null;
+  paired_at: string;
+  revoked_at: string | null;
+};
+
+// Every phone paired to `personId`, oldest first (user client: RLS shows them only
+// to family members with access to the person).
+export async function listDevicesForPerson(
+  client: DbClient,
+  personId: string,
+): Promise<PersonDeviceRow[]> {
+  const { data, error } = await client
+    .from("devices")
+    .select("id, user_id, label, paired_at, revoked_at")
+    .eq("protected_person_id", personId)
+    .order("paired_at", { ascending: true });
+  if (error) {
+    throw new Error(`listDevicesForPerson failed: ${error.message}`);
+  }
+  return data;
+}

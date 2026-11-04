@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/server/http/errors";
-import { assertSameOrigin, isSameOrigin } from "@/server/security/origin";
+import { assertSameOrigin, assertSameOriginRead, isSameOrigin } from "@/server/security/origin";
 
 // A fake request to our API on host scamly.example.
 function request(method: string, headers: Record<string, string>): Request {
@@ -52,5 +52,23 @@ describe("assertSameOrigin", () => {
     } catch (error) {
       expect(error).toMatchObject({ status: 403, code: "bad_origin" });
     }
+  });
+});
+
+describe("assertSameOriginRead (GET routes that hand out a secret)", () => {
+  it("allows a GET from our own page and a GET without browser headers", () => {
+    expect(() =>
+      assertSameOriginRead(request("GET", { "sec-fetch-site": "same-origin" })),
+    ).not.toThrow();
+    expect(() => assertSameOriginRead(request("GET", {}))).not.toThrow();
+  });
+
+  it("blocks a GET that another site started, although GET is otherwise never checked", () => {
+    const crossSite = request("GET", { "sec-fetch-site": "cross-site" });
+    expect(isSameOrigin(crossSite)).toBe(true);
+    expect(() => assertSameOriginRead(crossSite)).toThrow(ApiError);
+    expect(() => assertSameOriginRead(request("GET", { origin: "https://evil.example" }))).toThrow(
+      ApiError,
+    );
   });
 });

@@ -6,9 +6,9 @@
 // the tokens. Rule 1 of BUILD_PLAN section 0: the browser never writes to the
 // database; every write goes through our API.
 //
-// What it is for: Realtime subscriptions (live alerts, Week 2). For those, the page
-// will ask our API for a short-lived access token and pass it to
-// client.realtime.setAuth(token).
+// Not used for Realtime: src/lib/realtime.ts makes its own client with an
+// `accessToken` function (it gets the token from GET /api/realtime/token), because
+// this client would hand Realtime the publishable key on every heartbeat instead.
 
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";

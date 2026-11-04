@@ -58,3 +58,39 @@ export async function insertPerson(
   }
   return data;
 }
+
+// Renames a person and/or changes the district (user client: the RLS UPDATE policy
+// lets only the owner do it, and the column privilege allows only these two
+// columns). Returns the updated row, or null when nothing was changed (not the
+// owner, or no such person).
+export async function updatePerson(
+  client: DbClient,
+  personId: string,
+  changes: { displayName?: string; districtCode?: string },
+): Promise<PersonRow | null> {
+  const { data, error } = await client
+    .from("protected_persons")
+    .update({ display_name: changes.displayName, district_code: changes.districtCode })
+    .eq("id", personId)
+    .select(PERSON_COLUMNS)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`updatePerson failed: ${error.message}`);
+  }
+  return data;
+}
+
+// Deletes a person (user client: only the owner, RLS). The database deletes all
+// their data with it (on delete cascade): contacts, invites, pairing codes, devices,
+// checks and alerts. Returns false when nothing was deleted.
+export async function deletePerson(client: DbClient, personId: string): Promise<boolean> {
+  const { data, error } = await client
+    .from("protected_persons")
+    .delete()
+    .eq("id", personId)
+    .select("id");
+  if (error) {
+    throw new Error(`deletePerson failed: ${error.message}`);
+  }
+  return data.length > 0;
+}

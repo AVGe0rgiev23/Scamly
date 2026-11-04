@@ -25,7 +25,12 @@ export function isSameOrigin(request: Request): boolean {
   if (SAFE_METHODS.includes(request.method.toUpperCase())) {
     return true;
   }
+  return comesFromOurSite(request);
+}
 
+// Rules 1–3 above, for any method. Used directly by the few GET routes whose answer
+// is itself a secret (GET /api/realtime/token), so another site can't even try.
+export function comesFromOurSite(request: Request): boolean {
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite !== null) {
     return fetchSite === "same-origin" || fetchSite === "none";
@@ -48,6 +53,13 @@ export function isSameOrigin(request: Request): boolean {
 // Throws 403 when the request comes from another site. Step 0 of every non-GET route.
 export function assertSameOrigin(request: Request): void {
   if (!isSameOrigin(request)) {
+    throw new ApiError(403, "bad_origin", bg.errors.badOrigin);
+  }
+}
+
+// Same check for a GET whose answer is a secret (the Realtime access token).
+export function assertSameOriginRead(request: Request): void {
+  if (!comesFromOurSite(request)) {
     throw new ApiError(403, "bad_origin", bg.errors.badOrigin);
   }
 }

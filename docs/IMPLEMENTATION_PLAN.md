@@ -140,11 +140,28 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | 🔄 code ready; Vercel project + HEALTH_URL secret pending (Alex) |
 | W1-14 | `docs/learning/week-1.md` | Alex + Roberta | 🔄 note written; human check-in and remaining Week 1 review pending |
 
-### Weeks 2–5
+### Week 2 (9–15 Nov): call check + family alert
+
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| W2-01 | Protected UI: big button, wizard, result, `tel:` button | Roberta | ⬜ |
+| W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend (UI: Roberta) · offline fallback is part of W2-01 |
+| W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (live alert page UI: Roberta) | ✅ backend (UI: Roberta) · `GET /api/realtime/token`, `src/lib/realtime.ts` ready for the pages |
+| W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (button UI: Roberta) | ✅ backend (UI: Roberta) · round trip in e2e W2-11 |
+| W2-05 | Web push | Alex (opt-in UI + iOS hint: Roberta) | ⬜ |
+| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ⬜ |
+| W2-07 | Family dashboard UI | Roberta | ⬜ |
+| W2-08 | Contacts + invite API | Alex | ✅ backend (UI: Roberta) · migration applied 4 Nov; live smoke test 44/44 |
+| W2-09 | PWA | Roberta | ⬜ |
+| W2-10 | ✂ Voice input | Roberta | ⬜ |
+| W2-11 | E2E: button → alert → acknowledge → message | Alex + Roberta | ⬜ |
+| W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
+| W2-13 | Site layout + home page (D22) | Roberta | ⬜ |
+
+### Weeks 3–5
 
 | ID range | Theme | Status |
 |---|---|---|
-| W2-01 … W2-13 | Call check, family alert, push, email, family dashboard, site layout (W2-13) | ⬜ |
 | W3-01 … W3-11 | Reports, map, moderation, education, admin, AI ✂, escalation ✂ | ⬜ |
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |

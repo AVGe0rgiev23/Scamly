@@ -668,6 +668,10 @@ export type Database = {
       is_device_of: { Args: { pid: string }; Returns: boolean };
       is_moderator: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner_of: { Args: { pid: string }; Returns: boolean };
+      replace_trusted_contacts: {
+        Args: { p_contacts: Json; p_person_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       alert_channel: "realtime" | "push" | "email";
