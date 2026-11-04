@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-03**
+Last updated: **2026-11-04**
 
 **Contents**
 
@@ -31,13 +31,13 @@ Scamly is a web app. An older person's phone shows one big button; when a suspic
 
 The system has **layers**, and each layer only talks to the one below it: the **UI** (pages in the browser) calls our **REST API** (Next.js route handlers), which calls **services** (business logic, including the detection engine), which call **repositories** (all database queries), which talk to **PostgreSQL** on Supabase. PostgreSQL itself enforces **Row Level Security (RLS)**: even if our API had a bug, the database would still refuse to show family A the data of family B. Supabase also gives us **Auth** (logins, JWTs) and **Realtime** (live updates for the family's alert page).
 
-**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine logic and the Week 2 call-check/family screens are still planned.
+**Today (Week 1, 3 Nov)** the database is complete (all tables, triggers, RLS policies, 151 database tests), and the first slice through every layer works: sign-up, login, roles and device pairing go from designed auth pages through the API, services and repositories down to PostgreSQL (sections 3.8–3.17). The detection engine (Layer 1, section 3.21) works and is tested: `analyseCall()` turns answers + text into a red/yellow/green verdict with reasons, and `redactPersonalData()` removes personal data. The Week 2 call-check/family screens that use it are still planned.
 
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
   API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing · ⬜ rest (week 2-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing · ⬜ engine logic (week 1-3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, detection engine · ⬜ checks service (week 2)"]
   REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 6 files · ⬜ more (week 2-3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 151 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
@@ -74,7 +74,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 100 tests in 16 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 263 tests in 25 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 15 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) | ✅ | `.github/workflows/ci.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -98,9 +98,9 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · designed `/svarzhi`; live browser pairing check pending | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
 | Auth pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ designed auth pages; area contents remain temporary | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
-| Detection engine: types and constants (section 3.6) | ✅ (no logic yet) | `src/engine/types.ts` | `src/engine/types.test.ts` |
-| Engine dictionary and scenario data | ✅ data prepared; detection execution pending | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
-| Detection engine logic v1 + `redactPersonalData()` | ⬜ planned (week 1, W1-08 to W1-10) | `src/engine/` | |
+| Detection engine: types and constants (section 3.6) | ✅ | `src/engine/types.ts` | `src/engine/types.test.ts` |
+| Engine dictionary and scenario data | ✅ all 51 scenarios run and pass (section 3.21) | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
+| Detection engine logic v1 + `redactPersonalData()` (section 3.21) | ✅ (W1-08 to W1-10) | `src/engine/` (`index.ts` is the public API) | 170 engine tests incl. 51/51 scenarios; 100 % line coverage (`docs/evidence/engine-coverage-2026-11-04.md`) |
 | Seed script with demo accounts | 🔄 tooling ready; approved empty DB execution pending | `scripts/seed*.ts`, `scripts/tsconfig.seed.json` | Five offline tests and npm run seed preview; section 3.20 |
 | Deploy to Vercel, `/api/health`, keep-alive | ⬜ planned (W1-13, Mon 9 Nov, D20) | | |
 | Call check UI (big button, questions, result) | ⬜ planned (week 2, W2-01) | `src/app/protected/` | |
@@ -300,7 +300,7 @@ export function getServerEnv(env: Env = process.env): ServerEnv {
 
 ### 3.6 Detection engine: types (`src/engine/types.ts`)
 
-The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is **Planned (week 1, W1-08 to W1-10)**, see [`BUILD_PLAN.md`](./BUILD_PLAN.md) section 4. The dictionary and scenario data now use these shared shapes (section 3.18); the execution runner still awaits the engine logic.
+The rest of the engine (normalising, transliteration, fuzzy matching, signals, scoring, hard rules, verdict, `redactPersonalData`) is section 3.21. The dictionary and scenario data use these shared shapes (section 3.18).
 
 #### What it does
 
@@ -727,7 +727,7 @@ Data stays independent of scoring and database code, so Roberta can improve word
 
 #### How we know it works
 
-TypeScript checks the data against the shared engine types. `src/engine/data.test.ts` checks category coverage, phrase shape, contextual high-risk entries, scenario uniqueness and hard-rule expectation coverage. These are data-contract checks, **not executed verdict tests**. Alex's Session H runner, redaction tests and engine coverage evidence remain required before W1-10 is complete. No matcher is duplicated here just to make expected results pass.
+TypeScript checks the data against the shared engine types. `src/engine/data.test.ts` checks category coverage, phrase shape, contextual high-risk entries, scenario uniqueness and hard-rule expectation coverage. These are data-contract checks. Since Session H the scenarios are also **executed**: `src/engine/scenarios.test.ts` runs every one through `analyseCall()` and all 51 pass without changing a scenario (section 3.21).
 
 ---
 ### 3.19 Decision record and Week 1 study material
@@ -773,6 +773,59 @@ Default preview makes the action reviewable before any database changes. Matchin
 #### How we know it works
 
 Five offline tests cover flag parsing, target/password validation, failed preflight with no writes, fixture orchestration and role failure. The CLI preview and real adapter import smoke test pass without a database. `npm run check` passes with 100 executable tests. No live apply has run: the approved empty project and local environment settings are still needed. The live seed and every README demo login remain completion checks for W1-12.
+
+---
+
+### 3.21 Detection engine logic: `analyseCall()` and `redactPersonalData()` (Session H, W1-08 to W1-10)
+
+This is Scamly's main "algorithm" for the defense (brief 5.2 C, BUILD_PLAN 4). Types: section 3.6. Roberta's dictionary and scenarios: section 3.18.
+
+#### What it does
+
+`analyseCall(input)` (`src/engine/index.ts`) takes the answers to the questions and the caller's words (`CallInput`) and returns a `Verdict`: a score 0–100, red/yellow/green, the scam script it looks like, the hard rules that fired and a list of Bulgarian reasons that quote the caller's own words. `redactPersonalData(text, knownNames?)` (`redact.ts`) replaces phone numbers, e-mails, IBANs, card numbers, ЕГН and known names with labels like `[ТЕЛЕФОН]` before text is stored or sent to an AI. Both are **pure functions**: no database, no network, no clock, no randomness, no React/Next.js/Supabase. The only import from outside `src/engine/` is the strings file `@/i18n/bg`.
+
+| File | Job |
+|---|---|
+| `transliterate.ts` | шльокавица → Cyrillic, longest rule first (`sht`→щ before `sh`→ш), `y` → й next to a vowel, otherwise ъ |
+| `normalise.ts` | cap at 2000 chars, NFC, split into words, lower-case, `4`/`6` inside a word → ч/ш, Latin words → Cyrillic; each token keeps its **original** spelling |
+| `fuzzy.ts` | Damerau-Levenshtein distance, `matchesStem()` with the 4.4 tolerances, `findPhrase()` (stems in order within 6 tokens) |
+| `signals.ts` | answers + text → one `Signal` per category: the answer strength (`firm` = yes / a chosen option, `weak` = unsure) and the text evidence words |
+| `scoring.ts` | the one weights table (`WEIGHTS`, BUILD_PLAN 4.5); each category counts once as max(answer, text); sum capped at 100 |
+| `hardRules.ts` | HR1–HR6 as six small data objects: id, Bulgarian explanation, evidence categories, linked script, a one-line `fires()` condition |
+| `verdict.ts` | level (4.7 incl. the money floor), script type, reasons, headline and advice from `bg.verdict` |
+| `redact.ts` | regular expressions + the Luhn check, in a fixed order |
+
+#### How it works
+
+The four steps of `analyseCall`, with the worked example „politsiyata, dayte parite na kuriera“ (text only, nothing answered):
+
+1. **Normalise the text.** Split into words and clean them: `politsiyata`→`полицията`, `dayte`→`дайте` (y after a vowel = й), `parite`→`парите`, `na`→`на`, `kuriera`→`куриера`. Each token remembers the original word.
+2. **Detect signals.** Every dictionary stem is tried on every token, every phrase on the token list. A stem is a word *beginning*: `полиц` matches `полицията`. Stems of 5–8 letters allow 1 typo, ≥ 9 letters 2 typos (Damerau-Levenshtein, where a swap of two letters is one edit), compared with the token's beginning of the same length ±1. Short stems are stricter (see "Why"). Found: identity_police [politsiyata], money [parite], identity_courier [kuriera], handover (phrase `дайте … куриер`) [dayte, kuriera]. The dictionary stems go through the same normalisation, so Roberta's Latin stems (`politsiya`, `pari`) work too; a moderator's `extraKeywords` are added to their existing category the same way.
+3. **Score and hard rules.** Each category adds its weight once, the stronger of answer and text: police 25 + money 30 + courier 10 = **65**. Hard rules use only *firm* evidence (an answer "yes"/a chosen option, or a text match; "unsure" never fires a rule): HR1 (police + money) and HR2 (handover to a stranger) fire.
+4. **Build the verdict.** Level: a hard rule fired → **red** (else score ≥ 60 red, ≥ 30 yellow, "money: yes" at least yellow, else green with the D9 wording). Script type: police 25 + 20 (bonus for its linked rule HR1) = 45 beats courier 10 → **police**. Reasons: the two hard rules first, then money, police identity, courier identity (strongest first), each with the caller's words as `evidence`. Headline and advice: `bg.verdict.red` („ТОВА Е ИЗМАМА.“…), the same texts the `Verdict` component shows.
+
+`redactPersonalData` runs its patterns in an order that keeps look-alikes apart: e-mails → IBANs (BG shape, then any upper-case IBAN shape, spaces allowed) → `+359`/`00359` phones → card numbers (13–19 digits, kept only if the Luhn check passes) → Bulgarian mobiles `08x/09x` (spaces, dashes, dots) and landlines `02–07` (spaces, dashes) → any other 10 digits as ЕГН → known names, full name first, then each part, case-insensitive, whole words only. A mobile must start with three digits written together, which is how `08.11.2026` stays a date.
+
+#### Why it works like that
+
+- **Explainable and testable:** every point of the score comes from a named category in one table; every red without enough points comes from a named hard rule. No training data exists for Bulgarian scam calls, so a learned model is not an option (`WHY_WE_CHOSE.md` section 7).
+- **Max per category, not a sum:** repeating „пари, пари, пари“ or saying it *and* answering "yes" must not count money twice.
+- **Transliterate first, then fuzzy-match one Cyrillic dictionary:** one list of words to maintain; the remaining шльокавица ambiguity (`a` for ъ in `hvarlete`) is exactly one edit, which fuzzy matching absorbs.
+- **Short stems are stricter than the plan's "prefix with 0 edits"** (difference #18 in section 8): a stem of 3–4 letters must be the whole word or the word plus an article/plural ending (`пари`→`парите`, `евро`→`еврото`, `час`→`часа`); 1–2 letters (`не`, `до`) must be the whole word. Otherwise `нап` (НАП) matched „Напомняме“ in the doctor-reminder scenario, `евро` „европейски“ and `не` „нещо“. Roberta's dictionary was written for exactly this rule (its header: short stems match exactly, inflected forms are listed).
+- **Hard rules as data objects:** each rule reads like its row in the 4.6 table and can be tested on its own.
+- **Deterministic:** the server's verdict (the one the family sees) and the phone's offline fallback (4.9) are always the same for the same input.
+- **Redaction errs on the side of removing:** a removed 10-digit number that wasn't an ЕГН costs nothing; a leaked phone number is a privacy breach.
+
+#### How we know it works
+
+170 engine tests in 11 files, all green; engine line coverage 100 % (`docs/evidence/engine-coverage-2026-11-04.md`):
+- `scenarios.test.ts`: **all 51 of Roberta's scenarios** (every script from answers / text / both, every hard rule, legitimate calls that must not be red, шльокавица, typos, empty/long/mixed text, the score cap, moderator keywords). It checks each `expect` field as `types.ts` documents, plus the output shape (integer 0–100, reasons for red/yellow). **No scenario and no dictionary entry had to be changed.**
+- `verdict.test.ts`: every worked example of BUILD_PLAN 4.7, thresholds 60/30 at the edges, the money floor, script-type ties, reason order, D9 wording exact for green and no „безопасн…“ anywhere, determinism, input not modified.
+- `hardRules.test.ts`: each of HR1–HR6 fires from answers and/or text, and does not fire on "unsure", on half of its condition or on look-alike harmless sentences.
+- `fuzzy`, `transliterate`, `normalise`, `signals`, `scoring`: the building blocks one by one (`politsiya`→`полиция`, `хварлете` ≈ `хвърл`, swaps count as one edit, short stems never fuzzy, phrase window of 6, weights equal to 4.5).
+- `redact.test.ts`: every kind of personal data, several in one text, and no false positives on „100 лева“, dates, times and short numbers.
+
+**Known limits** (honest answers for the defense): stem matching does not understand negation in general (only through phrases like `не казвай … никого`). The 1-typo tolerance of 5–8 letter stems (BUILD_PLAN 4.4) also creates rare false matches such as „политиката“ ≈ `полиц`, „колегата“ ≈ `колет`, „песни“ ≈ `пенси`; they add points but are not covered by a scenario, so tuning them is a later decision for both of us. Phrases may cross sentence boundaries. Names are redacted only in the exact known form (not the vocative „Иване“).
 
 ---
 ## 4. Code quality, tests and CI
@@ -827,19 +880,19 @@ Tests small pieces of code (one function at a time) in milliseconds.
 
 - `vitest.config.mts`: tests run in plain Node.js (no browser), files are `src/**/*.test.ts(x)` and live **next to the code** they test. The `@` shortcut is set up the same way as in `tsconfig.json`.
 - A test looks like pytest with different words: `describe` groups tests, `it` is one test, `expect(a).toBe(b)` is `assert a == b`, `expect(() => f()).toThrow(/NAME/)` is `pytest.raises`.
-- Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no minimum percentage yet; the engine will have a ≥ 90 % goal (W1-10).
+- Coverage (`npm run test:coverage`) uses the V8 engine's built-in counters and writes `coverage/` (text, HTML and a JSON summary). There is no global minimum; the engine has a ≥ 90 % goal (W1-10) and reaches 100 % of lines (`docs/evidence/engine-coverage-2026-11-04.md`).
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
 - **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: 16 files, **100 tests**: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18; plus `engine/data` 3 and `scripts/seed` 5.
+Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18; plus `engine/data` 3 and `scripts/seed` 5; and from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7. Total: 25 files, **263 tests**.
 
 #### Why it works like that
 
-Unit tests are fast enough to run on every save, and the detection engine (planned) will be a pure function that is ideal for them. Tests next to the code are easy to find and keep up to date.
+Unit tests are fast enough to run on every save, and the detection engine is a pure function that is ideal for them. Tests next to the code are easy to find and keep up to date.
 
 #### How we know it works
 
-`npm test` → `Test Files 16 passed, Tests 100 passed` (3 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npm test` → `Test Files 25 passed, Tests 263 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -1550,6 +1603,10 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 15 | Integration tests "Vitest against local Supabase" in `tests/integration/` | Services get their tools as one deps object, and unit tests pass in-memory fakes (section 4.2). The real flow was checked once by a live smoke test (not in the repo); no `tests/integration/` yet |
 | 16 | BUILD_PLAN 2.4 calls the revoke function `deviceService.revoke()`; revoke deletes "the binding + the device's auth user" | `pairingService.revokeDevice()`; it deletes only the auth user and the database cascade removes the `devices` row |
 | 17 | `/api/me` and `/api/persons` belong to Week 2 | `GET /api/me` and `GET`/`POST /api/persons` already exist (minimal, needed for pairing); the rest of #3–#13 is W2-08 |
+| 18 | Engine 4.4: a stem matches the start of a token; stems ≤ 4 letters with 0 edits | Stems of 3–4 letters must be the whole word or the word + an article/plural ending (`-а, -я, -ът, -ят, -та, -то, -те, -и, -ите, -ове, -овете`); stems of 1–2 letters (`не`, `до`) must be the whole word. Stops `нап` ≈ „напомняме“, `евро` ≈ „европейски“, `не` ≈ „нещо“; matches the rule written in Roberta's dictionary (section 3.21) |
+| 19 | Engine 4.6, HR6: relative + money **`yes`** + (urgency or relative scenario) | Money may also come from the text (any *firm* evidence, the general rule under the 4.6 table). Needed by the scenario „Синът ви е в болница. Трябват пари.“ |
+| 20 | Engine 4.7: script type = identity + scenario + "the hard rule linked to it" (no number given) | A linked hard rule adds 20 points of script evidence (`HARD_RULE_SCRIPT_BONUS`): HR1 → police, HR5 → fake official, HR6 → relative in trouble; HR2, HR3, HR4 are not linked to one script |
+| 21 | Engine 4.2/4.7: `adviceBg` example is script-specific („Затворете телефона. Полицията никога не иска пари.“) | `headlineBg`/`adviceBg` are `bg.verdict[level]` (title, description), the same texts the `Verdict` component shows; script-specific explanations are in the hard-rule reasons. `combineVerdicts()` (4.10) comes with the AI layer in Week 3 |
 
 ---
 
@@ -1639,3 +1696,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-03 · Session F: designed auth/pairing/403 screens, accessible validation, request states, role redirects, QR-code prefill and logout handling; 30 browser runs pass with controlled API responses. Live demo-role verification remains pending.
 
 - 2026-11-03 · W1-12 seed tooling and five offline tests added with local-only tsx runner, empty-database preflight, real pairing-service reuse and synthetic fixtures; live seed/demo login verification remains pending.
+- 2026-11-04 · ADRs 0001–0004 added in `docs/decisions/` (technology stack, device pairing, e-mail provider, AI classifier chain); W1-03 done.
+- 2026-11-04 · Session H steps 2–10 (W1-08, W1-09, W1-10 engine logic): new section 3.21 (normalise, transliterate, fuzzy, signals, scoring, hard rules, verdict, `analyseCall`, `redactPersonalData`, worked example, known limits); 3.6, 3.18, 4.2, big picture and status table updated; plan differences #18–#21; 263 unit tests (170 engine, 51/51 scenarios), engine line coverage 100 %

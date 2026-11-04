@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-03
+> Last updated: 2026-11-04
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -25,11 +25,11 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library)
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · Web Push (VAPID) · Brevo behind `EmailProvider`
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
-7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · Damerau-Levenshtein · шльокавица transliteration · offline fallback · green never says "safe" · shared types + `as const` lists
+7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · keep-alive · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
@@ -567,19 +567,22 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we added third-party embeds; each one needs to be allowed in the CSP.
 
-### `redactPersonalData()` before storing or sending text  (status: decided, not built yet (week 1))
+### `redactPersonalData()` with regular expressions + the Luhn check (vs an NLP library)  (status: in use (`src/engine/redact.ts`); called by the checks API in week 2)
 
 **Used for:** removing phone numbers, emails, IBANs, card numbers, ЕГН and known names from free text before it's saved or sent to AI.
 
-**Alternatives we considered:** storing the raw text; asking users not to type personal data.
+**Alternatives we considered:** storing the raw text; asking users not to type personal data; a named-entity-recognition (NLP) library or an online PII-detection service.
 
 **Why this one:**
 - GDPR data minimisation: we don't need these details to detect a scam.
 - Free AI tiers may use inputs for training, so personal data must never reach them.
 - It's a pure, unit-tested function; each pattern has tests.
+- **Regular expressions + Luhn instead of an NLP library:** the data we must remove has a fixed *shape* (Bulgarian phone formats, IBAN, 13–19 digit cards with a check digit, 10-digit ЕГН), which a pattern finds exactly. NLP name-recognition libraries are large, mostly English, would have to run on the phone too, and still miss names; but we already *know* the names that matter (the protected person and their contacts), so we pass them in as `knownNames`. An online service would send the very data we want to protect to a third party.
+- The Luhn check stops us from marking any long number as a card; dates, amounts and short numbers stay readable (tested).
 
 **What we give up:**
-- Some useful detail is lost (e.g. the exact number a scammer gave), and patterns can miss unusual formats.
+- Some useful detail is lost (e.g. the exact number a scammer gave), and patterns can miss unusual formats (e.g. a phone number written in words, or a name we don't know).
+- Any 10-digit number becomes `[ЕГН]` even if it isn't one: we prefer removing too much.
 
 **We would reconsider if:** never; we'd only extend the patterns.
 
@@ -845,7 +848,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 7. Detection engine design
 
-### Pure TypeScript function with weights + hard rules + stem/fuzzy matching  (status: decided, not built yet (week 1))
+### Pure TypeScript function with weights + hard rules + stem/fuzzy matching  (status: in use (`src/engine/`, Session H))
 
 **Used for:** `analyseCall(input) → verdict`: the core "algorithm" of Scamly (BUILD_PLAN 4).
 
@@ -864,7 +867,91 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we collected enough real, labelled reports (e.g. from the public report form) to train and validate a model.
 
-### Typed dictionary and scenario data (status: data in use; verdict runner pending)
+### A deterministic pure function (no clock, no randomness, no I/O)  (status: in use (`analyseCall()`))
+
+**Used for:** `analyseCall(input) → Verdict` and `redactPersonalData(text, names)`.
+
+**Alternatives we considered:** an engine service that reads the weights and keywords from the database on every call; adding time-based rules ("calls at night are riskier") inside the engine.
+
+**Why this one:**
+- **Same input → same verdict, always.** The family sees the server's verdict, and the phone shows its own when the network is slow (BUILD_PLAN 4.9); both must agree.
+- **Easy to test:** a test is just "input → expected output", like testing a Python function with no side effects. That's why 170 engine tests run in under a second.
+- **Old verdicts stay explainable:** every check stores `engineVersion`, and the same version always gives the same answer.
+- Moderator keywords still reach the engine, but as a parameter (`extraKeywords`) that the service passes in, not as a hidden database read.
+
+**What we give up:**
+- Anything that needs the outside world (time of the call, the caller's number on a block list) must be added by the service as an input field, not looked up by the engine.
+
+**We would reconsider if:** never for the core; extra context would become new input fields.
+
+### Prefix stems ("light stemming") vs a full Bulgarian stemmer  (status: in use (`src/engine/fuzzy.ts`, `dictionary.ts`))
+
+**Used for:** matching word forms: the stem `хвърл` matches хвърлете, хвърли, хвърлям; `полиц` matches полицията, полицай.
+
+**Alternatives we considered:** a full Bulgarian stemmer (e.g. the BulStem rules or a Snowball-style stemmer), a morphological dictionary (all word forms), exact words only.
+
+**Why this one:**
+- **Explainable in one sentence:** "a stem is the beginning of a word". A full stemmer is hundreds of suffix rules we couldn't explain or test in four weeks.
+- Bulgarian articles and plurals are endings (-ът, -та, -то, -те, -ове), so a beginning covers them for free.
+- **Short stems are stricter** (our refinement of BUILD_PLAN 4.4): a 3–4 letter stem must be the whole word or the word + an article/plural ending, a 1–2 letter one the whole word. Otherwise `нап` (НАП) would match „напомняме“ and `не` would match „нещо“.
+- No extra library: the engine stays dependency-free and runs on the phone.
+
+**What we give up:**
+- Stems with a changing root (вода / води is fine, but e.g. „дай“ / „дадете“) need two entries; Roberta adds them as data.
+- A long-enough beginning can still hide inside an unrelated word; tests guard the important cases.
+
+**We would reconsider if:** the dictionary grew so much that writing stems by hand became the bottleneck.
+
+### Transliterate first, then fuzzy-match one Cyrillic dictionary (vs a separate Latin dictionary)  (status: in use (`normalise.ts`, `signals.ts`))
+
+**Used for:** finding `politsiyata`, `hvarlete parite` and mixed texts like „От полицията сме, dayte pari“ with the same Cyrillic stems.
+
+**Alternatives we considered:** a second dictionary with Latin spellings of every stem; matching Latin text directly with very loose fuzzy matching.
+
+**Why this one:**
+- **One dictionary to maintain.** A Latin copy would double Roberta's work and drift out of sync.
+- People write шльокавица in many ways (`sh`/`6`, `ch`/`4`, `ya`/`q`); transliteration rules handle the spelling, fuzzy matching then absorbs the one-letter leftovers (`a` for ъ: `хварлете` ≈ `хвърл`).
+- The dictionary's own Latin entries (`politsiya`, `pari`, `cvv`) go through the same normalisation, so they still work and don't need special code.
+
+**What we give up:**
+- A few spellings are ambiguous (`ia` → я turns `policia` into `полиця`); the dictionary lists such variants as data.
+
+**We would reconsider if:** tests on real reports showed many Latin texts that transliteration gets wrong.
+
+### One weights table + "each category counts once" (max of answer and text, vs summing every hit)  (status: in use (`src/engine/scoring.ts`))
+
+**Used for:** the score: `WEIGHTS` holds three numbers per category (firm answer, unsure answer, text); a category adds the larger of its answer and text weight; the total is capped at 100.
+
+**Alternatives we considered:** adding a weight for every matched word; adding answer and text weights together; weights spread over several files.
+
+**Why this one:**
+- **No double counting:** "money: yes" and „пари“ in the text are the same fact. Summing would turn one fact into 65 points, and a scammer who repeats „пари“ five times isn't five times more suspicious.
+- **Predictable thresholds:** the BUILD_PLAN 4.7 worked examples (60 = red, 45 = yellow) only hold with max-per-category; they are tests now.
+- **One table** is easy to show on a slide, to tune, and to test (a test compares it with BUILD_PLAN 4.5).
+
+**What we give up:**
+- More evidence of the same kind doesn't raise the score; combinations that matter are handled by hard rules instead.
+
+**We would reconsider if:** real reports showed that repeated evidence really predicts scams; then we'd add a small, capped bonus.
+
+### Hard rules as data objects (id + condition + explanation)  (status: in use (`src/engine/hardRules.ts`))
+
+**Used for:** HR1–HR6 (D10): each is `{ id, explanationBg, categories, script, fires(signals) }`, and `firedHardRules()` keeps those whose `fires` returns true.
+
+**Alternatives we considered:** a long `if … else if …` block inside the verdict code; very high weights instead of rules.
+
+**Why this one:**
+- **Reads like the table in BUILD_PLAN 4.6:** each condition is one line, e.g. `isFirm(s, "identity_police") && isFirm(s, "money")`.
+- **Each rule is tested on its own** (fires on answers and on text, never on "unsure"), as D10 requires.
+- The explanation, the evidence words and the linked script live next to the condition, so adding a rule touches one place.
+- High weights could still be outvoted by the thresholds; a rule always forces red.
+
+**What we give up:**
+- A function inside a data object is a new idea for Python readers (it's like a dict with a lambda); the file has comments for that.
+
+**We would reconsider if:** moderators needed to add rules without code; then rules would move to the database as data and the engine would interpret them.
+
+### Typed dictionary and scenario data (status: in use; all 51 scenarios run and pass)
 
 **Used for:** `DICTIONARY` in `src/engine/dictionary.ts` and `SCENARIOS` in `src/engine/__tests__/scenarios.ts`.
 
@@ -874,14 +961,14 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Shared `DictionaryEntry` and `EngineScenario` types catch spelling mistakes in category names before runtime, like checking a Python TypedDict.
 - Bulgarian stems cover inflections; explicit spelling variants document Latin ambiguity and frequent errors. Ordered phrases keep words such as courier or account from independently becoming high-risk evidence.
 - Legitimate calls and uncertain answers are recorded alongside scams so the final engine must demonstrate both detection and restraint.
-- Data-contract tests check coverage and consistency without claiming that the absent engine has analysed the scenarios.
+- Data-contract tests check coverage and consistency; since Session H, `scenarios.test.ts` also runs every scenario through the real engine (51/51 pass).
 
 **What we give up:**
 - Types and data checks cannot prove detection accuracy. Alex must connect the real runner and investigate failures with Roberta.
 - Stem matching does not understand negation or quotations in general; hard-rule context and false-positive cases need careful review rather than more generic keywords.
 
 **We would reconsider if:** real evaluated examples show that a stem is too broad or a phrase misses common wording; adjust the data together with regression scenarios.
-### Damerau-Levenshtein distance for typos  (status: decided, not built yet (week 1))
+### Damerau-Levenshtein distance for typos (vs plain Levenshtein)  (status: in use (`src/engine/fuzzy.ts`))
 
 **Used for:** matching words with typos to dictionary stems (`хварлете` ≈ `хвърл`).
 
@@ -889,7 +976,8 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why this one:**
 - Like Levenshtein, but **a swap of two neighbouring letters counts as one edit**, which is a very common typing mistake on small phone keyboards.
-- Easy to explain and to code ourselves (a dynamic-programming table, like in a Python algorithms class).
+- Easy to explain and to code ourselves (a dynamic-programming table, like in a Python algorithms class). We use the "optimal string alignment" version: plain Levenshtein + one extra case for a swapped pair, about 10 more lines. The full Damerau-Levenshtein needs an extra alphabet table and only differs for edits on already swapped letters, which never matters for 5–12 letter stems.
+- Plain Levenshtein would count `хврълете` vs `хвърлете` as 2 edits, so a 5–8 letter stem (1 edit allowed) would miss the most common phone typo.
 - The tolerance depends on word length (0 edits for short stems), which avoids false matches.
 - Soundex-style algorithms are designed for English names, not Bulgarian.
 
@@ -899,7 +987,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** tests showed too many false matches; then we'd tighten the tolerance.
 
-### Own transliteration for шльокавица (Latin-script Bulgarian)  (status: decided, not built yet (week 1))
+### Own transliteration for шльокавица (Latin-script Bulgarian)  (status: in use (`src/engine/transliterate.ts`))
 
 **Used for:** turning `politsiya`, `hvarlete parite ot terasata` and `ne ka6ete` into Cyrillic before matching.
 
@@ -930,7 +1018,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the engine needed secret data (it doesn't).
 
-### Green verdict never says "safe"  (status: decided (D9), not built yet (week 1))
+### Green verdict never says "safe"  (status: in use (D9; `verdict.ts` uses `bg.verdict.green`, tested word for word))
 
 **Used for:** the green result text: „Няма типични признаци на измама. Ако се съмнявате, затворете и се обадете сами на близкия си...“, plus a "money floor" (a request for money is never green).
 
@@ -1565,3 +1653,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-03 · documented the designed auth forms, shared Zod validation, accessible error handling, duplicate-request guard and explicit QR pairing action.
 
 - 2026-11-03 · documented the local-only tsx seed runner, scoped server-only alias, explicit empty-target setup and limits of offline verification.
+- 2026-11-04 · Session H (engine logic): new entries in section 7 (deterministic pure function, prefix stems vs a full stemmer, transliterate-then-fuzzy vs a Latin dictionary, weights table + max per category, hard rules as data objects); Damerau-Levenshtein entry explains OSA vs plain Levenshtein; redaction entry now compares regex + Luhn with an NLP library; statuses of the engine, dictionary/scenarios, Damerau-Levenshtein, transliteration, D9 wording and redaction moved to "in use"

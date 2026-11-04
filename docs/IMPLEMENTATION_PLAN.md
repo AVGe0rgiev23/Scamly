@@ -126,15 +126,15 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 |---|---|---|---|
 | W1-01 | Scaffold (Next.js, TS strict, Tailwind, lint, tests, licence, README) | Alex | ✅ |
 | W1-02 | GitHub Actions CI | Alex | ✅ |
-| W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | 🔄 Roberta: 0005 written; Alex: 0001–0004 pending |
+| W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | ✅ |
 | W1-04 | Supabase schema migration | Alex | ✅ |
 | W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
 | W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
 | W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
-| W1-08 | Engine part 1: types, normalise, transliterate, fuzzy | Alex | ⬜ |
-| W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ⬜ |
+| W1-08 | Engine part 1: types, normalise, transliterate, fuzzy | Alex | ✅ |
+| W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ✅ `analyseCall()`; all 4.7 worked examples pass |
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ✅ data prepared; matcher integration pending |
-| W1-10 | Engine tests ≥ 25 + `redactPersonalData()` | Roberta (test cases) + Alex (runner, redact) | 🔄 51 scenario cases prepared; runner, redaction and coverage pending |
+| W1-10 | Engine tests ≥ 25 + `redactPersonalData()` | Roberta (test cases) + Alex (runner, redact) | ✅ 170 engine tests (51/51 scenarios), `redactPersonalData()`, coverage 100 % lines (`docs/evidence/engine-coverage-2026-11-04.md`); Roberta: run the scenarios together (Session D step 5) |
 | W1-11 | Design system basics | Roberta | ✅ checks, production build and six browser runs pass |
 | W1-12 | Seed script | Roberta (D20) | 🔄 code + offline tests ready; approved empty DB apply and demo logins pending |
 | W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | ⬜ |
@@ -175,7 +175,7 @@ Week 1 hours left after D20: **Alex ≈ 28.5 h** (26.5 h until Sun 8 Nov + 2 h d
 
 | | Alex | Roberta |
 |---|---|---|
-| Done | ✅ Session A (scaffold + CI), ✅ Session C (database + RLS), ✅ Session H step 1 (engine types), ✅ Session E (auth + pairing backend) | |
+| Done | ✅ Session A (scaffold + CI), ✅ Session C (database + RLS), ✅ Session H step 1 (engine types), ✅ Session E (auth + pairing backend), ✅ Session H steps 2–10 (engine logic) | |
 | 1 | **Session H step 1 first** (engine types, about 30 min), push it right away so Roberta is not blocked | **Session B**: design system. No dependency, start now |
 | 2 | **Session E**: auth + pairing backend | **Session D**: engine dictionary + test cases (needs H step 1 on `main`) |
 | 3 | **Session H** steps 2–10: rest of the engine logic | **Session F**: login, register and `/svarzhi` pages (needs Session E's API on `main`) |
@@ -224,9 +224,9 @@ The pages themselves (login, register, `/svarzhi`) are Roberta's Session F. Alex
 | 7 | Revoke device + integration tests (valid, wrong, expired, reused, 6th try → 429, revoked → 401) | `Add device revocation and pairing tests` |
 | ✔ | `npm run check` + `npm run test:db` green → tell Roberta the API is ready → **"push?"** | |
 
-### Session H (Alex): W1-08 + W1-09 + W1-10 engine logic, about 12 h, over 2 sessions
+### ✅ Session H (Alex): W1-08 + W1-09 + W1-10 engine logic, done 4 Nov
 
-Step 1 comes **before Session E**: it's short and it unblocks Roberta's Session D.
+Step 1 comes **before Session E**: it's short and it unblocks Roberta's Session D. Steps 2–10 done 4 Nov: all 51 of Roberta's scenarios pass, 170 engine tests, 100 % line coverage. What was built: `docs/HOW_IT_WORKS.md` section 3.21; differences from BUILD_PLAN 4: section 8 there (#18–#21).
 
 | Step | What the agent does | Commit (in Alex's name) |
 |---|---|---|
