@@ -47,6 +47,57 @@ export const bg = {
         "Ако се съмнявате, затворете и се обадете сами на близкия си на номера, който знаете.",
     },
   },
+  // Texts of the detection engine (src/engine). The headline and advice of a verdict
+  // are bg.verdict above (one place for the D9 green wording).
+  engine: {
+    // Hard rules (D10, BUILD_PLAN 4.6): a short name and the explanation shown to the person.
+    hardRules: {
+      HR1_POLICE_ASKS_MONEY: {
+        name: "Полиция иска пари",
+        explanation: "Полицията никога не иска пари или ценности по телефона.",
+      },
+      HR2_HANDOVER_TO_STRANGER: {
+        name: "Предаване на непознат",
+        explanation: "Никой честен човек не иска да хвърляте пари или да ги давате на непознат.",
+      },
+      HR3_SECRECY_AND_MONEY: {
+        name: "Тайна и пари",
+        explanation: "Когато някой иска пари и ви казва да не казвате на никого, това е измама.",
+      },
+      HR4_ASKS_FOR_CODES: {
+        name: "Искат кодове",
+        explanation: "Банката никога не иска ПИН, пароли или кодове по телефона.",
+      },
+      HR5_SAFE_ACCOUNT: {
+        name: "Сигурна сметка",
+        explanation: "Няма „сигурна сметка“. Това е класическа измама.",
+      },
+      HR6_RELATIVE_IN_TROUBLE: {
+        name: "Роднина в беда",
+        explanation: "Затворете и се обадете сами на роднината на номера, който знаете.",
+      },
+    },
+    // One reason per signal category (BUILD_PLAN 4.5), shown under the verdict.
+    reasons: {
+      identity_police: "Обаждащият се казва, че е от полицията.",
+      identity_official: "Обаждащият се казва, че е от банка или от държавна институция.",
+      identity_relative: "Обаждащият се казва, че е ваш близък.",
+      identity_courier: "Обаждащият се казва, че е куриер.",
+      identity_other: "Не е ясно кой всъщност се обажда.",
+      money: "Искат пари или ценности.",
+      urgency: "Карат ви да бързате.",
+      secrecy: "Искат да пазите разговора в тайна.",
+      scenario_police: "Разказват за полицейска акция или за фалшиви банкноти.",
+      scenario_relative: "Разказват, че ваш близък е в беда: катастрофа, болница или арест.",
+      scenario_official: "Говорят за надвзета сума, компенсация или неплатена сметка.",
+      scenario_courier: "Искат доплащане, мито или такса за доставка.",
+      bank_transfer: "Искат да преведете пари по банков път.",
+      handover: "Искат да хвърлите парите или да ги дадете на непознат.",
+      credentials: "Искат ПИН, парола или код.",
+      safe_account: "Говорят за „сигурна сметка“.",
+      move_money: "Искат да прехвърлите парите си.",
+    },
+  },
   ui: {
     title: "Компоненти и цветове",
     description: "Преглед на бутоните, въпросите и резултатите в двата изгледа.",
