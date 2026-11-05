@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-04**
+Last updated: **2026-11-05**
 
 **Contents**
 
@@ -71,13 +71,14 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Part | Status | Where in the code | Proven by |
 |---|---|---|---|
 | App skeleton (layout, home page, 404 page) | ✅ | `src/app/layout.tsx`, `page.tsx`, `not-found.tsx`, `globals.css` | `tests/e2e/home.spec.ts`; CI jobs *checks* (build) and *e2e* |
+| Site layout: header, menu, compact theme switch, footer + real home page (3.31) | ✅ (W2-13, D22) | `src/components/layout/`, `src/components/ui/ThemeToggle.tsx`, `src/app/layout.tsx`, `src/app/page.tsx` | `tests/e2e/layout.spec.ts` (6 tests), `home.spec.ts`, `ui.spec.ts` |
 | App name constant | ✅ | `src/config/app.ts` | `src/i18n/bg.test.ts` |
 | Feature switches | ✅ (`push`, `email` used by the alert channels) | `src/config/features.ts` | `src/config/features.test.ts` |
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
 | Unit tests (Vitest) | ✅ 449 tests in 44 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 16 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 22 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -129,7 +130,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 
 #### What it does
 
-Shows a temporary Bulgarian home page at `/` (the name Scamly, the tagline „Обаждат ли ви се за пари? Проверете за 30 секунди.“ and a "coming soon" line) and a Bulgarian 404 page for any address that doesn't exist.
+Shows the Bulgarian home page at `/` (the tagline „Обаждат ли ви се за пари? Проверете за 30 секунди.“ as the main heading, the 3 steps and the start buttons; details in section 3.31) and a Bulgarian 404 page for any address that doesn't exist. Every page sits inside the shared frame of the root layout: header with logo, menu and theme switch, and footer (section 3.31).
 
 #### How it works
 
@@ -138,7 +139,7 @@ Next.js **App Router** turns folders and files in `src/app/` into web addresses 
 | File | Job |
 |---|---|
 | `src/app/page.tsx` | The page for `/`. Exports a function `HomePage()` that returns the page as JSX (HTML-like code). |
-| `src/app/layout.tsx` | The **root layout**: the `<html>` and `<body>` around *every* page. Sets `lang="bg"` and exports `metadata` (tab title and description). |
+| `src/app/layout.tsx` | The **root layout**: the `<html>` and `<body>` around *every* page, with the shared header and footer (section 3.31). Sets `lang="bg"` and exports `metadata` (tab title and description). |
 | `src/app/not-found.tsx` | The root not-found page. Next.js shows it, with HTTP status 404, for every URL that matches no page. |
 | `src/app/globals.css` | Global styles: loads Tailwind CSS and defines the design system's light/dark colour tokens, typography, focus styles and large controls. |
 
@@ -160,7 +161,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="bg" className="h-full antialiased">
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <SiteHeader />
+        <div id="content" className="site-content">{children}</div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }
@@ -181,7 +186,7 @@ Note: this is **Next.js 16.4**. Some names differ from older tutorials (see `AGE
 
 #### How we know it works
 
-- `tests/e2e/home.spec.ts` opens `/` in a real browser and checks: `<html lang="bg">`, the `<h1>` is the app name, the tagline is visible, and the tab title is `bg.app.metaTitle`. It runs on a desktop and on a phone screen (section 4.3).
+- `tests/e2e/home.spec.ts` opens `/` in a real browser and checks: `<html lang="bg">`, the `<h1>` is the tagline, the app name is in the header, and the tab title is `bg.app.metaTitle`. It runs on a desktop and on a phone screen (section 4.3).
 - `npm run build` in CI proves the app compiles and pre-renders.
 - The 404 page has no automated test yet. Check by hand: `npm run dev`, open `http://localhost:3000/nothing-here`.
 
@@ -362,7 +367,7 @@ Provides reusable `Button`, `Card`, `Verdict`, `BigChoice` and `ThemeToggle` com
 - Components receive **props**: named inputs such as children, disabled state or the selected answer. Think of props as Python function keyword arguments; React uses them to produce the HTML.
 - `Button` uses a native button, `Card` groups content, and `BigChoice` uses a fieldset with native radio inputs. Browser keyboard behaviour and form semantics remain available instead of being recreated with clickable divs.
 - `Verdict` displays a written level and explanation alongside its colour. Its green wording follows D9: no typical signs were found, but the person should hang up and call a familiar number if in doubt. All visible Bulgarian strings come from `src/i18n/bg.ts`.
-- `ThemeToggle` offers system, light and dark choices. It remembers the preference in `localStorage`, follows device-theme changes in system mode and continues to work if browser storage is denied. It is a client component because it needs browser settings and interaction; the static page content can remain server-rendered.
+- `ThemeToggle` offers system, light and dark choices. Since W2-13 it is a compact control in the site header: three small picture buttons (native radio buttons in a group named „Изглед“), not a full-width select above the page (section 3.31). It remembers the preference in `localStorage`, follows device-theme changes in system mode and continues to work if browser storage is denied. It is a client component because it needs browser settings and interaction; the static page content can remain server-rendered.
 
 #### Why it works like that
 
@@ -1140,6 +1145,43 @@ A family member in the contact list **with an account**, with `profiles.email_al
 
 **Tested only with fakes so far.** There is no Brevo account yet, so the real test e-mail of ADR 0003's "done when" is still pending.
 
+### 3.31 Site layout and home page (W2-13, D22)
+
+#### What it does
+
+Every page now has the same frame: a **header** with the Scamly logo (a link to `/`), the main menu („Вход“, „Регистрация“, „Свържи телефон“) and a small **theme switch**, and a **footer** that says what Scamly is (a school project for the „Джон Атанасов“ IT tournament, GPL-3.0, no ads, no tracking). The home page `/` replaces the day-1 placeholder: the tagline, one sentence on the problem, the **3 steps** (the relative pairs the phone → the older person presses one big button and answers a few questions → the family gets an alert at once), the start buttons „Регистрация за близки“ and „Свържи телефон“ (plus „Вход“), and a box with three rules for a suspicious call.
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/app/layout.tsx` | The root layout. It renders a "skip to content" link, `<SiteHeader />`, the page (`{children}`) inside `<div id="content">`, and `<SiteFooter />`. |
+| `src/components/layout/SiteHeader.tsx` | Server Component: logo link + `<nav aria-label="Основно меню">` with three `<Link>`s (addresses from `ROUTES`) + `<ThemeToggle />`. |
+| `src/components/layout/Logo.tsx` | Our own mark: a shield with a mobile phone, drawn as inline SVG. Its colours are CSS classes that use the theme tokens. |
+| `src/components/layout/SiteFooter.tsx` | Server Component with two lines of text. |
+| `src/components/ui/ThemeToggle.tsx` | Client Component: three radio buttons in a `radiogroup` named „Изглед“, each with a small picture (screen, sun, moon) and a hidden text label. |
+| `src/app/page.tsx` | The home page (Server Component). Steps and rules are arrays in `bg.home`, rendered with `.map()`, like a Python `for` loop that builds a list. |
+| `src/app/globals.css` | The classes `site-header`, `site-nav`, `theme-*`, `site-footer`, `home-*` and `a.button` (a link that looks like our big button). |
+
+- **One shared frame.** In the App Router, `layout.tsx` wraps every page: Next.js calls `RootLayout({ children: <the page> })`. On navigation only `children` changes; the header and footer stay and are not re-rendered. So every page, also the ones built later (W2-01, W2-07…), gets the frame without adding anything.
+- **Header layout.** A wrapping flexbox. On a wide screen: logo left, menu and theme switch right. Below 640 px the menu gets its own full-width row under the logo and theme switch (`order: 3`), and the label „Изглед“ is hidden on screen but still read aloud. Below 380 px the menu text is a little smaller, so all three links fit in one row at 360 px. Menu links and theme buttons are at least 48 px high; the start buttons on the home page are 64 px (`.button`).
+- **Theme switch.** The choice is written to `<html data-theme="…">`, and `globals.css` picks the colour tokens from it; `system` follows the device setting (`prefers-color-scheme`). The choice is saved in `localStorage` under `scamly-theme`. After the page loads, an effect reads it back, applies it and ticks the right radio button. The component listens to the browser's own `change` event: React's `onChange` would miss a click after we tick a radio button from code. The radios are real `<input type="radio">` elements, invisible but covering each picture button, so a tap, a click, Tab and the arrow keys all work, and focus is shown with a 3 px outline.
+- **Skip link.** The first Tab on a page shows „Към основното съдържание“; Enter jumps over the menu to the page.
+- **Text.** All new text is in `bg.layout` and `bg.home` in `src/i18n/bg.ts`; the old `app.comingSoon` placeholder is removed.
+
+#### Why it works like that
+
+- **Root layout instead of a header in every page:** one place to change, and new pages can't forget it (D22: the deployed app looked unfinished without a frame).
+- **Compact theme switch in the header:** the old full-width field pushed every page down and looked like part of a form. Three picture buttons fit next to the logo even at 360 px, where a select with „Според устройството“ did not.
+- **Server Components for header, footer and home page:** they are plain HTML, so no extra JavaScript on cheap phones. Only the theme switch is a Client Component.
+- **No menu button ("hamburger"):** three links fit at 360 px, so nothing is hidden behind an extra tap.
+- **The home page explains the 3 steps** because a family member must understand in seconds what to do, and the jury sees the idea at once. The rules box helps even someone who opens the site during a call. The green verdict wording (D9) is not used here: the page promises no "safe" result.
+- Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Shared root layout for the header and footer", "Compact theme switch in the header", "Home page that explains the 3 steps".
+
+#### How we know it works
+
+`tests/e2e/layout.spec.ts`, 6 tests × 2 screens: header (logo, three menu links) and footer on `/`, `/vhod`, `/registratsia`, `/svarzhi`; no theme `combobox` any more and the theme switch is narrower than half the screen; choosing dark changes the colours, survives a reload and a menu click, and the arrow key moves the choice; each menu link and the logo open the right page; no sideways scrolling at 360 px and menu links at least 48 px high; the home page shows the problem sentence, the 3 steps, the 3 rules and the two start buttons (at least 64 px high) that open `/registratsia` and `/svarzhi`. `home.spec.ts` and `ui.spec.ts` were updated for the new heading and the radio-button switch. Screenshots at 390 × 844 (light and dark) and 1366 × 800 were checked by eye.
+
 ---
 ## 4. Code quality, tests and CI
 
@@ -1219,7 +1261,7 @@ Opens the real app in a real browser and checks what a user would see.
 - Every test runs **twice**: project `desktop-chromium` (Desktop Chrome) and project `android-phone` (Pixel 5: a 393 × 851 touch screen, like a cheap Android phone).
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
-- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
+- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 6 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
@@ -1229,7 +1271,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 16 tests × 2 screens = 32 runs, all passing locally on 4 Nov. The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 22 tests × 2 screens = 44 runs, all passing locally on 5 Nov. The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -2091,3 +2133,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-04 · migration `20261104000002` applied in the live project; contacts/invites live smoke test re-run: 44/44 passed.
 - 2026-11-04 · W1-12 seed applied to the live Supabase project; all four demo logins verified through `/api/auth/login`. Fix: the second sample check now lists `hard_rules: []`, because a batch insert fills missing columns with NULL instead of the column default. Note: in a Claude Code cloud session Node needs `NODE_USE_ENV_PROXY=1` to reach Supabase.
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): new sections 3.29 (public-key route, subscriptions API with endpoint allowlist and delete + insert, `pushChannel`/`pushSender` with `web-push` 3.6.7, TTL 10 min, 404/410 cleanup, `public/sw.js`, `src/lib/push.ts`) and 3.30 (`EmailProvider`, Brevo via `fetch` with 5 s timeout, `noop`, Resend stub, e-mail channel, `alertEmail.ts`, `getSiteUrl()`); 3.24 updated (`"skipped"` writes no row, parallel sends, channels by feature switch); 3.5 env fallback for optional extras; 3.3, 3.4, 3.13, 4.2, 7.7, big picture and status table updated; plan differences #31–#37; glossary (web push, VAPID, service worker, SSRF); 449 unit tests in 44 files; push smoke test 22/22; real-phone push and a real Brevo e-mail pending
+- 2026-11-05 · W2-13 site layout + home page (D22): new section 3.31 (root layout with skip link, `SiteHeader` with own logo and menu, compact radio-button theme switch, `SiteFooter`, home page with the 3 steps, start buttons and three rules); 3.1, 3.7, 4.3 and the status table updated; 22 e2e tests × 2 screens

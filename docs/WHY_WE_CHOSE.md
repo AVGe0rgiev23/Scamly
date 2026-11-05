@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-04
+> Last updated: 2026-11-05
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · push endpoint allowlist · push upsert = delete + insert
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
@@ -761,7 +761,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - We check WCAG AA contrast for every colour pair, in both themes.
 - The theme select uses an explicit label/for association to keep its label separate from the option text. We installed Playwright Chromium locally and verified the production build with six browser runs. Build/browser commands need approved execution outside the Codex Windows sandbox because Turbopack workers use local TCP connections; no bundler or dependency changes were needed.
 - Native buttons and fieldset/radio groups preserve keyboard and screen-reader behaviour without another UI dependency. Component props are explained as Python keyword arguments in the code.
-- A three-choice theme control allows an explicit light/dark preference or the device setting. `localStorage` remembers only this non-sensitive preference; denied storage does not stop the control working, and system mode tracks device changes.
+- A three-choice theme control allows an explicit light/dark preference or the device setting (since W2-13 a compact radio-button switch in the header, see "Compact theme switch in the header" below). `localStorage` remembers only this non-sensitive preference; denied storage does not stop the control working, and system mode tracks device changes.
 - Verdicts include words alongside colours and use the D9 green wording. The preview shows both palettes together so changes can be reviewed consistently.
 
 **What we give up:**
@@ -786,6 +786,61 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - We maintain a small request helper ourselves. Browser tests with mocked API responses verify the UI contract but do not replace live demo-account login and pairing checks.
 
 **We would reconsider if:** form complexity grows enough to justify a library; the API and server-managed session boundary remain the same.
+### Shared root layout for the header and footer (vs a header in every page)  (status: in use (W2-13, D22))
+
+**Used for:** the header (logo, menu, theme switch) and footer around every page, in `src/app/layout.tsx` with `src/components/layout/`.
+
+**Alternatives we considered:** importing `<SiteHeader />` and `<SiteFooter />` in every `page.tsx`; a separate layout per area (`/family`, `/protected`…) only.
+
+**Why this one:**
+- In the App Router the root layout wraps every page by itself; new pages (W2-01, W2-07, W3…) get the frame without any extra code, so nobody can forget it.
+- On navigation the layout stays and only the page changes, so the header doesn't flicker or reload.
+- One place to change the menu, which two people can explain in the defense.
+- Header and footer are Server Components: plain HTML, no extra JavaScript on cheap phones.
+
+**What we give up:**
+- The older person's own screen (W2-01) also gets the header; if it should be calmer there, that area needs its own nested layout or a smaller header later.
+- The menu doesn't yet change for logged-in users (e.g. „Изход“); that comes with the dashboards.
+
+**We would reconsider if:** areas needed very different frames; then we'd use route groups with one layout each.
+
+### Compact theme switch in the header (vs the full-width „Изглед“ field)  (status: in use (W2-13, D22))
+
+**Used for:** choosing „Според устройството“, light or dark from any page: three small picture buttons (screen, sun, moon) in the header.
+
+**Alternatives we considered:** keep the full-width select above every page; a small select in the header; a single button that cycles through the three modes; a menu button ("hamburger") that hides the menu and the switch.
+
+**Why this one:**
+- The old field looked like part of a form and pushed every page down (D22).
+- A select showing „Според устройството“ didn't fit next to the logo at 360 px; three 48 px buttons do.
+- Native radio buttons in a named group („Изглед“): Tab, arrow keys and screen readers work without extra code; each choice keeps its full Bulgarian name for screen readers and as a tooltip.
+- A cycling button hides which modes exist; with three buttons all choices are visible at once.
+- Same behaviour as before: saved in `localStorage`, `system` follows the device.
+
+**What we give up:**
+- Pictures alone are less clear than words for some older users; on wide screens the label „Изглед“ is shown next to them, on phones it is only read aloud.
+- We listen to the browser's `change` event ourselves, because React's `onChange` misses a click after we tick the saved choice from code; one more thing to explain.
+
+**We would reconsider if:** user tests show older people can't find or understand the pictures; then we'd add short words under them or move the switch to a settings page.
+
+### Home page that explains the 3 steps (vs a plain landing page or straight to login)  (status: in use (W2-13, D22))
+
+**Used for:** `/`: tagline, the problem in one sentence, the 3 steps, start buttons and three rules for a suspicious call.
+
+**Alternatives we considered:** keep the placeholder; send `/` straight to `/vhod`; a long marketing page with statistics.
+
+**Why this one:**
+- A family member must understand in seconds what Scamly does and what to do first: register, or pair the older person's phone.
+- The jury sees the whole idea on the first page.
+- Two clear main actions (64 px buttons) and one secondary („Вход“) instead of many links.
+- The three rules help even someone who opens the page during a scam call.
+- No numbers or statistics we can't prove; all text is in `bg.ts`.
+
+**What we give up:**
+- A logged-in family member also sees the start page; sending them straight to their dashboard comes later.
+
+**We would reconsider if:** most visitors were returning users; then `/` would redirect logged-in people to their area.
+
 ### System fonts instead of web fonts  (status: in use)
 
 **Used for:** all text uses the phone's or computer's built-in font (`font-sans`); we removed the Geist web font that `create-next-app` adds.
@@ -1976,3 +2031,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-04 · Session I (W1-13 code): new entry "Health check on a public table with the publishable key (vs the service-role key)"; keep-alive entry rewritten as GitHub Actions vs Vercel cron vs only an uptime monitor, now in use; Frankfurt entry explains `vercel.json` `regions` vs the deprecated `preferredRegion`; Vercel Hobby status updated (project pending)
 - 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new entries in section 3 (server-side verdict; redact before storing; Realtime token endpoint vs readable cookies; contact list through one SQL function, SECURITY INVOKER, vs REST calls / upsert / more column rights / SECURITY DEFINER; invite tokens 256 bits + HMAC + 7 days; refusals don't burn invites) and section 5 (`AlertChannel` interface; Realtime as a doorbell + 5 s polling fallback; own Realtime client with `accessToken` vs `setAuth`); statuses updated for REST API, Supabase Realtime, server-only writes, HMAC, rate limiting, redaction, DI fakes, pgTAP
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): Web Push entry now in use and compares `web-push` 3.6.7 with hand-written encryption and Firebase FCM; Brevo entry now in use (real e-mail pending a Brevo account); new entries: VAPID public key from a route vs `NEXT_PUBLIC_`, push endpoint allowlist (SSRF), push upsert = delete + insert vs an UPDATE grant, plain `fetch` vs Brevo's SDK, Resend as a stub, no `alerts` row when nothing was sent (`noop`, `"skipped"`), `Promise.all` for the alert sends, `.catch()` fallback for optional env vars vs failing fast; `AlertChannel`, rate limiting and DI-fakes statuses updated
+- 2026-11-05 · W2-13 (D22): new entries in section 4: shared root layout for the header and footer (vs a header in every page), compact theme switch in the header (vs the full-width field, a select, a cycling button, a menu button), home page that explains the 3 steps; design-system entry points to the new switch
