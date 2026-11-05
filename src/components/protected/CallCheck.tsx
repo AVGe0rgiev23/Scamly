@@ -10,9 +10,11 @@
 
 import { useRef, useState } from "react";
 import { callApi } from "@/components/family/api";
+import { bg } from "@/i18n/bg";
 import type { AnswersResultDto } from "@/schemas/checks";
 import { CallerText } from "./CallerText";
-import { useCallContact } from "./callContact";
+import { CheckResult } from "./CheckResult";
+import { saveCallContact, useCallContact } from "./callContact";
 import { CheckHome } from "./CheckHome";
 import { QuestionWizard } from "./QuestionWizard";
 import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
@@ -35,13 +37,16 @@ export function CallCheck() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [sending, setSending] = useState(false);
   // The server's verdict (shown by the result screen).
-  const [, setResult] = useState<AnswersResultDto | null>(null);
+  const [result, setResult] = useState<AnswersResultDto | null>(null);
+  // true = „Обаждането вече приключи — искам да проверя“ (no „Затворете телефона.“).
+  const [afterCall, setAfterCall] = useState(false);
   // The running POST /api/checks (a Promise is like a Python asyncio Task).
   // useRef keeps it between renders without redrawing the screen.
   const checkIdRequest = useRef<Promise<string | null> | null>(null);
 
-  function start() {
+  function start(startedAfterCall: boolean) {
     checkIdRequest.current = startCheckOnServer();
+    setAfterCall(startedAfterCall);
     setAnswers(EMPTY_ANSWERS);
     setQuestionIndex(0);
     setResult(null);
@@ -78,12 +83,22 @@ export function CallCheck() {
     setSending(false);
     if (response !== null && response.ok) {
       setResult(response.data);
+      // Remember who to call, for the home screen next time.
+      saveCallContact(response.data.callContact);
       setStage("result");
     }
   }
 
+  // A "live region": a screen reader reads its text aloud whenever it changes, even
+  // if the focus is somewhere else. Hidden on screen (the verdict is shown big).
+  const announcement =
+    stage === "result" && result !== null ? bg.verdict[result.verdict.level].title : "";
+
   return (
     <main className="call-check">
+      <p className="sr-only" role="status">
+        {announcement}
+      </p>
       {stage === "home" ? <CheckHome contact={contact} onStart={start} /> : null}
       {stage === "questions" ? (
         <QuestionWizard
@@ -102,6 +117,15 @@ export function CallCheck() {
           onSubmit={(text) => void submit(text)}
           onBack={() => setStage("questions")}
           sending={sending}
+        />
+      ) : null}
+      {stage === "result" && result !== null ? (
+        <CheckResult
+          level={result.verdict.level}
+          reasons={result.verdict.reasons.map((reason) => reason.textBg)}
+          callContact={result.callContact}
+          afterCall={afterCall}
+          onNewCheck={() => setStage("home")}
         />
       ) : null}
     </main>

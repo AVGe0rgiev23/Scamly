@@ -1088,3 +1088,33 @@ a.button {
   font-weight: 700;
   color: var(--foreground);
 }
+/* The result screen: the verdict big, then the call button. */
+.check-result {
+  display: grid;
+  gap: 1.25rem;
+}
+.check-praise {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.verdict-title {
+  font-size: clamp(2rem, 9vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.verdict-title:focus {
+  outline: none;
+}
+.verdict-lead {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.verdict-why {
+  font-weight: 700;
+}
+.verdict-reasons {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.4rem;
+  list-style: disc;
+}

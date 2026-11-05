@@ -561,6 +561,12 @@ export const bg = {
     skip: "Прескочи",
     check: "Провери",
     checking: "Проверяваме…",
+    // The result screen. A red result starts with praise (IDEAS #8): the person did the
+    // right thing, and a calm voice helps them act. Green uses bg.verdict.green (D9).
+    praise: "Добре направихте, че проверихте.",
+    hangUp: "Затворете телефона.",
+    reasonsTitle: "Защо:",
+    newCheck: "Нова проверка",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
