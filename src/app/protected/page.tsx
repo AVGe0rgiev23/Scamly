@@ -1,8 +1,9 @@
-// /protected: TEMPORARY page that only shows the name of the area (the site header shows
-// who is logged in). The real page comes later.
+// /protected: the home of the older person's paired phone: the call check (W2-01).
+// The role guard is in layout.tsx; everything on the screen runs in the browser and
+// talks only to our API (which checks the phone's login again on every request).
 
-import { bg } from "@/i18n/bg";
+import { CallCheck } from "@/components/protected/CallCheck";
 
 export default function ProtectedPage() {
-  return <h1 className="text-3xl font-bold">{bg.areas.protected}</h1>;
+  return <CallCheck />;
 }

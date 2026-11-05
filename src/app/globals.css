@@ -3,6 +3,7 @@
  * dark: text/surface 13.82, muted/surface 10.19, ink/primary 9.04.
  * Verdict foreground/surface: light red 7.30, yellow 6.61, green 6.77;
  * dark red 10.37, yellow 11.08, green 10.61. See contrast verification.
+ * The big call-check button (--on-red text on --red-fg): light 7.6, dark 12.7.
  */
 @import "tailwindcss";
 
@@ -22,6 +23,7 @@
   --yellow-fg: #854d0e;
   --green-bg: #ecfdf5;
   --green-fg: #166534;
+  --on-red: #ffffff;
 }
 
 /* An explicit theme overrides the device; system mode follows it automatically. */
@@ -41,6 +43,7 @@
     --yellow-fg: #fde68a;
     --green-bg: #15382b;
     --green-fg: #bbf7d0;
+    --on-red: #101820;
   }
 }
 [data-theme="dark"] {
@@ -58,6 +61,7 @@
   --yellow-fg: #fde68a;
   --green-bg: #15382b;
   --green-fg: #bbf7d0;
+  --on-red: #101820;
 }
 @theme inline {
   --color-background: var(--background);
@@ -971,4 +975,51 @@ a.button {
 }
 .check-detail-slot:empty {
   display: none;
+}
+
+/* The older person's call check (/protected, W2-01): huge text, few words, every tap
+ * target at least 64 px, one column that fits 360 px. */
+.call-check {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+  font-size: 1.25rem; /* 22.5 px */
+  line-height: 1.45;
+}
+.call-check .button {
+  width: 100%;
+  min-height: 72px;
+  font-size: 1.35rem;
+}
+.check-big-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: max(30vh, 12rem);
+  padding: 1.5rem 1rem;
+  border: 4px solid var(--foreground);
+  border-radius: 1.5rem;
+  background: var(--red-fg);
+  color: var(--on-red);
+  font: inherit;
+  font-size: clamp(1.75rem, 8vw, 2.6rem); /* at least 31 px */
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+.check-big-button:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+.check-big-button:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+.check-call-button {
+  font-size: 1.5rem;
 }

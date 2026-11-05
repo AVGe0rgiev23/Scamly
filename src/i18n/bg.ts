@@ -514,6 +514,17 @@ export const bg = {
       other: "друг начин",
     },
   },
+  // The older person's call check on the paired phone (/protected, W2-01).
+  // Few words, big text: this screen is for an 80-year-old during a stressful call.
+  protectedCheck: {
+    // Read aloud as the page heading (hidden on screen: the big button says it all).
+    title: "Проверка на обаждане",
+    bigButton: "Обаждат ми се за пари!",
+    // A check can also start after the call has ended (brief 5.2 A).
+    afterCall: "Обаждането вече приключи — искам да проверя",
+    // {name} = the first trusted contact with a phone, e.g. „Иван“ (a tel: link).
+    callContact: "Обади се на {name}",
+  },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
     forbiddenHelp:
