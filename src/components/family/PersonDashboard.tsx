@@ -11,8 +11,15 @@ import { ROUTES } from "@/config/routes";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { bg } from "@/i18n/bg";
-import { callApi, type ContactDto, type PersonDetailsDto, type PersonDto } from "./api";
+import {
+  callApi,
+  type ContactDto,
+  type DeviceDto,
+  type PersonDetailsDto,
+  type PersonDto,
+} from "./api";
 import { ContactsEditor } from "./ContactsEditor";
+import { DevicesList } from "./DevicesList";
 import { districtName } from "./format";
 import { InviteForm } from "./InviteForm";
 import { PairingPanel } from "./PairingPanel";
@@ -70,6 +77,12 @@ export function PersonDashboard({ personId }: { personId: string }) {
     );
   }
 
+  function updateDevices(devices: DeviceDto[]) {
+    setState((old) =>
+      old.kind === "ready" ? { kind: "ready", details: { ...old.details, devices } } : old,
+    );
+  }
+
   const backLink = (
     <Link href={ROUTES.family} className="family-back">
       ← {bg.family.backToList}
@@ -109,7 +122,7 @@ export function PersonDashboard({ personId }: { personId: string }) {
     );
   }
 
-  const { person, contacts } = state.details;
+  const { person, contacts, devices } = state.details;
   return (
     <>
       {backLink}
@@ -121,6 +134,15 @@ export function PersonDashboard({ personId }: { personId: string }) {
         <p className="muted">{person.isOwner ? bg.family.roleOwner : bg.family.roleContact}</p>
         {person.isOwner ? null : <p className="muted">{bg.family.readOnlyNote}</p>}
       </header>
+
+      <Section title={bg.family.devicesTitle}>
+        <DevicesList
+          personId={person.id}
+          devices={devices}
+          canEdit={person.isOwner}
+          onChange={updateDevices}
+        />
+      </Section>
 
       {person.isOwner ? (
         <Section title={bg.family.pairingTitle}>

@@ -437,6 +437,24 @@ export const bg = {
     // {time} = minutes and seconds left, e.g. „9:42“.
     codeTimeLeft: "Остават {time} мин.",
     codeExpired: "Кодът изтече. Натиснете „Нов код“, за да създадете друг.",
+    // The paired phones and „Премахни“ (DELETE /api/devices/:id, owner only).
+    devicesTitle: "Свързани телефони",
+    devicesEmpty: "Още няма свързан телефон. Свържете го с код от 6 цифри.",
+    deviceUnnamed: "Телефон без име",
+    // {time} = the full date and time of pairing.
+    devicePairedAt: "Свързан на {time}",
+    deviceActive: "Активен",
+    deviceRevoked: "Премахнат",
+    refreshDevices: "Обнови списъка",
+    revokeButton: "Премахни",
+    // {name} = the phone's name, e.g. „Телефонът на баба“.
+    revokeLabel: "Премахни {name}",
+    revokeDialogTitle: "Да премахнем ли „{name}“?",
+    revokeDialogText:
+      "Телефонът ще бъде изключен веднага и няма да може да прави проверки. За да го използвате отново, ще трябва да го свържете с нов код.",
+    revokeConfirm: "Да, премахни",
+    revoking: "Премахване…",
+    deviceRemoved: "Телефонът е премахнат.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

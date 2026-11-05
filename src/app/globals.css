@@ -845,3 +845,31 @@ a.button {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.devices {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.devices > .button {
+  justify-self: start;
+}
+.device-list {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+.device-row {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+.device-row .button {
+  margin-top: 0.5rem;
+}
+.device-status {
+  font-weight: 700;
+}
