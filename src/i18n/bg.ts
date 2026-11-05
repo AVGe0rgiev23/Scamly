@@ -347,6 +347,17 @@ export const bg = {
     unknownDistrict: "Неизвестна област",
     roleOwner: "Вие сте създали този профил",
     roleContact: "Вие сте в списъка с близки",
+    backToList: "Към списъка с хората",
+    saving: "Запазване…",
+    // Creating a protected person (/family/new).
+    createTitle: "Добавяне на човек",
+    createIntro:
+      "Въведете името и областта на възрастния човек, когото искате да пазите. Вие ще бъдете първи в списъка му с близки за обаждане.",
+    nameLabel: "Име",
+    nameHint: "Както го наричате вкъщи, например Баба Мария. До 60 знака.",
+    districtHint: "Използва се само за анонимната карта на измамите по области.",
+    districtPlaceholder: "Изберете област",
+    createButton: "Добави",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
