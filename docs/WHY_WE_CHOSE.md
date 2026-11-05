@@ -26,11 +26,11 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · push endpoint allowlist · push upsert = delete + insert
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
-8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
+8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
 11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `.catch()` fallback for optional env vars · `APP_NAME` constant · `server-only`
@@ -841,6 +841,59 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** most visitors were returning users; then `/` would redirect logged-in people to their area.
 
+### Family dashboard: Client Components that call our API (vs Server Components that read the database)  (status: in use (W2-07))
+
+**Used for:** every screen of `/family` that shows or changes personal data (people list, person page, history, phones, contacts, invites, pairing).
+
+**Alternatives we considered:** Server Components that read Supabase directly with the user client and pass the data down; Server Actions for the forms; a data library such as SWR or TanStack Query.
+
+**Why this one:**
+- One path to the data: the API routes we already built and tested (same-origin check, `requireRole`, Zod, RLS). A screen can't skip a check because it has no other way in.
+- After a change (save the list, remove a phone) the same component updates itself; no page reload, no second copy of the logic.
+- The browser tests answer the API calls with `page.route()`, so the whole UI is tested in CI without a database or a login.
+- The server still does what it must do first: the role guard (`FamilyGate`, `requirePageRole`) runs before any page of the area is sent.
+- Plain `fetch` in one small helper (`callApi()`) is easy to explain; SWR or TanStack Query would add a library and caching rules we don't need.
+
+**What we give up:**
+- The first view shows „Зареждане…“ for a moment, because the data comes after the page; a Server Component could send it with the HTML.
+- A little more JavaScript in the browser.
+
+**We would reconsider if:** the first load felt slow on a cheap phone; then the person page could get its first data from a Server Component and keep the API for changes.
+
+### ↑ / ↓ buttons for the contact order (vs drag and drop)  (status: in use (W2-07))
+
+**Used for:** the order of the trusted contacts (places 1–5) on the person page.
+
+**Alternatives we considered:** drag and drop with a library (dnd-kit, SortableJS); the browser's own HTML drag and drop; a number field „Място“ for each contact.
+
+**Why this one:**
+- Works with a keyboard, a screen reader and an unsteady finger on a small phone; HTML drag and drop does not work with touch or a keyboard at all, and drag libraries need extra work to be accessible.
+- No extra library (less code to load, nothing to licence or explain).
+- After a move the focus stays on the same arrow and a hidden status line says „Иван е на място 1.“, so the person always knows where the contact is.
+- With at most 5 contacts, moving one place at a time is quick.
+
+**What we give up:**
+- Moving someone from place 5 to place 1 takes four taps.
+
+**We would reconsider if:** lists became much longer; then an accessible drag library plus the buttons.
+
+### `qrcode` (1.5.4) in the browser for the pairing QR code (vs our own QR code, vs an online QR service)  (status: in use (W2-07))
+
+**Used for:** the QR code with `<our site>/svarzhi?kod=482915` on the pairing screen.
+
+**Alternatives we considered:** writing the QR algorithm ourselves; an online QR image service (a URL like `https://…/qr?data=…`); only the 6 digits without a QR code.
+
+**Why this one:**
+- **Privacy:** the code is made in the browser, so the pairing code (a 10-minute key to the older person's account) never leaves our site; an online service would receive every code.
+- A QR code needs Reed–Solomon error correction and mask patterns; writing that ourselves would take days and be easy to get wrong. `qrcode` is small, widely used and MIT-licensed (compatible with GPL-3.0).
+- We use only `create()` (the grid of squares) and draw it ourselves as one inline SVG path: sharp at any size, black on white also in dark mode, no image files, and it will pass a strict CSP later (no `data:` images needed).
+- The 6 digits stay as the main way; the QR code only saves typing on a phone with a camera.
+
+**What we give up:**
+- One more dependency (with its small helper packages) to keep updated.
+
+**We would reconsider if:** the library were abandoned with a security problem; then another MIT QR library with the same `create()` idea.
+
 ### System fonts instead of web fonts  (status: in use)
 
 **Used for:** all text uses the phone's or computer's built-in font (`font-sans`); we removed the Geist web font that `create-next-app` adds.
@@ -1442,6 +1495,23 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project.
 
+### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`))
+
+**Used for:** testing the family dashboard in a real browser in CI, where there is no database.
+
+**Alternatives we considered:** a real test account in a test Supabase project; a "test mode" switch that lets the role guard accept a fake user; Playwright component testing (`@playwright/experimental-ct-react`).
+
+**Why this one:**
+- The real `/family` pages need a real login (the proxy and `requirePageRole` ask Supabase). The preview pages render the same components without that frame, and `page.route()` answers their API calls, so the tests cover the real UI.
+- Safe: the previews contain no data; every API call still needs a login, so on the real site they only show „Моля, влезте в профила си.“ A "test mode" switch in the role guard would be a dangerous back door.
+- No new tool: the same Playwright set-up and the same idea as `/dev/ui` and the auth form tests.
+
+**What we give up:**
+- The previews don't test `FamilyGate` itself (that is `auth-guards.spec.ts`) or the real API (unit tests and the live check do).
+- Three extra public addresses (marked `noindex`).
+
+**We would reconsider if:** we had a test Supabase project in CI; then one end-to-end test with a real login (W2-11).
+
 ### pgTAP for database and RLS tests  (status: in use (9 test files, 171 assertions))
 
 **Used for:** proving in SQL that each role sees exactly the rows it should (`supabase/tests/*.test.sql`), including IDOR tests (family B can't see family A's data).
@@ -2032,3 +2102,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-04 · Week 2 backend (W2-02, W2-03, W2-04, W2-08): new entries in section 3 (server-side verdict; redact before storing; Realtime token endpoint vs readable cookies; contact list through one SQL function, SECURITY INVOKER, vs REST calls / upsert / more column rights / SECURITY DEFINER; invite tokens 256 bits + HMAC + 7 days; refusals don't burn invites) and section 5 (`AlertChannel` interface; Realtime as a doorbell + 5 s polling fallback; own Realtime client with `accessToken` vs `setAuth`); statuses updated for REST API, Supabase Realtime, server-only writes, HMAC, rate limiting, redaction, DI fakes, pgTAP
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): Web Push entry now in use and compares `web-push` 3.6.7 with hand-written encryption and Firebase FCM; Brevo entry now in use (real e-mail pending a Brevo account); new entries: VAPID public key from a route vs `NEXT_PUBLIC_`, push endpoint allowlist (SSRF), push upsert = delete + insert vs an UPDATE grant, plain `fetch` vs Brevo's SDK, Resend as a stub, no `alerts` row when nothing was sent (`noop`, `"skipped"`), `Promise.all` for the alert sends, `.catch()` fallback for optional env vars vs failing fast; `AlertChannel`, rate limiting and DI-fakes statuses updated
 - 2026-11-05 · W2-13 (D22): new entries in section 4: shared root layout for the header and footer (vs a header in every page), compact theme switch in the header (vs the full-width field, a select, a cycling button, a menu button), home page that explains the 3 steps; design-system entry points to the new switch
+- 2026-11-05 · W2-07 family dashboard (Roberta): new entries in section 4 (Client Components that call our API vs Server Components that read the database; ↑ / ↓ buttons vs drag and drop; `qrcode` 1.5.4 in the browser vs our own QR code vs an online QR service) and section 8 (preview pages without the role guard for the browser tests vs a test login, a test mode, component tests)

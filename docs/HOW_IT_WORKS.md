@@ -100,7 +100,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | API basics: error shape, same-origin check (CSRF), JSON body, client IP, HMAC | ✅ | `src/server/http/`, `src/server/security/`, `src/schemas/` | `errors`, `request`, `origin`, `hash`, `schemas` tests |
 | `/api/me`, `/api/persons` (list, create, details, rename, delete) | ✅ (details/rename/delete: W2-08, 3.26) | `src/app/api/me/`, `src/app/api/persons/`, `src/server/services/personService.ts` | `personService.test.ts`; live smoke test; RLS: `03_persons_contacts` |
 | Device pairing (create code, redeem, revoke) | ✅ backend (W1-07) · designed `/svarzhi`; live browser pairing check pending | `src/app/api/persons/[id]/pairing-codes/`, `src/app/api/pairing/redeem/`, `src/app/api/devices/[id]/`, `src/server/services/pairingService.ts` | `pairingService.test.ts` (18 tests); live smoke test |
-| Auth pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ designed auth pages; area contents remain temporary | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
+| Auth pages: `/vhod`, `/registratsia`, `/svarzhi`, `/403`, area layouts | ✅ designed auth pages; area contents remain temporary, except `/family` (W2-07, 3.32) | `src/app/{vhod,registratsia,svarzhi,403,family,moderator,admin,protected}/`, `src/app/_auth-placeholders/` | `tests/e2e/auth-guards.spec.ts` |
 | Design system (colours, Button, Card, Verdict, BigChoice, ThemeToggle) | ✅ (W1-11) | `src/components/ui/`, `src/app/globals.css`, `/dev/ui` | Section 3.7; npm run check and all 6 browser runs pass |
 | Detection engine: types and constants (section 3.6) | ✅ | `src/engine/types.ts` | `src/engine/types.test.ts` |
 | Engine dictionary and scenario data | ✅ all 51 scenarios run and pass (section 3.21) | `src/engine/dictionary.ts`, `src/engine/__tests__/scenarios.ts` | Type check and `src/engine/data.test.ts`; section 3.18 |
@@ -113,7 +113,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Web push (3.29) | ✅ backend (W2-05) · opt-in button + iOS hint: Roberta · real-phone test pending | `src/app/api/push/`, `src/server/services/pushSubscriptionService.ts`, `src/server/notifications/push{Channel,Sender}.ts`, `src/schemas/push.ts`, `src/lib/push.ts`, `public/sw.js` | `pushChannel` (19), `pushSender` (4), `pushSubscriptionService` (7), `schemas/push` (7), `lib/push` (9); live smoke test 22/22 |
 | Email (`EmailProvider`, Brevo) (3.30) | ✅ backend (W2-06) · wording draft: Roberta · real Brevo e-mail pending (no account yet) | `src/server/notifications/email/`, `src/server/notifications/siteUrl.ts` | `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3); fakes only |
 | Contacts + invites API (3.27, 3.28) | ✅ backend (W2-08) · migration applied 4 Nov; live smoke test 44/44 | `src/app/api/persons/[id]/{contacts,invites}/`, `src/app/api/invites/redeem/`, `contactService.ts`, `inviteService.ts` | `contactService` (12), `inviteService` (17), `11_replace_contacts`; live 35/44 |
-| Family dashboard UI (people, contacts, pairing, history) | ⬜ planned (week 2, W2-07, Roberta) | | |
+| Family dashboard UI: people, create person, contacts order, invite, pairing with QR, devices + revoke, check history (3.32) | ✅ (W2-07, Roberta) · live alert page is W2-03 | `src/app/family/`, `src/components/family/`, `src/components/ui/{ConfirmDialog,VerdictBadge}.tsx`, `/dev/family` previews | `tests/e2e/family.spec.ts` (10 tests × 2 screens), `format`, `qr`, `districts` unit tests; live check with the demo account |
 | PWA (install, offline card), voice input | ⬜ planned (week 2, W2-09, W2-10) | | |
 | Public reports + scam map | ⬜ planned (week 3, W3-01 to W3-03) | | |
 | Moderation, education pages | ⬜ planned (week 3, W3-04, W3-05) | | |
@@ -1182,6 +1182,60 @@ Every page now has the same frame: a **header** with the Scamly logo (a link to 
 
 `tests/e2e/layout.spec.ts`, 6 tests × 2 screens: header (logo, three menu links) and footer on `/`, `/vhod`, `/registratsia`, `/svarzhi`; no theme `combobox` any more and the theme switch is narrower than half the screen; choosing dark changes the colours, survives a reload and a menu click, and the arrow key moves the choice; each menu link and the logo open the right page; no sideways scrolling at 360 px and menu links at least 48 px high; the home page shows the problem sentence, the 3 steps, the 3 rules and the two start buttons (at least 64 px high) that open `/registratsia` and `/svarzhi`. `home.spec.ts` and `ui.spec.ts` were updated for the new heading and the radio-button switch. Screenshots at 390 × 844 (light and dark) and 1366 × 800 were checked by eye.
 
+### 3.32 Family dashboard (W2-07)
+
+#### What it does
+
+The logged-in family member's area. **`/family`** lists the people they protect (as owner or as trusted contact), each with name, district and role, with an empty state and a Bulgarian error with „Опитай отново“. **`/family/new`** adds a person (name + one of the 28 districts) and opens their page. **`/family/[personId]`** has one section per job:
+
+| Section | Who | API |
+|---|---|---|
+| „Проверки на обаждания“: history, newest first, time in Bulgarian time, verdict badge (symbol + word), who the caller claimed to be, who answered „Обаждам ѝ се сега“; „Покажи още“; „Подробности“ with the reasons and answers | everyone with access | `GET /api/checks?personId=…&cursor=…`, `GET /api/checks/:id` |
+| „Свързани телефони“: name, paired date, status; „Премахни“ with a confirmation window; „Обнови списъка“ | list: everyone · remove: owner | `GET /api/persons/:id`, `DELETE /api/devices/:id` |
+| „Свързване на телефона“: big code „482 915“, QR code with `<site>/svarzhi?kod=482915`, 10-minute countdown, „Нов код“ | owner | `POST /api/persons/:id/pairing-codes` |
+| „Ред за обаждане“: places 1–5, ↑ / ↓ buttons, edit name and phone, remove, add a relative with a phone, „Запази списъка“; who has an account | edit: owner · read-only: others | `PUT /api/persons/:id/contacts` |
+| „Покани близък“: name + place → a link with a copy button and its expiry | owner | `POST /api/persons/:id/invites` |
+| „Име и област“: rename, change district; „Изтрий профила“ with a confirmation window | owner | `PATCH` / `DELETE /api/persons/:id` |
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/app/family/layout.tsx` + `src/components/family/FamilyGate.tsx` | Server Components. `<Suspense>` + `FamilyGate`, which calls `requirePageRole(["family"], "/vhod")` before any page of the area is sent, and shows „Влезли сте като …“ with the logout button. Replaces the temporary `RoleGate` for this area. |
+| `src/app/family/page.tsx`, `new/page.tsx`, `[personId]/page.tsx` | Thin Server Components. The person page only reads the id from the address, checks that it is a uuid (`IdParamSchema`, else the 404 page) and renders `<PersonDashboard personId=… />`. |
+| `src/components/family/api.ts` | `callApi()`: one `fetch` to our API (same-origin cookies, `no-store`), returning `{ ok: true, data }` or `{ ok: false, messageBg }` with the API's Bulgarian message (or „Няма връзка със сървъра…“). The DTO types are imported with `import type`, so no server code reaches the browser. |
+| `PeopleList`, `CreatePersonForm`, `PersonDashboard`, `CheckHistory`, `DevicesList`, `PairingPanel`, `ContactsEditor`, `InviteForm`, `PersonSettings` | Client Components (`"use client"`). Each loads or sends its own data through `callApi()` and shows loading, error and success texts. |
+| `src/components/family/fields.tsx` | `TextField`, `SelectField` (a real `<label>`, hint and error linked with `aria-describedby`, `aria-invalid`) and `FormMessage` (`role="alert"` + focus for errors, `role="status"` for success). |
+| `src/components/family/format.ts` | Pure helpers: district name from the code, `fill()` for `{placeholders}`, `formatDateTime()` (Europe/Sofia), `formatCode()` „482 915“, `spellDigits()` „4 8 2 9 1 5“ for screen readers, `formatCountdown()` „9:42“. |
+| `src/components/family/qr.ts` + `QrCode.tsx` | `qrcode` 1.5.4 `create()` gives the grid of squares; we draw it as one inline SVG `<path>` (black on white with a 4-square border, also in dark mode), `role="img"` with a Bulgarian label. |
+| `src/components/ui/ConfirmDialog.tsx` | The browser's `<dialog>` with `showModal()`: the page behind is blocked, Tab stays inside, Esc cancels, „Отказ“ gets the focus first, and the focus returns to the button that opened it. |
+| `src/components/ui/VerdictBadge.tsx` | A small badge with the same colours and symbols as Roberta's `Verdict` (`!`, `!`, `✓`; `…` for an unfinished check) plus a short word from `bg.verdictBadge`; green says „Без типични признаци“ (D9). |
+| `src/app/dev/family/**` + `src/components/family/preview.ts` | Preview pages **without** the role guard (like `/dev/ui`), only for the browser tests: they hold no data, every API call still needs a real login, and search engines are told not to list them. |
+| `src/i18n/bg.ts` | New `bg.family`, `bg.verdictBadge` and `bg.districts` (the 28 names; `src/i18n/districts.test.ts` checks them against the migration's seed). |
+
+- **Server vs client.** The role check and the page frame run on the server; everything that shows personal data runs in the browser and asks **our API**, never Supabase directly. So the API's steps (same origin, `requireRole`, Zod, RLS) protect every screen, and a trusted contact who sends a change by hand still gets 404.
+- **Contacts editor.** The owner edits a *draft* list in the browser. ↑ / ↓ swap two rows; the moved row keeps its React `key`, the focus is put back on the same arrow (or on the other one at the top or bottom), and a hidden `role="status"` line says „Иван е на място 1.“ „Запази списъка“ sends the whole list once (place = position) after the same `ContactsSchema` check the API uses, plus "a contact without an account needs a phone". The owner's own row has no „Премахни“.
+- **Pairing countdown.** The deadline is the server's `expiresAt`, but never more than 10 minutes after the answer arrived (if the computer's clock is wrong, the countdown ends early, never late). A timer updates the time once a second; a screen reader hears „Кодът е готов.“ and later „Кодът изтече…“, not every second.
+- **Invite link.** The API gives `/pokana?t=…`; the page adds `window.location.origin`, shows it in a read-only field (selected on focus), copies it with `navigator.clipboard` (with a "copy by hand" message if that fails) and shows „Валидна до …“. The token is shown only this once.
+- **No "last check" in the people list:** `GET /api/persons` has no such field, and asking `/api/checks` for every person would be one extra request per person; the history is one tap away.
+- **Text:** all of it in `bg.family`, `bg.verdictBadge` and `bg.districts`.
+
+#### Why it works like that
+
+- **API from the browser instead of reading the database in Server Components:** one path to the data, with all the checks we already test; the same code updates the screen after a change; and the browser tests can replace the API answers with `page.route()` without a database.
+- **District names in `bg.ts` instead of a database query:** the API returns only the code, the list needs the name in the browser, and user-visible text belongs in `bg.ts`; a unit test reads the migration file and fails if the two lists differ.
+- **↑ / ↓ buttons instead of drag and drop:** usable with a keyboard, a screen reader and an unsteady hand, with no extra library.
+- **`qrcode` in the browser instead of an online QR service:** the pairing code never leaves our site.
+- **`<dialog>` instead of a home-made overlay:** the browser already does the focus trap, Esc and the focus return.
+- Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Family dashboard: Client Components that call our API", "↑ / ↓ buttons for the contact order", "`qrcode` in the browser for the pairing QR code", "Preview pages without the role guard for the browser tests".
+
+#### How we know it works
+
+- `tests/e2e/family.spec.ts`, 10 tests × 2 screens, with `page.route()` answers on the `/dev/family` previews: the list (names, district names, role, links); the error with „Опитай отново“ and the empty state; create-form validation („Въведете име…“, „Изберете област…“, `aria-invalid`, no request) and the exact POST body; ↑ moves Ivan to place 1, the focus stays on his arrows, the move is announced, and the PUT body has the new order; a new contact needs a phone; a trusted contact sees no edit buttons; the code „482 915“ + QR + countdown (with Playwright's fake clock: 5 minutes later, then „Кодът изтече…“, then „Нов код“); removing a phone asks first, „Отказ“ sends nothing, „Да, премахни“ sends one `DELETE`; history badges `!`/`✓` + word, no „безопас“, „Покажи още“ with the cursor, details with reasons and answers; no sideways scrolling at 360 px and every button at least 48 px high.
+- Unit tests: `format.test.ts` (districts, `fill`, Sofia time in winter and summer, code helpers, the 10-minute lifetime equals the server's), `qr.test.ts`, `districts.test.ts`, and a D9 check in `bg.test.ts`.
+- `auth-guards.spec.ts` still shows that a guest who opens `/family` lands on `/vhod`.
+- Live check on 5 Nov with the demo family account against the real Supabase project: people list, Елена's page with history and details, phones, contacts and a real pairing code with QR; screenshots at 390 × 844 (light and dark) and 1366 × 800 checked by eye. The demo data was not changed (only a pairing code was created; it expires by itself).
+
 ---
 ## 4. Code quality, tests and CI
 
@@ -1261,6 +1315,7 @@ Opens the real app in a real browser and checks what a user would see.
 - Every test runs **twice**: project `desktop-chromium` (Desktop Chrome) and project `android-phone` (Pixel 5: a 393 × 851 touch screen, like a cheap Android phone).
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
+- `tests/e2e/family.spec.ts` (family dashboard, 10 tests, section 3.32) uses the same idea: `page.route()` answers the API calls of the `/dev/family` preview pages, so it needs no database and no login.
 - `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 6 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
@@ -1271,7 +1326,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 22 tests × 2 screens = 44 runs, all passing locally on 5 Nov. The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 32 tests × 2 screens = 64 runs, all passing locally on 5 Nov (W2-07 added 10). The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -2027,6 +2082,10 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 35 | 2.4 use 4: fan-out (order of sends not specified) | All (contact, channel) sends run in parallel with `Promise.all`, in `fanOut()` and `notifyVerdict()`; push and e-mail are in the list only when their switch is on (push also needs valid VAPID keys) (3.24) |
 | 36 | ADR 0003 / R4: "at most one e-mail per alert per recipient" | One e-mail when the check starts, plus one follow-up **only when red**: at most 2 per check, 1 for yellow/green (3.30) |
 | 37 | R16: "env vars validated at startup" (fail fast) | Required values still fail loudly; the optional extras `EMAIL_PROVIDER`, `EMAIL_FROM`, `SITE_URL`, `VAPID_SUBJECT` fall back to a safe value with a warning naming the variable (3.5) |
+| 38 | W2-07: "contacts order (drag or ↑↓)" | ↑ / ↓ buttons only, no drag library; the whole list is saved at once with „Запази списъка“ (3.32) |
+| 39 | W2-07 people list | No "last check" per person: the API has no such field and one extra request per person is not worth it; the history is on the person's page (3.32) |
+| 40 | W2-07 create form: districts from the database | The 28 names live in `bg.districts` (user-visible text), checked against the migration by a unit test; the API stores only the code (3.32) |
+| 41 | W2-07 browser tests | Extra preview pages `/dev/family`, `/dev/family/new`, `/dev/family/person` without the role guard (no data of their own; the API still needs a login), so `page.route()` can test the UI without a database (3.32, 4.3) |
 
 ---
 
@@ -2134,3 +2193,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-04 · W1-12 seed applied to the live Supabase project; all four demo logins verified through `/api/auth/login`. Fix: the second sample check now lists `hard_rules: []`, because a batch insert fills missing columns with NULL instead of the column default. Note: in a Claude Code cloud session Node needs `NODE_USE_ENV_PROXY=1` to reach Supabase.
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): new sections 3.29 (public-key route, subscriptions API with endpoint allowlist and delete + insert, `pushChannel`/`pushSender` with `web-push` 3.6.7, TTL 10 min, 404/410 cleanup, `public/sw.js`, `src/lib/push.ts`) and 3.30 (`EmailProvider`, Brevo via `fetch` with 5 s timeout, `noop`, Resend stub, e-mail channel, `alertEmail.ts`, `getSiteUrl()`); 3.24 updated (`"skipped"` writes no row, parallel sends, channels by feature switch); 3.5 env fallback for optional extras; 3.3, 3.4, 3.13, 4.2, 7.7, big picture and status table updated; plan differences #31–#37; glossary (web push, VAPID, service worker, SSRF); 449 unit tests in 44 files; push smoke test 22/22; real-phone push and a real Brevo e-mail pending
 - 2026-11-05 · W2-13 site layout + home page (D22): new section 3.31 (root layout with skip link, `SiteHeader` with own logo and menu, compact radio-button theme switch, `SiteFooter`, home page with the 3 steps, start buttons and three rules); 3.1, 3.7, 4.3 and the status table updated; 22 e2e tests × 2 screens
+- 2026-11-05 · W2-07 family dashboard (Roberta): new section 3.32 (`FamilyGate` role guard, people list, create form, person page with check history + details, phones + revoke, pairing code with QR and countdown, contact order with ↑ / ↓, invite link, rename/delete; `callApi()`, `ConfirmDialog`, `VerdictBadge`, `bg.family`, `bg.districts`, `/dev/family` previews); status table, 4.3, plan differences #38–#41; 32 e2e tests × 2 screens
