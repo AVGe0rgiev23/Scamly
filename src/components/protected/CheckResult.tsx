@@ -2,6 +2,9 @@
 // Verdict: headline, advice and up to 4 reasons), the big „Обади се на Иван“ button
 // and „Нова проверка“.
 //
+// When a family member presses „Обаждам ѝ се сега“, a big message appears:
+// „Иван ще ви се обади веднага.“ (CallCheck watches the check live).
+//
 // Red starts with praise, „Добре направихте, че проверихте.“ (IDEAS #8), then the
 // clear instruction „Затворете телефона.“: a calm, kind voice helps a frightened
 // person act. Green shows exactly the D9 wording and never says "safe".
@@ -22,6 +25,7 @@ type CheckResultProps = {
   reasons: string[]; // Bulgarian "why" lines from the engine
   callContact: CallContactDto | null;
   afterCall: boolean; // the call has already ended: no „Затворете телефона.“
+  familyMessage: string | null; // „Иван ще ви се обади веднага.“, null until then
   onNewCheck: () => void;
 };
 
@@ -30,6 +34,7 @@ export function CheckResult({
   reasons,
   callContact,
   afterCall,
+  familyMessage,
   onNewCheck,
 }: CheckResultProps) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -51,6 +56,16 @@ export function CheckResult({
         reasons={reasons.slice(0, MAX_REASONS)}
         reasonsTitle={bg.protectedCheck.reasonsTitle}
       />
+      {/* role="status": a live region, there from the start, so a screen reader reads
+          the family message aloud the moment it appears. */}
+      <div role="status" className={familyMessage === null ? undefined : "check-family"}>
+        {familyMessage === null ? null : (
+          <p>
+            <span aria-hidden="true">💬 </span>
+            {familyMessage}
+          </p>
+        )}
+      </div>
       {callContact === null ? null : <CallContactButton contact={callContact} />}
       <Button variant="secondary" onClick={onNewCheck}>
         {bg.protectedCheck.newCheck}

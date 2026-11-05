@@ -8,10 +8,12 @@
 // for the answer, so a slow network never holds the person back.
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { bg } from "@/i18n/bg";
+import { watchCheck } from "@/lib/realtime";
 import type { AnswersResultDto } from "@/schemas/checks";
+import { familyMessage } from "./acknowledgement";
 import { CallerText } from "./CallerText";
 import { CheckResult } from "./CheckResult";
 import { saveCallContact, useCallContact } from "./callContact";
@@ -38,6 +40,8 @@ export function CallCheck() {
   const [sending, setSending] = useState(false);
   // The server's verdict (shown by the result screen).
   const [result, setResult] = useState<AnswersResultDto | null>(null);
+  // „Иван ще ви се обади веднага.“ once a family member answers (null until then).
+  const [message, setMessage] = useState<string | null>(null);
   // true = „Обаждането вече приключи — искам да проверя“ (no „Затворете телефона.“).
   const [afterCall, setAfterCall] = useState(false);
   // The running POST /api/checks (a Promise is like a Python asyncio Task).
@@ -50,6 +54,7 @@ export function CallCheck() {
     setAnswers(EMPTY_ANSWERS);
     setQuestionIndex(0);
     setResult(null);
+    setMessage(null);
     setStage("questions");
   }
 
@@ -89,6 +94,22 @@ export function CallCheck() {
     }
   }
 
+  // On the result screen: watch the check live (Supabase Realtime, with polling every
+  // 5 s as a fallback, src/lib/realtime.ts) until a family member presses „Обаждам ѝ
+  // се сега“. The returned stop() runs when the screen closes (React cleanup).
+  const watchedCheckId = stage === "result" && result !== null ? result.checkId : null;
+  useEffect(() => {
+    if (watchedCheckId === null) {
+      return;
+    }
+    return watchCheck(watchedCheckId, (check) => {
+      const text = familyMessage(check.acknowledgement);
+      if (text !== null) {
+        setMessage(text);
+      }
+    });
+  }, [watchedCheckId]);
+
   // A "live region": a screen reader reads its text aloud whenever it changes, even
   // if the focus is somewhere else. Hidden on screen (the verdict is shown big).
   const announcement =
@@ -125,6 +146,7 @@ export function CallCheck() {
           reasons={result.verdict.reasons.map((reason) => reason.textBg)}
           callContact={result.callContact}
           afterCall={afterCall}
+          familyMessage={message}
           onNewCheck={() => setStage("home")}
         />
       ) : null}
