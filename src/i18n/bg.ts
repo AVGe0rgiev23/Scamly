@@ -24,6 +24,16 @@ export const bg = {
     notFoundText: "Няма страница на този адрес.",
     backHome: "Към началната страница",
   },
+  // The frame around every page: header with menu (W2-13, src/components/layout/).
+  layout: {
+    skipToContent: "Към основното съдържание",
+    // Read by screen readers after the logo text, so the logo link says where it leads.
+    homeLink: "Начална страница",
+    navLabel: "Основно меню",
+    login: "Вход",
+    register: "Регистрация",
+    pair: "Свържи телефон",
+  },
   theme: {
     label: "Изглед",
     system: "Според устройството",
