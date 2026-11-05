@@ -586,3 +586,69 @@ a.button {
     margin: 0 -0.25rem;
   }
 }
+
+/* Family dashboard (W2-07): /family, /family/new, /family/[personId]. */
+.family {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+.family > * {
+  min-width: 0;
+}
+.family-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.family-account .auth-form .button {
+  width: auto;
+  min-height: 48px;
+}
+.family-heading {
+  display: grid;
+  gap: 0.75rem;
+}
+.family-error {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.family-empty .button {
+  margin-top: 1rem;
+}
+.person-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+}
+.person-card {
+  position: relative;
+}
+.person-card:hover,
+.person-card:focus-within {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.person-link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+/* The whole card is the link's tap area. */
+.person-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+}
