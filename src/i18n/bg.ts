@@ -524,6 +524,36 @@ export const bg = {
     afterCall: "Обаждането вече приключи — искам да проверя",
     // {name} = the first trusted contact with a phone, e.g. „Иван“ (a tel: link).
     callContact: "Обади се на {name}",
+    // The questions (BUILD_PLAN 4.1), one per screen. {current} and {total} are numbers.
+    progress: "Въпрос {current} от {total}",
+    back: "Назад",
+    next: "Напред",
+    questions: {
+      claimedIdentity: "Кой казва, че е?",
+      asksMoney: "Искат ли пари или ценности?",
+      // Only asked when the answer to „Искат ли пари…“ is „Да“.
+      handover: "Как искат да ги дадете?",
+      rushing: "Карат ли ви да бързате?",
+      secrecy: "Казват ли ви да не казвате на никого?",
+    },
+    identities: {
+      police: "Полиция",
+      relative: "Роднина",
+      official: "Банка/ток/НЗОК",
+      courier: "Куриер",
+      other: "Друг",
+    },
+    tri: {
+      yes: "Да",
+      no: "Не",
+      unsure: "Не знам",
+    },
+    handoverMethods: {
+      courier_or_stranger: "На куриер/непознат",
+      throw: "Да ги хвърля",
+      bank_transfer: "По банков път",
+      other: "Друго",
+    },
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

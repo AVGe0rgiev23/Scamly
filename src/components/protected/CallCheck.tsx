@@ -1,7 +1,7 @@
 // The whole call check on the older person's phone (/protected, W2-01), as one
 // Client Component that moves through the screens:
 //
-//   home  (the big button)  ->  questions  ->  result
+//   home  (the big button)  ->  questions (one per screen)  ->  result
 //
 // Pressing the big button sends POST /api/checks at once (the server alerts the
 // family before any question is answered) and opens the questions without waiting
@@ -12,9 +12,11 @@ import { useRef, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { useCallContact } from "./callContact";
 import { CheckHome } from "./CheckHome";
+import { QuestionWizard } from "./QuestionWizard";
+import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
 
-// Which screen is shown. Like a Python Literal["home", "questions"].
-type Stage = "home" | "questions";
+// Which screen is shown. Like a Python Literal["home", "questions", "text"].
+type Stage = "home" | "questions" | "text";
 
 // POST /api/checks -> the new check's id, or null if the request failed (offline,
 // server down, too many checks). The questions go on either way.
@@ -26,18 +28,52 @@ async function startCheckOnServer(): Promise<string | null> {
 export function CallCheck() {
   const contact = useCallContact();
   const [stage, setStage] = useState<Stage>("home");
+  const [answers, setAnswers] = useState(EMPTY_ANSWERS);
+  const [questionIndex, setQuestionIndex] = useState(0);
   // The running POST /api/checks (a Promise is like a Python asyncio Task).
   // useRef keeps it between renders without redrawing the screen.
   const checkIdRequest = useRef<Promise<string | null> | null>(null);
 
   function start() {
     checkIdRequest.current = startCheckOnServer();
+    setAnswers(EMPTY_ANSWERS);
+    setQuestionIndex(0);
     setStage("questions");
+  }
+
+  // The next question, or the last (text) step after the last question.
+  function goForward(current = answers) {
+    if (questionIndex + 1 < questionOrder(current).length) {
+      setQuestionIndex(questionIndex + 1);
+    } else {
+      setStage("text");
+    }
+  }
+
+  function answer(id: QuestionId, value: string) {
+    setAnswers((previous) => withAnswer(previous, id, value));
+  }
+
+  // A tap on an answer: save it and go on at once (one tap per question).
+  function pick(id: QuestionId, value: string) {
+    const next = withAnswer(answers, id, value);
+    setAnswers(next);
+    goForward(next);
   }
 
   return (
     <main className="call-check">
       {stage === "home" ? <CheckHome contact={contact} onStart={start} /> : null}
+      {stage === "questions" ? (
+        <QuestionWizard
+          answers={answers}
+          index={questionIndex}
+          onAnswer={answer}
+          onPick={pick}
+          onNext={() => goForward()}
+          onBack={() => setQuestionIndex(Math.max(0, questionIndex - 1))}
+        />
+      ) : null}
     </main>
   );
 }

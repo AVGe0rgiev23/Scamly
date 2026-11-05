@@ -10,7 +10,7 @@ import { bg } from "@/i18n/bg";
 
 function Samples({ theme }: { theme: "light" | "dark" }) {
   // useState remembers a value between renders, like an instance field in Python.
-  const [answer, setAnswer] = useState<"yes" | "no" | null>(null);
+  const [answer, setAnswer] = useState<string | null>(null);
   const [clicked, setClicked] = useState(false);
   return (
     <section data-theme={theme} className="preview-panel" aria-label={bg.theme[theme]}>
