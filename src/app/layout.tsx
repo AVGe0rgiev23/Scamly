@@ -1,11 +1,10 @@
 // The root layout: the <html> and <body> that wrap every page of the app, and the
-// shared frame around each page (the header with logo and menu).
+// shared frame around each page (the header with logo, menu and theme switch).
 // The page language is Bulgarian (lang="bg"), which screen readers and browsers use.
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { bg } from "@/i18n/bg";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import "./globals.css";
 
@@ -26,9 +25,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {bg.layout.skipToContent}
         </a>
         <SiteHeader />
-        <div className="mx-auto w-full max-w-7xl px-6 py-4">
-          <ThemeToggle />
-        </div>
         {/* The page itself. It grows to fill the screen, so a short page still has
             the footer at the bottom. tabIndex={-1} lets the skip link move focus here. */}
         <div id="content" tabIndex={-1} className="site-content">

@@ -182,13 +182,52 @@ select {
   cursor: not-allowed;
   opacity: 0.55;
 }
+/* The compact theme switch in the header: a small label and three picture buttons
+ * (native radios, invisible but covering each button, so a tap anywhere selects it). */
 .theme-control {
-  display: grid;
-  gap: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
-.theme-control select {
-  padding: 0.5rem 1rem;
-  max-width: 100%;
+.theme-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+.theme-options {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+.theme-option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 0.6rem;
+  color: var(--muted);
+}
+.theme-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.theme-option:hover {
+  color: var(--foreground);
+}
+.theme-option:has(input:checked) {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.theme-option:has(input:focus-visible) {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
 }
 .muted {
   color: var(--muted);
@@ -408,12 +447,41 @@ select {
 .site-content:focus {
   outline: none;
 }
-/* On a phone the menu gets its own row under the logo, using the full width. */
+/* On a phone the menu gets its own row under the logo and the theme switch, using the
+ * full width; the label „Изглед“ is then only read aloud (sr-only style), to save space. */
 @media (max-width: 40rem) {
+  .site-header-inner {
+    column-gap: 0.5rem;
+  }
   .site-nav {
+    order: 3;
     width: 100%;
   }
   .site-nav ul {
-    margin-left: -0.6rem;
+    justify-content: space-between;
+    column-gap: 0;
+    margin: 0 -0.4rem;
+  }
+  .site-nav a {
+    padding: 0 0.4rem;
+    font-size: 0.95rem;
+  }
+  .theme-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* Very narrow phones (360 px): slightly smaller menu text keeps the menu on one row. */
+@media (max-width: 23.75rem) {
+  .site-nav a {
+    padding: 0 0.25rem;
+    font-size: 0.875rem;
+  }
+  .site-nav ul {
+    margin: 0 -0.25rem;
   }
 }

@@ -4,12 +4,13 @@ import { bg } from "@/i18n/bg";
 
 test("theme persists across pages and system mode follows the device", async ({ page }) => {
   await page.goto("/dev/ui");
-  const theme = page.getByLabel(bg.theme.label, { exact: true });
-  await theme.selectOption("dark");
+  // The compact switch in the header: a group of three radio buttons named „Изглед“.
+  const theme = page.getByRole("radiogroup", { name: bg.theme.label, exact: true });
+  await theme.getByRole("radio", { name: bg.theme.dark, exact: true }).check();
   await page.goto("/");
-  await expect(theme).toHaveValue("dark");
+  await expect(theme.getByRole("radio", { name: bg.theme.dark, exact: true })).toBeChecked();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await theme.selectOption("system");
+  await theme.getByRole("radio", { name: bg.theme.system, exact: true }).check();
   await page.emulateMedia({ colorScheme: "dark" });
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(16, 24, 32)");
   await page.emulateMedia({ colorScheme: "light" });

@@ -1,8 +1,11 @@
-// The top bar of every page: the Scamly logo (a link to the home page) and the main menu.
-// A Server Component: it is plain HTML with links, so no JavaScript is sent for it.
+// The top bar of every page: the Scamly logo (a link to the home page), the main menu
+// and the compact theme switch.
+// A Server Component: plain HTML with links. Only the theme switch inside it is a
+// Client Component, so only its small piece of JavaScript is sent to the browser.
 
 import Link from "next/link";
 import { ROUTES } from "@/config/routes";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { bg } from "@/i18n/bg";
 import { LogoMark } from "./Logo";
 
@@ -33,6 +36,7 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
+        <ThemeToggle />
       </div>
     </header>
   );
