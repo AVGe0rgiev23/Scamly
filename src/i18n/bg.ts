@@ -554,6 +554,13 @@ export const bg = {
       bank_transfer: "По банков път",
       other: "Друго",
     },
+    // The last, optional step: what the caller said. {count} and {max} are numbers.
+    textLabel: "Какво ви казаха? (по желание)",
+    textHint: "Можете да напишете няколко думи или да прескочите.",
+    textCounter: "{count} от {max} знака",
+    skip: "Прескочи",
+    check: "Провери",
+    checking: "Проверяваме…",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

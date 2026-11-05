@@ -1064,3 +1064,27 @@ a.button {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.75rem;
 }
+/* „Какво ви казаха?“: a big text field with a counter. */
+.check-text {
+  width: 100%;
+  min-height: 9rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+}
+.check-text:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.check-counter,
+.check-sending {
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+.check-sending {
+  font-weight: 700;
+  color: var(--foreground);
+}

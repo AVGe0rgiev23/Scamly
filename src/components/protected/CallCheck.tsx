@@ -1,7 +1,7 @@
 // The whole call check on the older person's phone (/protected, W2-01), as one
 // Client Component that moves through the screens:
 //
-//   home  (the big button)  ->  questions (one per screen)  ->  result
+//   home  (the big button)  ->  questions (one per screen)  ->  text  ->  result
 //
 // Pressing the big button sends POST /api/checks at once (the server alerts the
 // family before any question is answered) and opens the questions without waiting
@@ -10,13 +10,16 @@
 
 import { useRef, useState } from "react";
 import { callApi } from "@/components/family/api";
+import type { AnswersResultDto } from "@/schemas/checks";
+import { CallerText } from "./CallerText";
 import { useCallContact } from "./callContact";
 import { CheckHome } from "./CheckHome";
 import { QuestionWizard } from "./QuestionWizard";
 import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
+import { sendAnswers } from "./sendAnswers";
 
-// Which screen is shown. Like a Python Literal["home", "questions", "text"].
-type Stage = "home" | "questions" | "text";
+// Which screen is shown. Like a Python Literal["home", "questions", "text", "result"].
+type Stage = "home" | "questions" | "text" | "result";
 
 // POST /api/checks -> the new check's id, or null if the request failed (offline,
 // server down, too many checks). The questions go on either way.
@@ -30,6 +33,9 @@ export function CallCheck() {
   const [stage, setStage] = useState<Stage>("home");
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [sending, setSending] = useState(false);
+  // The server's verdict (shown by the result screen).
+  const [, setResult] = useState<AnswersResultDto | null>(null);
   // The running POST /api/checks (a Promise is like a Python asyncio Task).
   // useRef keeps it between renders without redrawing the screen.
   const checkIdRequest = useRef<Promise<string | null> | null>(null);
@@ -38,6 +44,7 @@ export function CallCheck() {
     checkIdRequest.current = startCheckOnServer();
     setAnswers(EMPTY_ANSWERS);
     setQuestionIndex(0);
+    setResult(null);
     setStage("questions");
   }
 
@@ -61,6 +68,20 @@ export function CallCheck() {
     goForward(next);
   }
 
+  // „Прескочи“ (text "") or „Провери“: send the answers, then show the verdict.
+  async function submit(text: string) {
+    const final = { ...answers, text };
+    setAnswers(final);
+    setSending(true);
+    const checkId = await checkIdRequest.current;
+    const response = checkId === null ? null : await sendAnswers(checkId, final);
+    setSending(false);
+    if (response !== null && response.ok) {
+      setResult(response.data);
+      setStage("result");
+    }
+  }
+
   return (
     <main className="call-check">
       {stage === "home" ? <CheckHome contact={contact} onStart={start} /> : null}
@@ -72,6 +93,15 @@ export function CallCheck() {
           onPick={pick}
           onNext={() => goForward()}
           onBack={() => setQuestionIndex(Math.max(0, questionIndex - 1))}
+        />
+      ) : null}
+      {stage === "text" ? (
+        <CallerText
+          text={answers.text}
+          onTextChange={(text) => setAnswers({ ...answers, text })}
+          onSubmit={(text) => void submit(text)}
+          onBack={() => setStage("questions")}
+          sending={sending}
         />
       ) : null}
     </main>
