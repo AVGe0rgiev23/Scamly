@@ -873,3 +873,85 @@ a.button {
 .device-status {
   font-weight: 700;
 }
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0.2rem 0.75rem;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-weight: 750;
+}
+.verdict-pending {
+  background: var(--background);
+  color: var(--muted);
+  border-style: dashed;
+}
+.check-list {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+.check-item {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+.check-item > * {
+  max-width: 100%;
+}
+.check-time {
+  font-weight: 700;
+}
+.check-detail {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.check-detail ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.check-answers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+}
+.check-answers dt {
+  font-weight: 650;
+}
+.check-text {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--border);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.history {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.history > .button {
+  justify-self: start;
+}
+@media (max-width: 30rem) {
+  .check-answers {
+    grid-template-columns: 1fr;
+  }
+  .check-answers dd {
+    margin-bottom: 0.5rem;
+  }
+}
+.check-detail-slot {
+  width: 100%;
+}
+.check-detail-slot:empty {
+  display: none;
+}

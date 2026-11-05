@@ -90,6 +90,14 @@ export const bg = {
         "Ако се съмнявате, затворете и се обадете сами на близкия си на номера, който знаете.",
     },
   },
+  // Short verdict labels for lists, e.g. the family's check history (VerdictBadge).
+  // Green never says "safe" (D9).
+  verdictBadge: {
+    red: "Признаци на измама",
+    yellow: "Съмнително обаждане",
+    green: "Без типични признаци",
+    pending: "Незавършена проверка",
+  },
   // Texts of the detection engine (src/engine). The headline and advice of a verdict
   // are bg.verdict above (one place for the D9 green wording).
   engine: {
@@ -455,6 +463,51 @@ export const bg = {
     revokeConfirm: "Да, премахни",
     revoking: "Премахване…",
     deviceRemoved: "Телефонът е премахнат.",
+    // The history of call checks (GET /api/checks?personId=…).
+    historyTitle: "Проверки на обаждания",
+    historyLoading: "Зареждаме проверките…",
+    historyEmpty:
+      "Още няма проверки. Когато възрастният човек натисне големия бутон на телефона си, проверката ще се появи тук.",
+    showMore: "Покажи още",
+    // {identity} = e.g. „полицай“.
+    claimedIdentity: "Кой се обажда: {identity}",
+    identities: {
+      police: "полицай",
+      relative: "роднина",
+      official: "служител на банка или институция",
+      courier: "куриер",
+      other: "друг човек",
+      unknown: "не е посочено",
+    },
+    // {name} = the family member who pressed „Обаждам ѝ се сега“, {time} = when.
+    acknowledgedBy: "{name} потвърди, че се обажда ({time}).",
+    acknowledgedBySomeone: "Близък потвърди, че се обажда ({time}).",
+    notAcknowledged: "Още никой не е потвърдил, че се обажда.",
+    showDetails: "Подробности",
+    hideDetails: "Скрий подробностите",
+    // {time} = when the check started; read aloud on the „Подробности“ button.
+    detailsLabel: "Подробности за проверката от {time}",
+    detailsLoading: "Зареждаме подробностите…",
+    reasonsTitle: "Защо",
+    noReasons: "Няма отбелязани признаци.",
+    answersTitle: "Отговори на въпросите",
+    asksMoney: "Искане на пари",
+    handover: "Начин на предаване",
+    rushing: "Натиск за бързане",
+    secrecy: "Искане за тайна",
+    callText: "Какво е казано (личните данни са скрити)",
+    triAnswers: {
+      yes: "Да",
+      no: "Не",
+      unsure: "Не знам",
+      none: "Без отговор",
+    },
+    handoverMethods: {
+      courier_or_stranger: "чрез куриер или непознат",
+      throw: "хвърляне през балкона или прозореца",
+      bank_transfer: "банков превод",
+      other: "друг начин",
+    },
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

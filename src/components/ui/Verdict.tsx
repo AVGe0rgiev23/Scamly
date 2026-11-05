@@ -2,9 +2,12 @@
 import { bg } from "@/i18n/bg";
 import { Card } from "./Card";
 
+// The symbol shown before the verdict's words (shared with VerdictBadge).
+export const VERDICT_SYMBOLS = { red: "!", yellow: "!", green: "✓" } as const;
+
 export function Verdict({ level }: { level: "red" | "yellow" | "green" }) {
   const text = bg.verdict[level];
-  const symbol = { red: "!", yellow: "!", green: "✓" }[level];
+  const symbol = VERDICT_SYMBOLS[level];
   return (
     <Card className={`verdict verdict-${level}`}>
       <h3>

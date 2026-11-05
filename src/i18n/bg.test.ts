@@ -13,4 +13,11 @@ describe("bg strings", () => {
   it("has the agreed tagline", () => {
     expect(bg.app.tagline).toBe("Обаждат ли ви се за пари? Проверете за 30 секунди.");
   });
+
+  it("never calls a green check safe (D9)", () => {
+    const texts = [bg.verdictBadge.green, bg.verdict.green.title, bg.verdict.green.description];
+    for (const text of texts) {
+      expect(text.toLowerCase()).not.toContain("безопас");
+    }
+  });
 });

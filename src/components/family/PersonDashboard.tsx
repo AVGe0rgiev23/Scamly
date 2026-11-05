@@ -18,6 +18,7 @@ import {
   type PersonDetailsDto,
   type PersonDto,
 } from "./api";
+import { CheckHistory } from "./CheckHistory";
 import { ContactsEditor } from "./ContactsEditor";
 import { DevicesList } from "./DevicesList";
 import { districtName } from "./format";
@@ -134,6 +135,10 @@ export function PersonDashboard({ personId }: { personId: string }) {
         <p className="muted">{person.isOwner ? bg.family.roleOwner : bg.family.roleContact}</p>
         {person.isOwner ? null : <p className="muted">{bg.family.readOnlyNote}</p>}
       </header>
+
+      <Section title={bg.family.historyTitle}>
+        <CheckHistory personId={person.id} />
+      </Section>
 
       <Section title={bg.family.devicesTitle}>
         <DevicesList
