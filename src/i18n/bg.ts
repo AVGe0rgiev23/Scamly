@@ -421,6 +421,22 @@ export const bg = {
     copyLink: "Копирай връзката",
     copied: "Връзката е копирана.",
     copyFailed: "Копирането не успя. Маркирайте връзката и я копирайте ръчно.",
+    // Pairing the older person's phone (POST /api/persons/:id/pairing-codes).
+    pairingTitle: "Свързване на телефона",
+    // {address} = our pairing page, e.g. „scamly.example/svarzhi“.
+    pairingIntro:
+      "Създайте код от 6 цифри. На телефона на възрастния човек отворете {address} и въведете кода или сканирайте QR кода с камерата на телефона.",
+    pairingRules:
+      "Кодът е валиден 10 минути и може да се използва само веднъж. Новият код отменя предишния.",
+    pairingButton: "Свържи телефон",
+    newCode: "Нов код",
+    creatingCode: "Създаване на код…",
+    codeLabel: "Код за свързване",
+    codeReady: "Кодът е готов.",
+    qrLabel: "QR код с връзка за свързване на телефона",
+    // {time} = minutes and seconds left, e.g. „9:42“.
+    codeTimeLeft: "Остават {time} мин.",
+    codeExpired: "Кодът изтече. Натиснете „Нов код“, за да създадете друг.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

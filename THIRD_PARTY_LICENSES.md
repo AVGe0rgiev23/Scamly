@@ -16,6 +16,7 @@ These are part of the app that runs on the server and in the browser.
 | @supabase/ssr         | 0.12.7  | MIT     | Keeps the Supabase login session in cookies (server and proxy)  |
 | @supabase/supabase-js | 2.118.0 | MIT     | Talks to our Supabase database, Auth and Realtime               |
 | next                  | 16.4.4  | MIT     | Web framework (pages, API routes, build)                        |
+| qrcode                | 1.5.4   | MIT     | Makes the QR code for pairing a phone, in the browser           |
 | react                 | 19.3.1  | MIT     | User-interface library                                          |
 | react-dom             | 19.3.1  | MIT     | Draws React components in the browser                           |
 | server-only           | 0.0.1   | MIT     | Makes the build fail if browser code imports a server-only file |
@@ -31,6 +32,7 @@ These are only used while writing, checking, testing and building the code.
 | @playwright/test       | 1.63.0  | Apache-2.0 | End-to-end tests in a real browser                        |
 | @tailwindcss/turbopack | 4.3.4   | MIT        | Lets the Next.js bundler process Tailwind CSS             |
 | @types/node            | 22.20.5 | MIT        | TypeScript types for Node.js                              |
+| @types/qrcode          | 1.5.6   | MIT        | TypeScript types for qrcode                               |
 | @types/react           | 19.3.0  | MIT        | TypeScript types for React                                |
 | @types/react-dom       | 19.3.0  | MIT        | TypeScript types for React DOM                            |
 | @types/web-push        | 3.6.4   | MIT        | TypeScript types for web-push                             |
@@ -58,6 +60,7 @@ Packages that our dependencies install for us, worth knowing about:
 | cookie                                                                          | MIT               | @supabase/ssr         | Reads and writes cookie headers                                                    |
 | iceberg-js                                                                      | MIT               | @supabase/supabase-js | Part of the storage client (we don't use it)                                       |
 | tslib                                                                           | 0BSD              | @supabase/\*          | TypeScript helper functions; 0BSD is compatible with GPL-3.0                       |
+| dijkstrajs, pngjs, yargs                                                        | MIT               | qrcode                | QR segment optimiser; PNG output and command line (not used in the browser bundle) |
 | http_ece, asn1.js, bn.js, jws, jwa, https-proxy-agent, agent-base, minimist     | MIT               | web-push              | Message encryption, key handling, the VAPID signature, proxy support               |
 
 The seed runner tsx also uses esbuild (MIT) for TypeScript transformation.

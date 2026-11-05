@@ -45,3 +45,25 @@ export function formatDateTime(iso: string): string {
   }).format(moment);
   return fill(bg.family.dateTime, { date, time });
 }
+
+// A pairing code is valid this long: the same value as PAIRING_CODE_LIFETIME_MS in
+// src/server/services/pairingService.ts (a unit test checks that they are equal).
+export const CODE_LIFETIME_MS = 10 * 60 * 1000;
+
+// "482915" -> „482 915“: two groups of three digits are easier to read and type.
+export function formatCode(code: string): string {
+  return `${code.slice(0, 3)} ${code.slice(3)}`;
+}
+
+// "482915" -> „4 8 2 9 1 5“, for screen readers (they would read „482 915“ as two numbers).
+export function spellDigits(code: string): string {
+  return code.split("").join(" ");
+}
+
+// Milliseconds left -> „9:42“ (minutes:seconds). Never negative.
+export function formatCountdown(msLeft: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(msLeft / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}

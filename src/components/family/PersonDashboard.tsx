@@ -15,6 +15,7 @@ import { callApi, type ContactDto, type PersonDetailsDto, type PersonDto } from 
 import { ContactsEditor } from "./ContactsEditor";
 import { districtName } from "./format";
 import { InviteForm } from "./InviteForm";
+import { PairingPanel } from "./PairingPanel";
 import { PersonSettings } from "./PersonSettings";
 
 type DashboardState =
@@ -120,6 +121,12 @@ export function PersonDashboard({ personId }: { personId: string }) {
         <p className="muted">{person.isOwner ? bg.family.roleOwner : bg.family.roleContact}</p>
         {person.isOwner ? null : <p className="muted">{bg.family.readOnlyNote}</p>}
       </header>
+
+      {person.isOwner ? (
+        <Section title={bg.family.pairingTitle}>
+          <PairingPanel personId={person.id} />
+        </Section>
+      ) : null}
 
       <Section title={bg.family.contactsTitle}>
         <ContactsEditor
