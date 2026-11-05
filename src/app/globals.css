@@ -462,6 +462,92 @@ select {
   margin: 0 auto;
   padding: 1.25rem 1rem 1.5rem;
 }
+/* A link that looks like a big button (e.g. the start buttons on the home page). */
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* Home page (W2-13): hero, the 3 steps and the three rules. */
+.home {
+  display: grid;
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 1rem;
+}
+.home-hero {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 4vw, 3rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+}
+.home-hero > * {
+  max-width: 46rem;
+}
+.home-eyebrow {
+  color: var(--primary);
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+.home-lead {
+  font-size: 1.2rem;
+}
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.home-actions .button {
+  flex: 1 1 13rem;
+}
+.home-section {
+  display: grid;
+  gap: 1rem;
+}
+.home-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  list-style: none;
+}
+.home-step-number {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.home-rules {
+  border-left: 6px solid var(--primary);
+}
+.home-rules ul {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+  font-weight: 600;
+}
+.home-rules li::marker {
+  color: var(--primary);
+}
+@media (max-width: 50rem) {
+  .home-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* On a phone the menu gets its own row under the logo and the theme switch, using the
  * full width; the label „Изглед“ is then only read aloud (sr-only style), to save space. */
 @media (max-width: 40rem) {

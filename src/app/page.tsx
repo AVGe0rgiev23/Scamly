@@ -1,14 +1,56 @@
-// The home page ("/"): a short, temporary Bulgarian landing page.
-// All text comes from src/i18n/bg.ts. The real design arrives with the design system (W1-11).
+// The home page ("/"): what Scamly is for, the 3 steps, the start buttons and three
+// rules to remember. A Server Component; all text comes from src/i18n/bg.ts.
 
+import Link from "next/link";
+import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 px-6 py-16">
-      <h1 className="text-4xl font-bold sm:text-5xl">{bg.app.name}</h1>
-      <p className="text-2xl leading-snug">{bg.app.tagline}</p>
-      <p className="text-lg text-muted">{bg.app.comingSoon}</p>
+    <main className="home">
+      <section className="home-hero" aria-labelledby="home-title">
+        <p className="home-eyebrow">{bg.home.eyebrow}</p>
+        <h1 id="home-title">{bg.app.tagline}</h1>
+        <p className="home-lead">{bg.home.problem}</p>
+        {/* Links that look like our big buttons: they open another page. */}
+        <div className="home-actions">
+          <Link href={ROUTES.register} className="button button-primary">
+            {bg.home.register}
+          </Link>
+          <Link href={ROUTES.pair} className="button button-primary">
+            {bg.home.pair}
+          </Link>
+          <Link href={ROUTES.login} className="button button-secondary">
+            {bg.home.login}
+          </Link>
+        </div>
+        <p className="muted">{bg.home.pairNote}</p>
+      </section>
+
+      <section className="home-section" aria-labelledby="steps-title">
+        <h2 id="steps-title">{bg.home.stepsTitle}</h2>
+        {/* An ordered list (<ol>): screen readers announce "1 of 3" and so on. */}
+        <ol className="home-steps">
+          {bg.home.steps.map((step, index) => (
+            <li key={step.title} className="card home-step">
+              <span className="home-step-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="card home-rules" aria-labelledby="rules-title">
+        <h2 id="rules-title">{bg.home.rulesTitle}</h2>
+        <ul>
+          {bg.home.rules.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }
