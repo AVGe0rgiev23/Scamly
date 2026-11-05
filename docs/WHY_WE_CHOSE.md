@@ -929,6 +929,41 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** our design needed a specific font for the brand; then we'd self-host one with a free licence (e.g. OFL) that supports Bulgarian Cyrillic.
 
+### Call check: one question per screen (vs one long form)  (status: in use (W2-01, `src/components/protected/QuestionWizard.tsx`))
+
+**Used for:** the 4 + 1 questions on the older person's phone (BUILD_PLAN 4.1), then the optional text.
+
+**Alternatives we considered:** all questions on one scrolling form with one „Провери“ button; a chat-like flow (bot messages and answer bubbles); only yes / no buttons without the „Не знам“ answer.
+
+**Why this one:**
+- One decision at a time: a frightened 80-year-old on a small phone reads one big question and taps one big answer. A long form needs scrolling, and an unanswered question in the middle is easy to miss.
+- One tap goes on to the next question, so the whole check is about 5 taps; „Назад“ and „Въпрос 2 от 4“ show where you are.
+- Question 3 („Как искат да ги дадете?“) simply appears or not; in a form it would jump in and move everything below it.
+- Each screen gives the focus to its heading, so a screen reader reads the new question; answers are native radio buttons (keyboard and screen reader work without extra code). With the keyboard the arrow keys only choose and „Напред“ goes on, so the choice can't jump away.
+- A chat flow looks friendly but adds text to read and is harder to make accessible.
+
+**What we give up:**
+- More screens: a person who wants to change an early answer taps „Назад“ a few times.
+- A little more code (the stage and question index) than one form.
+
+**We would reconsider if:** tests with older people showed they get lost between screens; then fewer, combined questions.
+
+### Praise first on the red result (vs only the warning)  (status: in use (W2-01, IDEAS #8))
+
+**Used for:** a red result starts with „Добре направихте, че проверихте.“, then „ТОВА Е ИЗМАМА.“, „Затворете телефона.“ and the reasons.
+
+**Alternatives we considered:** only the alarm („ТОВА Е ИЗМАМА.“ in big red letters); a sound or vibration; a softer headline („Може би е измама“).
+
+**Why this one:**
+- A scared person who feels ashamed („how could I believe it?“) may freeze or keep talking to the scammer. Praise first tells them they did the right thing, and the next line tells them clearly what to do now.
+- The headline stays clear: we soften the tone, not the message (D10 still forces red).
+- No sound: the scammer may still be on the line and hear it.
+
+**What we give up:**
+- One more line to read before the instruction (it is short, and „Затворете телефона.“ is the biggest line in the box).
+
+**We would reconsider if:** older users told us the praise feels patronising; then a shorter, neutral first line.
+
 ### PWA instead of a native Android/iOS app  (status: decided, not built yet (week 2))
 
 **Used for:** making Scamly installable on the home screen, with web push and an offline "what to do" card.
@@ -1408,22 +1443,26 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we found a maintained library that handles real-world шльокавица better than our rules.
 
-### The same engine on the phone as an offline fallback  (status: decided (Q6), not built yet (week 2))
+### The same engine on the phone as an offline fallback  (status: in use (Q6; `src/components/protected/CallCheck.tsx` + `upload.ts`, W2-01))
 
-**Used for:** if the network fails or takes more than 4 s, the phone shows the locally computed verdict and uploads later.
+**Used for:** if `PUT /api/checks/:id/answers` fails or takes more than 4 s, the phone runs `analyseCall()` itself, shows that verdict at once with the note „Резултатът е изчислен на телефона — семейството може още да не е уведомено.“, and keeps sending the answers in the background (after 2, 4, 8, 15 and 30 s).
 
-**Alternatives we considered:** server-only verdict; showing an error when offline.
+**Alternatives we considered:** server-only verdict (wait, then show an error when offline); an error with a „Опитай отново“ button; a service worker that queues the request (Background Sync); computing the verdict only on the phone.
 
 **Why this one:**
-- The red "hang up" message must never depend on Wi-Fi.
-- It costs almost nothing because the engine is pure TypeScript with no dependencies.
+- The red „Затворете телефона.“ must never depend on Wi-Fi: on a bad connection the person sees it in under 5 s anyway.
+- It costs almost nothing because the engine is pure TypeScript with no dependencies; the phone and the server compute the same verdict from the same answers.
+- The server verdict stays the official one: the family sees only what the server computed, and a late server answer replaces the local one on the phone.
+- Plain retries in the page are easy to explain and to test with fakes (`upload.test.ts`); Background Sync works only in some browsers and needs the service worker (W2-09).
+- An error screen would leave a frightened person with nothing at the worst moment.
 
 **What we give up:**
-- The engine code is visible in the browser (fine: it holds no secrets), and the server verdict stays the official one.
+- The engine code is visible in the browser (fine: it holds no secrets).
+- If the page is closed before a retry gets through, the answers are lost (the family was still alerted by the big button, if that request arrived); the note says the family may not know yet.
 
-**We would reconsider if:** the engine needed secret data (it doesn't).
+**We would reconsider if:** the engine needed secret data (it doesn't), or a real phone showed many lost answers; then Background Sync in the service worker.
 
-### Green verdict never says "safe"  (status: in use (D9; `verdict.ts` uses `bg.verdict.green`, tested word for word))
+### Green verdict never says "safe"  (status: in use (D9; `verdict.ts` uses `bg.verdict.green`, tested word for word; the `Verdict` component and the call-check screen also take the words only from `bg.verdict`))
 
 **Used for:** the green result text: „Няма типични признаци на измама. Ако се съмнявате, затворете и се обадете сами на близкия си...“, plus a "money floor" (a request for money is never green).
 
@@ -1514,7 +1553,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project.
 
-### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`))
+### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`; W2-01: `/dev/protected`))
 
 **Used for:** testing the family dashboard in a real browser in CI, where there is no database.
 
@@ -2123,3 +2162,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-05 · W2-13 (D22): new entries in section 4: shared root layout for the header and footer (vs a header in every page), compact theme switch in the header (vs the full-width field, a select, a cycling button, a menu button), home page that explains the 3 steps; design-system entry points to the new switch
 - 2026-11-05 · W2-07 family dashboard (Roberta): new entries in section 4 (Client Components that call our API vs Server Components that read the database; ↑ / ↓ buttons vs drag and drop; `qrcode` 1.5.4 in the browser vs our own QR code vs an online QR service) and section 8 (preview pages without the role guard for the browser tests vs a test login, a test mode, component tests)
 - 2026-11-05 · logged-in header (Roberta): new entry in section 4 "Logged-in header menu read on the server inside `<Suspense>`" (vs `GET /api/me` in the browser, vs no `<Suspense>`, vs a bar per area); shared-root-layout entry no longer lists the missing logged-in menu
+- 2026-11-05 · W2-01 call check (Roberta): new entries in section 4 "Call check: one question per screen (vs one long form)" and "Praise first on the red result (vs only the warning)"; "The same engine on the phone as an offline fallback" now in use (4 s, background retries, server verdict stays official; vs an error screen, Background Sync, phone-only verdict); D9 and preview-page entries updated

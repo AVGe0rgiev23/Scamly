@@ -25,6 +25,7 @@ type CheckResultProps = {
   reasons: string[]; // Bulgarian "why" lines from the engine
   callContact: CallContactDto | null;
   afterCall: boolean; // the call has already ended: no „Затворете телефона.“
+  local: boolean; // computed on the phone (offline fallback): show the small note
   familyMessage: string | null; // „Иван ще ви се обади веднага.“, null until then
   onNewCheck: () => void;
 };
@@ -34,6 +35,7 @@ export function CheckResult({
   reasons,
   callContact,
   afterCall,
+  local,
   familyMessage,
   onNewCheck,
 }: CheckResultProps) {
@@ -56,6 +58,7 @@ export function CheckResult({
         reasons={reasons.slice(0, MAX_REASONS)}
         reasonsTitle={bg.protectedCheck.reasonsTitle}
       />
+      {local ? <p className="check-local-note">{bg.protectedCheck.localNote}</p> : null}
       {/* role="status": a live region, there from the start, so a screen reader reads
           the family message aloud the moment it appears. */}
       <div role="status" className={familyMessage === null ? undefined : "check-family"}>

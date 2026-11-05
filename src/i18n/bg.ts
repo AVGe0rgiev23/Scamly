@@ -567,6 +567,9 @@ export const bg = {
     hangUp: "Затворете телефона.",
     reasonsTitle: "Защо:",
     newCheck: "Нова проверка",
+    // Offline fallback (BUILD_PLAN 4.9): the server did not answer within 4 s, so the
+    // phone computed the verdict itself and keeps sending the answers in the background.
+    localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {
