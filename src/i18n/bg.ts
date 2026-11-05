@@ -24,7 +24,7 @@ export const bg = {
     notFoundText: "Няма страница на този адрес.",
     backHome: "Към началната страница",
   },
-  // The frame around every page: header with menu (W2-13, src/components/layout/).
+  // The frame around every page: header with menu, and footer (W2-13, src/components/layout/).
   layout: {
     skipToContent: "Към основното съдържание",
     // Read by screen readers after the logo text, so the logo link says where it leads.
@@ -33,6 +33,8 @@ export const bg = {
     login: "Вход",
     register: "Регистрация",
     pair: "Свържи телефон",
+    footerProject: `${APP_NAME} е училищен проект за ИТ турнира „Джон Атанасов“.`,
+    footerPrinciples: "Свободен софтуер с лиценз GPL-3.0. Без реклами и без проследяване.",
   },
   theme: {
     label: "Изглед",

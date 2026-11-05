@@ -363,7 +363,7 @@ select {
   letter-spacing: 0.18em;
 }
 
-/* Site frame (W2-13): skip link, header with logo and menu, page area. */
+/* Site frame (W2-13): skip link, header with logo and menu, page area, footer. */
 .skip-link {
   position: absolute;
   left: 1rem;
@@ -446,6 +446,21 @@ select {
 }
 .site-content:focus {
   outline: none;
+}
+.site-footer {
+  margin-top: 2rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.site-footer-inner {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 1.5rem;
 }
 /* On a phone the menu gets its own row under the logo and the theme switch, using the
  * full width; the label „Изглед“ is then only read aloud (sr-only style), to save space. */
