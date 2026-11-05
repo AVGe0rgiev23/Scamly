@@ -800,9 +800,28 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **What we give up:**
 - The older person's own screen (W2-01) also gets the header; if it should be calmer there, that area needs its own nested layout or a smaller header later.
-- The menu doesn't yet change for logged-in users (e.g. „Изход“); that comes with the dashboards.
+- On a normal click between pages the header is not drawn again, so it changes only after a full page load (login, pairing and „Изход“ do one on purpose).
 
 **We would reconsider if:** areas needed very different frames; then we'd use route groups with one layout each.
+
+### Logged-in header menu read on the server inside `<Suspense>` (vs the browser asking `GET /api/me`)  (status: in use (`src/components/layout/SiteHeader.tsx`))
+
+**Used for:** the header menu for a logged-in person: link to their area, their name, „Изход“ (not on a paired phone).
+
+**Alternatives we considered:** a Client Component that calls `GET /api/me` after the page loads; reading the login in the root layout itself without `<Suspense>`; a separate „Влезли сте като … / Изход“ bar in each area (what `/family` had).
+
+**Why this one:**
+- `getActor()` already answers "who is this?" on the server; the header uses it directly, so there is no second request from the browser and no JavaScript for it.
+- It is the pattern of the Next.js 16 guide "Authentication with Cache Components": the component that reads the session sits inside `<Suspense>`, so the rest of every page is still built in advance. Reading the cookie in the layout without `<Suspense>` makes `next build` fail with Cache Components (and would make every page wait for the database).
+- The fallback is the guest menu with the same height, so the header never jumps and is never empty.
+- One place for the name and „Изход“ in every area, instead of a bar per area.
+
+**What we give up:**
+- Every page view of a logged-in person asks Supabase Auth once more (`auth.getUser()`); the area pages ask again in their role guard. Fine at our size.
+- A logged-in person may see the guest menu for a moment before the real one streams in, mostly on a slow connection.
+- The logged-in menu can't be tested in the browser tests without a database; the role → link rule is unit-tested and the screen was checked by hand with the demo account.
+
+**We would reconsider if:** the header needed to change on client-side navigation without a full page load; then a small Client Component with `GET /api/me` (or a shared user context) would be simpler.
 
 ### Compact theme switch in the header (vs the full-width „Изглед“ field)  (status: in use (W2-13, D22))
 
@@ -2103,3 +2122,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): Web Push entry now in use and compares `web-push` 3.6.7 with hand-written encryption and Firebase FCM; Brevo entry now in use (real e-mail pending a Brevo account); new entries: VAPID public key from a route vs `NEXT_PUBLIC_`, push endpoint allowlist (SSRF), push upsert = delete + insert vs an UPDATE grant, plain `fetch` vs Brevo's SDK, Resend as a stub, no `alerts` row when nothing was sent (`noop`, `"skipped"`), `Promise.all` for the alert sends, `.catch()` fallback for optional env vars vs failing fast; `AlertChannel`, rate limiting and DI-fakes statuses updated
 - 2026-11-05 · W2-13 (D22): new entries in section 4: shared root layout for the header and footer (vs a header in every page), compact theme switch in the header (vs the full-width field, a select, a cycling button, a menu button), home page that explains the 3 steps; design-system entry points to the new switch
 - 2026-11-05 · W2-07 family dashboard (Roberta): new entries in section 4 (Client Components that call our API vs Server Components that read the database; ↑ / ↓ buttons vs drag and drop; `qrcode` 1.5.4 in the browser vs our own QR code vs an online QR service) and section 8 (preview pages without the role guard for the browser tests vs a test login, a test mode, component tests)
+- 2026-11-05 · logged-in header (Roberta): new entry in section 4 "Logged-in header menu read on the server inside `<Suspense>`" (vs `GET /api/me` in the browser, vs no `<Suspense>`, vs a bar per area); shared-root-layout entry no longer lists the missing logged-in menu

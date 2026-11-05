@@ -1,5 +1,7 @@
 // End-to-end tests for the site frame (W2-13): header, menu, compact theme switch and
 // footer on every public page, and the home page with its 3 steps and start buttons.
+// They run without a database, so only the guest header is tested here; the logged-in
+// menu (role -> area link, „Изход“) is unit-tested in src/components/layout/.
 
 import { expect, test, type Page } from "@playwright/test";
 import { bg } from "@/i18n/bg";
@@ -29,6 +31,20 @@ test("every public page has the header, the menu and the footer", async ({ page 
     }
     await expect(page.getByRole("contentinfo")).toContainText(bg.layout.footerProject);
     await expect(page.getByRole("contentinfo")).toContainText(bg.layout.footerPrinciples);
+  }
+});
+
+test("a guest's header shows no account link, no name and no „Изход“", async ({ page }) => {
+  // /family without a login is sent to /vhod; its header must be the guest one too.
+  for (const path of [...PAGES.map((entry) => entry.path), "/family"]) {
+    await page.goto(path);
+    const header = page.getByRole("banner");
+    await expect(header.getByRole("link", { name: bg.layout.login, exact: true })).toBeVisible();
+    for (const label of [bg.layout.accountFamily, bg.layout.accountProtected]) {
+      await expect(header.getByRole("link", { name: label })).toHaveCount(0);
+    }
+    await expect(header.getByText(bg.layout.signedInAs)).toHaveCount(0);
+    await expect(header.getByRole("button", { name: bg.auth.logoutButton })).toHaveCount(0);
   }
 });
 

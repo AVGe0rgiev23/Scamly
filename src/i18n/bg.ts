@@ -32,6 +32,13 @@ export const bg = {
     login: "Вход",
     register: "Регистрация",
     pair: "Свържи телефон",
+    // When logged in, the menu shows the link to the person's own area (by role),
+    // the name („Влезли сте като …“) and „Изход“ (not on the older person's phone).
+    accountFamily: "Моите близки",
+    accountModerator: "Модерация",
+    accountAdmin: "Администрация",
+    accountProtected: "Проверка на обаждане",
+    signedInAs: "Влезли сте като",
     footerProject: `${APP_NAME} е училищен проект за ИТ турнира „Джон Атанасов“.`,
     footerPrinciples: "Свободен софтуер с лиценз GPL-3.0. Без реклами и без проследяване.",
   },
@@ -203,7 +210,6 @@ export const bg = {
     passwordWeak: "Паролата е твърде лесна за отгатване. Изберете друга.",
     displayNameInvalid: "Въведете име от 1 до 60 знака.",
     checkEmail: "Изпратихме ви писмо. Отворете връзката в него, за да потвърдите профила си.",
-    signedInAs: "Влезли сте като",
   },
   // Pairing the older person's phone (page /svarzhi, BUILD_PLAN section 5).
   pairing: {
@@ -339,7 +345,6 @@ export const bg = {
   },
   // The family dashboard /family (W2-07, src/components/family/).
   family: {
-    signedInAs: "Влезли сте като",
     networkError: "Няма връзка със сървъра. Проверете интернета си и опитайте отново.",
     retry: "Опитай отново",
     // The list of protected persons (/family).

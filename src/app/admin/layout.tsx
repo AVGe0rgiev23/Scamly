@@ -9,7 +9,7 @@ import { AreaLoading, RoleGate } from "../_auth-placeholders/RoleGate";
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <Suspense fallback={<AreaLoading />}>
-      <RoleGate allowedRoles={["admin"]} loginPage={ROUTES.login} showLogout={true}>
+      <RoleGate allowedRoles={["admin"]} loginPage={ROUTES.login}>
         {children}
       </RoleGate>
     </Suspense>

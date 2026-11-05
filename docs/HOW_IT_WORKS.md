@@ -71,14 +71,14 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Part | Status | Where in the code | Proven by |
 |---|---|---|---|
 | App skeleton (layout, home page, 404 page) | ✅ | `src/app/layout.tsx`, `page.tsx`, `not-found.tsx`, `globals.css` | `tests/e2e/home.spec.ts`; CI jobs *checks* (build) and *e2e* |
-| Site layout: header, menu, compact theme switch, footer + real home page (3.31) | ✅ (W2-13, D22) | `src/components/layout/`, `src/components/ui/ThemeToggle.tsx`, `src/app/layout.tsx`, `src/app/page.tsx` | `tests/e2e/layout.spec.ts` (6 tests), `home.spec.ts`, `ui.spec.ts` |
+| Site layout: header, menu, compact theme switch, footer + real home page (3.31) | ✅ (W2-13, D22) | `src/components/layout/`, `src/components/ui/ThemeToggle.tsx`, `src/app/layout.tsx`, `src/app/page.tsx` | `tests/e2e/layout.spec.ts` (7 tests), `src/components/layout/accountLinks.test.ts`, `home.spec.ts`, `ui.spec.ts` |
 | App name constant | ✅ | `src/config/app.ts` | `src/i18n/bg.test.ts` |
 | Feature switches | ✅ (`push`, `email` used by the alert channels) | `src/config/features.ts` | `src/config/features.test.ts` |
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 449 tests in 44 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 22 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| Unit tests (Vitest) | ✅ 467 tests in 48 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 33 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -149,7 +149,7 @@ Step by step, when someone opens `/`:
 2. App Router finds `src/app/page.tsx` for that URL and the layout above it (`src/app/layout.tsx`).
 3. It calls `RootLayout({ children: <HomePage /> })`. The page is put where the layout writes `{children}`.
 4. Both are **server components**, so React turns their static content into HTML on the server. Interactive components such as the design system's theme control use `"use client"` and add the browser code needed for their behaviour.
-5. Because `next.config.ts` turns on `cacheComponents: true` and the home page uses no request data, Next.js **pre-renders it once at build time**. After `npm run build` you can see the result as `.next/server/app/index.html`. Every visitor gets that ready-made HTML.
+5. Because `next.config.ts` turns on `cacheComponents: true` and the home page uses no request data, Next.js **pre-renders it once at build time**. After `npm run build` you can see the result as `.next/server/app/index.html`. Every visitor gets that ready-made HTML. Only the header's menu is filled in per request: it depends on who is logged in, so it sits inside `<Suspense>` and streams in after the ready-made part (section 3.31). This is why `next build` marks the pages ◐ (Partial Prerender).
 6. The text comes from `bg` (the Bulgarian text file), for example `{bg.app.tagline}`.
 
 ```tsx
@@ -709,11 +709,11 @@ Everything the service needs from outside comes in one `PairingDeps` object (clo
 
 `src/components/auth/AuthPage.tsx` provides the server-rendered Card frame. Client forms in `src/components/auth/forms.tsx` reuse the API Zod schemas, labelled native fields, autocomplete, at least 18 px text and 64 px controls. Bulgarian validation identifies the invalid field and focuses an alert summary; confirmation uses a status message. Inputs and submit controls are disabled while a request is pending, with an immediate ref guard against duplicate requests. Network/API failures keep the visitor on the form.
 
-Login accepts only a known role before choosing its destination. Registration either shows the email-confirmation message or opens the family area when the API explicitly returns family with no confirmation required. Logout opens the login page only after success. Session cookies remain server-managed and HttpOnly.
+Login accepts only a known role before choosing its destination. Registration either shows the email-confirmation message or opens the family area when the API explicitly returns family with no confirmation required. Logout opens the home page `/` only after success (since the header logout, 3.31). Session cookies remain server-managed and HttpOnly.
 
 Pairing keeps the code as a six-character string so leading zeroes survive. A valid `/svarzhi?kod=001234` link prefills the field without submitting; malformed query values are ignored. `useSearchParams` is inside Suspense, following the installed Next.js guide. Wrong/expired/reused codes retain the backend generic error and rate-limit messages are shown clearly. No client code bypasses the API guards.
 
-`RoleGate.tsx` still checks the role server-side inside Suspense and now imports the designed logout control. The obsolete temporary forms module was removed. Bulgarian fixture wording is prepared in `bg.seed` for the local seed script.
+`RoleGate.tsx` still checks the role server-side inside Suspense; the name and the logout control moved to the site header (3.31). The obsolete temporary forms module was removed. Bulgarian fixture wording is prepared in `bg.seed` for the local seed script.
 
 #### Why it works like that
 
@@ -1149,14 +1149,16 @@ A family member in the contact list **with an account**, with `profiles.email_al
 
 #### What it does
 
-Every page now has the same frame: a **header** with the Scamly logo (a link to `/`), the main menu („Вход“, „Регистрация“, „Свържи телефон“) and a small **theme switch**, and a **footer** that says what Scamly is (a school project for the „Джон Атанасов“ IT tournament, GPL-3.0, no ads, no tracking). The home page `/` replaces the day-1 placeholder: the tagline, one sentence on the problem, the **3 steps** (the relative pairs the phone → the older person presses one big button and answers a few questions → the family gets an alert at once), the start buttons „Регистрация за близки“ and „Свържи телефон“ (plus „Вход“), and a box with three rules for a suspicious call.
+Every page now has the same frame: a **header** with the Scamly logo (a link to `/`), the main menu („Вход“, „Регистрация“, „Свържи телефон“; for a logged-in person instead: the link to their own area, their name and „Изход“) and a small **theme switch**, and a **footer** that says what Scamly is (a school project for the „Джон Атанасов“ IT tournament, GPL-3.0, no ads, no tracking). The home page `/` replaces the day-1 placeholder: the tagline, one sentence on the problem, the **3 steps** (the relative pairs the phone → the older person presses one big button and answers a few questions → the family gets an alert at once), the start buttons „Регистрация за близки“ and „Свържи телефон“ (plus „Вход“), and a box with three rules for a suspicious call.
 
 #### How it works
 
 | File | Job |
 |---|---|
 | `src/app/layout.tsx` | The root layout. It renders a "skip to content" link, `<SiteHeader />`, the page (`{children}`) inside `<div id="content">`, and `<SiteFooter />`. |
-| `src/components/layout/SiteHeader.tsx` | Server Component: logo link + `<nav aria-label="Основно меню">` with three `<Link>`s (addresses from `ROUTES`) + `<ThemeToggle />`. |
+| `src/components/layout/SiteHeader.tsx` | Server Component: logo link + `<nav aria-label="Основно меню">` + `<ThemeToggle />`. The menu is drawn by `AccountNav` inside `<Suspense>`: it calls `getActor()` and shows the guest links (addresses from `ROUTES`) or the logged-in menu. |
+| `src/components/layout/accountLinks.ts` | Plain functions: `accountLinkFor(role)` (the area link: `homePathForRole(role)` + its text from `bg.layout`) and `showsLogout(role)` (false only for `protected`). |
+| `src/components/auth/forms.tsx` | `LogoutButton` (Client Component): `POST /api/auth/logout`, then `window.location.assign("/")`. |
 | `src/components/layout/Logo.tsx` | Our own mark: a shield with a mobile phone, drawn as inline SVG. Its colours are CSS classes that use the theme tokens. |
 | `src/components/layout/SiteFooter.tsx` | Server Component with two lines of text. |
 | `src/components/ui/ThemeToggle.tsx` | Client Component: three radio buttons in a `radiogroup` named „Изглед“, each with a small picture (screen, sun, moon) and a hidden text label. |
@@ -1166,6 +1168,19 @@ Every page now has the same frame: a **header** with the Scamly logo (a link to 
 - **One shared frame.** In the App Router, `layout.tsx` wraps every page: Next.js calls `RootLayout({ children: <the page> })`. On navigation only `children` changes; the header and footer stay and are not re-rendered. So every page, also the ones built later (W2-01, W2-07…), gets the frame without adding anything.
 - **Header layout.** A wrapping flexbox. On a wide screen: logo left, menu and theme switch right. Below 640 px the menu gets its own full-width row under the logo and theme switch (`order: 3`), and the label „Изглед“ is hidden on screen but still read aloud. Below 380 px the menu text is a little smaller, so all three links fit in one row at 360 px. Menu links and theme buttons are at least 48 px high; the start buttons on the home page are 64 px (`.button`).
 - **Theme switch.** The choice is written to `<html data-theme="…">`, and `globals.css` picks the colour tokens from it; `system` follows the device setting (`prefers-color-scheme`). The choice is saved in `localStorage` under `scamly-theme`. After the page loads, an effect reads it back, applies it and ticks the right radio button. The component listens to the browser's own `change` event: React's `onChange` would miss a click after we tick a radio button from code. The radios are real `<input type="radio">` elements, invisible but covering each picture button, so a tap, a click, Tab and the arrow keys all work, and focus is shown with a 3 px outline.
+- **Logged-in header.** Who is looking is read on the server, in a small async Server Component `AccountNav`: `await connection()`, then `getActor()` (the same function `/api/me` and `requirePageRole` use). It shows:
+
+  | Role | Area link | Name | „Изход“ |
+  |---|---|---|---|
+  | `family` | „Моите близки“ → `/family` | yes | yes |
+  | `moderator` | „Модерация“ → `/moderator` | yes | yes |
+  | `admin` | „Администрация“ → `/admin` | yes | yes |
+  | `protected` (paired phone) | „Проверка на обаждане“ → `/protected` | yes | **no**: the older person must never log out by mistake; only a family member can pair the phone again |
+  | guest | „Вход“, „Регистрация“, „Свържи телефон“ | no | no |
+
+  The name reads „Влезли сте като **Мария Петрова**“; below 640 px „Влезли сте като“ is only read aloud (like „Изглед“) and a long name ends in „…“. „Изход“ is a 48 px button: `POST /api/auth/logout`, then a full page load of `/`, so the header is drawn again for a guest. Login and pairing also open the area with a full page load, so the header is always right after them. (On a normal click between pages the root layout and its header stay as they are, see "One shared frame".)
+- **Cache Components and `<Suspense>`.** Reading the login cookie is request data. With `cacheComponents: true` it must sit inside `<Suspense>`, or `next build` fails for every page. The fallback is the guest menu, so the ready-made part of each page (built once at `next build`) still has a full header, and when the real menu streams in it takes the same one row of 48 px items (no jump). Without Supabase settings (CI) the header doesn't ask anyone and shows the guest menu. If `getActor()` fails, the header also shows the guest menu instead of breaking the page; `unstable_rethrow()` lets Next.js's own signals pass. The areas still check the role themselves (`requirePageRole`), and the API checks every request: the header only *shows* links, it protects nothing.
+- **One place for „Влезли сте като … / Изход“.** The family area's own bar (in `FamilyGate`) and the name and logout of the temporary `RoleGate` were removed; the header shows them on every page.
 - **Skip link.** The first Tab on a page shows „Към основното съдържание“; Enter jumps over the menu to the page.
 - **Text.** All new text is in `bg.layout` and `bg.home` in `src/i18n/bg.ts`; the old `app.comingSoon` placeholder is removed.
 
@@ -1173,14 +1188,15 @@ Every page now has the same frame: a **header** with the Scamly logo (a link to 
 
 - **Root layout instead of a header in every page:** one place to change, and new pages can't forget it (D22: the deployed app looked unfinished without a frame).
 - **Compact theme switch in the header:** the old full-width field pushed every page down and looked like part of a form. Three picture buttons fit next to the logo even at 360 px, where a select with „Според устройството“ did not.
-- **Server Components for header, footer and home page:** they are plain HTML, so no extra JavaScript on cheap phones. Only the theme switch is a Client Component.
+- **Server Components for header, footer and home page:** they are plain HTML, so no extra JavaScript on cheap phones. Only the theme switch and the „Изход“ button are Client Components.
+- **Logged-in menu read on the server (vs the browser asking `GET /api/me`):** no extra request after the page loads, no JavaScript for it, and it is the pattern the Next.js guide "Authentication with Cache Components" shows (a component that reads the session inside `<Suspense>`). Details: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Logged-in header menu read on the server inside `<Suspense>`".
 - **No menu button ("hamburger"):** three links fit at 360 px, so nothing is hidden behind an extra tap.
 - **The home page explains the 3 steps** because a family member must understand in seconds what to do, and the jury sees the idea at once. The rules box helps even someone who opens the site during a call. The green verdict wording (D9) is not used here: the page promises no "safe" result.
 - Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Shared root layout for the header and footer", "Compact theme switch in the header", "Home page that explains the 3 steps".
 
 #### How we know it works
 
-`tests/e2e/layout.spec.ts`, 6 tests × 2 screens: header (logo, three menu links) and footer on `/`, `/vhod`, `/registratsia`, `/svarzhi`; no theme `combobox` any more and the theme switch is narrower than half the screen; choosing dark changes the colours, survives a reload and a menu click, and the arrow key moves the choice; each menu link and the logo open the right page; no sideways scrolling at 360 px and menu links at least 48 px high; the home page shows the problem sentence, the 3 steps, the 3 rules and the two start buttons (at least 64 px high) that open `/registratsia` and `/svarzhi`. `home.spec.ts` and `ui.spec.ts` were updated for the new heading and the radio-button switch. Screenshots at 390 × 844 (light and dark) and 1366 × 800 were checked by eye.
+`tests/e2e/layout.spec.ts`, 7 tests × 2 screens: header (logo, three menu links) and footer on `/`, `/vhod`, `/registratsia`, `/svarzhi`; a guest's header (also on `/family`, which sends a guest to `/vhod`) has no area link, no „Влезли сте като“ and no „Изход“; no theme `combobox` any more and the theme switch is narrower than half the screen; choosing dark changes the colours, survives a reload and a menu click, and the arrow key moves the choice; each menu link and the logo open the right page; no sideways scrolling at 360 px and menu links at least 48 px high; the home page shows the problem sentence, the 3 steps, the 3 rules and the two start buttons (at least 64 px high) that open `/registratsia` and `/svarzhi`. `home.spec.ts` and `ui.spec.ts` were updated for the new heading and the radio-button switch. Screenshots at 390 × 844 (light and dark) and 1366 × 800 were checked by eye. The logged-in menu needs a real login, which the browser tests don't have (no database), so `src/components/layout/accountLinks.test.ts` (4 tests) checks the role → link mapping and that a paired phone never gets „Изход“; the logged-in header was checked by hand with the demo family account on `/family` (1366 × 800, 390 × 844, 360 px dark: name, „Моите близки“, „Изход“, no sideways scrolling; „Изход“ with the keyboard leads to `/` and the guest menu).
 
 ### 3.32 Family dashboard (W2-07)
 
@@ -1201,7 +1217,7 @@ The logged-in family member's area. **`/family`** lists the people they protect 
 
 | File | Job |
 |---|---|
-| `src/app/family/layout.tsx` + `src/components/family/FamilyGate.tsx` | Server Components. `<Suspense>` + `FamilyGate`, which calls `requirePageRole(["family"], "/vhod")` before any page of the area is sent, and shows „Влезли сте като …“ with the logout button. Replaces the temporary `RoleGate` for this area. |
+| `src/app/family/layout.tsx` + `src/components/family/FamilyGate.tsx` | Server Components. `<Suspense>` + `FamilyGate`, which calls `requirePageRole(["family"], "/vhod")` before any page of the area is sent. The name and „Изход“ are in the site header (3.31). Replaces the temporary `RoleGate` for this area. |
 | `src/app/family/page.tsx`, `new/page.tsx`, `[personId]/page.tsx` | Thin Server Components. The person page only reads the id from the address, checks that it is a uuid (`IdParamSchema`, else the 404 page) and renders `<PersonDashboard personId=… />`. |
 | `src/components/family/api.ts` | `callApi()`: one `fetch` to our API (same-origin cookies, `no-store`), returning `{ ok: true, data }` or `{ ok: false, messageBg }` with the API's Bulgarian message (or „Няма връзка със сървъра…“). The DTO types are imported with `import type`, so no server code reaches the browser. |
 | `PeopleList`, `CreatePersonForm`, `PersonDashboard`, `CheckHistory`, `DevicesList`, `PairingPanel`, `ContactsEditor`, `InviteForm`, `PersonSettings` | Client Components (`"use client"`). Each loads or sends its own data through `callApi()` and shows loading, error and success texts. |
@@ -1316,7 +1332,7 @@ Opens the real app in a real browser and checks what a user would see.
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
 - `tests/e2e/family.spec.ts` (family dashboard, 10 tests, section 3.32) uses the same idea: `page.route()` answers the API calls of the `/dev/family` preview pages, so it needs no database and no login.
-- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 6 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
+- `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 7 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
@@ -2194,3 +2210,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-04 · W2-05 web push + W2-06 e-mail (backend): new sections 3.29 (public-key route, subscriptions API with endpoint allowlist and delete + insert, `pushChannel`/`pushSender` with `web-push` 3.6.7, TTL 10 min, 404/410 cleanup, `public/sw.js`, `src/lib/push.ts`) and 3.30 (`EmailProvider`, Brevo via `fetch` with 5 s timeout, `noop`, Resend stub, e-mail channel, `alertEmail.ts`, `getSiteUrl()`); 3.24 updated (`"skipped"` writes no row, parallel sends, channels by feature switch); 3.5 env fallback for optional extras; 3.3, 3.4, 3.13, 4.2, 7.7, big picture and status table updated; plan differences #31–#37; glossary (web push, VAPID, service worker, SSRF); 449 unit tests in 44 files; push smoke test 22/22; real-phone push and a real Brevo e-mail pending
 - 2026-11-05 · W2-13 site layout + home page (D22): new section 3.31 (root layout with skip link, `SiteHeader` with own logo and menu, compact radio-button theme switch, `SiteFooter`, home page with the 3 steps, start buttons and three rules); 3.1, 3.7, 4.3 and the status table updated; 22 e2e tests × 2 screens
 - 2026-11-05 · W2-07 family dashboard (Roberta): new section 3.32 (`FamilyGate` role guard, people list, create form, person page with check history + details, phones + revoke, pairing code with QR and countdown, contact order with ↑ / ↓, invite link, rename/delete; `callApi()`, `ConfirmDialog`, `VerdictBadge`, `bg.family`, `bg.districts`, `/dev/family` previews); status table, 4.3, plan differences #38–#41; 32 e2e tests × 2 screens
+- 2026-11-05 · logged-in header (Roberta): section 3.31 (`AccountNav` reads `getActor()` inside `<Suspense>` with the guest menu as fallback; area link by role, name, „Изход“ except on a paired phone; `accountLinks.ts`; logout now opens `/`); the family bar „Влезли сте като … / Изход“ and `RoleGate`'s name and logout removed (3.17, 3.32); 3.1 notes the ◐ pages; status table and test counts

@@ -439,6 +439,29 @@ select {
 .site-nav a:hover {
   text-decoration-color: currentColor;
 }
+/* Logged in: „Влезли сте като <name>“ and the „Изход“ button in the menu row. */
+.site-nav ul {
+  align-items: center;
+}
+.site-user {
+  min-width: 0;
+  max-width: 18rem;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-user strong {
+  color: var(--foreground);
+}
+.site-nav .auth-form {
+  gap: 0.5rem;
+}
+.site-nav .auth-form .button {
+  width: auto;
+  min-height: 48px;
+  padding: 0 1rem;
+}
 .site-content {
   display: flex;
   flex: 1;
@@ -567,7 +590,14 @@ a.button {
     padding: 0 0.4rem;
     font-size: 0.95rem;
   }
-  .theme-label {
+  .site-user {
+    flex: 1;
+    padding: 0 0.4rem;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  .theme-label,
+  .site-user-prefix {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -578,7 +608,8 @@ a.button {
 }
 /* Very narrow phones (360 px): slightly smaller menu text keeps the menu on one row. */
 @media (max-width: 23.75rem) {
-  .site-nav a {
+  .site-nav a,
+  .site-user {
     padding: 0 0.25rem;
     font-size: 0.875rem;
   }
@@ -599,20 +630,6 @@ a.button {
 }
 .family > * {
   min-width: 0;
-}
-.family-account {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
-}
-.family-account .auth-form .button {
-  width: auto;
-  min-height: 48px;
 }
 .family-heading {
   display: grid;

@@ -7,22 +7,14 @@
 
 import type { ReactNode } from "react";
 import { ROUTES } from "@/config/routes";
-import { LogoutButton } from "@/components/auth/forms";
 import { bg } from "@/i18n/bg";
 import { requirePageRole } from "@/server/auth/requireRole";
 import { FamilyFrame } from "./FamilyFrame";
 
+// The name and „Изход“ are shown by the site header (SiteHeader), for every area.
 export async function FamilyGate({ children }: { children: ReactNode }) {
-  const actor = await requirePageRole(["family"], ROUTES.login);
-  const account = (
-    <div className="family-account">
-      <p>
-        {bg.family.signedInAs} <strong>{actor.profile.display_name}</strong>
-      </p>
-      <LogoutButton />
-    </div>
-  );
-  return <FamilyFrame account={account}>{children}</FamilyFrame>;
+  await requirePageRole(["family"], ROUTES.login);
+  return <FamilyFrame>{children}</FamilyFrame>;
 }
 
 // Shown while the role check runs (it reads the login cookie, so with Cache

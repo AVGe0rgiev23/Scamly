@@ -313,12 +313,14 @@ export function PairForm() {
   );
 }
 
+// „Изход“ (in the site header): ends the session in this browser, then opens the home
+// page with a full page load, so the header is drawn again for a guest.
 export function LogoutButton() {
   const request = useFormRequest();
   async function logout() {
     const data = await request.post("/api/auth/logout", {});
     if (!data) return;
-    if (data.ok === true) window.location.assign(ROUTES.login);
+    if (data.ok === true) window.location.assign(ROUTES.home);
     else request.showError(bg.errors.internal);
   }
   return (
