@@ -358,6 +358,69 @@ export const bg = {
     districtHint: "Използва се само за анонимната карта на измамите по области.",
     districtPlaceholder: "Изберете област",
     createButton: "Добави",
+    // {date} = „5 ноември 2026 г.“, {time} = „14:30“ (Bulgarian time).
+    dateTime: "{date}, {time} ч.",
+    // One protected person's page (/family/[personId]).
+    personLoading: "Зареждаме данните…",
+    readOnlyNote: "Само човекът, който е създал профила, може да променя тези данни.",
+    // Name and district (owner only), and deleting the person.
+    settingsTitle: "Име и област",
+    saveChanges: "Запази промените",
+    changesSaved: "Промените са запазени.",
+    deleteTitle: "Изтриване на профила",
+    deleteText:
+      "Изтриването премахва човека и всички негови данни: списъка с близки, проверките и свързаните телефони.",
+    deleteButton: "Изтрий профила",
+    // {name} = the protected person's name.
+    deleteDialogTitle: "Да изтрием ли профила на {name}?",
+    deleteDialogText:
+      "Ще бъдат изтрити списъкът с близки, всички проверки, поканите и кодовете. Свързаните телефони ще бъдат изключени веднага. Това не може да бъде отменено.",
+    deleteConfirm: "Да, изтрий завинаги",
+    deleting: "Изтриване…",
+    cancel: "Отказ",
+    // The ordered contact list (who is called first).
+    contactsTitle: "Ред за обаждане",
+    contactsIntro:
+      "Подредете близките в реда, в който трябва да бъдат търсени. Първият близък с телефонен номер се показва на телефона на възрастния човек като бутон за обаждане.",
+    // {n} = the place in the list, 1 to 5.
+    contactPlace: "Място {n}",
+    contactName: "Име",
+    contactPhone: "Телефон",
+    phoneHint: "Например 0888 123 456",
+    hasAccount: `Има профил в ${APP_NAME} и получава сигнали`,
+    noAccount: "Няма профил, само телефон",
+    you: "Това сте вие",
+    noPhone: "Без телефон",
+    // {name} = the contact's name. Read aloud by screen readers on the ↑ ↓ buttons.
+    moveUp: "Премести {name} нагоре",
+    moveDown: "Премести {name} надолу",
+    removeContact: "Премахни",
+    removeContactLabel: "Премахни {name}",
+    unnamed: "близък без име",
+    // Announced after ↑ or ↓: „Иван е на място 2.“
+    movedTo: "{name} е на място {n}.",
+    addContactTitle: "Добавяне на близък с телефон",
+    addContactButton: "Добави в списъка",
+    listFull: "Списъкът е пълен: най-много 5 близки.",
+    saveContacts: "Запази списъка",
+    contactsSaved: "Списъкът с близки е запазен.",
+    unsavedChanges: "Има незапазени промени. Натиснете „Запази списъка“.",
+    // Inviting another relative with their own account (POST /api/persons/:id/invites).
+    inviteTitle: "Покани близък",
+    inviteIntro:
+      "Създайте връзка и я изпратете на член на семейството. Когато я отвори и влезе в профила си, ще бъде добавен в списъка и ще получава сигнали.",
+    inviteName: "Име на близкия",
+    invitePlace: "Място в списъка",
+    inviteButton: "Създай връзка за покана",
+    inviteCreated: "Връзката за покана е готова.",
+    inviteLinkLabel: "Връзка за покана",
+    inviteOnce:
+      "Връзката се показва само сега. Изпратете я само на човека, когото каните, например в лично съобщение.",
+    // {time} = the full date and time, e.g. „12 ноември 2026 г., 14:30 ч.“
+    inviteExpires: "Валидна до {time}. Може да бъде използвана само веднъж.",
+    copyLink: "Копирай връзката",
+    copied: "Връзката е копирана.",
+    copyFailed: "Копирането не успя. Маркирайте връзката и я копирайте ръчно.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

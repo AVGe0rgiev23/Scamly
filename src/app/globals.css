@@ -696,3 +696,113 @@ a.button {
 .form-field select:disabled {
   opacity: 0.7;
 }
+.button-danger {
+  background: var(--red-bg);
+  color: var(--red-fg);
+  border-color: var(--red-fg);
+}
+.confirm-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  padding: 1.25rem;
+  border: 2px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--foreground);
+}
+.confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+.confirm-dialog > * + * {
+  margin-top: 1rem;
+}
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.confirm-actions .button {
+  flex: 1 1 10rem;
+}
+.family-section > h2 {
+  font-size: 1.5rem;
+}
+.family-link {
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+.contact-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+}
+.contact-row {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--background);
+}
+.contact-row > * + * {
+  margin-top: 0.25rem;
+}
+.contact-fields {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.contact-place {
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 750;
+}
+.contact-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.contact-actions .button {
+  min-width: 64px;
+  font-size: 1.25rem;
+}
+.contact-actions .contact-remove {
+  font-size: 1rem;
+}
+.contact-add fieldset {
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+}
+.contact-add legend {
+  padding: 0 0.25rem;
+  font-size: 1.1rem;
+}
+.contacts-editor,
+.invite,
+.invite-result {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.contacts-editor > .button,
+.invite-result > .button {
+  justify-self: start;
+}
+.contacts-dirty {
+  font-weight: 650;
+}
+.danger-zone {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
