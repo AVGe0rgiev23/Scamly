@@ -23,8 +23,9 @@
 import type { PushPublicKeyDto } from "@/schemas/push";
 
 // Where the service worker is served (public/sw.js) and the pages it may control.
-const SERVICE_WORKER_URL = "/sw.js";
-const SERVICE_WORKER_SCOPE = "/";
+// Exported for src/components/pwa/RegisterServiceWorker.tsx (W2-09).
+export const SERVICE_WORKER_URL = "/sw.js";
+export const SERVICE_WORKER_SCOPE = "/";
 
 // ---------------------------------------------------------------------------------
 // Pure helpers (no browser needed, unit-tested in push.test.ts)

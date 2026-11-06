@@ -669,6 +669,14 @@ export const bg = {
     // iPhone / iPad in Safari: three steps by hand.
     iosLead: `На iPhone добавете ${APP_NAME} към началния екран. Така се отваря като приложение и може да получава известия:`,
   },
+  // The offline card /offline (W2-09, src/app/offline/route.ts), shown by the service
+  // worker when a page can't load. The three rules reuse home.rulesTitle and home.rules.
+  offline: {
+    pageTitle: `Няма връзка – ${APP_NAME}`,
+    title: "Няма връзка с интернет",
+    lead: `Без интернет ${APP_NAME} не може да провери обаждането. Ако ви се обаждат за пари, запомнете:`,
+    retry: "Опитайте отново",
+  },
   // Voice input on the older person's text step (W2-10, src/components/protected/VoiceInput.tsx).
   voice: {
     start: "Говорете",

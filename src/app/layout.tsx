@@ -8,6 +8,7 @@ import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/config/pwa";
 import { bg } from "@/i18n/bg";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { RegisterServiceWorker } from "@/components/pwa/RegisterServiceWorker";
 import "./globals.css";
 
 // Title and description shown in the browser tab and in search results.
@@ -53,6 +54,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <SiteFooter />
+        {/* The service worker: push alerts and the offline card (W2-09). */}
+        <RegisterServiceWorker />
       </body>
     </html>
   );
