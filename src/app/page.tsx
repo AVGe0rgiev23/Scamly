@@ -1,7 +1,9 @@
 // The home page ("/"): what Scamly is for, the 3 steps, the start buttons and three
-// rules to remember. A Server Component; all text comes from src/i18n/bg.ts.
+// rules to remember, plus the „Инсталирай Scamly“ card (W2-09, a Client Component).
+// A Server Component; all text comes from src/i18n/bg.ts.
 
 import Link from "next/link";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
@@ -26,6 +28,9 @@ export default function HomePage() {
         </div>
         <p className="muted">{bg.home.pairNote}</p>
       </section>
+
+      {/* „Инсталирай Scamly“: only appears when this phone can install the app (W2-09). */}
+      <InstallPrompt />
 
       <section className="home-section" aria-labelledby="steps-title">
         <h2 id="steps-title">{bg.home.stepsTitle}</h2>

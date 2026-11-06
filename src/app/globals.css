@@ -1184,6 +1184,21 @@ a.button {
   stroke-linejoin: round;
 }
 
+/* „Инсталирай Scamly“ card (W2-09): the iPhone steps reuse .push-ios-steps above. */
+.install-card {
+  display: grid;
+  gap: 0.75rem;
+  border-left: 6px solid var(--primary);
+}
+.install-card > * + * {
+  margin-top: 0;
+}
+.install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 /* „Говорете“: voice input on the older person's text step (W2-10). */
 .voice-input {
   display: grid;

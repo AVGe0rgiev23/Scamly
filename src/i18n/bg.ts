@@ -657,6 +657,17 @@ export const bg = {
     iosStepAdd: "Изберете „Добави към началния екран“",
     iosStepOpen: `Отворете ${APP_NAME} от новата икона`,
   },
+  // The „Инсталирай Scamly“ card on the home page and /family (W2-09,
+  // src/components/pwa/InstallPrompt.tsx). The iPhone steps reuse pushOptIn.iosStep*.
+  install: {
+    title: `Инсталирай ${APP_NAME}`,
+    // Android / Chrome: the browser can install the app with one tap.
+    lead: `Сложете ${APP_NAME} на началния екран като приложение: отваря се с едно докосване и известията пристигат сигурно.`,
+    button: "Инсталирай",
+    dismiss: "Не сега",
+    // iPhone / iPad in Safari: three steps by hand.
+    iosLead: `На iPhone добавете ${APP_NAME} към началния екран. Така се отваря като приложение и може да получава известия:`,
+  },
   // Voice input on the older person's text step (W2-10, src/components/protected/VoiceInput.tsx).
   voice: {
     start: "Говорете",

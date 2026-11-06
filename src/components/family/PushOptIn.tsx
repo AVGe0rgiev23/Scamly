@@ -15,7 +15,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { LogoMark } from "@/components/layout/Logo";
+import { IosInstallSteps } from "@/components/pwa/IosInstallSteps";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { bg } from "@/i18n/bg";
@@ -93,7 +93,7 @@ export function PushOptIn() {
           {pushStateText(state)}
         </p>
       )}
-      {state === "ios" ? <IosSteps /> : null}
+      {state === "ios" ? <IosInstallSteps /> : null}
       {state === "off" ? (
         <Button onClick={() => void turnOn()} disabled={working}>
           {working ? bg.pushOptIn.working : bg.pushOptIn.turnOn}
@@ -109,46 +109,5 @@ export function PushOptIn() {
         {message}
       </p>
     </Card>
-  );
-}
-
-// „Сподели“ → „Добави към началния екран“ → open Scamly from the icon, each step with
-// a small drawing of what to look for on the iPhone screen.
-function IosSteps() {
-  return (
-    <ol className="push-ios-steps">
-      <li>
-        <ShareIcon />
-        <span>{bg.pushOptIn.iosStepShare}</span>
-      </li>
-      <li>
-        <AddIcon />
-        <span>{bg.pushOptIn.iosStepAdd}</span>
-      </li>
-      <li>
-        <LogoMark />
-        <span>{bg.pushOptIn.iosStepOpen}</span>
-      </li>
-    </ol>
-  );
-}
-
-// The iPhone share symbol: a square with an arrow pointing up.
-function ShareIcon() {
-  return (
-    <svg className="push-icon" viewBox="0 0 24 24" width="36" height="36" aria-hidden="true">
-      <path d="M8 9H6v12h12V9h-2" />
-      <path d="M12 3v12M8 7l4-4 4 4" />
-    </svg>
-  );
-}
-
-// „Добави към началния екран“: a rounded square with a plus.
-function AddIcon() {
-  return (
-    <svg className="push-icon" viewBox="0 0 24 24" width="36" height="36" aria-hidden="true">
-      <rect x="3" y="3" width="18" height="18" rx="4" />
-      <path d="M12 8v8M8 12h8" />
-    </svg>
   );
 }
