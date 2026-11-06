@@ -25,7 +25,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · push endpoint allowlist · push upsert = delete + insert
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
@@ -673,7 +673,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - `PAIRING_PEPPER` is already the secret for "codes that let someone join a protected person"; no new variable to set in Vercel.
 
 **What we give up:**
-- The token is in the URL, so it can land in the browser history or a `Referer` header. The page (W2-07, Roberta) must POST it at once and set `Referrer-Policy: no-referrer`.
+- The token is in the URL, so it can land in the browser history or a `Referer` header. The page `/pokana` (W2-14) POSTs it at once, removes it from the address and sets `Referrer-Policy: no-referrer` (entry below).
 - Whoever gets the link first (e.g. a forwarded message) joins; the owner sees the new contact in the list and can remove them.
 
 **We would reconsider if:** relatives had to join without an account (then a different flow).
@@ -693,6 +693,40 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - A few more steps than "use up, then check", and two more tests to explain.
 
 **We would reconsider if:** never; pairing doesn't need it because a refused code there is simply asked for again in a minute.
+
+### Invite page: send the token at once, remove it with `replaceState`, `no-referrer`  (status: in use (`/pokana`, `InviteAccept.tsx`, W2-14))
+
+**Used for:** the page `/pokana?t=<token>` (HOW_IT_WORKS 3.37). A logged-in family member's browser POSTs the token to `/api/invites/redeem` as soon as the page opens, then calls `history.replaceState(null, "", "/pokana")`; the page answers with `Referrer-Policy: no-referrer` (header in `next.config.ts` plus a `<meta name="referrer">`).
+
+**Alternatives we considered:** a „Приеми поканата“ button the person must press; keeping the token in the address; a server-side redirect after redeeming (POST → 303 to a clean URL); the default referrer policy; a `GET /api/invites/:token` lookup so the page could say „Мария ви кани…“ before redeeming.
+
+**Why this one:**
+- **The address is the weak spot of a link token:** it stays in the address bar, in screenshots and in bookmarks, and with the default policy the full address can be sent as `Referer` to the next page. Removing it right after use and sending no `Referer` closes both.
+- **`replaceState` changes the address without loading the page again**, so the success message stays on screen; a server redirect would need a form POST and a second page.
+- **No extra button:** opening the link already means "I accept"; refusals (own invite, already listed, no place) don't burn the invite (see above), so nothing is lost by sending at once.
+- **No lookup endpoint:** a page that shows whose invite it is before redeeming would let anyone with a forwarded link learn the older person's name. The API reveals the name only to the family member who redeems.
+
+**What we give up:**
+- The entry the person first opened (`/pokana?t=…`) stays in the browser's history list; a page can't delete history entries. After redeeming, that token is used up and worthless.
+- A guest keeps the token in the address until they log in (they need it to come back).
+
+**We would reconsider if:** invites became reusable or long-lived; then a one-time short code typed by hand would be safer.
+
+### Safe `next` redirect after login (vs an open redirect, vs no redirect)  (status: in use (`safeNextPath()` in `src/config/routes.ts`, W2-14))
+
+**Used for:** „Вход“ / „Регистрация“ on the invite page link to `/vhod?next=/pokana?t=…`; after login the form opens `next` instead of the role's home page.
+
+**Alternatives we considered:** use `next` as it is (open redirect); no `next` at all (the person opens the invite link again after login); keep the invite in `sessionStorage`; an allowlist of exact pages.
+
+**Why this one:**
+- **An open redirect is a gift to scammers:** a real Scamly link `…/vhod?next=https://fake-bank.example` would look trustworthy and then send the person to a fake page. `safeNextPath()` accepts only a path on our site: it must start with one `/` (not `//`, which browsers read as "another site"), contain no `\` and no control characters (browsers drop a tab or new line, so `/<tab>/evil` would become `//evil`), be at most 512 characters, and, read as an address on our site, must stay on our site. Anything else → the normal home page of the role.
+- **Fewer steps for a relative:** log in once and the invite is accepted.
+- A rule ("same-site path") is simpler than an allowlist that has to grow with every page.
+
+**What we give up:**
+- After registration with e-mail confirmation the person must open the invite link again (the confirmation link is Supabase's); the form says so.
+
+**We would reconsider if:** we added more `next` sources; then a short allowlist of areas could be safer still.
 
 ### Push endpoint allowlist (vs accepting any `https` URL)  (status: in use (`isAllowedPushEndpoint()` in `src/schemas/push.ts`, W2-05))
 
@@ -2281,3 +2315,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-05 · logged-in header (Roberta): new entry in section 4 "Logged-in header menu read on the server inside `<Suspense>`" (vs `GET /api/me` in the browser, vs no `<Suspense>`, vs a bar per area); shared-root-layout entry no longer lists the missing logged-in menu
 - 2026-11-05 · W2-01 call check (Roberta): new entries in section 4 "Call check: one question per screen (vs one long form)" and "Praise first on the red result (vs only the warning)"; "The same engine on the phone as an offline fallback" now in use (4 s, background retries, server verdict stays official; vs an error screen, Background Sync, phone-only verdict); D9 and preview-page entries updated
 - 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new entries in section 4 (`useSyncExternalStore` for `?check=` vs `useSearchParams` + `<Suspense>`; Web Audio beep vs a sound file; one sentence per tap vs continuous listening; `FEATURE_VOICE` read at request time vs at build time) and section 5 (10 s safety poll while Realtime is connected vs trusting Realtime alone, the fix of the missed family message; one Realtime channel for all people vs one per person; 1.5 s cap on the push unsubscribe at logout); Web Speech API entry now in use, compared with recording and sending audio, with the honest note that Chrome's recognition runs on the browser's speech service; Realtime, Web Push and preview-page entries updated.
+- 2026-11-06 · W2-14 invite page + W2-06 wording (Roberta): new entries in section 3 "Invite page: send the token at once, remove it with `replaceState`, `no-referrer`" (vs a button, a server redirect, a lookup before redeeming) and "Safe `next` redirect after login" (vs an open redirect, no redirect, `sessionStorage`, an allowlist); the invite-token entry's open point (page must POST at once, `no-referrer`) is now done

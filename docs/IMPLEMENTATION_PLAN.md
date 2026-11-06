@@ -153,7 +153,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ (Alex) · `/family/alerts` live page, header link „Сигнали“, `?check=` focus, sound only after a tap · Realtime fix: 10 s safety poll while connected · live 5/5, alert visible after 2.3–3.9 s |
 | W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ (Alex) · button on each alert; phone shows the name 0.8–1.3 s after the tap (live) · two-browser e2e in W2-11 |
 | W2-05 | Web push | Alex (backend + opt-in UI + iOS hint) | ✅ backend (`src/lib/push.ts` ready) · smoke test 22/22 · ✅ opt-in UI + iOS hint (Alex, `PushOptIn` on `/family`; logout unsubscribes) · ⬜ real-phone test (Alex; iPhone only after "Add to Home Screen") · push icons: W2-09 (Roberta) |
-| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ⬜ wording: Roberta, draft in `bg.alertEmail` · ⬜ real Brevo e-mail: Alex (no account yet) |
+| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ✅ wording proofread by Roberta (6 Nov: `bg.alertEmail` and `bg.push`) · ⬜ real Brevo e-mail: Alex (no account yet) |
 | W2-07 | Family dashboard UI | Roberta (took it over from Alex on 5 Nov) | 🔄 in progress |
 | W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
 | W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ⬜ |
@@ -161,7 +161,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
 | W2-13 | Site layout + home page (D22) | Roberta | ⬜ |
-| W2-14 | `/pokana` invite page (D23) | Roberta | ⬜ |
+| W2-14 | `/pokana` invite page (D23) | Roberta | ✅ 6 Nov · token sent at once, removed from the address, `no-referrer`; safe `next` after login; `invite.spec.ts` · live redeem with two real accounts pending |
 
 ### Weeks 3–5
 

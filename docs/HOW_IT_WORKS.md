@@ -113,12 +113,13 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Checks API + server-side verdict + acknowledge (3.23) | ✅ backend (W2-02, W2-04) · acknowledge button: 3.34 | `src/app/api/checks/`, `src/server/services/checkService.ts`, `src/schemas/checks.ts` | `checkService.test.ts` (24), `schemas/checks.test.ts`; live smoke test 38/38 |
 | Family alerts: fan-out + Realtime token + live-watch helper with safety poll (3.24, 3.25) | ✅ (W2-03) · live alert page: 3.34 | `src/server/services/alertService.ts`, `realtimeService.ts`, `src/app/api/realtime/token/`, `src/lib/realtime.ts` | `alertService`, `realtimeService`, `realtime` (10), `origin` tests; live: alert via Realtime in 111 ms; 5/5 round trips on 6 Nov |
 | Web push (3.29) | ✅ backend (W2-05) · ✅ opt-in card + iOS hint (3.35) · real-phone test pending | `src/app/api/push/`, `src/server/services/pushSubscriptionService.ts`, `src/server/notifications/push{Channel,Sender}.ts`, `src/schemas/push.ts`, `src/lib/push.ts`, `public/sw.js` | `pushChannel` (19), `pushSender` (4), `pushSubscriptionService` (7), `schemas/push` (7), `lib/push` (12); live smoke test 22/22 |
-| Email (`EmailProvider`, Brevo) (3.30) | ✅ backend (W2-06) · wording draft: Roberta · real Brevo e-mail pending (no account yet) | `src/server/notifications/email/`, `src/server/notifications/siteUrl.ts` | `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3); fakes only |
+| Email (`EmailProvider`, Brevo) (3.30) | ✅ backend (W2-06) · ✅ wording proofread (Roberta, 6 Nov) · real Brevo e-mail pending (no account yet, Alex) | `src/server/notifications/email/`, `src/server/notifications/siteUrl.ts` | `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3); fakes only |
 | Contacts + invites API (3.27, 3.28) | ✅ backend (W2-08) · migration applied 4 Nov; live smoke test 44/44 | `src/app/api/persons/[id]/{contacts,invites}/`, `src/app/api/invites/redeem/`, `contactService.ts`, `inviteService.ts` | `contactService` (12), `inviteService` (17), `11_replace_contacts`; live 35/44 |
 | Family dashboard UI: people, create person, contacts order, invite, pairing with QR, devices + revoke, check history (3.32) | ✅ (W2-07, Roberta) · live alert page: 3.34 | `src/app/family/`, `src/components/family/`, `src/components/ui/{ConfirmDialog,VerdictBadge}.tsx`, `/dev/family` previews | `tests/e2e/family.spec.ts` (10 tests × 2 screens), `format`, `qr`, `districts` unit tests; live check with the demo account |
 | Live alert page `/family/alerts` + „Обаждам ѝ се сега“ (3.34) | ✅ (W2-03, W2-04, Alex) | `src/app/family/alerts/`, `src/components/family/{AlertsPage.tsx,alerts.ts,alertSound.ts}`, `/dev/family/alerts` preview | `tests/e2e/alerts.spec.ts` (8 tests × 2 screens), `alerts` (9), `accountLinks` tests; live 5/5 round trips |
 | Push opt-in card + iPhone hint, unsubscribe on logout (3.35) | ✅ (W2-05 UI, Alex) · real-phone delivery untested | `src/components/family/{PushOptIn.tsx,pushState.ts}`, `FamilyHome.tsx`, `src/lib/push.ts`, `src/components/auth/forms.tsx` | `tests/e2e/push-optin.spec.ts` (7 tests × 2 screens), `pushState` (10), `lib/push` (12) |
 | Voice input „Говорете“ (3.36) | ✅ (W2-10, Alex) · real Bulgarian recognition on a phone untested | `src/components/protected/{VoiceInput.tsx,voice.ts,CallCheckPage.tsx}`, `CallerText.tsx` | `tests/e2e/voice.spec.ts` (4 tests × 2 screens), `voice` (9) |
+| Invite page `/pokana` + safe `next` after login (3.37) | ✅ (W2-14, Roberta) | `src/app/pokana/`, `src/components/auth/InviteAccept.tsx`, `src/config/routes.ts` (`safeNextPath`, `withNext`), `src/components/auth/forms.tsx`, `next.config.ts` (headers) | `tests/e2e/invite.spec.ts` (13 tests × 2 screens), `routes.test.ts` (`safeNextPath`, `withNext`) |
 | PWA (install, offline card) | ⬜ planned (week 2, W2-09) | | |
 | Public reports + scam map | ⬜ planned (week 3, W3-01 to W3-03) | | |
 | Moderation, education pages | ⬜ planned (week 3, W3-04, W3-05) | | |
@@ -263,7 +264,7 @@ Holds **every piece of Bulgarian text a user can see**, in one object `bg` with 
 
 #### How it works
 
-Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Groups so far: `app`, `common`, the design-system groups, and (Session E) `errors` (API error messages), `auth`, `pairing`, `persons` and `areas` (temporary area pages); Week 2 added `alertEmail` (3.30) and `push` (3.29), both marked **draft, Roberta to proofread**.
+Screens import `bg` and write `{bg.app.tagline}` instead of typing text. The object ends with `as const`, which makes it read-only (like a frozen Python dict) and lets TypeScript know the exact keys, so a typo like `bg.app.tagLine` is a type error. Groups so far: `app`, `common`, the design-system groups, and (Session E) `errors` (API error messages), `auth`, `pairing`, `persons` and `areas` (temporary area pages); Week 2 added `alertEmail` (3.30) and `push` (3.29), proofread by Roberta on 6 Nov (W2-06 wording: no more draft markers), and `invitePage` (3.37).
 
 #### Why it works like that
 
@@ -1082,7 +1083,7 @@ How a second relative (e.g. Иван) joins Баба Мария's contact list *
 - **256-bit token, 7 days:** unlike a 6-digit code it can't be guessed even without the rate limit, so it may live long enough for a relative to open it from a message. `PAIRING_PEPPER` is reused: it is the secret for "codes that let someone join a protected person", and no new environment variable is needed.
 - **Refusals don't burn the link;** a failed add gives it back. The owner tapping their own link by mistake doesn't cost a new invite.
 - **Linking the same-name phone-only row:** Иван is not in the list twice.
-- **Risk for the page (note for Roberta, W2-07):** the token is in the `/pokana` URL, so it can end up in the browser history or a `Referer` header. The page should POST it at once and set `Referrer-Policy: no-referrer`.
+- **Risk for the page:** the token is in the `/pokana` URL, so it can end up in the browser history or a `Referer` header. The page (3.37, W2-14) POSTs it at once, removes it from the address bar and sets `Referrer-Policy: no-referrer`.
 - Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Invite tokens" and "Refusals don't burn invites".
 
 #### How we know it works
@@ -1121,7 +1122,7 @@ The „Включи известията“ button and the iPhone hint are the �
 - **Endpoint allowlist (SSRF):** the server POSTs to whatever endpoint is stored. Without the allowlist any logged-in user could make our server send requests to any address, including internal ones.
 - **Delete + insert:** `push_subscriptions` has only SELECT/INSERT/DELETE grants for logged-in users (`…_rls_policies.sql`); we didn't add a migration and an UPDATE right for one refresh case. The fresh-subscription retry on 409 means a shared browser moves to the new account instead of failing.
 - **Same tag per check, TTL 10 min, urgency high:** one notification per check (the red one replaces the first and rings again); an alert about a call happening now is useless an hour later; "high" wakes a phone in battery saving.
-- **Only fixed texts, a name and an id:** a lock screen can be read by anyone nearby. Wording is a draft for Roberta to proofread.
+- **Only fixed texts, a name and an id:** a lock screen can be read by anyone nearby. Wording proofread by Roberta (6 Nov).
 - Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Web Push with VAPID through `web-push`", "VAPID public key from a route", "Push endpoint allowlist", "Push subscription upsert = delete + insert".
 
 #### How we know it works
@@ -1153,7 +1154,7 @@ A family member in the contact list **with an account**, with `profiles.email_al
 - **Content kept minimal:** an e-mail can be forwarded, printed or read by someone else, so no phone numbers or call details. The display name is typed by a user, so it is escaped against HTML injection.
 - **Errors without secrets:** `alerts.error` is readable by the recipient (RLS), and logs can end up in screenshots.
 - **Site URL fallback:** links work on Vercel without setting anything; `SITE_URL` is only needed for a custom address.
-- Wording is a draft for Roberta to proofread (W2-06).
+- **Wording proofread by Roberta (W2-06, 6 Nov):** formal „Вие“ form, short sentences, „…“ quotes, en dash with spaces. Main changes: the red subject starts with „Внимание!“ (seen first in a short inbox line); the start e-mail says „{name} получи съмнително обаждане. Проверката в Scamly започна на {time}“ (no full stop after „ч.“, so never „ч..“; `alertEmail.test.ts` checks it); „високо – има признаци на измама“ (parallel to the other levels); the footer uses the app's own words „в списъка с близки“; the push error says „в този браузър“. Placeholders and keys unchanged.
 - Comparisons: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Brevo free tier behind an `EmailProvider` interface", "Plain `fetch` for Brevo", "Resend as a stub only", "No `alerts` row when nothing was sent".
 
 #### How we know it works
@@ -1422,6 +1423,36 @@ The button is there **only** when the browser has speech recognition **and** the
 #### How we know it works
 
 `tests/e2e/voice.spec.ts`, 4 tests × 2 screens (a fake `SpeechRecognition` in the page): no button without speech recognition, typing works; „Говорете“ listens in `bg-BG`, shows the guess and adds the final text after the typed text; a blocked microphone gives a clear message and the field stays usable; the button is big and the text step fits 360 px. Unit tests: `voice.test.ts` (9). **Not yet tested:** real Bulgarian recognition on a real Android phone (W2-10 "done when").
+
+### 3.37 Invite page `/pokana` and the safe `next` after login (W2-14)
+
+#### What it does
+
+The relative who got an invite link (3.28) opens `/pokana?t=<token>`:
+
+- **Guest:** „Поканени сте да пазите близък в Scamly.“, a short explanation and two big buttons, „Вход“ and „Регистрация“. They lead to `/vhod?next=/pokana?t=…` and `/registratsia?next=…`; after login the person comes straight back and the invite is accepted. (After registration with e-mail confirmation the form says to open the invite link again.)
+- **Family member:** the token is sent **at once** to `POST /api/invites/redeem`; then the token is **removed from the address bar**; then „Вече сте близък на Баба Елена на място 2.“ with a button „Към страницата на Баба Елена“ (`/family/<id>`), or the API's Bulgarian error (wrong / expired / used → one message; already in the list; no free place; own invite).
+- **Other roles:** „Тази покана е за профил на близък.“ A broken link (no 43-character token) gets the "wrong invite" message without asking the API.
+
+Whose invite it is is **not** shown before redeeming: the API reveals the name only to the person who redeems, so a forwarded link shows nothing.
+
+#### How it works
+
+- `src/app/pokana/page.tsx`: the `AuthPage` frame; `InviteAccept` sits inside `<Suspense>` because it reads the address (`useSearchParams`), so the frame is pre-rendered (Cache Components), like `/svarzhi`. Metadata: `referrer: "no-referrer"` and `robots: noindex`.
+- `src/components/auth/InviteAccept.tsx` (Client Component): reads `t` **once** into state (after `replaceState` the address no longer has it); checks it with `RedeemInviteSchema`; `GET /api/me` (401 → guest view; role ≠ family → "for a family account"); then `POST /api/invites/redeem` (a `useRef` makes sure it is sent only once). After **any** answer from the server: `history.replaceState(null, "", "/pokana")`. Only without a connection the token stays, so a reload tries again. Uses `callApi()` from `src/components/family/api.ts`.
+- `next.config.ts` `headers()`: `Referrer-Policy: no-referrer` on `/pokana`, and on `/vhod` and `/registratsia` when they have a `next` parameter (that address contains the token too).
+- **Safe `next`:** `safeNextPath()` in `src/config/routes.ts` accepts only a path on our site: starts with one `/` (not `//`), no `\`, no control characters, at most 512 characters, and `new URL(value, base)` must stay on the same origin. `withNext(page, next)` builds `/vhod?next=<encoded>`. `LoginForm` and `RegisterForm` read `next` at submit time from `window.location.search` (so `/vhod` needs no `<Suspense>`) and open it with `location.replace()`; an unsafe or missing `next` → the role's home page as before. `KeepNextLink` keeps `next` on the „Нямате профил?“ / „Вече имате профил?“ links.
+- Texts in `bg.invitePage` (and `bg.auth.checkEmailThenInvite`); the existing `.auth-form`, `a.button` and `.form-message` styles, no new CSS.
+
+#### Why it works like that
+
+- **Token sent at once, then removed with `replaceState`, `no-referrer`:** the address is the weak spot of a link token (history, screenshots, `Referer`). [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Invite page: send the token at once, remove it with `replaceState`, `no-referrer`".
+- **Only safe `next` paths:** an open redirect would let a scam link start on the real Scamly and end on a fake page. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Safe `next` redirect after login".
+- **Role read with `GET /api/me` in the browser:** the page stays public and pre-rendered, and the browser tests can mock the role with `page.route()`; the API checks the login and role on the redeem anyway.
+
+#### How we know it works
+
+`tests/e2e/invite.spec.ts`, 13 tests × 2 screens, on the real `/pokana` with `page.route()` for the API (service workers blocked, so `page.route()` sees page loads): guest view with both buttons carrying `next=/pokana?t=…` and no redeem call; family member → token POSTed once, URL becomes `/pokana`, success text and link to the person; each of the 4 API errors; broken link → the same message without any API call; moderator → "for a family account"; `Referrer-Policy: no-referrer` header on `/pokana`, `/vhod?next=…`, `/registratsia?next=…` and the `<meta>`; login with a safe `next` returns to the invite (and the register link keeps `next`); login with `https://evil.example/`, `//evil.example/` or `/\evil.example` goes to `/family`. Unit tests: `routes.test.ts` (`safeNextPath`: same-site paths, other sites, `//`, `\`, control characters, empty / too long; `withNext`). **Not yet tested:** a live redeem with two real accounts in the browser.
 
 ---
 ## 4. Code quality, tests and CI
@@ -2393,3 +2424,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-05 · logged-in header (Roberta): section 3.31 (`AccountNav` reads `getActor()` inside `<Suspense>` with the guest menu as fallback; area link by role, name, „Изход“ except on a paired phone; `accountLinks.ts`; logout now opens `/`); the family bar „Влезли сте като … / Изход“ and `RoleGate`'s name and logout removed (3.17, 3.32); 3.1 notes the ◐ pages; status table and test counts
 - 2026-11-05 · W2-01 call check (Roberta): new section 3.33 (`ProtectedGate`, big button + after-call button + remembered „Обади се на …“, one question per screen with „Въпрос 2 от 4“, optional text with counter, result with praise and `tel:` button, live family message via `watchCheck()`, offline `analyseCall()` fallback with background retries; `BigChoice` and `Verdict` extended; `bg.protectedCheck`, `--on-red`); walkthrough 7.7 with the real screens; status table; plan differences #42–#45; 484 unit tests in 51 files, 39 e2e tests × 2 screens
 - 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new sections 3.34 (live alert page `/family/alerts`, header link „Сигнали“, `?check=` focus with `useSyncExternalStore`, `aria-live`, Web Audio beep only after a tap, „Обаждам ѝ се сега“ with „Вие поехте обаждането.“ / „<Име> вече се обажда.“, no `tel:`), 3.35 (push opt-in card with 6 states and iPhone hint, unsubscribe at logout ≤ 1.5 s) and 3.36 (voice input, Web Speech API `bg-BG`, `FEATURE_VOICE` at request time); 3.25 Realtime fix (10 s safety poll while connected, re-load after `SUBSCRIBED` and on wake-up, one load at a time, `onLive`, `watchChecksOfPersons()`, `newestFirst()`); 3.3, 3.29, 3.31, 3.33, 4.2, 4.3, walkthrough 7.7, status table, big picture; plan differences #46–#49; 521 unit tests, 58 e2e tests × 2 screens; live 5/5 round trips.
+- 2026-11-06 · W2-14 invite page (Roberta): new section 3.37 (`/pokana`: token sent at once, removed with `replaceState`, `Referrer-Policy: no-referrer`; safe `next` after login with `safeNextPath()`), status row, 3.28 risk note done; W2-06 wording (Roberta): `alertEmail` and `push` texts proofread, draft markers removed (3.4, 3.29, 3.30, status row)

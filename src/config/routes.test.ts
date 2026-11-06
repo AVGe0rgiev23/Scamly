@@ -1,7 +1,7 @@
 // Unit tests for routes.ts: which pages need a login, and where each role starts.
 
 import { describe, expect, it } from "vitest";
-import { homePathForRole, isInside, loginPageFor } from "@/config/routes";
+import { homePathForRole, isInside, loginPageFor, safeNextPath, withNext } from "@/config/routes";
 
 describe("isInside", () => {
   it("matches the area itself and pages inside it", () => {
@@ -41,5 +41,44 @@ describe("homePathForRole", () => {
     expect(homePathForRole("protected")).toBe("/protected");
     expect(homePathForRole("moderator")).toBe("/moderator");
     expect(homePathForRole("admin")).toBe("/admin");
+  });
+});
+
+// The `next` parameter of /vhod and /registratsia (W2-14): only paths on our own site.
+describe("safeNextPath", () => {
+  it("accepts a path on our site, with its query", () => {
+    expect(safeNextPath("/pokana?t=abc_DEF-123")).toBe("/pokana?t=abc_DEF-123");
+    expect(safeNextPath("/family/alerts")).toBe("/family/alerts");
+    expect(safeNextPath("/")).toBe("/");
+  });
+
+  it("refuses other sites (no open redirect)", () => {
+    expect(safeNextPath("https://evil.example/")).toBeNull();
+    expect(safeNextPath("http:evil.example")).toBeNull();
+    expect(safeNextPath("//evil.example/pokana")).toBeNull();
+    expect(safeNextPath("/\\evil.example")).toBeNull();
+    expect(safeNextPath("\\evil.example")).toBeNull();
+    expect(safeNextPath("javascript:alert(1)")).toBeNull();
+    expect(safeNextPath("pokana")).toBeNull();
+  });
+
+  it("refuses hidden characters that browsers drop (/<tab>/evil → //evil)", () => {
+    expect(safeNextPath("/\t/evil.example")).toBeNull();
+    expect(safeNextPath("/\n/evil.example")).toBeNull();
+    expect(safeNextPath("/pokana\u0000")).toBeNull();
+  });
+
+  it("refuses an empty, missing or very long value", () => {
+    expect(safeNextPath("")).toBeNull();
+    expect(safeNextPath(null)).toBeNull();
+    expect(safeNextPath(undefined)).toBeNull();
+    expect(safeNextPath("/" + "a".repeat(600))).toBeNull();
+  });
+});
+
+describe("withNext", () => {
+  it("adds the encoded next path, or nothing", () => {
+    expect(withNext("/vhod", "/pokana?t=abc")).toBe("/vhod?next=%2Fpokana%3Ft%3Dabc");
+    expect(withNext("/vhod", null)).toBe("/vhod");
   });
 });
