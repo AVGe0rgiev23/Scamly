@@ -35,6 +35,8 @@ export const bg = {
     // When logged in, the menu shows the link to the person's own area (by role),
     // the name („Влезли сте като …“) and „Изход“ (not on the older person's phone).
     accountFamily: "Моите близки",
+    // The family's live alert page /family/alerts (W2-03).
+    accountFamilyAlerts: "Сигнали",
     accountModerator: "Модерация",
     accountAdmin: "Администрация",
     accountProtected: "Проверка на обаждане",
@@ -514,6 +516,47 @@ export const bg = {
       other: "друг начин",
     },
   },
+  // The family's live alert page /family/alerts (W2-03) and the „Обаждам ѝ се сега“
+  // button on each alert (W2-04, src/components/family/AlertsPage.tsx).
+  alerts: {
+    title: "Сигнали",
+    intro:
+      "Тук виждате на живо проверките на обаждания на хората, които пазите. Новите сигнали се появяват сами, без да презареждате страницата.",
+    loading: "Зареждаме сигналите…",
+    empty:
+      "Още няма сигнали. Когато някой от хората, които пазите, натисне големия бутон на телефона си, сигналът ще се появи тук веднага.",
+    noPersons: "Още нямате добавен човек, затова няма и сигнали.",
+    live: "Връзка на живо: новите сигнали се появяват веднага.",
+    liveLost: "Връзката на живо прекъсна. Показваме новостите на всеки 5 секунди.",
+    refreshFailed: "Не успяхме да обновим сигналите. Опитваме отново след малко.",
+    listLabel: "Сигнали, най-новите първи",
+    newBadge: "Нов сигнал",
+    focusedBadge: "Сигналът от известието",
+    focusNotFound:
+      "Сигналът от връзката не е намерен. Може да е изтрит или да нямате достъп до него.",
+    // {name} = the protected person's name. Read aloud by screen readers.
+    announceNew: "Нов сигнал: {name} проверява съмнително обаждане.",
+    // Used for {name} when the person is not in the list any more.
+    someone: "Ваш близък",
+    statusStarted: "Проверката още тече.",
+    statusAnswered: "Проверката е завършена.",
+    // Sound and vibration for a new alert: only after the user turns them on (a browser
+    // may not play sound before the user has pressed something on the page).
+    soundOn: "Включи звук и вибрация",
+    soundOff: "Изключи звук и вибрация",
+    soundEnabled: "Звукът и вибрацията при нов сигнал са включени.",
+    soundDisabled: "Звукът и вибрацията са изключени.",
+    // W2-04: the family member tells the older person's phone that they are calling.
+    callNow: "Обаждам ѝ се сега",
+    // {name} = the protected person, {time} = when the check started. Read aloud.
+    callNowLabel: "Обаждам ѝ се сега: {name}, проверка от {time}",
+    callNowHint: "Натиснете бутона и на телефона на {name} веднага ще се покаже, че се обаждате.",
+    sending: "Изпращане…",
+    youResponded: "Вие поехте обаждането.",
+    // {name} = the family member who pressed the button first.
+    otherResponding: "{name} вече се обажда.",
+    someoneResponding: "Друг близък вече се обажда.",
+  },
   // The older person's call check on the paired phone (/protected, W2-01).
   // Few words, big text: this screen is for an 80-year-old during a stressful call.
   protectedCheck: {
@@ -570,6 +613,44 @@ export const bg = {
     // Offline fallback (BUILD_PLAN 4.9): the server did not answer within 4 s, so the
     // phone computed the verdict itself and keeps sending the answers in the background.
     localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
+  },
+  // The „Известия на телефона“ card on /family (W2-05, src/components/family/PushOptIn.tsx).
+  pushOptIn: {
+    title: "Известия на телефона",
+    checking: "Проверяваме…",
+    disabled: "Известията още не са настроени.",
+    unsupported: `Този браузър не може да показва известия. На телефона отворете ${APP_NAME} в Chrome (Android) или от иконата на началния екран (iPhone).`,
+    off: "Известията са изключени. Включете ги, за да научавате веднага, когато ваш близък проверява съмнително обаждане.",
+    on: "Известията са включени на това устройство.",
+    blocked:
+      "Браузърът блокира известията от този сайт. Разрешете ги от настройките на сайта (иконата до адреса) и презаредете страницата.",
+    turnOn: "Включи известията",
+    turnOff: "Изключи",
+    working: "Момент…",
+    // The person closed the browser's question without „Разреши“.
+    notAllowed: "Известията не бяха разрешени. Можете да опитате отново.",
+    failed: "Не успяхме да променим известията. Проверете връзката и опитайте отново.",
+    // iPhone / iPad in a normal Safari tab: push works only from the home screen icon.
+    iosIntro: `На iPhone известията работят само когато ${APP_NAME} е добавен към началния екран:`,
+    iosStepShare: "Натиснете „Сподели“",
+    iosStepAdd: "Изберете „Добави към началния екран“",
+    iosStepOpen: `Отворете ${APP_NAME} от новата икона`,
+  },
+  // Voice input on the older person's text step (W2-10, src/components/protected/VoiceInput.tsx).
+  voice: {
+    start: "Говорете",
+    stop: "Спри",
+    listening: "Слушам… Говорете сега.",
+    // {text} = what the browser has heard so far (not final yet).
+    heard: "Чувам: „{text}“",
+    added: "Добавено в полето.",
+    privacyNote: `Гласът се превръща в текст от браузъра. ${APP_NAME} не записва звук.`,
+    errorNoSpeech: "Не чух нищо. Натиснете „Говорете“ и опитайте пак.",
+    errorNotAllowed:
+      "Микрофонът не е разрешен. Разрешете го от настройките на браузъра или напишете текста.",
+    errorNoMicrophone: "Не намерих микрофон. Можете да напишете текста.",
+    errorNetwork: "Гласовото въвеждане се нуждае от интернет. Можете да напишете текста.",
+    errorOther: "Гласовото въвеждане не проработи. Можете да напишете текста.",
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

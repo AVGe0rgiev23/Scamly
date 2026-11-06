@@ -115,6 +115,7 @@ If I were on the jury and saw only the current plan, built well, this is where I
 | SMS alerts | Costs money (D11) |
 | Points, badges, leaderboards for grandma | Feels patronising to older people |
 | Blocking phone numbers | Scammers spoof numbers. We target behaviour, not numbers (brief section 14) |
+| Analysing the caller's voice or sound frequencies to detect a scam | A web or phone app can't access call audio (Android and iPhone block it); recording a caller without consent is a legal problem in Bulgaria and under GDPR; voice/stress detection isn't reliable enough, and a false "safe" is our worst bug (D9). See idea 19 for the legal alternative |
 
 ---
 
@@ -135,3 +136,23 @@ Honest cost: about **20–25 extra hours over Weeks 2–3** for both of you toge
 - Idea 6 ("try to fool it") is our demo of the algorithm. If we fall behind, it's a reason to **cut the AI layer** (already first in D12) without losing the "smart" story.
 - Idea 5 replaces the weekly email digest (idea 16).
 - Idea 1 is the wow feature. If time runs out, a simpler version still works: grandma starts a practice from her menu, with text instead of recorded audio (~4 h).
+
+---
+
+## 8. AI / LLM ideas (added 6 Nov, to decide later)
+
+The regulation does **not** require AI or an LLM. These ideas build on the planned optional AI layer (W3-07, ADR 0004): AI may only make Scamly more careful, never less, and a human stays in control.
+
+| # | Idea | Why it's "another level" | Effort |
+|---|---|---|---|
+| 18 | **LLM-assisted detection of new scam scripts.** The LLM reads the anonymous public reports (personal data removed), groups similar ones and tells the moderator e.g. *"New script this week: 'НАП refund by SMS link', 9 reports in Пловдив"*, and **suggests new keywords**. The moderator approves; the rule engine then recognises the new script at once (`extraKeywords`) | The system improves itself while staying explainable: AI suggests, a human decides, the rules decide the verdict | ≈ 6–8 h (after W3-01, W3-04, W3-05, W3-07) |
+| 19 | **„Разкажете ми“: grandma retells the call by voice.** After the call (or with the caller on hold) she says in her own words what happened; speech-to-text (W2-10) turns it into text; the rule engine and the LLM analyse it | The legal version of "listening to the call": we analyse her words, not the caller's voice | ≈ 2 h on top of W2-10 |
+| 20 | **LLM-written practice calls for „Тренировка“ (idea 1).** The LLM writes short, realistic fake scam scripts based on the real scam waves from the map; grandma practises pressing the button; family sees the result | Prebunking with fresh, local scripts instead of a fixed set | ≈ 3 h on top of idea 1 |
+
+## 9. Ideas inbox (add new ideas here)
+
+Write each new idea as one row; we decide together which ones to build.
+
+| # | Idea | Who suggested | Date | Decision |
+|---|---|---|---|---|
+| 21 | *(next idea)* | | | |

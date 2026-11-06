@@ -31,12 +31,12 @@ function pageUrl(personId: string, cursor: string | null): string {
   return `/api/checks?${query.toString()}`;
 }
 
-function identityText(check: CheckDto): string {
+export function identityText(check: CheckDto): string {
   const identity = check.answers.claimedIdentity ?? "unknown";
   return fill(bg.family.claimedIdentity, { identity: bg.family.identities[identity] });
 }
 
-function acknowledgementText(check: CheckDto): string {
+export function acknowledgementText(check: CheckDto): string {
   const ack = check.acknowledgement;
   if (ack === null) {
     return bg.family.notAcknowledged;

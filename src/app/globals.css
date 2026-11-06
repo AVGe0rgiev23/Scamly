@@ -1136,3 +1136,179 @@ a.button {
   color: var(--foreground);
   font-size: 1.05rem;
 }
+
+/* „Известия на телефона“ card on /family (W2-05). */
+.push-card {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.push-card > * + * {
+  margin-top: 0;
+}
+.push-card > * {
+  max-width: 100%;
+}
+.push-message:empty {
+  display: none;
+}
+/* iPhone hint: three numbered steps, each with a small drawing. */
+.push-ios-steps {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: push-step;
+}
+.push-ios-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  counter-increment: push-step;
+  font-weight: 650;
+}
+.push-ios-steps li::before {
+  content: counter(push-step) ".";
+  flex: none;
+  width: 1.5rem;
+  font-weight: 800;
+}
+.push-ios-steps svg {
+  flex: none;
+}
+.push-icon {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* „Говорете“: voice input on the older person's text step (W2-10). */
+.voice-input {
+  display: grid;
+  gap: 0.5rem;
+}
+.voice-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.voice-icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* While listening: a thick primary-coloured frame, so it is clear the phone listens. */
+.voice-listening {
+  border-width: 4px;
+  border-color: var(--primary);
+}
+.voice-listening .voice-icon {
+  fill: currentColor;
+}
+.voice-status {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.voice-status:empty {
+  display: none;
+}
+.voice-error {
+  color: var(--red-fg);
+}
+.voice-note {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* Family alert page /family/alerts (W2-03) and „Обаждам ѝ се сега“ (W2-04). */
+.alerts {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.alerts-tools {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.alerts-live {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--green-fg);
+  background: var(--green-bg);
+  color: var(--green-fg);
+  font-weight: 650;
+}
+.alerts-live-lost {
+  border-left-color: var(--yellow-fg);
+  background: var(--yellow-bg);
+  color: var(--yellow-fg);
+}
+.alert-item {
+  scroll-margin: 1rem;
+}
+.alert-item:focus {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+.alert-person {
+  font-size: 1.35rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+/* A new alert, or the one opened from a notification: a thick frame, a tag and a
+ * short pulse (no pulse for people who asked the system for less motion). */
+.alert-new,
+.alert-focused {
+  border: 3px solid var(--primary);
+  background: var(--surface);
+}
+.alert-new {
+  animation: alert-pulse 1.2s ease-out 2;
+}
+@keyframes alert-pulse {
+  from {
+    box-shadow: 0 0 0 6px var(--primary);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alert-new {
+    animation: none;
+  }
+}
+.alert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.alert-tag {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
+}
+.alert-actions {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+}
+/* The big „Обаждам ѝ се сега“: full width, easy to hit with a thumb. */
+.alert-call {
+  width: 100%;
+  font-size: 1.15rem;
+}
+.alert-responded {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--primary);
+  background: var(--surface);
+  font-weight: 750;
+}

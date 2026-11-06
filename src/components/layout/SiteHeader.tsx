@@ -3,8 +3,9 @@
 //
 // The menu depends on who is looking:
 //   - a guest sees „Вход“, „Регистрация“, „Свържи телефон“;
-//   - a logged-in person sees the link to their own area (e.g. „Моите близки“), their
-//     name and „Изход“ (the older person's phone: area link and name, never „Изход“).
+//   - a logged-in person sees the link to their own area (e.g. „Моите близки“; a
+//     family member also „Сигнали“), their name and „Изход“ (the older person's
+//     phone: area link and name, never „Изход“).
 //
 // A Server Component: plain HTML with links. Who is logged in is read on the server
 // (getActor), so the login cookie never has to be read by browser code. Reading the
@@ -23,7 +24,7 @@ import { ROUTES, type AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { readPublicEnv } from "@/lib/publicEnv";
 import { getActor } from "@/server/auth/actor";
-import { accountLinkFor, showsLogout, type NavLink } from "./accountLinks";
+import { accountLinkFor, extraLinksFor, showsLogout, type NavLink } from "./accountLinks";
 import { LogoMark } from "./Logo";
 
 // The menu for a guest, in the order it is shown. A list of objects, like a Python
@@ -104,6 +105,11 @@ function SiteNav({ account }: { account: HeaderAccount | null }) {
         <li>
           <Link href={area.href}>{area.label}</Link>
         </li>
+        {extraLinksFor(account.role).map((link) => (
+          <li key={link.href}>
+            <Link href={link.href}>{link.label}</Link>
+          </li>
+        ))}
         <li className="site-user">
           {/* On a phone „Влезли сте като“ is only read aloud, to save space. */}
           <span className="site-user-prefix">{bg.layout.signedInAs} </span>

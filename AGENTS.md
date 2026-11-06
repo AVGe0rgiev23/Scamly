@@ -52,12 +52,19 @@ Scamly helps older people in Bulgaria check a suspicious phone call in 30 second
 - Never push until the person explicitly says "push".
 - Never force-push or rewrite pushed history without asking first.
 - Small commits with clear messages (see the commit names in `docs/IMPLEMENTATION_PLAN.md` section 6).
+- **No docs-only commits.** Documentation changes (plan, status board, `HOW_IT_WORKS.md`, `WHY_WE_CHOSE.md`, `CHANGES.md`, ADRs) always go into the code commit they belong to. If a docs change has no code yet, keep it uncommitted and add it to the next code commit.
 
 ## Before asking "push?"
 
 - Run `npm run check` (lint, type-check, format check, tests).
 - If anything in `supabase/` changed, also run `npm run test:db`. It needs a local PostgreSQL 16 with pgTAP on Linux. On Roberta's computer, if she changes `supabase/` and can't run it, say so; CI's _database_ job is then the check, so look at it right after the push.
 - Never push red. Fix it first, or explain why you can't.
+
+## After every push: check the deploy
+
+- Vercel deploys every push to `main` automatically (1–2 minutes) to https://scamly-ag777.vercel.app.
+- After each push, check that the new change is visible on the live site and that `/api/health` answers `{"ok":true,"db":true}`. If the deploy fails or the live site breaks, say so at once and fix it before new work.
+- If a change needs a database migration, run it in the Supabase SQL Editor before the push, so the live site never runs code against an old database.
 
 ## Keep the docs up to date (D19)
 

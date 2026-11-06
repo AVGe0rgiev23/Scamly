@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-05**
+Last updated: **2026-11-06**
 
 **Contents**
 
@@ -35,6 +35,8 @@ The system has **layers**, and each layer only talks to the one below it: the **
 
 **Week 2 backend (4 Nov, ahead of plan):** the call-check API runs the engine on the server and stores only redacted text (3.23); the family is alerted through `alerts` rows and Supabase Realtime, with a 5 s polling fallback (3.24, 3.25); „Обаждам ѝ се сега“ works end to end (3.23); persons, the contact list and invites are complete (3.26–3.28, 5.14). Web push (3.29) and e-mail (3.30) are two more alert channels, each behind its feature switch; a real phone and a real Brevo e-mail are still to be tested. 171 database tests, 449 unit tests. Roberta's Week 2 screens that use them are still to come.
 
+**Week 2 frontend (6 Nov, Alex):** the family's live alert page `/family/alerts` with „Обаждам ѝ се сега“ (3.34, header link „Сигнали“), the push opt-in card with the iPhone hint (3.35) and voice input on grandma's text step (3.36). Realtime got a reliability fix: a 10 s safety poll keeps running while connected (3.25). Live: 5/5 round trips, alert on the family page 2.3–3.9 s after the big button, the name on grandma's phone 0.8–1.3 s after the family member's tap. 521 unit tests, 58 e2e tests × 2 screens.
+
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
@@ -43,7 +45,7 @@ flowchart TB
   REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 12 files · ⬜ more (week 3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 171 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
-  RT["Supabase Realtime<br/>✅ publication, token endpoint, src/lib/realtime.ts · ⬜ live pages"]
+  RT["Supabase Realtime<br/>✅ publication, token endpoint, src/lib/realtime.ts, live alert page, phone's family message"]
   CFG["Config, Bulgarian text, env check<br/>src/config, src/i18n, src/lib<br/>✅ works, unit-tested"]
 
   UI --> API --> SVC --> REPO --> PG
@@ -56,8 +58,8 @@ flowchart TB
   classDef done fill:#d1fae5,stroke:#047857,color:#064e3b
   classDef planned fill:#f3f4f6,stroke:#6b7280,stroke-dasharray:5 5,color:#374151
   classDef partly fill:#fef3c7,stroke:#b45309,color:#78350f
-  class PG,CFG,AUTH done
-  class UI,API,SVC,REPO,RT partly
+  class PG,CFG,AUTH,RT done
+  class UI,API,SVC,REPO partly
 ```
 
 Green = works now, yellow = partly built, grey dashed = planned.
@@ -71,14 +73,14 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Part | Status | Where in the code | Proven by |
 |---|---|---|---|
 | App skeleton (layout, home page, 404 page) | ✅ | `src/app/layout.tsx`, `page.tsx`, `not-found.tsx`, `globals.css` | `tests/e2e/home.spec.ts`; CI jobs *checks* (build) and *e2e* |
-| Site layout: header, menu, compact theme switch, footer + real home page (3.31) | ✅ (W2-13, D22) | `src/components/layout/`, `src/components/ui/ThemeToggle.tsx`, `src/app/layout.tsx`, `src/app/page.tsx` | `tests/e2e/layout.spec.ts` (7 tests), `src/components/layout/accountLinks.test.ts`, `home.spec.ts`, `ui.spec.ts` |
+| Site layout: header, menu (family: + „Сигнали“), compact theme switch, footer + real home page (3.31) | ✅ (W2-13, D22) | `src/components/layout/`, `src/components/ui/ThemeToggle.tsx`, `src/app/layout.tsx`, `src/app/page.tsx` | `tests/e2e/layout.spec.ts` (7 tests), `src/components/layout/accountLinks.test.ts`, `home.spec.ts`, `ui.spec.ts` |
 | App name constant | ✅ | `src/config/app.ts` | `src/i18n/bg.test.ts` |
-| Feature switches | ✅ (`push`, `email` used by the alert channels) | `src/config/features.ts` | `src/config/features.test.ts` |
+| Feature switches | ✅ (`push`, `email` used by the alert channels; `voice` by the call check, 3.36) | `src/config/features.ts` | `src/config/features.test.ts` |
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 484 tests in 51 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 39 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| Unit tests (Vitest) | ✅ 521 tests in 54 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 58 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -108,13 +110,16 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Seed script with demo accounts | 🔄 tooling ready; approved empty DB execution pending | `scripts/seed*.ts`, `scripts/tsconfig.seed.json` | Five offline tests and npm run seed preview; section 3.20 |
 | `/api/health`, keep-alive workflow, Vercel region (section 3.22) | 🔄 code ready, live check against Supabase OK; Vercel project + `HEALTH_URL` secret pending (W1-13, Mon 9 Nov) | `src/app/api/health/`, `src/server/services/healthService.ts`, `src/server/repositories/districtsRepository.ts`, `.github/workflows/keep-alive.yml`, `vercel.json` | `healthService.test.ts`, `tests/e2e/health.spec.ts`; local live check |
 | Call check UI: big button, one question per screen, optional text, verdict with praise and `tel:` button, live family message, offline engine fallback (3.33) | ✅ (W2-01, Roberta) | `src/app/protected/`, `src/components/protected/`, `src/components/ui/{BigChoice,Verdict}.tsx`, `/dev/protected` preview | `tests/e2e/protected.spec.ts` (6 tests × 2 screens), `questions`, `upload`, `acknowledgement` unit tests; live check with a throwaway pairing |
-| Checks API + server-side verdict + acknowledge (3.23) | ✅ backend (W2-02, W2-04) · UI: Roberta | `src/app/api/checks/`, `src/server/services/checkService.ts`, `src/schemas/checks.ts` | `checkService.test.ts` (24), `schemas/checks.test.ts`; live smoke test 38/38 |
-| Family alerts: fan-out + Realtime token + live-watch helper (3.24, 3.25) | ✅ backend (W2-03) · live alert page UI: Roberta | `src/server/services/alertService.ts`, `realtimeService.ts`, `src/app/api/realtime/token/`, `src/lib/realtime.ts` | `alertService`, `realtimeService`, `realtime`, `origin` tests; live: alert via Realtime in 111 ms |
-| Web push (3.29) | ✅ backend (W2-05) · opt-in button + iOS hint: Roberta · real-phone test pending | `src/app/api/push/`, `src/server/services/pushSubscriptionService.ts`, `src/server/notifications/push{Channel,Sender}.ts`, `src/schemas/push.ts`, `src/lib/push.ts`, `public/sw.js` | `pushChannel` (19), `pushSender` (4), `pushSubscriptionService` (7), `schemas/push` (7), `lib/push` (9); live smoke test 22/22 |
+| Checks API + server-side verdict + acknowledge (3.23) | ✅ backend (W2-02, W2-04) · acknowledge button: 3.34 | `src/app/api/checks/`, `src/server/services/checkService.ts`, `src/schemas/checks.ts` | `checkService.test.ts` (24), `schemas/checks.test.ts`; live smoke test 38/38 |
+| Family alerts: fan-out + Realtime token + live-watch helper with safety poll (3.24, 3.25) | ✅ (W2-03) · live alert page: 3.34 | `src/server/services/alertService.ts`, `realtimeService.ts`, `src/app/api/realtime/token/`, `src/lib/realtime.ts` | `alertService`, `realtimeService`, `realtime` (10), `origin` tests; live: alert via Realtime in 111 ms; 5/5 round trips on 6 Nov |
+| Web push (3.29) | ✅ backend (W2-05) · ✅ opt-in card + iOS hint (3.35) · real-phone test pending | `src/app/api/push/`, `src/server/services/pushSubscriptionService.ts`, `src/server/notifications/push{Channel,Sender}.ts`, `src/schemas/push.ts`, `src/lib/push.ts`, `public/sw.js` | `pushChannel` (19), `pushSender` (4), `pushSubscriptionService` (7), `schemas/push` (7), `lib/push` (12); live smoke test 22/22 |
 | Email (`EmailProvider`, Brevo) (3.30) | ✅ backend (W2-06) · wording draft: Roberta · real Brevo e-mail pending (no account yet) | `src/server/notifications/email/`, `src/server/notifications/siteUrl.ts` | `emailProviders` (10), `alertEmail` (9), `emailChannel` (8), `siteUrl` (3); fakes only |
 | Contacts + invites API (3.27, 3.28) | ✅ backend (W2-08) · migration applied 4 Nov; live smoke test 44/44 | `src/app/api/persons/[id]/{contacts,invites}/`, `src/app/api/invites/redeem/`, `contactService.ts`, `inviteService.ts` | `contactService` (12), `inviteService` (17), `11_replace_contacts`; live 35/44 |
-| Family dashboard UI: people, create person, contacts order, invite, pairing with QR, devices + revoke, check history (3.32) | ✅ (W2-07, Roberta) · live alert page is W2-03 | `src/app/family/`, `src/components/family/`, `src/components/ui/{ConfirmDialog,VerdictBadge}.tsx`, `/dev/family` previews | `tests/e2e/family.spec.ts` (10 tests × 2 screens), `format`, `qr`, `districts` unit tests; live check with the demo account |
-| PWA (install, offline card), voice input | ⬜ planned (week 2, W2-09, W2-10) | | |
+| Family dashboard UI: people, create person, contacts order, invite, pairing with QR, devices + revoke, check history (3.32) | ✅ (W2-07, Roberta) · live alert page: 3.34 | `src/app/family/`, `src/components/family/`, `src/components/ui/{ConfirmDialog,VerdictBadge}.tsx`, `/dev/family` previews | `tests/e2e/family.spec.ts` (10 tests × 2 screens), `format`, `qr`, `districts` unit tests; live check with the demo account |
+| Live alert page `/family/alerts` + „Обаждам ѝ се сега“ (3.34) | ✅ (W2-03, W2-04, Alex) | `src/app/family/alerts/`, `src/components/family/{AlertsPage.tsx,alerts.ts,alertSound.ts}`, `/dev/family/alerts` preview | `tests/e2e/alerts.spec.ts` (8 tests × 2 screens), `alerts` (9), `accountLinks` tests; live 5/5 round trips |
+| Push opt-in card + iPhone hint, unsubscribe on logout (3.35) | ✅ (W2-05 UI, Alex) · real-phone delivery untested | `src/components/family/{PushOptIn.tsx,pushState.ts}`, `FamilyHome.tsx`, `src/lib/push.ts`, `src/components/auth/forms.tsx` | `tests/e2e/push-optin.spec.ts` (7 tests × 2 screens), `pushState` (10), `lib/push` (12) |
+| Voice input „Говорете“ (3.36) | ✅ (W2-10, Alex) · real Bulgarian recognition on a phone untested | `src/components/protected/{VoiceInput.tsx,voice.ts,CallCheckPage.tsx}`, `CallerText.tsx` | `tests/e2e/voice.spec.ts` (4 tests × 2 screens), `voice` (9) |
+| PWA (install, offline card) | ⬜ planned (week 2, W2-09) | | |
 | Public reports + scam map | ⬜ planned (week 3, W3-01 to W3-03) | | |
 | Moderation, education pages | ⬜ planned (week 3, W3-04, W3-05) | | |
 | Admin (users, roles, stats, audit log view) | ⬜ planned (week 3, W3-06) | | |
@@ -238,7 +243,7 @@ export function parseBoolean(value: string | undefined, defaultValue: boolean): 
 }
 ```
 
-The first users are the alert channels (3.24): `email` adds the e-mail channel (3.30), and `push` adds the push channel **only if the VAPID keys are valid too** (3.29); `GET /api/push/public-key` answers `enabled: false` when either is missing.
+The first users are the alert channels (3.24): `email` adds the e-mail channel (3.30), and `push` adds the push channel **only if the VAPID keys are valid too** (3.29); `GET /api/push/public-key` answers `enabled: false` when either is missing. `voice` is read at request time by `CallCheckPage.tsx` and shows or hides „Говорете“ (3.36).
 
 #### Why it works like that
 
@@ -963,17 +968,27 @@ When the button is pressed, every trusted contact **with a Scamly account** gets
 
 #### What it does
 
-Gives Roberta's pages two functions that keep a check (or a person's list of checks) up to date live:
+Gives the pages three functions that keep checks up to date live:
 
-- `watchCheck(checkId, onCheck)`: grandma's phone after the verdict (waiting for „Анна ще ви се обади веднага.“) and the family's alert page.
-- `watchPersonChecks(personId, onChecks)`: the family's live list of one person's checks.
+- `watchCheck(checkId, onCheck)`: grandma's phone after the verdict (waiting for „Анна ще ви се обади веднага.“, 3.33).
+- `watchChecksOfPersons(personIds, onChecks, { onError, onLive })`: the family's alert page `/family/alerts` (3.34): everybody the family member looks after, on **one** Realtime channel. Each load asks `GET /api/checks?personId=…` once per person, all at the same time (`Promise.all`), and `newestFirst()` merges the lists (newest first, a check never twice).
+- `watchPersonChecks(personId, onChecks)`: one person; it is `watchChecksOfPersons([personId], …)`.
 
-Both return `stop()` (call it in the cleanup of `useEffect`).
+All return `stop()` (call it in the cleanup of `useEffect`).
 
 #### How it works
 
-1. **Realtime is only a doorbell.** The channel listens to `postgres_changes`: `watchCheck` to `UPDATE` on `checks` with `id=eq.<checkId>`; `watchPersonChecks` to every change on `checks` with `protected_person_id=eq.<personId>` **and** `INSERT` on `alerts` with `recipient_id=eq.<my user id>`. On any event the page fetches the fresh data **from our API** (`GET /api/checks/:id` or `GET /api/checks?personId=…`), so it always gets the same `CheckDto` shape with Bulgarian reasons and names. RLS decides whether a subscriber receives an event at all.
-2. **Polling fallback.** `startLiveWatch()` loads the data at once and polls our API **every 5 s until Realtime says `SUBSCRIBED`**, then stops polling and loads once more (to catch what changed while connecting). If the channel drops (`TIMED_OUT`, `CLOSED`, `CHANNEL_ERROR`) polling starts again; if Realtime can't start at all (no token, WebSockets blocked) polling simply goes on.
+1. **Realtime is only a doorbell.** The channel listens to `postgres_changes`: `watchCheck` to `UPDATE` on `checks` with `id=eq.<checkId>`; `watchChecksOfPersons` to every change on `checks` with `protected_person_id=eq.<personId>` for each person **and** `INSERT` on `alerts` with `recipient_id=eq.<my user id>`. On any event the page fetches the fresh data **from our API** (`GET /api/checks/:id` or `GET /api/checks?personId=…`), so it always gets the same `CheckDto` shape with Bulgarian reasons and names. RLS decides whether a subscriber receives an event at all.
+2. **When the page loads (`startLiveWatch()`).** The rules since the fix of 6 Nov:
+   - load at once, then poll our API **every 5 s** (`POLL_INTERVAL_MS`) until Realtime says `SUBSCRIBED`;
+   - load once more **right after `SUBSCRIBED`** (a change made while joining sent us no event);
+   - while `SUBSCRIBED`, a **safety poll every 10 s** (`SAFETY_POLL_INTERVAL_MS`): one timer ticks every 5 s and loads only when the last load started at least 10 s ago;
+   - load again when the page **wakes up** (`browserWakeListener()`: the tab becomes visible, e.g. a phone back from the lock screen, or the network comes back, `online`);
+   - **one load at a time:** a doorbell during a load sets a flag and starts exactly **one** more load after it, so an older answer can never overwrite a newer one;
+   - the channel drops (`TIMED_OUT`, `CLOSED`, `CHANNEL_ERROR`) → back to every 5 s; Realtime can't start at all (no token, WebSockets blocked) → the 5 s polling simply goes on. It is **not** retried: if the first token request fails, the page stays on polling until it is reloaded (difference #49);
+   - `onLive(true / false)` tells the page whether Realtime is connected right now (the alert page shows „Връзка на живо…“ or „…на всеки 5 секунди.“).
+
+   **The fix.** In the W2-01 live check (5 Nov, 3.33) the family's answer once did not reach grandma's phone within 15 s. The cause: polling **stopped** at `SUBSCRIBED`, so an event lost after that (e.g. one sent while the database side of the subscription was still starting) was never re-checked. The safety poll now brings such a change within about 10 s, and the wake-up load covers a phone that slept.
 3. **The token.** Realtime needs the user's access token so RLS knows who is listening, but our session cookies are HttpOnly (3.9). So the page asks **`GET /api/realtime/token`**: `assertSameOriginRead()` (403 if another site started the request, although GET routes are otherwise never checked), `requireRole([...all four roles])` (→ `getUser()`, so a deleted account is refused), then `auth.getSession()` from the cookies. `issueRealtimeToken()` (`src/server/services/realtimeService.ts`) answers 401 unless the session exists, **belongs to the same account** and has an expiry; else 200 `{ userId, accessToken, expiresAt }` with `Cache-Control: no-store`.
 4. **Its own Supabase client.** `realtime.ts` creates one client per page with `createClient(url, publishableKey, { accessToken: async () => (await getToken()).accessToken })`. supabase-js asks this function for the token again on every heartbeat (about every 25 s). `getToken()` keeps the token in a module variable and fetches a new one **60 s before `expiresAt`** (`tokenNeedsRefresh()`). Before joining a channel it calls `realtime.setAuth()` once, so the first join already carries the token.
 5. **Why not `setAuth(token)` on the normal browser client?** That client has no session (HttpOnly cookies), so on the next heartbeat it would hand Realtime the **publishable key** instead and replace our token; RLS would then see a guest. The header of `src/lib/supabase/browser.ts` now says it is not used for Realtime.
@@ -983,12 +998,14 @@ Both return `stop()` (call it in the cleanup of `useEffect`).
 
 - **Doorbell + our API:** one place builds the answer (Bulgarian reasons from codes, names, the acknowledgement message); Realtime payloads would be raw database rows.
 - **Polling fallback:** pressing the button must reach the family even on a network that blocks WebSockets (D7). 5 s is fast enough for a phone call and cheap for the server.
+- **Safety poll while connected:** `SUBSCRIBED` does not promise that every event arrives. One extra request every 10 s per open page is cheap and limits the worst case to about 10 s. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Safety poll every 10 s even while Realtime is connected".
+- **One channel for all people** on the alert page: one WebSocket subscription and one place for the connected / not connected state, instead of one channel per person. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "One Realtime channel for all the family's people".
 - **Trade-off of the token endpoint:** page JavaScript now sees the short-lived **access** token (about 1 hour). The **refresh** token, which keeps a session alive for weeks, stays in the HttpOnly cookie and never reaches the page. The alternative, readable session cookies (`@supabase/ssr`'s default), would expose both tokens to any XSS bug. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Realtime token endpoint".
 - **Same-origin check on a GET:** the answer itself is a secret, so another site must not even try to fetch it with the victim's cookies.
 
 #### How we know it works
 
-`realtime.test.ts`, 6 tests: a token is fetched when there is none and kept until one minute before it expires; loads at once and polls every 5 s until connected; polls again when Realtime drops; keeps polling when Realtime can't start; `stop()` ends polling and closes the channel. `realtimeService.test.ts`, 3 tests: token of the same account; 401 without a session or for another account; 401 without an expiry. `origin.test.ts`: 2 new tests for `assertSameOriginRead()`. Live: the alert arrived through Realtime 111 ms after the API answer (3.23).
+`realtime.test.ts`, 10 tests (fake timers): a token is fetched when there is none and kept until one minute before it expires (2); loads at once and polls every 5 s until connected; keeps a safety poll every 10 s while connected (a lost event still arrives); loads again when the page wakes up; polls again when Realtime drops; keeps polling when Realtime can't start; one load at a time, and exactly one more for a doorbell during a load; `stop()` ends polling and closes the channel; `newestFirst()` merges several people's lists newest first without duplicates. `realtimeService.test.ts`, 3 tests: token of the same account; 401 without a session or for another account; 401 without an expiry. `origin.test.ts`: 2 new tests for `assertSameOriginRead()`. Live: the alert arrived through Realtime 111 ms after the API answer (3.23). **Live on 6 Nov** (real Supabase project, grandma's phone and the family page in two browsers, after the fix): **5/5 round trips**; the alert was on the family page **2.3–3.9 s** after the big button (this includes the server creating the check and the fan-out), and the name appeared on the phone **0.8–1.3 s** after „Обаждам ѝ се сега“.
 
 ### 3.26 One protected person: `GET`/`PATCH`/`DELETE /api/persons/:id` (W2-08 backend)
 
@@ -1086,12 +1103,12 @@ A family member who switched notifications on gets a notification on their phone
 | `POST /api/push/subscriptions` `{ endpoint, keys: { p256dh, auth } }` | any logged-in role | 201 `{ ok: true }`; 400 bad subscription; 409 `push_endpoint_taken`; 429 after 20 changes per hour |
 | `DELETE /api/push/subscriptions` `{ endpoint }` | any logged-in role | 200 `{ ok: true, removed }` (only the caller's own row) |
 
-The „Включи известията“ button and the iPhone hint are Roberta's (W2-05 UI); `src/lib/push.ts` gives her the functions.
+The „Включи известията“ button and the iPhone hint are the „Известия на телефона“ card (3.35); `src/lib/push.ts` gives it the functions.
 
 #### How it works
 
 1. **Keys.** One VAPID key pair, made once with `npx web-push generate-vapid-keys`: `VAPID_PUBLIC_KEY` (public), `VAPID_PRIVATE_KEY` (secret), and optional `VAPID_SUBJECT` (`mailto:…` or `https://…`, default `mailto:scamly-demo@example.invalid`). `getPushConfig(env, features)` (`pushChannel.ts`) returns `null` (push off) when `FEATURE_PUSH` is off, a key is missing, or a key has the wrong shape (87 / 43 base64url characters; the warning names the variables, never the values).
-2. **Subscribing in the browser** (`src/lib/push.ts`). `subscribeToPush()` must be called **directly in the tap handler** (Safari asks for permission only in answer to a tap). In order: iPhone/iPad outside the home-screen app → `"ios_home_screen"` (an iPad says "Macintosh", so "Macintosh" + touch screen counts as iPad); no service worker / `PushManager` / `Notification` → `"unsupported"`; `Notification.requestPermission()` (no → `"denied"`); register `/sw.js` with scope `/` and `updateViaCache: "none"`; fetch the public key (`null` → `"disabled"`); reuse this browser's subscription unless it was made for another key; else `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`; POST `subscription.toJSON()`. On **409** it unsubscribes, makes a **fresh** subscription (new endpoint) and tries **once** more. Other helpers: `isPushEnabledOnServer()`, `isPushSupported()`, `isIosNeedsHomeScreen()`, `getPushPermission()`, `isSubscribedToPush()`, and `unsubscribeFromPush()` (server DELETE first, then the browser; call it on logout).
+2. **Subscribing in the browser** (`src/lib/push.ts`). `subscribeToPush()` must be called **directly in the tap handler** (Safari asks for permission only in answer to a tap). In order: iPhone/iPad outside the home-screen app → `"ios_home_screen"` (an iPad says "Macintosh", so "Macintosh" + touch screen counts as iPad); no service worker / `PushManager` / `Notification` → `"unsupported"`; `Notification.requestPermission()` (no → `"denied"`); register `/sw.js` with scope `/` and `updateViaCache: "none"`; fetch the public key (`null` → `"disabled"`); reuse this browser's subscription unless it was made for another key; else `pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })`; POST `subscription.toJSON()`. On **409** it unsubscribes, makes a **fresh** subscription (new endpoint) and tries **once** more. Other helpers: `isPushEnabledOnServer()`, `isPushSupported()`, `isIosNeedsHomeScreen()`, `getPushPermission()`, `isSubscribedToPush()`, and `unsubscribeFromPush()` (server DELETE first, then the browser). `unsubscribeFromPushBeforeLogout()` wraps it for „Изход“ (3.35): it never fails and waits at most 1.5 s.
 3. **Saving on the server.** Route: same-origin check, `requireRole([all four roles])`, `PushSubscriptionSchema` (`src/schemas/push.ts`): the endpoint must be `https`, port 443, no user/password, ≤ 1000 characters, on an **allowlisted host** or a sub-domain of it (`fcm.googleapis.com`, `push.services.mozilla.com`, `push.apple.com`, `notify.windows.com`); `p256dh` 43–200 and `auth` 16–100 base64url characters; other keys (`expirationTime`) dropped. `saveSubscription()` (`pushSubscriptionService.ts`): rate limit `push:user:<user id>` (3.13); then an **upsert without an UPDATE right**: `deleteOwn(userId, endpoint)`, then `insertOwn()`, both with the **user** client (RLS: `user_id = auth.uid()`). `user_id` always comes from the session. If the insert hits the unique endpoint (`23505`), the endpoint belongs to **another** account, whose row RLS hides → 409 `push_endpoint_taken`. `removeSubscription()` deletes only the caller's row and always answers 200.
 4. **Sending** (`pushChannel.ts`, an `AlertChannel` named `push`, 3.24). `buildPushMessage(payload)` → `{ title, body, url, tag }` from `bg.push` (name, or „Ваш близък“ when it is empty); `url` = `/family/alerts?check=<id>`, `tag` = `check-<id>`; a verdict that is not red → `null` → `"skipped"`. `listSubscriptions(userId)` (admin client, use 4); none → `"skipped"`. Each of the member's browsers in turn gets `createWebPushSender(config)` (`pushSender.ts`) → `webpush.sendNotification(target, JSON, { TTL: 600, urgency: "high", timeout: 5000, vapidDetails })`. HTTP **404/410** → `"gone"` → the row is deleted at once (a failed delete is only logged). Another status → an error with **only the status code** (the body could echo the endpoint). At least one browser reached → `sent` row; none → the channel throws (`"all N push subscription(s) expired and were removed"` or `"push failed for N subscription(s): …"`) → `failed` row; the fan-out goes on.
 5. **The service worker** `public/sw.js` (plain JavaScript; the browser loads it from `/sw.js` without our build). `next.config.ts` gives `/sw.js` the headers `Content-Type: application/javascript`, `Cache-Control: no-cache, no-store, must-revalidate` and its own CSP `default-src 'self'; script-src 'self'`. `install` → `skipWaiting()`, `activate` → `clients.claim()` (a fix reaches phones at once). `push` → `readMessage()` (anything malformed becomes a general „Scamly“ alert; `url` must be a path of our own site, `/` but not `//`) → `showNotification()` with the same `tag`, `renotify: true`, `requireInteraction: true`. `notificationclick` → focus an open Scamly tab and navigate it, else open a new one. **No caching yet:** the offline "what to do" card comes with W2-09 (Roberta).
@@ -1109,7 +1126,7 @@ The „Включи известията“ button and the iPhone hint are Rober
 
 #### How we know it works
 
-`pushChannel.test.ts`, 19 tests: when push is on (switch, both keys, subject, malformed key warns without the value, no channel at all when off); the message (who, link and tag of this check, second message only for red, „Ваш близък“, no free text); sending (every browser of the recipient and nobody else, 404/410 deleted and still `sent`, all gone → throws, nobody reached → throws without the endpoint, `"skipped"`, a failed delete is only logged); inside a real `fanOut()` (only linked contacts, `sent`/`failed` per member, no row without a subscription, red follow-up). `pushSender.test.ts`, 4 (TTL, urgency and VAPID keys; 404/410 → gone; other status → status only; network errors passed on). `pushSubscriptionService.test.ts`, 7 (stored for the caller with the rate limit, own endpoint refreshed, 409 leaves the other account's row, 429; delete own, someone else's endpoint untouched but 200, 429). `schemas/push.test.ts`, 7 (the four push services; other and look-alike hosts, `http`, odd ports and garbage refused; `toJSON()` accepted with unknown keys dropped; Bulgarian message; length; keys). `lib/push.test.ts`, 9 (support detection, iPhone/iPad detection, hint only outside the home screen, base64url decoding, an 87-character key → 65 bytes starting `0x04`, `sameBytes`).
+`pushChannel.test.ts`, 19 tests: when push is on (switch, both keys, subject, malformed key warns without the value, no channel at all when off); the message (who, link and tag of this check, second message only for red, „Ваш близък“, no free text); sending (every browser of the recipient and nobody else, 404/410 deleted and still `sent`, all gone → throws, nobody reached → throws without the endpoint, `"skipped"`, a failed delete is only logged); inside a real `fanOut()` (only linked contacts, `sent`/`failed` per member, no row without a subscription, red follow-up). `pushSender.test.ts`, 4 (TTL, urgency and VAPID keys; 404/410 → gone; other status → status only; network errors passed on). `pushSubscriptionService.test.ts`, 7 (stored for the caller with the rate limit, own endpoint refreshed, 409 leaves the other account's row, 429; delete own, someone else's endpoint untouched but 200, 429). `schemas/push.test.ts`, 7 (the four push services; other and look-alike hosts, `http`, odd ports and garbage refused; `toJSON()` accepted with unknown keys dropped; Bulgarian message; length; keys). `lib/push.test.ts`, 12 (support detection, iPhone/iPad detection, hint only outside the home screen, base64url decoding, an 87-character key → 65 bytes starting `0x04`, `sameBytes`; logout: waits for a quick unsubscribe, never fails when it throws, gives up after the timeout).
 
 **Live smoke test (4 Nov, not in the repo): 22/22 steps passed.** **Not yet tested:** delivery to a real phone (needs a real Android phone with Chrome; on iPhone only after "Add to Home Screen"), which is W2-05's "done when" in BUILD_PLAN.
 
@@ -1157,8 +1174,8 @@ Every page now has the same frame: a **header** with the Scamly logo (a link to 
 |---|---|
 | `src/app/layout.tsx` | The root layout. It renders a "skip to content" link, `<SiteHeader />`, the page (`{children}`) inside `<div id="content">`, and `<SiteFooter />`. |
 | `src/components/layout/SiteHeader.tsx` | Server Component: logo link + `<nav aria-label="Основно меню">` + `<ThemeToggle />`. The menu is drawn by `AccountNav` inside `<Suspense>`: it calls `getActor()` and shows the guest links (addresses from `ROUTES`) or the logged-in menu. |
-| `src/components/layout/accountLinks.ts` | Plain functions: `accountLinkFor(role)` (the area link: `homePathForRole(role)` + its text from `bg.layout`) and `showsLogout(role)` (false only for `protected`). |
-| `src/components/auth/forms.tsx` | `LogoutButton` (Client Component): `POST /api/auth/logout`, then `window.location.assign("/")`. |
+| `src/components/layout/accountLinks.ts` | Plain functions: `accountLinkFor(role)` (the area link: `homePathForRole(role)` + its text from `bg.layout`), `extraLinksFor(role)` (a family member also gets „Сигнали“ → `/family/alerts`, 3.34; other roles none) and `showsLogout(role)` (false only for `protected`). |
+| `src/components/auth/forms.tsx` | `LogoutButton` (Client Component): `unsubscribeFromPushBeforeLogout()` (3.35), `POST /api/auth/logout`, then `window.location.assign("/")`. |
 | `src/components/layout/Logo.tsx` | Our own mark: a shield with a mobile phone, drawn as inline SVG. Its colours are CSS classes that use the theme tokens. |
 | `src/components/layout/SiteFooter.tsx` | Server Component with two lines of text. |
 | `src/components/ui/ThemeToggle.tsx` | Client Component: three radio buttons in a `radiogroup` named „Изглед“, each with a small picture (screen, sun, moon) and a hidden text label. |
@@ -1172,7 +1189,7 @@ Every page now has the same frame: a **header** with the Scamly logo (a link to 
 
   | Role | Area link | Name | „Изход“ |
   |---|---|---|---|
-  | `family` | „Моите близки“ → `/family` | yes | yes |
+  | `family` | „Моите близки“ → `/family`, then „Сигнали“ → `/family/alerts` | yes | yes |
   | `moderator` | „Модерация“ → `/moderator` | yes | yes |
   | `admin` | „Администрация“ → `/admin` | yes | yes |
   | `protected` (paired phone) | „Проверка на обаждане“ → `/protected` | yes | **no**: the older person must never log out by mistake; only a family member can pair the phone again |
@@ -1273,7 +1290,7 @@ One question per screen, with „Въпрос 2 от 4“ (or „… от 5“ o
 | File | Job |
 |---|---|
 | `src/app/protected/layout.tsx` + `src/components/protected/ProtectedGate.tsx` | Server Components: `<Suspense>` + `requirePageRole(["protected"], "/svarzhi")` before anything is sent. Replaces the temporary `RoleGate` for this area (no "temporary page" note any more). |
-| `src/app/protected/page.tsx` | Renders `<CallCheck />`. |
+| `src/app/protected/page.tsx` | Renders `<CallCheckPage />` (`src/components/protected/CallCheckPage.tsx`): it reads `FEATURE_VOICE` at request time and renders `<CallCheck voiceEnabled={…} />` (3.36). |
 | `src/components/protected/CallCheck.tsx` | Client Component with the screens `home → questions → text → result` (a `useState` "stage"), the answers, the result and the live watch. |
 | `CheckHome.tsx`, `QuestionWizard.tsx`, `CallerText.tsx`, `CheckResult.tsx`, `CallContactButton.tsx` | The four screens and the `tel:` button. |
 | `src/components/protected/questions.ts` | Pure rules: `questionOrder()` (4 or 5 questions), `withAnswer()` (stores one answer; a changed money answer removes the handover answer, because the API refuses a handover without money), `optionsFor()` (answers + pictures). The answers have the engine's own `CallInput` shape. |
@@ -1305,7 +1322,106 @@ One question per screen, with „Въпрос 2 от 4“ (or „… от 5“ o
 
 - `tests/e2e/protected.spec.ts`, 6 tests × 2 screens, on `/dev/protected` with `page.route()` (the fake server runs the real `analyseCall()`): big button → `POST` once → „Въпрос 1 от 4“ → police → „Да“ → question 3 appears („Въпрос 3 от 5“) → text with counter → red: praise, „ТОВА Е ИЗМАМА.“ focused, „Затворете телефона.“, the HR1 explanation, at most 4 reasons, `tel:+359888123456`, the exact `PUT` body, and „Нова проверка“ shows the remembered „Обади се на Иван“; green: keyboard (arrows only choose, „Напред“), „Не“ to money skips question 3, „Назад“ keeps the answer, exact D9 sentence, no „безопас“, no praise; offline (`POST` and `PUT` fail): the local red verdict appears in under 4 s with the note, and a new check is tried in the background; slow server (6 s): local verdict + note within 5 s, then the server's verdict replaces it; the family's answer appears in the `role="status"` box after the polling read; 360 px: no sideways scrolling on every screen, every button and answer at least 64 px, the big button at least 30 % of the screen high and its text at least 28 px, base font at least 22 px.
 - Unit tests: `questions.test.ts` (6), `upload.test.ts` (8: retries with growing waits, 409 = delivered, a new check when the first `POST` failed, stop on 401, give up, helpers), `acknowledgement.test.ts` (3).
-- Live check on 5 Nov against the real Supabase project (`next start`) with throwaway pairings of the demo person (revoked afterwards; the original demo phone was not touched): police + money → red (HR1 + HR2) on the phone; the server's first answer took about 6 s, so the phone showed its own verdict with the note after 4.4 s, and the server verdict replaced it; the family account saw the new check; `POST /api/checks/:id/acknowledge` → „Мария Петрова ще ви се обади веднага.“ on the phone 1.3 s later (through Realtime). In a first run the family message did not appear within 15 s; the second run did not repeat this, so it is worth watching in W2-11. Screenshots at 390 × 844 (light and dark) were checked by eye. The demo contacts have no phone number, so no „Обади се на …“ button was shown there.
+- Live check on 5 Nov against the real Supabase project (`next start`) with throwaway pairings of the demo person (revoked afterwards; the original demo phone was not touched): police + money → red (HR1 + HR2) on the phone; the server's first answer took about 6 s, so the phone showed its own verdict with the note after 4.4 s, and the server verdict replaced it; the family account saw the new check; `POST /api/checks/:id/acknowledge` → „Мария Петрова ще ви се обади веднага.“ on the phone 1.3 s later (through Realtime). In a first run the family message did not appear within 15 s; the second run did not repeat this. The cause (polling stopped at `SUBSCRIBED`) was fixed on 6 Nov with the safety poll (3.25); 5/5 live round trips since. Screenshots at 390 × 844 (light and dark) were checked by eye. The demo contacts have no phone number, so no „Обади се на …“ button was shown there.
+
+### 3.34 The family's live alert page `/family/alerts` and „Обаждам ѝ се сега“ (W2-03, W2-04 UI)
+
+#### What it does
+
+„Сигнали“ (a header link for every family member, 3.31) shows the call checks of **everybody the family member looks after**, newest first, live: a new check appears without reloading. Each alert shows the person's name (as a heading), the time, the verdict badge (or „Проверката още тече.“), who the caller claimed to be, and the big button **„Обаждам ѝ се сега“**. The first family member to press it reads **„Вие поехте обаждането.“**; anyone later reads **„<Име> вече се обажда.“**, and grandma's phone shows „<Име> ще ви се обади веднага.“ (3.33). A new alert gets a „Нов сигнал“ tag, is read aloud by screen readers, and, only if the user pressed „Включи звук и вибрация“, beeps twice and vibrates. A push notification or an alert e-mail opens `/family/alerts?check=<id>`: the page scrolls to that alert, moves the focus to it and tags it „Сигналът от известието“.
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/app/family/alerts/page.tsx` | The route. The role guard is the `/family` layout (`FamilyGate`, 3.32). |
+| `src/app/dev/family/alerts/page.tsx` | Preview without the role guard for the browser tests (`noindex` from the `/dev/family` layout; no data of its own, the API still needs a login). |
+| `src/components/family/AlertsPage.tsx` | Client Component: `AlertsPage` (loads `GET /api/persons`), `AlertsList` (the live list), `AlertItem` (one alert + the button). |
+| `src/components/family/alerts.ts` | Pure helpers: `focusCheckId()` (`?check=` only if it is a well-formed UUID), `findNewCheckIds()` (nothing is "new" on the first load), `personNameOf()` („Ваш близък“ when the person is gone), `statusText()`, `responderMessage()`, `announcementFor()`. |
+| `src/components/family/alertSound.ts` | `enableAlertSound()` (creates the `AudioContext` in the button's click) and `playAlertSound()` (two short beeps, 880 Hz and 660 Hz, from an oscillator, and `navigator.vibrate([200, 100, 200])` where it exists). |
+| `src/config/routes.ts`, `accountLinks.ts`, `SiteHeader.tsx` | `ROUTES.familyAlerts`; `extraLinksFor("family")` → „Сигнали“ after the area link. |
+| `src/i18n/bg.ts` | `bg.alerts`, `bg.layout.accountFamilyAlerts`. |
+
+- **Live list.** Once the people are known, `watchChecksOfPersons(ids, …, { onError, onLive })` (3.25) runs in a `useEffect` and returns its `stop()` as the cleanup. Every load replaces the list; ids not seen before are new. A failed load shows „Не успяхме да обновим сигналите…“ until the next good one. „Връзка на живо…“ / „…Показваме новостите на всеки 5 секунди.“ comes from `onLive`.
+- **`?check=`.** Read with `useSyncExternalStore` (`""` on the server, `window.location.search` in the browser), so the page needs no `<Suspense>` for `useSearchParams()`. If the check is not among the newest 20 of its person, `GET /api/checks/:id` loads it and adds it to the list; if that fails: „Сигналът от връзката не е намерен…“. Scrolling and focus happen once (`tabIndex={-1}` on the item: the page can focus it, Tab skips it).
+- **„Обаждам ѝ се сега“.** `POST /api/checks/:id/acknowledge` (3.23) through `callApi()` (3.32: `{ ok, data }` or a Bulgarian error message). While sending the button says „Изпращане…“ and is disabled; the answer `{ first, acknowledgement }` becomes the message; an error shows under the button and the button stays. The button is hidden once the check has an acknowledgement; then „<Име> потвърди, че се обажда (<час>).“ from `acknowledgementText()` (shared with the history, 3.32). Its accessible name includes the person and the time („Обаждам ѝ се сега: Мария, проверка от …“), because many alerts have the same button.
+- **No `tel:` link.** The API gives the family no phone number of the protected person (only contacts have phones, 3.27), so the family member calls the number they know (difference #46).
+- **Screen readers.** A hidden `role="status"` paragraph receives „Нов сигнал: <Име> проверява съмнително обаждане.“ (one sentence per new alert); the answer to the button is a `role="status"` too.
+- **Sound.** Browsers allow sound only after the user pressed something on the page, so it is off until „Включи звук и вибрация“ (`aria-pressed`), which also plays a short sample. A failure is ignored: the alert is on the screen anyway.
+
+#### Why it works like that
+
+- **One page for all people** (vs one page per person): a family member who looks after two grandparents has one place to watch; one Realtime channel ([`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "One Realtime channel for all the family's people").
+- **`useSyncExternalStore` for `?check=`**: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`useSyncExternalStore` for `?check=` (vs `useSearchParams` + `<Suspense>`)".
+- **Beep from Web Audio, only after a tap**: no file to load, no autoplay block ([`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Alert beep made with Web Audio (vs a sound file)").
+- **Nothing is "new" on the first load**: opening the page must not beep for old alerts.
+
+#### How we know it works
+
+- `tests/e2e/alerts.spec.ts`, 8 tests × 2 screens, on `/dev/family/alerts` with `page.route()`: everybody's checks newest first with name, time, badge and status; a new check appears without reloading, tagged and announced; the first responder reads „Вие поехте обаждането.“ (and the `POST` went out once); somebody else first → „<Име> вече се обажда.“; `?check=` focuses the alert, also an older one loaded on its own; keyboard only; empty, no people and error states in Bulgarian; 360 px: no sideways scrolling, big tap targets.
+- Unit tests: `alerts.test.ts` (9), `accountLinks.test.ts` (+2 for `extraLinksFor`), `realtime.test.ts` (3.25).
+- Live on 6 Nov: 5/5 round trips (3.25): alert visible after 2.3–3.9 s, name on the phone 0.8–1.3 s after the tap.
+
+### 3.35 Push opt-in card „Известия на телефона“ and logout (W2-05 UI)
+
+#### What it does
+
+On `/family`, under the people list, a card lets the family member switch web push (3.29) on or off **for this browser**. It shows one of six states:
+
+| State | When | Shows |
+|---|---|---|
+| `disabled` | the server has push off (`GET /api/push/public-key` → `enabled: false`) | „Известията още не са настроени.“, no button |
+| `ios` | iPhone / iPad in a normal Safari tab | the 3-step hint („Сподели“ → „Добави към началния екран“ → open from the icon), each with a small drawing, no button |
+| `unsupported` | no service worker / `PushManager` / `Notification` | what to use instead, no button |
+| `blocked` | notifications denied for the site | how to allow them, no button |
+| `on` | permission granted **and** a subscription in this browser | „Известията са включени на това устройство.“ + „Изключи“ |
+| `off` | everything else | why it helps + „Включи известията“ |
+
+„Изход“ switches push off for the browser first, so the next person using it doesn't get this account's alerts.
+
+#### How it works
+
+- `src/components/family/pushState.ts`: `pushCardState(facts)` turns four facts (`serverEnabled`, `iosNeedsHomeScreen`, `permission`, `subscribed`) into the state; the order matters (a server without push wins; the iPhone hint comes before "unsupported", because a Safari tab has no `PushManager` but the home-screen app has). `pushStateText()` and `subscribeMessage()` give the texts (closing the browser's question without an answer → „Можете да опитате отново.“).
+- `src/components/family/PushOptIn.tsx` reads the facts once with the helpers of `src/lib/push.ts`, and again after each press. **The browser's permission question is asked only after „Включи известията“**: `subscribeToPush()` is called directly in the click handler (Safari asks only in answer to a tap). The result message is in a `role="status"` paragraph that is always on the page.
+- Logout: `LogoutButton` (`src/components/auth/forms.tsx`) awaits `unsubscribeFromPushBeforeLogout()` before `POST /api/auth/logout`, because deleting the server row needs the login. It races `unsubscribeFromPush()` against a 1.5 s timer (`Promise.race`), swallows errors and always continues.
+- Texts in `bg.pushOptIn`; styles `.push-card`, `.push-ios-steps`, `.push-icon` in `globals.css`.
+
+#### Why it works like that
+
+- **Permission only after a tap:** a question that pops up on page load is usually refused, and a refusal is hard to undo; Safari ignores it anyway.
+- **iPhone hint instead of a button** (risk R2): on iOS web push works only from the home-screen app (16.4+).
+- **Card on `/family`**, not on the alert page: it is a one-time setting, next to the people it is about.
+- **1.5 s cap at logout:** [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "At most 1.5 s for the push unsubscribe at logout".
+
+#### How we know it works
+
+`tests/e2e/push-optin.spec.ts`, 7 tests × 2 screens (fake `Notification`, `PushManager` and service worker in the page, `page.route()` for the API): „Включи известията“ asks only after the tap, subscribes, and „Изключи“ undoes it; an existing subscription shows „включени“ with „Изключи“; closing the question keeps it off with a hint; blocked; unsupported; push off on the server; iPhone in Safari shows the 3 steps and fits 360 px. Unit tests: `pushState.test.ts` (10), `lib/push.test.ts` (12, 3 of them for logout). **Not yet tested:** delivery to a real phone (W2-05 "done when").
+
+### 3.36 Voice input „Говорете“ on grandma's text step (W2-10)
+
+#### What it does
+
+Under „Какво ви казаха?“ (3.33) a big **„Говорете“** button lets grandma say the caller's words instead of typing. While she speaks, „Чувам: „…““ shows what the browser hears; the final text is **added at the end** of the field (with one space, never over 2000 characters), and „Добавено в полето.“ appears. „Спри“ stops early. One tap = one sentence. Under the button: „Гласът се превръща в текст от браузъра. Scamly не записва звук.“ Typing always works.
+
+The button is there **only** when the browser has speech recognition **and** the `FEATURE_VOICE` switch is on. It never starts by itself.
+
+#### How it works
+
+- `src/components/protected/CallCheckPage.tsx` (async Server Component): `await connection()` (only at request time, never at `next build`), then `<CallCheck voiceEnabled={getFeatures().voice} />` → `CallerText` → `VoiceInput enabled={…}`. `/protected` (inside the layout's `<Suspense>`) and `/dev/protected` (its own `<Suspense>`) render it.
+- `src/components/protected/VoiceInput.tsx` (Client Component): support is read with `useSyncExternalStore` (`false` on the server). A tap creates `new SpeechRecognition()` (or `webkitSpeechRecognition`) with `lang = "bg-BG"`, `interimResults = true`, `continuous = false`, `maxAlternatives = 1`, and calls `start()` (the browser asks for the microphone now). `onresult` → `readResults()` splits final text from the current guess; the final text goes to `onSpoken` → `appendSpoken()`. `onerror` → `voiceErrorMessage()` (no speech, microphone not allowed, no microphone, no network, other; `aborted` says nothing). The session is aborted when the answers are being sent or the screen closes. The status line is `role="status"`, so a screen reader reads „Слушам…“, the guess and errors.
+- `src/components/protected/voice.ts`: the small typed description of the Web Speech API (TypeScript has no built-in types for it) and the pure helpers above.
+- Texts in `bg.voice`; styles `.voice-*` in `globals.css` (a thick frame while listening; the button is at least 64 px high like the other buttons on these screens).
+
+#### Why it works like that
+
+- **Web Speech API** (vs recording and sending audio to a speech service): free, nothing to store; [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Browser Web Speech API for voice input". Honest limit: in Chrome the recognition is done by the browser's speech service (Google's servers), not on the phone and not by us; Scamly gets only the text.
+- **One sentence per tap** (`continuous = false`): [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "One sentence per tap for voice input".
+- **Switch read at request time:** [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "`FEATURE_VOICE` read at request time (vs at build time)". Voice is second in the D12 cut order.
+- **Append, don't replace:** grandma may type a little and speak the rest; nothing she wrote is lost.
+
+#### How we know it works
+
+`tests/e2e/voice.spec.ts`, 4 tests × 2 screens (a fake `SpeechRecognition` in the page): no button without speech recognition, typing works; „Говорете“ listens in `bg-BG`, shows the guess and adds the final text after the typed text; a blocked microphone gives a clear message and the field stays usable; the button is big and the text step fits 360 px. Unit tests: `voice.test.ts` (9). **Not yet tested:** real Bulgarian recognition on a real Android phone (W2-10 "done when").
 
 ---
 ## 4. Code quality, tests and CI
@@ -1372,7 +1488,7 @@ Unit tests are fast enough to run on every save, and the detection engine is a p
 
 #### How we know it works
 
-`npx vitest run` → `Test Files 44 passed, Tests 449 passed` (4 Nov). CI uploads the coverage report as an artifact named `coverage`.
+`npx vitest run` → `Test Files 54 passed, Tests 521 passed` (6 Nov). CI uploads the coverage report as an artifact named `coverage`.
 
 ### 4.3 End-to-end tests (Playwright)
 
@@ -1387,6 +1503,7 @@ Opens the real app in a real browser and checks what a user would see.
 - On CI: a leftover `test.only` fails the run (`forbidOnly`), a failed test is retried once, and a trace (a recording) is saved on the retry. An HTML report goes to `playwright-report/`.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
 - `tests/e2e/family.spec.ts` (family dashboard, 10 tests, section 3.32) uses the same idea: `page.route()` answers the API calls of the `/dev/family` preview pages, so it needs no database and no login.
+- `tests/e2e/alerts.spec.ts` (8 tests, 3.34), `push-optin.spec.ts` (7, 3.35) and `voice.spec.ts` (4, 3.36) use the same idea with the previews `/dev/family/alerts`, `/dev/family` and `/dev/protected`; push and speech recognition are faked inside the page.
 - `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 7 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
@@ -1397,7 +1514,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 32 tests × 2 screens = 64 runs, all passing locally on 5 Nov (W2-07 added 10). The report is uploaded as the artifact `playwright-report`.
+CI job *e2e*: 58 tests × 2 screens = 116 runs, all passing locally on 6 Nov (W2-03/04 added 8, W2-05 7, W2-10 4). The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 
@@ -2094,19 +2211,19 @@ Proven by `pairingService.test.ts` (18 tests), `04_devices_pairing` (RLS and cas
 
 ### 7.7 Grandma presses the button → the family sees the alert → „Обаждам ѝ се сега“ → grandma sees the name
 
-Баба Мария's phone is paired (7.6). Her contact list: 1 Анна (owner, account), 2 Иван (account, joined by invite, 3.28, phone +359 888 123 456), 3 neighbour Гергана (phone only). Анна has the family page open; it runs `watchPersonChecks(<Мария>)`. Grandma's screens are real (W2-01, 3.33); the family's live alert page is Roberta's W2-03/W2-04.
+Баба Мария's phone is paired (7.6). Her contact list: 1 Анна (owner, account), 2 Иван (account, joined by invite, 3.28, phone +359 888 123 456), 3 neighbour Гергана (phone only). Анна has „Сигнали“ (`/family/alerts`, 3.34) open; it runs `watchChecksOfPersons([<Мария>])`. Both sides are real screens: grandma's W2-01 (3.33) and the family's alert page W2-03/W2-04 (3.34).
 
-1. **The page subscribes.** `GET /api/realtime/token` (same-origin, `getUser()`, the cookie session must be Анна's) → `{ userId, accessToken, expiresAt }`. `realtime.ts` opens a channel with `postgres_changes` on `checks` (`protected_person_id=eq.<Мария>`) and `alerts` INSERT (`recipient_id=eq.<Анна>`), and polls `GET /api/checks?personId=<Мария>` every 5 s until the channel says `SUBSCRIBED` (3.25).
+1. **The page subscribes.** `GET /api/realtime/token` (same-origin, `getUser()`, the cookie session must be Анна's) → `{ userId, accessToken, expiresAt }`. `realtime.ts` opens a channel with `postgres_changes` on `checks` (`protected_person_id=eq.<Мария>`) and `alerts` INSERT (`recipient_id=eq.<Анна>`), and polls `GET /api/checks?personId=<Мария>` every 5 s until the channel says `SUBSCRIBED`, then every 10 s as a safety net; the page shows „Връзка на живо…“ (3.25).
 2. **A stranger calls grandma about money; she presses „Обаждат ми се за пари!“** (the giant red button on `/protected`). The phone sends `POST /api/checks` with no body and shows „Кой казва, че е?“ at once, without waiting for the answer. Same-origin check, `requireRole(["protected"])`: `getActor()` gives her device and person.
 3. Rate limit `check:device:<device>` (10 per hour). `insertCheck()` (service role): `protected_person_id` = Мария from the phone's pairing, `status 'started'` (3.23).
 4. **Fan-out** (3.24): recipients = contacts with an account = Анна and Иван (not Гергана). One INSERT of two `alerts` rows (`realtime`, `sent`), plus a `push` and an `email` row for each of them who switched those on (3.29, 3.30; all sends run in parallel). The phone gets `201 { checkId }` and keeps it for the answers (the first question is already on the screen).
-5. **The family sees it.** Realtime checks RLS (`recipient_id = auth.uid()` for `alerts`, `has_family_access()` for `checks`) and rings Анна's page; the page fetches `GET /api/checks?personId=<Мария>` and shows the new check, still without a verdict. In the live smoke test this took 111 ms after the API answer. On a network without WebSockets the 5 s polling shows it instead.
+5. **The family sees it.** Realtime checks RLS (`recipient_id = auth.uid()` for `alerts`, `has_family_access()` for `checks`) and rings Анна's page; the page fetches `GET /api/checks?personId=<Мария>` and shows the new check at the top, still without a verdict („Проверката още тече.“), tagged „Нов сигнал“ and read aloud („Нов сигнал: Мария проверява съмнително обаждане.“); if Анна switched the sound on, it beeps. In the live smoke test this took 111 ms after the API answer; on 6 Nov, measured from the tap on grandma's phone, 2.3–3.9 s. On a network without WebSockets the 5 s polling shows it instead.
 6. **Grandma answers**, one question per screen with one tap each: „Полиция“, „Да“ (so „Как искат да ги дадете?“ appears: „На куриер/непознат“), „Да“, „Не знам“, then types the caller's words under „Какво ви казаха?“ and presses „Провери“. `PUT /api/checks/<id>/answers`. The server: `loadOwnCheck()` (her phone started it), `status 'started'` ✔; `analyseCall()` on the original words → **red**, HR1 + HR2; the text is redacted with the known names (Мария, Анна, Иван, Гергана) and stored; one `UPDATE … WHERE status = 'started'` saves answers and verdict; `notifyVerdict()` (red, so push and e-mail send their follow-up).
 7. The phone gets `200 { verdict: red, „ТОВА Е ИЗМАМА.“, reasons with the caller's words, callContact: { "Иван", "+359888123456" } }`: Иван is the first contact with a phone, so the big `tel:` button says „Обади се на Иван“. Her screen shows „Добре направихте, че проверихте.“, „ТОВА Е ИЗМАМА.“, „Затворете телефона.“ and up to 4 reasons, and the phone remembers Иван for its home screen. (Had the answer taken more than 4 s or failed, the phone would have shown its own `analyseCall()` verdict at once with a note and kept sending in the background, 3.33.) At the same moment Realtime delivers the `checks` UPDATE to Анна's page, which re-reads and shows red.
-8. **Анна presses „Обаждам ѝ се сега“.** `POST /api/checks/<id>/acknowledge`: RLS read ✔, then one `UPDATE … SET acknowledged_by = Анна WHERE acknowledged_by IS NULL` wins → audit `check_acknowledged` → `{ first: true, acknowledgement: { displayName: "Анна", messageBg: "Анна ще ви се обади веднага." } }`. If Иван presses a second later, his UPDATE changes nothing and he gets `first: false` with Анна's name, so he knows she is on it.
-9. **Grandma sees the name.** Her result screen runs `watchCheck(<id>)`: Realtime delivers the `checks` UPDATE, the phone fetches `GET /api/checks/<id>` (its own check) and shows a big framed message in a `role="status"` box: „Анна ще ви се обади веднага.“ (built from `acknowledgement.displayName` with the same `bg.checks.acknowledgedBy` text). Without Realtime the 5 s polling brings it.
+8. **Анна presses „Обаждам ѝ се сега“** on the alert. `POST /api/checks/<id>/acknowledge`: RLS read ✔, then one `UPDATE … SET acknowledged_by = Анна WHERE acknowledged_by IS NULL` wins → audit `check_acknowledged` → `{ first: true, acknowledgement: { displayName: "Анна", messageBg: "Анна ще ви се обади веднага." } }`; her page shows „Вие поехте обаждането.“ and hides the button. If Иван presses a second later, his UPDATE changes nothing and he gets `first: false`: his page shows „Анна вече се обажда.“. Анна then calls grandma from her own phone (the page has no `tel:` for grandma, difference #46).
+9. **Grandma sees the name.** Her result screen runs `watchCheck(<id>)`: Realtime delivers the `checks` UPDATE, the phone fetches `GET /api/checks/<id>` (its own check) and shows a big framed message in a `role="status"` box: „Анна ще ви се обади веднага.“ (built from `acknowledgement.displayName` with the same `bg.checks.acknowledgedBy` text). Live on 6 Nov this took 0.8–1.3 s. Without Realtime the 5 s polling brings it; a lost event, the 10 s safety poll.
 
-Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `05_checks_alerts`, the live smoke test (38/38), `tests/e2e/protected.spec.ts` and the W2-01 live check through grandma's real screens (3.33). The two-browser e2e test of exactly this story is W2-11.
+Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `05_checks_alerts`, the live smoke test (38/38), `tests/e2e/protected.spec.ts`, `tests/e2e/alerts.spec.ts`, the W2-01 live check (3.33) and the 6 Nov live run through both real screens (5/5, 3.25). The two-browser e2e test of exactly this story is W2-11.
 
 ---
 
@@ -2161,6 +2278,10 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 43 | Brief 5.2 A: "3–4 huge yes/no questions" | 4 questions + the conditional one (BUILD_PLAN 4.1), one per screen; „Въпрос 2 от 4“ counts only the questions, not the optional text step (3.33) |
 | 44 | BUILD_PLAN 4.9: "retries the upload in the background" | Up to 5 retries after 2, 4, 8, 15 and 30 s, each try at most 15 s; `409` counts as delivered; 400/401/403/404 stop; only while the page stays open (3.33) |
 | 45 | W2-01 browser tests | Extra preview page `/dev/protected` without the role guard, like #41 (3.33) |
+| 46 | Brief 5.2 B / W2-04: „Обаждам ѝ се сега“ (the family member calls grandma) | The button only tells grandma's phone who is calling; there is **no `tel:` link** to the protected person, because the API stores no phone number for them (only for contacts). The family member calls the number they know (3.34) |
+| 47 | W2-03 "done when": the alert on browser B in < 3 s | Live 2.3–3.9 s from the tap on grandma's phone (5 runs), including the server creating the check and the fan-out; Realtime itself is fast (111 ms), the rest is the `POST` and the page's re-read (3.25) |
+| 48 | W2-13 / 3.31: the logged-in header shows the name | With the extra „Сигнали“ link, a family member's name at 360 px is cut with „…“ sooner, so the menu still fits in one row (3.31, 3.34) |
+| 49 | W2-03: Realtime "with a 5 s polling fallback" | Also a 10 s safety poll while connected, a re-load after `SUBSCRIBED` and on wake-up (3.25). If the **first** token request fails, Realtime is not tried again; the page stays on 5 s polling until it is reloaded |
 
 ---
 
@@ -2271,3 +2392,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-05 · W2-07 family dashboard (Roberta): new section 3.32 (`FamilyGate` role guard, people list, create form, person page with check history + details, phones + revoke, pairing code with QR and countdown, contact order with ↑ / ↓, invite link, rename/delete; `callApi()`, `ConfirmDialog`, `VerdictBadge`, `bg.family`, `bg.districts`, `/dev/family` previews); status table, 4.3, plan differences #38–#41; 32 e2e tests × 2 screens
 - 2026-11-05 · logged-in header (Roberta): section 3.31 (`AccountNav` reads `getActor()` inside `<Suspense>` with the guest menu as fallback; area link by role, name, „Изход“ except on a paired phone; `accountLinks.ts`; logout now opens `/`); the family bar „Влезли сте като … / Изход“ and `RoleGate`'s name and logout removed (3.17, 3.32); 3.1 notes the ◐ pages; status table and test counts
 - 2026-11-05 · W2-01 call check (Roberta): new section 3.33 (`ProtectedGate`, big button + after-call button + remembered „Обади се на …“, one question per screen with „Въпрос 2 от 4“, optional text with counter, result with praise and `tel:` button, live family message via `watchCheck()`, offline `analyseCall()` fallback with background retries; `BigChoice` and `Verdict` extended; `bg.protectedCheck`, `--on-red`); walkthrough 7.7 with the real screens; status table; plan differences #42–#45; 484 unit tests in 51 files, 39 e2e tests × 2 screens
+- 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new sections 3.34 (live alert page `/family/alerts`, header link „Сигнали“, `?check=` focus with `useSyncExternalStore`, `aria-live`, Web Audio beep only after a tap, „Обаждам ѝ се сега“ with „Вие поехте обаждането.“ / „<Име> вече се обажда.“, no `tel:`), 3.35 (push opt-in card with 6 states and iPhone hint, unsubscribe at logout ≤ 1.5 s) and 3.36 (voice input, Web Speech API `bg-BG`, `FEATURE_VOICE` at request time); 3.25 Realtime fix (10 s safety poll while connected, re-load after `SUBSCRIBED` and on wake-up, one load at a time, `onLive`, `watchChecksOfPersons()`, `newestFirst()`); 3.3, 3.29, 3.31, 3.33, 4.2, 4.3, walkthrough 7.7, status table, big picture; plan differences #46–#49; 521 unit tests, 58 e2e tests × 2 screens; live 5/5 round trips.

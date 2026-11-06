@@ -1,7 +1,7 @@
 // Unit tests for the header's logged-in menu: role -> area link, and who sees „Изход“.
 
 import { describe, expect, it } from "vitest";
-import { accountLinkFor, showsLogout } from "@/components/layout/accountLinks";
+import { accountLinkFor, extraLinksFor, showsLogout } from "@/components/layout/accountLinks";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
@@ -24,6 +24,18 @@ describe("accountLinkFor", () => {
 
   it("shows „Моите близки“ to a family member", () => {
     expect(accountLinkFor("family").label).toBe("Моите близки");
+  });
+});
+
+describe("extraLinksFor", () => {
+  it("gives a family member the link to „Сигнали“", () => {
+    expect(extraLinksFor("family")).toEqual([{ href: "/family/alerts", label: "Сигнали" }]);
+  });
+
+  it("gives the other roles no extra links", () => {
+    expect(extraLinksFor("protected")).toEqual([]);
+    expect(extraLinksFor("moderator")).toEqual([]);
+    expect(extraLinksFor("admin")).toEqual([]);
   });
 });
 

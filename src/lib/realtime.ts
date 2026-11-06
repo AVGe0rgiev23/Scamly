@@ -1,11 +1,12 @@
 // Live updates in the browser: Supabase Realtime, with a 5-second polling fallback
-// (task W2-03, decision D7). Used by Roberta's pages:
+// (task W2-03, decision D7). Used by:
 //
 //   watchCheck(checkId, onCheck)          the phone after the verdict („Иван ще ви се
-//                                          обади веднага“), the family's alert page
-//   watchPersonChecks(personId, onChecks) the family's live list of one person's checks
+//                                          обади веднага“, Roberta's W2-01)
+//   watchChecksOfPersons(ids, onChecks)   the family's alert page /family/alerts
+//   watchPersonChecks(personId, onChecks) the live list of one person's checks
 //
-// Both return a stop() function; call it when the page closes (React: in the cleanup
+// All return a stop() function; call it when the page closes (React: in the cleanup
 // of useEffect).
 //
 // How it works:
@@ -18,7 +19,8 @@
 //      so we ask GET /api/realtime/token for it.
 //   3. Until Realtime says "SUBSCRIBED", and whenever it fails, we poll our API every
 //      5 seconds. Pressing the big button must reach the family even on a network that
-//      blocks WebSockets.
+//      blocks WebSockets. Even while SUBSCRIBED we still ask every 10 seconds (a safety
+//      net for a lost event), and again when the page wakes up (startLiveWatch below).
 //
 // The token and the client: supabase-js gives Realtime an `accessToken` function and
 // asks it again on every heartbeat (every 25 s). A plain browser client would answer
@@ -36,6 +38,10 @@ import type { Database } from "@/types/database";
 
 // How often we ask our API while Realtime is not connected.
 export const POLL_INTERVAL_MS = 5_000;
+
+// How often we still ask while Realtime IS connected: a safety net in case an event
+// is lost, so a change always arrives within about 10 seconds.
+export const SAFETY_POLL_INTERVAL_MS = 10_000;
 
 // Fetch a new token this many seconds before the old one expires.
 export const TOKEN_REFRESH_MARGIN_SECONDS = 60;
@@ -94,46 +100,94 @@ function getRealtimeClient(): SupabaseClient<Database> {
 // connect(onChange, onConnected) opens the Realtime subscription and returns a function
 // that closes it. It calls onChange() for every database change and onConnected(true /
 // false) whenever the connection is up or down.
+// listenForWake(onWake) calls onWake() when the page comes back (the tab is shown
+// again, the phone wakes up, the network returns) and returns a function that stops
+// listening. Optional: the tests leave it out or pass a fake.
+// onLive(true / false) tells the page whether Realtime is connected right now (the
+// alert page shows „showing updates every 5 seconds“ while it is not).
 export type LiveWatchParts = {
   refresh: () => Promise<void>; // load the data from our API and hand it to the page
   connect: (onChange: () => void, onConnected: (connected: boolean) => void) => Promise<() => void>;
-  pollMs: number;
+  pollMs: number; // while Realtime is NOT connected
+  safetyPollMs: number; // while Realtime IS connected (in case an event is lost)
   onError: (error: unknown) => void;
+  onLive?: (live: boolean) => void;
+  listenForWake?: (onWake: () => void) => () => void;
 };
 
+// The rules (the reliability fix after the live run where the family's answer once
+// did not reach the phone within 15 s):
+//   * Load at once, then poll every `pollMs` until Realtime says SUBSCRIBED.
+//   * Load once more right after SUBSCRIBED (a change made while we were joining
+//     sent no event to us).
+//   * Keep a slow SAFETY poll every `safetyPollMs` even while SUBSCRIBED. Realtime can
+//     say SUBSCRIBED and still miss an event (e.g. one sent while the database side of
+//     the subscription was still starting); before this fix nothing re-checked then.
+//   * Load again when the page wakes up (tab shown, network back).
+//   * One load at a time: a doorbell during a load starts exactly one more load after
+//     it, so an older answer can never overwrite a newer one.
 export function startLiveWatch(parts: LiveWatchParts): () => void {
   let stopped = false;
+  let connected = false;
+  let lastRefreshAt = 0; // when the last load STARTED (milliseconds)
+  let loading = false; // a load is running now
+  let again = false; // somebody asked for a load while one was running
   // ReturnType<typeof setInterval> = "whatever setInterval returns" (a number in the
   // browser, an object in Node.js).
-  let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let timer: ReturnType<typeof setInterval> | null = null;
   let disconnect: (() => void) | null = null;
+  let stopWake: (() => void) | null = null;
 
   function refreshNow(): void {
-    parts.refresh().catch(parts.onError);
-  }
-  function startPolling(): void {
-    if (pollTimer === null && !stopped) {
-      pollTimer = setInterval(refreshNow, parts.pollMs);
+    if (stopped) {
+      return;
     }
+    if (loading) {
+      again = true;
+      return;
+    }
+    loading = true;
+    lastRefreshAt = Date.now();
+    parts
+      .refresh()
+      .catch(parts.onError)
+      .finally(() => {
+        loading = false;
+        if (again) {
+          again = false;
+          refreshNow();
+        }
+      });
   }
-  function stopPolling(): void {
-    if (pollTimer !== null) {
-      clearInterval(pollTimer);
-      pollTimer = null;
+
+  // One timer ticks every `pollMs`. Not connected: load on every tick. Connected: load
+  // only when the last load is at least `safetyPollMs` old.
+  function tick(): void {
+    const waitMs = connected ? parts.safetyPollMs : parts.pollMs;
+    if (Date.now() - lastRefreshAt >= waitMs) {
+      refreshNow();
     }
   }
 
-  // Show the current state at once, and poll until Realtime is confirmed.
+  function setConnected(value: boolean): void {
+    connected = value;
+    if (!stopped && parts.onLive) {
+      parts.onLive(value);
+    }
+  }
+
+  // Show the current state at once and start the timer.
   refreshNow();
-  startPolling();
+  timer = setInterval(tick, parts.pollMs);
+  if (parts.listenForWake) {
+    stopWake = parts.listenForWake(refreshNow);
+  }
 
   parts
-    .connect(refreshNow, (connected) => {
-      if (connected) {
-        stopPolling();
+    .connect(refreshNow, (isConnected) => {
+      setConnected(isConnected);
+      if (isConnected) {
         refreshNow(); // catch anything that changed while we were connecting
-      } else {
-        startPolling();
       }
     })
     .then((close) => {
@@ -144,16 +198,42 @@ export function startLiveWatch(parts: LiveWatchParts): () => void {
       }
     })
     .catch((error: unknown) => {
-      // No token or no Realtime: polling simply goes on.
+      // No token or no Realtime: polling every `pollMs` simply goes on.
+      setConnected(false);
       parts.onError(error);
     });
 
   return () => {
     stopped = true;
-    stopPolling();
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+    if (stopWake !== null) {
+      stopWake();
+    }
     if (disconnect !== null) {
       disconnect();
     }
+  };
+}
+
+// The real wake-up signals of a browser: the tab becomes visible again (a phone
+// coming back from the lock screen) or the network comes back.
+export function browserWakeListener(onWake: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+  const onVisible = () => {
+    if (document.visibilityState === "visible") {
+      onWake();
+    }
+  };
+  document.addEventListener("visibilitychange", onVisible);
+  window.addEventListener("online", onWake);
+  return () => {
+    document.removeEventListener("visibilitychange", onVisible);
+    window.removeEventListener("online", onWake);
   };
 }
 
@@ -205,6 +285,13 @@ function realtimeConnector(
 // What the pages use
 // ---------------------------------------------------------------------------------
 
+// Optional extras for a watch: onError for failed loads, onLive(true / false) for the
+// "live / every 5 seconds" note on the family's alert page.
+export type WatchOptions = {
+  onError?: (error: unknown) => void;
+  onLive?: (live: boolean) => void;
+};
+
 // One check, live. For the phone ("has somebody acknowledged?") and the family.
 export function watchCheck(
   checkId: string,
@@ -222,30 +309,69 @@ export function watchCheck(
       { table: "checks", event: "UPDATE", filter: `id=eq.${checkId}` },
     ]),
     pollMs: POLL_INTERVAL_MS,
+    safetyPollMs: SAFETY_POLL_INTERVAL_MS,
     onError,
+    listenForWake: browserWakeListener,
   });
 }
 
-// The newest checks of one person, live (family only). A new check, its verdict and
-// „Обаждам ѝ се сега“ all arrive as changes of the checks table; a new alert addressed
-// to this family member rings the doorbell too.
+// The newest checks of several people, live (family only): the alert page
+// /family/alerts watches everybody the family member looks after. A new check, its
+// verdict and „Обаждам ѝ се сега“ all arrive as changes of the checks table; a new
+// alert addressed to this family member rings the doorbell too. One Realtime channel
+// for all of them; each load asks GET /api/checks?personId=… once per person.
+// onChecks gets every person's newest checks in one list (newest first).
+export function watchChecksOfPersons(
+  personIds: string[],
+  onChecks: (checks: CheckDto[]) => void,
+  options: WatchOptions = {},
+): () => void {
+  return startLiveWatch({
+    refresh: async () => {
+      // Promise.all: all requests at the same time (like Python's asyncio.gather).
+      const pages = await Promise.all(
+        personIds.map(
+          async (personId) =>
+            (await getJson(`/api/checks?personId=${encodeURIComponent(personId)}`)) as {
+              checks: CheckDto[];
+            },
+        ),
+      );
+      onChecks(newestFirst(pages.flatMap((page) => page.checks)));
+    },
+    connect: realtimeConnector("family-checks", (token) => [
+      ...personIds.map((personId): Watch => ({
+        table: "checks",
+        event: "*",
+        filter: `protected_person_id=eq.${personId}`,
+      })),
+      { table: "alerts", event: "INSERT", filter: `recipient_id=eq.${token.userId}` },
+    ]),
+    pollMs: POLL_INTERVAL_MS,
+    safetyPollMs: SAFETY_POLL_INTERVAL_MS,
+    onError: options.onError ?? (() => undefined),
+    onLive: options.onLive,
+    listenForWake: browserWakeListener,
+  });
+}
+
+// The newest checks of one person, live (family only).
 export function watchPersonChecks(
   personId: string,
   onChecks: (checks: CheckDto[]) => void,
   onError: (error: unknown) => void = () => undefined,
 ): () => void {
-  return startLiveWatch({
-    refresh: async () => {
-      const body = (await getJson(`/api/checks?personId=${encodeURIComponent(personId)}`)) as {
-        checks: CheckDto[];
-      };
-      onChecks(body.checks);
-    },
-    connect: realtimeConnector(`person:${personId}`, (token) => [
-      { table: "checks", event: "*", filter: `protected_person_id=eq.${personId}` },
-      { table: "alerts", event: "INSERT", filter: `recipient_id=eq.${token.userId}` },
-    ]),
-    pollMs: POLL_INTERVAL_MS,
-    onError,
-  });
+  return watchChecksOfPersons([personId], onChecks, { onError });
+}
+
+// Sorts checks newest first (by startedAt; ISO times sort correctly as text) and
+// drops a check that appears twice. Returns a new list.
+export function newestFirst(checks: CheckDto[]): CheckDto[] {
+  const byId = new Map<string, CheckDto>(); // like a Python dict
+  for (const check of checks) {
+    byId.set(check.id, check);
+  }
+  return [...byId.values()].sort((a, b) =>
+    a.startedAt < b.startedAt ? 1 : a.startedAt > b.startedAt ? -1 : 0,
+  );
 }

@@ -18,6 +18,7 @@ export const ROUTES = {
   invite: "/pokana", // accept an invite to become a trusted contact („покана“), W2-08
   forbidden: "/403",
   family: "/family",
+  familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
   moderator: "/moderator",
   admin: "/admin",
   protected: "/protected",

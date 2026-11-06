@@ -133,15 +133,15 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W1-03 | ADRs D4–D7 | Alex (0001–0004) + Roberta (0005) | ✅ |
 | W1-04 | Supabase schema migration | Alex | ✅ |
 | W1-05 | RLS policies + pgTAP tests | Alex | ✅ |
-| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
-| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend + designed UI; live demo-role browser check pending |
+| W1-06 | Auth for family / moderator / admin | Alex (login/register UI: Roberta) | ✅ backend + designed UI; live demo logins verified on Vercel 4 Nov |
+| W1-07 | Device pairing | Alex (`/svarzhi` UI: Roberta) | ✅ backend + designed UI; live demo logins verified on Vercel 4 Nov |
 | W1-08 | Engine part 1: types, normalise, transliterate, fuzzy | Alex | ✅ |
 | W1-09 | Engine part 2: signals, scoring, hard rules, verdict | Alex | ✅ `analyseCall()`; all 4.7 worked examples pass |
 | W1-09b | Engine dictionary (`dictionary.ts`, шльокавица, typos) | Roberta | ✅ data prepared; matcher integration pending |
 | W1-10 | Engine tests ≥ 25 + `redactPersonalData()` | Roberta (test cases) + Alex (runner, redact) | ✅ 170 engine tests (51/51 scenarios), `redactPersonalData()`, coverage 100 % lines (`docs/evidence/engine-coverage-2026-11-04.md`); Roberta: run the scenarios together (Session D step 5) |
 | W1-11 | Design system basics | Roberta | ✅ checks, production build and six browser runs pass |
 | W1-12 | Seed script | Roberta (D20) | ✅ applied to the live project 4 Nov; all four demo logins verified; batch-insert `hard_rules` fix |
-| W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | 🔄 code ready; Vercel project + HEALTH_URL secret pending (Alex) |
+| W1-13 | Vercel deploy + health + keep-alive | Alex, Mon 9 Nov (D20) | ✅ live at https://scamly-ag777.vercel.app (health OK, 4 demo logins OK, 4 Nov) · ⬜ GitHub secret `HEALTH_URL` + Supabase Site URL (Alex) |
 | W1-14 | `docs/learning/week-1.md` | Alex + Roberta | 🔄 note written; human check-in and remaining Week 1 review pending |
 
 ### Week 2 (9–15 Nov): call check + family alert
@@ -150,14 +150,14 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 |---|---|---|---|
 | W2-01 | Protected UI: big button, wizard, result, `tel:` button (incl. offline fallback) | Roberta | ⬜ |
 | W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend · offline fallback is part of W2-01 (Roberta) |
-| W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ backend · ⬜ live alert page UI (Alex, D23) · `GET /api/realtime/token`, `src/lib/realtime.ts` ready |
-| W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ backend · ⬜ button UI (Alex, D23) · round trip in e2e W2-11 |
-| W2-05 | Web push | Alex (backend + opt-in UI + iOS hint) | ✅ backend (`src/lib/push.ts` ready) · smoke test 22/22 · ⬜ opt-in UI + iOS hint (Alex, D23) · ⬜ real-phone test (Alex; iPhone only after "Add to Home Screen") · push icons: W2-09 (Roberta) |
+| W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ (Alex) · `/family/alerts` live page, header link „Сигнали“, `?check=` focus, sound only after a tap · Realtime fix: 10 s safety poll while connected · live 5/5, alert visible after 2.3–3.9 s |
+| W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ (Alex) · button on each alert; phone shows the name 0.8–1.3 s after the tap (live) · two-browser e2e in W2-11 |
+| W2-05 | Web push | Alex (backend + opt-in UI + iOS hint) | ✅ backend (`src/lib/push.ts` ready) · smoke test 22/22 · ✅ opt-in UI + iOS hint (Alex, `PushOptIn` on `/family`; logout unsubscribes) · ⬜ real-phone test (Alex; iPhone only after "Add to Home Screen") · push icons: W2-09 (Roberta) |
 | W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ⬜ wording: Roberta, draft in `bg.alertEmail` · ⬜ real Brevo e-mail: Alex (no account yet) |
-| W2-07 | Family dashboard UI | Alex (D23) | ⬜ |
+| W2-07 | Family dashboard UI | Roberta (took it over from Alex on 5 Nov) | 🔄 in progress |
 | W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
 | W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ⬜ |
-| W2-10 | ✂ Voice input | Alex (D23) | ⬜ |
+| W2-10 | ✂ Voice input | Alex (D23) | ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
 | W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
 | W2-13 | Site layout + home page (D22) | Roberta | ⬜ |
@@ -338,3 +338,66 @@ Starts after Session E's pairing API (W1-07) is on `main`, because the seed crea
 2. If more runs late: W1-07 (pairing) may slip to Monday 9 Nov and no further, because W2-02 needs it. W1-12 (seed) then moves with it, because the seed needs pairing. Nothing else may slip.
 3. The design-system preview page can be skipped; the components themselves can't.
 4. Tell the agent "we're behind". It will propose what to move, never silently cut tests.
+
+## 7. Week 2 step by step (saved 5 Nov)
+
+Both work **in parallel on separate files**; every phase ends with a **checkpoint**: all tests, commits under the name of the person who directed each task (Roberta one commit per step, Alex one per task, D23), push. Roberta builds the **frame** first, because every other screen sits inside it.
+
+**Shared session rule:** when Roberta works in Alex's Claude Code session, she says „I'm Roberta“ first; when Alex takes over, „I'm Alex“. The agent commits each piece under the name of the person who directed it and asks when it's unclear.
+
+### Phase 0: preparation (Alex, 10 min)
+
+| Who | What |
+|---|---|
+| Alex | GitHub secret `HEALTH_URL` · Supabase Site URL · Vercel: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` · Brevo if there is time |
+| Alex | Week 1 marked ✅ on the status board |
+
+### Phase 1: frame + family dashboard (parallel)
+
+| Who | Task | Files (no overlap) |
+|---|---|---|
+| Roberta | **W2-13** site layout + home page (header with logo, small theme switch, menu, footer, real home page) | `src/app/layout.tsx`, `src/app/page.tsx`, `src/components/layout/` |
+| Alex | **W2-07 part 1**: people list, create person, person page with ordered contacts | `src/app/family/`, `src/components/family/` |
+
+🔵 **Checkpoint 1:** Roberta's W2-13 commits (≈ 5) → push. From here every page has the frame.
+
+### Phase 2: grandma's screen + rest of the dashboard (parallel)
+
+| Who | Task |
+|---|---|
+| Roberta | **W2-01** grandma's screen: big button → 4 + 1 questions → optional text → result → `tel:` button → offline fallback; **includes** the live message „Иван ще ви се обади веднага“ on her result screen (`watchCheck()` from `src/lib/realtime.ts`) |
+| Alex | **W2-07 part 2**: pairing screen with QR, devices + revoke, check history → **W2-03** live alert page `/family/alerts` → **W2-04** „Обаждам ѝ се сега“ button |
+
+🔵 **Checkpoint 2:** Roberta's W2-01 commits (≈ 6) + Alex's W2-07, W2-03, W2-04 (≈ 3) → push. The core demo works in the browser.
+
+### Phase 3: finishing (parallel)
+
+| Who | Task |
+|---|---|
+| Roberta | **W2-14** `/pokana` invite page → **W2-09** PWA (manifest, icons incl. `/icons/icon-192.png` and `/icons/badge-72.png`, install prompt, offline card in `public/sw.js`) → **W2-06** proofread the `bg.ts` texts marked "draft" (e-mail, push) |
+| Alex | **W2-05** notification opt-in + iPhone hint → **W2-10 ✂** voice input (add-on to grandma's text step, only after W2-01 is on `main`) → real tests: push on a real phone, e-mail via Brevo |
+
+🔵 **Checkpoint 3:** commits under each name → push.
+
+### Phase 4: together
+
+| Who | Task |
+|---|---|
+| Alex (leads) + Roberta | **W2-11** full demo e2e: two browsers, grandma + family, start to end |
+| Alex + Roberta | **W2-12** learning note: Alex writes Realtime, push, e-mail; Roberta writes the screens and PWA |
+| both | Check the live site on a real phone; each explains the other's part for 5 minutes |
+
+🔵 **Final checkpoint:** all tests, push, CI green, Vercel deployed → Week 2 done.
+
+### Expected commits at the end of Week 2
+
+| | Before (5 Nov) | + Week 2 | End of Week 2 |
+|---|---|---|---|
+| Roberta | 11 | ≈ 19 | ≈ 30 |
+| Alex | 48 | ≈ 8 | ≈ 56 |
+
+Week 3 (Roberta 26 h, Alex 23 h) closes the gap further.
+
+### Next: Week 3 (16–22 Nov)
+
+Roberta: W3-03 map, W3-04 moderation API, W3-05 script API + education pages, W3-08 help pages, W3-09 ✂ escalation, W3-10 fridge card. Alex: W3-01 reports API, W3-02 report form, W3-04 moderation UI, W3-06 admin API + UI + charts, W3-07 ✂ AI. Both: W3-11 learning note. Planned in detail on its first day.

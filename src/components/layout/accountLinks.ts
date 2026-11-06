@@ -2,7 +2,7 @@
 // (by role) and whether the „Изход“ button is shown.
 // Plain functions without React or Supabase, so they can be unit-tested.
 
-import { homePathForRole, type AppRole } from "@/config/routes";
+import { homePathForRole, ROUTES, type AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
 // One menu entry: where it goes and its text.
@@ -20,6 +20,15 @@ const AREA_LABELS: Record<AppRole, string> = {
 // The link to the person's own area: the same start page that opens after login.
 export function accountLinkFor(role: AppRole): NavLink {
   return { href: homePathForRole(role), label: AREA_LABELS[role] };
+}
+
+// More links after the area link. A family member also gets „Сигнали“, the live
+// alert page (W2-03), so it is one tap away on every page.
+export function extraLinksFor(role: AppRole): NavLink[] {
+  if (role === "family") {
+    return [{ href: ROUTES.familyAlerts, label: bg.layout.accountFamilyAlerts }];
+  }
+  return [];
 }
 
 // The older person's phone never shows „Изход“: one wrong tap would log it out, and

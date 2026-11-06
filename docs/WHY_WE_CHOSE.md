@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-05
+> Last updated: 2026-11-06
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -26,8 +26,8 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · push endpoint allowlist · push upsert = delete + insert
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · PWA · Leaflet + OpenStreetMap · Web Speech API · Recharts
-5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
+5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
@@ -964,6 +964,40 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** older users told us the praise feels patronising; then a shorter, neutral first line.
 
+### `useSyncExternalStore` for `?check=` (vs `useSearchParams` + `<Suspense>`)  (status: in use (`src/components/family/AlertsPage.tsx`, W2-03))
+
+**Used for:** reading `?check=<id>` (the link in a push notification or an alert e-mail) on `/family/alerts`, to scroll to that alert and focus it.
+
+**Alternatives we considered:** `useSearchParams()` from `next/navigation` (needs a `<Suspense>` boundary around the component with `cacheComponents`, or `next build` fails); reading `window.location.search` in a `useEffect` and storing it in state; a Server Component reading `searchParams`.
+
+**Why this one:**
+- React's own hook for "a value that lives outside React": it gives `""` while the page is built on the server and the real address in the browser, **without a hydration mismatch** and without an extra render.
+- No `<Suspense>` and no fallback flash for one small value; the address never changes while the page is open, so the "subscribe" function does nothing.
+- The same pattern we already use for the remembered call contact (W2-01) and the voice support check (W2-10).
+
+**What we give up:**
+- If the page ever changed `?check=` itself (client-side navigation), this hook would not notice; it doesn't.
+- A less familiar hook to explain than `useSearchParams()`.
+
+**We would reconsider if:** the page needed to react to address changes; then `useSearchParams()` inside `<Suspense>`.
+
+### Alert beep made with Web Audio (vs a sound file)  (status: in use (`src/components/family/alertSound.ts`, W2-03))
+
+**Used for:** an optional two-tone beep (880 Hz, then 660 Hz) and a vibration on a new alert, only after the family member pressed „Включи звук и вибрация“.
+
+**Alternatives we considered:** an MP3/WAV file played with `<audio>`; no sound at all; sound on by default.
+
+**Why this one:**
+- **Nothing to download, license or cache:** an oscillator (a tiny synthesizer in the browser) makes the beep in a few lines.
+- Browsers block sound before the user has pressed something on the page; creating the `AudioContext` **in the button's click** is exactly what they allow, so the sound really works later.
+- Sound is opt-in: a page that beeps by surprise in an office or at night would be switched off for good. The alert is always on the screen and read aloud anyway.
+
+**What we give up:**
+- A plain beep, not a designed sound. The setting is not remembered after a reload.
+- iPhones and desktop browsers don't vibrate (`navigator.vibrate` is missing there).
+
+**We would reconsider if:** users asked for a recognisable alert sound; then a short free-licensed file.
+
 ### PWA instead of a native Android/iOS app  (status: decided, not built yet (week 2))
 
 **Used for:** making Scamly installable on the home screen, with web push and an offline "what to do" card.
@@ -999,23 +1033,55 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed street-level detail (we don't: privacy rule = district level only).
 
-### Browser Web Speech API for voice input  (status: decided, not built yet (week 2) ✂ can be cut)
+### Browser Web Speech API for voice input  (status: in use (`src/components/protected/VoiceInput.tsx`, W2-10) ✂ can be cut; real Bulgarian recognition on a phone not yet tested)
 
-**Used for:** letting the older person say what the caller said instead of typing (`bg-BG`).
+**Used for:** letting the older person say what the caller said instead of typing (`bg-BG`, the „Говорете“ button on the text step).
 
-**Alternatives we considered:** paid speech-to-text APIs (Google Cloud, Azure, OpenAI Whisper API), running Whisper ourselves.
+**Alternatives we considered:** recording the audio in the browser (`MediaRecorder`) and sending it to our server, which passes it to a speech service: a paid API (Google Cloud, Azure, OpenAI Whisper API) or Whisper run by ourselves.
 
 **Why this one:**
 - **Free and built into Chrome on Android**, our main target phone.
-- No audio files on our servers.
-- Paid APIs cost money per minute; running Whisper ourselves needs a server with a lot of computing power.
+- **Scamly never receives or stores audio**: we get only the text, which goes through the same redaction as typed text (3.23). Recording and uploading would put voice recordings of a frightened person on our server, with consent, storage and deletion to handle.
+- Paid APIs cost money per minute (D11); running Whisper ourselves needs a server with a lot of computing power.
 
 **What we give up:**
-- **Not available everywhere** (missing in Firefox, unreliable on iOS), so we hide the button when it isn't supported and always offer typing (risk R3).
-- In Chrome, the audio is processed by the browser maker's servers, not ours; we can't control that.
-- Needs an internet connection.
+- **Not available everywhere** (missing in Firefox, unreliable on iOS), so the button is hidden when it isn't supported and typing always works (risk R3).
+- **Honest limit:** in Chrome the recognition is done by the browser's speech service (Google's servers), not on the phone and not by us; we can't control that. The note under the button says the browser turns the voice into text and Scamly records no sound, which is true, but it doesn't claim nothing leaves the phone.
+- Needs an internet connection (error „Гласовото въвеждане се нуждае от интернет…“).
 
 **We would reconsider if:** voice became the main way to use the app for people who can't read well (then a dedicated speech service would be worth asking about).
+
+### One sentence per tap for voice input (vs continuous listening)  (status: in use (`continuous = false` in `VoiceInput.tsx`, W2-10))
+
+**Used for:** each tap on „Говорете“ listens to one sentence; recognition ends by itself after a pause, the text is added, and the button is ready again. „Спри“ ends earlier.
+
+**Alternatives we considered:** `continuous = true` (keep listening until „Спри“); starting to listen automatically when the text step opens.
+
+**Why this one:**
+- **The most reliable mode on Android Chrome:** continuous recognition there often stops on its own, repeats words or ends silently, which would confuse an older person.
+- The phone listens only right after a tap: the microphone is never on by surprise (the browser also asks for permission at that moment), and a TV or the caller on speaker is not written down by accident.
+- Each piece is added at the end of the field, so speaking twice simply adds two sentences.
+
+**What we give up:**
+- A long story needs several taps.
+
+**We would reconsider if:** tests on real phones showed that continuous mode works well in `bg-BG`.
+
+### `FEATURE_VOICE` read at request time (vs at build time)  (status: in use (`src/components/protected/CallCheckPage.tsx`, W2-10))
+
+**Used for:** deciding on the server, for every request, whether the „Говорете“ button may be shown, and passing it to the browser part as a normal prop.
+
+**Alternatives we considered:** a `NEXT_PUBLIC_FEATURE_VOICE` variable (copied into the JavaScript at `next build`); asking an API route from the browser.
+
+**Why this one:**
+- **Switching voice off on Vercel needs no new build** (D12: voice is second in the cut order); the same idea as the VAPID public key route (3.29).
+- No extra request: the value arrives with the page.
+- `await connection()` marks the component as "request time only", which is how Next.js 16 with `cacheComponents` wants request data; it sits inside `<Suspense>` (the `/protected` layout has one, the preview adds its own).
+
+**What we give up:**
+- That part of `/protected` is rendered per request instead of once at build time (a tiny cost: the page is a few screens of buttons).
+
+**We would reconsider if:** the switch were never used; then it could be removed instead.
 
 ### Recharts for admin statistics  (status: decided (Q9), not built yet (week 3))
 
@@ -1037,7 +1103,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 5. Notifications
 
-### Supabase Realtime live alert page as the primary channel  (status: in use (publication on `checks`, `alerts`; token endpoint and `src/lib/realtime.ts` since W2-03); pages: Roberta, week 2)
+### Supabase Realtime live alert page as the primary channel  (status: in use (publication on `checks`, `alerts`; token endpoint and `src/lib/realtime.ts`; family page `/family/alerts` and grandma's family message since W2-01/W2-03))
 
 **Used for:** the family member's alert page updates within seconds when grandma presses the button, and grandma's screen shows „Иван ще ви се обади веднага“ when Ivan acknowledges.
 
@@ -1091,6 +1157,41 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for the alert page; the fallback is what makes D7 reliable.
 
+### Safety poll every 10 s even while Realtime is connected (vs trusting Realtime alone)  (status: in use (`SAFETY_POLL_INTERVAL_MS` in `src/lib/realtime.ts`, fix of 6 Nov))
+
+**Used for:** while the channel is `SUBSCRIBED`, the page still re-reads our API when its last load is 10 s old; it also re-reads right after `SUBSCRIBED` and when the tab becomes visible or the network returns.
+
+**Alternatives we considered:** stopping polling at `SUBSCRIBED` (our first version); polling every 5 s all the time; re-subscribing the channel every few minutes.
+
+**Why this one:**
+- **It fixed a real miss.** In the W2-01 live check the family's answer once did not reach grandma's phone within 15 s. Polling had stopped at `SUBSCRIBED`, so an event lost after that (e.g. sent while the database side of the subscription was still starting) was never re-checked. `SUBSCRIBED` does not promise that every event arrives.
+- With the safety poll the worst case is about 10 s, and in the normal case Realtime still brings the change in about a second. Live after the fix: 5/5 round trips.
+- Half the requests of polling every 5 s all the time; re-subscribing would not catch an event lost in between.
+- "One load at a time" (a doorbell during a load causes exactly one more load) keeps the extra loads from racing each other.
+
+**What we give up:**
+- One small request every 10 s per open page, even when nothing happens.
+- Slightly more logic to test (`realtime.test.ts`, 10 tests with fake timers).
+
+**We would reconsider if:** many family pages were open at once and the requests counted against a free-tier limit; then a longer safety interval (e.g. 30 s).
+
+### One Realtime channel for all the family's people (vs one channel per person)  (status: in use (`watchChecksOfPersons()`, W2-03))
+
+**Used for:** `/family/alerts` watches the checks of everybody the family member looks after with one channel that has one `postgres_changes` filter per person plus one for new `alerts` rows.
+
+**Alternatives we considered:** one channel (and one `watchPersonChecks()`) per person; one channel on all of `checks` without a filter (RLS would still limit it).
+
+**Why this one:**
+- **One connection state for the page** („Връзка на живо“ or polling), one place where polling starts and stops, one list sorted by `newestFirst()`.
+- Fewer channels on the free tier's connection limits; most families watch one or two people anyway.
+- Filters per person keep the events to what the page shows; RLS stays the real lock.
+
+**What we give up:**
+- Any change of any of the people re-reads **all** their lists (one `GET /api/checks?personId=…` per person, in parallel).
+- A new person is picked up only when the page reloads.
+
+**We would reconsider if:** a family member looked after many people; then one API route for "all my people's newest checks".
+
 ### Own Realtime client with an `accessToken` function (vs `setAuth` on the browser client)  (status: in use (`src/lib/realtime.ts`, W2-03))
 
 **Used for:** the page's Realtime connection gets the user's token from `GET /api/realtime/token` through a function supabase-js calls on every heartbeat; it is refreshed 60 s before it expires.
@@ -1124,7 +1225,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** families got large or sends slow; then a background job (`pg_cron` or a queue).
 
-### Web Push with VAPID through `web-push` 3.6.7 (vs hand-written encryption, vs Firebase FCM)  (status: in use (W2-05 backend; opt-in button: Roberta; real-phone test pending))
+### Web Push with VAPID through `web-push` 3.6.7 (vs hand-written encryption, vs Firebase FCM)  (status: in use (W2-05 backend and opt-in card with iPhone hint; real-phone test pending))
 
 **Used for:** a notification on the family member's phone even when Scamly isn't open (`src/server/notifications/pushSender.ts`, `pushChannel.ts`, `public/sw.js`).
 
@@ -1159,6 +1260,22 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - One extra request before subscribing (only when someone taps the button).
 
 **We would reconsider if:** never for this project.
+
+### At most 1.5 s for the push unsubscribe at logout (vs waiting for it, vs skipping it)  (status: in use (`unsubscribeFromPushBeforeLogout()` in `src/lib/push.ts`, W2-05))
+
+**Used for:** „Изход“ first switches web push off for this browser (server row and browser subscription), then logs out. It races the unsubscribe against a 1.5 s timer and ignores errors.
+
+**Alternatives we considered:** waiting for the unsubscribe however long it takes; not unsubscribing at logout; unsubscribing after the logout.
+
+**Why this one:**
+- **A shared browser must not keep getting the old account's alerts** (names of the people it protects on the lock screen).
+- **„Изход“ must never hang or fail**: a slow network or a stuck push service would otherwise block the button. 1.5 s is enough on a normal connection and short enough not to feel broken.
+- It must happen **before** the logout, because deleting the server row needs the login.
+
+**What we give up:**
+- On a very slow network the unsubscribe may not finish; a later push to that browser then still reaches it until the subscription expires (a 404/410 deletes the row, 3.29), or until the next account subscribes the same browser (409 → fresh subscription).
+
+**We would reconsider if:** we saw stale subscriptions in practice; then a server-side cleanup of a user's subscriptions at logout.
 
 ### Brevo free tier behind an `EmailProvider` interface  (status: in use (D5, W2-06 backend); real test e-mail pending a Brevo account)
 
@@ -1553,7 +1670,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project.
 
-### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`; W2-01: `/dev/protected`))
+### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`; W2-01: `/dev/protected`; W2-03: `/dev/family/alerts`))
 
 **Used for:** testing the family dashboard in a real browser in CI, where there is no database.
 
@@ -2163,3 +2280,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-05 · W2-07 family dashboard (Roberta): new entries in section 4 (Client Components that call our API vs Server Components that read the database; ↑ / ↓ buttons vs drag and drop; `qrcode` 1.5.4 in the browser vs our own QR code vs an online QR service) and section 8 (preview pages without the role guard for the browser tests vs a test login, a test mode, component tests)
 - 2026-11-05 · logged-in header (Roberta): new entry in section 4 "Logged-in header menu read on the server inside `<Suspense>`" (vs `GET /api/me` in the browser, vs no `<Suspense>`, vs a bar per area); shared-root-layout entry no longer lists the missing logged-in menu
 - 2026-11-05 · W2-01 call check (Roberta): new entries in section 4 "Call check: one question per screen (vs one long form)" and "Praise first on the red result (vs only the warning)"; "The same engine on the phone as an offline fallback" now in use (4 s, background retries, server verdict stays official; vs an error screen, Background Sync, phone-only verdict); D9 and preview-page entries updated
+- 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new entries in section 4 (`useSyncExternalStore` for `?check=` vs `useSearchParams` + `<Suspense>`; Web Audio beep vs a sound file; one sentence per tap vs continuous listening; `FEATURE_VOICE` read at request time vs at build time) and section 5 (10 s safety poll while Realtime is connected vs trusting Realtime alone, the fix of the missed family message; one Realtime channel for all people vs one per person; 1.5 s cap on the push unsubscribe at logout); Web Speech API entry now in use, compared with recording and sending audio, with the honest note that Chrome's recognition runs on the browser's speech service; Realtime, Web Push and preview-page entries updated.
