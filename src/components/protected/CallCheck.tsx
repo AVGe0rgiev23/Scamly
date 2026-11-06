@@ -55,7 +55,8 @@ const UPLOAD_DEPS: UploadDeps = {
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 };
 
-export function CallCheck() {
+// voiceEnabled: the FEATURE_VOICE switch, read on the server (CallCheckPage.tsx).
+export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) {
   const contact = useCallContact();
   const [stage, setStage] = useState<Stage>("home");
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
@@ -222,6 +223,7 @@ export function CallCheck() {
           onSubmit={(text) => void submit(text)}
           onBack={() => setStage("questions")}
           sending={sending}
+          voiceEnabled={voiceEnabled}
         />
       ) : null}
       {stage === "result" && result !== null ? (
