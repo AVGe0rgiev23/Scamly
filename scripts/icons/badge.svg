@@ -1,0 +1,13 @@
+<!-- Scamly notification badge (W2-09): Android shows only the shape (it uses the
+     transparency, not the colours) in the status bar. A white shield with the phone
+     cut out, on a transparent background. Our own work, GPL-3.0. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <mask id="phone-cut">
+      <rect width="32" height="32" fill="#ffffff"/>
+      <rect x="11.5" y="8.5" width="9" height="15" rx="2" fill="none" stroke="#000000" stroke-width="2.2"/>
+      <circle cx="16" cy="20" r="1.4" fill="#000000"/>
+    </mask>
+  </defs>
+  <path d="M16 2 L28 6.5 V15 C28 22.4 23 27.8 16 30 C9 27.8 4 22.4 4 15 V6.5 Z" fill="#ffffff" mask="url(#phone-cut)"/>
+</svg>

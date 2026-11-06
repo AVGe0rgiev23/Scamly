@@ -19,6 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "test:db": "scripts/db/test-local.sh",
+    "icons": "node scripts/icons/generate.mjs",
     "seed": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs --tsconfig scripts/tsconfig.seed.json scripts/seed.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

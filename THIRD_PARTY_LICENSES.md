@@ -74,4 +74,5 @@ unchanged from npm.
 | Item                  | Licence | Status                                                                                                           |
 | --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
 | Fonts                 | none    | We use the device's built-in system fonts, so no font files are shipped                                          |
+| App icons             | GPL-3.0 | Our own work (W2-09): `public/icons/*.png`, made from our SVG sources in `scripts/icons/` by `npm run icons`     |
 | District shapes (map) | ODbL    | OpenStreetMap data for the 28 districts will be added in Week 3. Required credit: "© OpenStreetMap contributors" |
