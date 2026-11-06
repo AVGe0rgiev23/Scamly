@@ -212,6 +212,9 @@ export const bg = {
     passwordWeak: "Паролата е твърде лесна за отгатване. Изберете друга.",
     displayNameInvalid: "Въведете име от 1 до 60 знака.",
     checkEmail: "Изпратихме ви писмо. Отворете връзката в него, за да потвърдите профила си.",
+    // After registering from an invite (/registratsia?next=/pokana?t=…).
+    checkEmailThenInvite:
+      "Изпратихме ви писмо. Отворете връзката в него, за да потвърдите профила си. След това влезте и отворете отново връзката за покана.",
   },
   // Pairing the older person's phone (page /svarzhi, BUILD_PLAN section 5).
   pairing: {
@@ -258,6 +261,24 @@ export const bg = {
     noFreePlace:
       "В списъка с близки няма свободно място. Помолете човека, който ви е поканил, да освободи място, и отворете връзката отново.",
     tryAgain: "Списъкът с близки се промени в същия момент. Опитайте отново.",
+  },
+  // The invite page /pokana?t=… (W2-14, src/components/auth/InviteAccept.tsx).
+  // {name} = the protected person's name, {n} = the place in the list (1–5).
+  invitePage: {
+    title: "Покана за близък",
+    intro: `Поканени сте да пазите близък в ${APP_NAME}.`,
+    guestText:
+      "Влезте в профила си или създайте нов. След това ще ви върнем тук и поканата ще бъде приета.",
+    loginButton: "Вход",
+    registerButton: "Регистрация",
+    registerHint:
+      "Ако създадете нов профил, първо потвърдете имейла си. След това отворете връзката за покана отново.",
+    redeeming: "Приемаме поканата…",
+    success: "Вече сте близък на {name} на място {n}.",
+    successNext: "Ще получавате сигнал, когато {name} проверява съмнително обаждане.",
+    openPerson: "Към страницата на {name}",
+    wrongRole: "Тази покана е за профил на близък.",
+    wrongRoleHint: "Отворете връзката на устройство, на което сте влезли със семейния си профил.",
   },
   // Call checks: the answers of the older person and the family's „Обаждам ѝ се сега“.
   checks: {

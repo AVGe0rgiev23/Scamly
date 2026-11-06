@@ -54,3 +54,48 @@ export function homePathForRole(role: AppRole): string {
   if (role === "admin") return ROUTES.admin;
   return ROUTES.family;
 }
+
+// The base for checking a `next` address; never shown or visited.
+const CHECK_ORIGIN = "https://scamly.invalid";
+
+// The `next` parameter of /vhod and /registratsia (W2-14): where to go after login,
+// e.g. back to /pokana?t=… . Only a path on OUR site is accepted, never another
+// site (an "open redirect" would let a scam link say „влезте в Scamly“ and then
+// send the person to a fake page). Returns the safe path, or null.
+//
+//   "/pokana?t=abc"        → "/pokana?t=abc"
+//   "https://evil.example" → null (not a path)
+//   "//evil.example"       → null (browsers read "//" as "another site")
+//   "/\evil.example"       → null (some browsers read "\" like "/")
+export function safeNextPath(value: string | null | undefined): string | null {
+  if (typeof value !== "string" || value.length === 0 || value.length > 512) {
+    return null;
+  }
+  if (!value.startsWith("/") || value.startsWith("//")) {
+    return null;
+  }
+  // No backslash and no invisible control characters (tab, new line, …), which
+  // browsers silently drop, so "/\t/evil.example" would become "//evil.example".
+  for (const char of value) {
+    const code = char.charCodeAt(0);
+    if (char === "\\" || code < 32 || code === 127) {
+      return null;
+    }
+  }
+  // Last check: read it as an address on our site; it must stay on our site.
+  try {
+    const url = new URL(value, CHECK_ORIGIN);
+    if (url.origin !== CHECK_ORIGIN) {
+      return null;
+    }
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return null;
+  }
+}
+
+// A page address with a safe `next` parameter, e.g. /vhod?next=%2Fpokana%3Ft%3D… .
+// encodeURIComponent is like Python's urllib.parse.quote(value, safe="").
+export function withNext(page: string, next: string | null): string {
+  return next === null ? page : `${page}?next=${encodeURIComponent(next)}`;
+}

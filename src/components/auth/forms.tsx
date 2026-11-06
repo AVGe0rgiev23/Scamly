@@ -6,11 +6,14 @@ import {
   useId,
   useRef,
   useState,
+  useSyncExternalStore,
   type FormEvent,
   type InputHTMLAttributes,
+  type ReactNode,
 } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { homePathForRole, ROUTES, type AppRole } from "@/config/routes";
+import { homePathForRole, ROUTES, safeNextPath, withNext, type AppRole } from "@/config/routes";
 import { Button } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
 import { unsubscribeFromPushBeforeLogout } from "@/lib/push";
@@ -136,6 +139,40 @@ function Feedback({ message, id }: { message: Message; id: string }) {
   );
 }
 
+// The safe `next` path of this page's address (e.g. /vhod?next=/pokana?t=…), or null.
+// Read when it is needed (after a submit), so the page needs no <Suspense> for it.
+function readNext(): string | null {
+  return safeNextPath(new URLSearchParams(window.location.search).get("next"));
+}
+
+// Opens `path` after login or registration. With a `next` page we use replace(), so
+// „Назад“ doesn't lead back to the login form (and its address with the invite).
+function openAfterLogin(next: string | null, fallback: string) {
+  if (next !== null) window.location.replace(next);
+  else window.location.assign(fallback);
+}
+
+// The query string of the address, read only in the browser (on the server: "").
+// useSyncExternalStore reads a value from outside React, like a getter.
+function useQueryString(): string {
+  return useSyncExternalStore(
+    () => () => {},
+    () => window.location.search,
+    () => "",
+  );
+}
+
+// A link between /vhod and /registratsia that keeps a safe `next` parameter, so a
+// person who switches from login to registration still comes back to the invite.
+export function KeepNextLink({ href, children }: { href: string; children: ReactNode }) {
+  const next = safeNextPath(new URLSearchParams(useQueryString()).get("next"));
+  return (
+    <Link href={withNext(href, next)} prefetch={false}>
+      {children}
+    </Link>
+  );
+}
+
 function isRole(value: unknown): value is AppRole {
   return value === "family" || value === "moderator" || value === "admin" || value === "protected";
 }
@@ -153,7 +190,7 @@ export function LoginForm() {
       );
     const data = await request.post("/api/auth/login", input.data);
     if (!data) return;
-    if (isRole(data.role)) window.location.assign(homePathForRole(data.role));
+    if (isRole(data.role)) openAfterLogin(readNext(), homePathForRole(data.role));
     else request.showError(bg.errors.internal);
   }
   return (
@@ -205,10 +242,15 @@ export function RegisterForm() {
       );
     const data = await request.post("/api/auth/register", input.data);
     if (!data) return;
+    const next = readNext();
     if (data.needsEmailConfirmation === true)
-      request.setMessage({ text: bg.auth.checkEmail, kind: "success" });
+      request.setMessage({
+        // With an invite waiting: after the e-mail, open the invite link again.
+        text: next?.startsWith(ROUTES.invite) ? bg.auth.checkEmailThenInvite : bg.auth.checkEmail,
+        kind: "success",
+      });
     else if (data.needsEmailConfirmation === false && data.role === "family")
-      window.location.assign(ROUTES.family);
+      openAfterLogin(next, ROUTES.family);
     else request.showError(bg.errors.internal);
   }
   return (
