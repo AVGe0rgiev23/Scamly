@@ -293,31 +293,32 @@ export const bg = {
     acknowledgedBySomeone: "Ваш близък ще ви се обади веднага.",
   },
   // Alert e-mails to family members (W2-06, src/server/notifications/email/alertEmail.ts).
-  // draft — Roberta to proofread (W2-06 wording)
+  // Proofread by Roberta (W2-06 wording, 6 Nov).
   // {name} = the protected person's name, {time} = e.g. „9 ноември в 12:05 ч.“,
   // {link} = the address of the alert page. No phone numbers or call details, ever.
   alertEmail: {
     startedSubject: `${APP_NAME}: {name} проверява съмнително обаждане`,
-    redSubject: `${APP_NAME}: Внимание! Проверката на {name} показва признаци на измама`,
+    redSubject: `Внимание! Проверката на {name} в ${APP_NAME} показва признаци на измама`,
     greeting: "Здравейте!",
-    startedText: `{name} получи съмнително обаждане и започна проверка в ${APP_NAME} на {time}.`,
+    // No full stop at the end: {time} already ends with „ч.“
+    startedText: `{name} получи съмнително обаждане. Проверката в ${APP_NAME} започна на {time}`,
     redText: "Проверката на {name} завърши на {time} и показва признаци на телефонна измама.",
     riskLabel: "Ниво на риска:",
     risk: {
       pending: "още не е известно – проверката продължава",
-      red: "високо – признаци на измама",
+      red: "високо – има признаци на измама",
       yellow: "средно – има съмнителни признаци",
       green: "ниско – няма типични признаци на измама",
     },
     callNow: "Обадете се веднага на {name} на номера, който знаете.",
     openText: "Вижте подробностите тук: {link}",
     openButton: "Вижте сигнала",
-    footer: `Получавате това писмо, защото сте сред близките на {name} в ${APP_NAME}. Можете да спрете тези писма от настройките на профила си.`,
+    footer: `Получавате това писмо, защото сте в списъка с близки на {name} в ${APP_NAME}. Можете да спрете тези писма от настройките на профила си.`,
     // {date} = „9 ноември“, {time} = „12:05“ (Bulgarian time).
     timeFormat: "{date} в {time} ч.",
   },
   // Web push notifications to family members (W2-05, src/server/notifications/pushChannel.ts).
-  // draft — Roberta to proofread (W2-05 wording)
+  // Proofread by Roberta (W2-05 wording, 6 Nov).
   // {name} = the protected person's name, always at the start of a phrase (so the
   // fallback `someone` fits too). Short: a phone shows about 40 characters of the title.
   // No phone numbers or call details, ever.
@@ -330,7 +331,7 @@ export const bg = {
     // Used for {name} when the person's name is unknown (e.g. the person was deleted).
     someone: "Ваш близък",
     // Errors of POST /api/push/subscriptions.
-    subscriptionInvalid: "Известията не могат да бъдат включени от този браузър. Опитайте отново.",
+    subscriptionInvalid: "Известията не могат да бъдат включени в този браузър. Опитайте отново.",
     endpointTaken: "Този браузър вече получава известия за друг профил. Опитайте отново.",
   },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the

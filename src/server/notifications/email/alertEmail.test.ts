@@ -50,7 +50,9 @@ describe("buildAlertEmail", () => {
 
     expect(email.subject).toBe("Scamly: Мария Петрова проверява съмнително обаждане");
     expect(email.text).toContain("Мария Петрова получи съмнително обаждане");
-    expect(email.text).toContain("9 ноември в 12:05 ч.");
+    // The proofread sentence ends with the time: one full stop after „ч.“, not two.
+    expect(email.text).toContain("Проверката в Scamly започна на 9 ноември в 12:05 ч.\n");
+    expect(email.text).not.toContain("ч..");
     expect(email.text).toContain("Ниво на риска: още не е известно");
     expect(email.text).toContain(`${SITE}/family/alerts?check=${STARTED.checkId}`);
     expect(email.html).toContain(`href="${SITE}/family/alerts?check=${STARTED.checkId}"`);
@@ -59,7 +61,8 @@ describe("buildAlertEmail", () => {
 
   it("has a red follow-up wording for a red verdict", () => {
     const email = buildAlertEmail({ payload: RED, siteUrl: SITE, sentAt: SENT_AT });
-    expect(email.subject).toContain("Внимание!");
+    // „Внимание!“ first, so it is seen in a short inbox line.
+    expect(email.subject.startsWith("Внимание! Проверката на")).toBe(true);
     expect(email.text).toContain("признаци на телефонна измама");
     expect(email.text).toContain("Ниво на риска: високо");
   });
