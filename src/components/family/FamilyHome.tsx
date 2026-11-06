@@ -1,11 +1,14 @@
-// The content of /family: the heading, the „Добави човек“ button and the list.
-// A Server Component (plain HTML); only <PeopleList /> inside it runs in the browser.
+// The content of /family: the heading, the „Добави човек“ button, the list and the
+// „Известия на телефона“ card (W2-05).
+// A Server Component (plain HTML); only <PeopleList /> and <PushOptIn /> inside it run
+// in the browser.
 // Also used by the test preview page /dev/family (tests/e2e/family.spec.ts).
 
 import Link from "next/link";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { PeopleList } from "./PeopleList";
+import { PushOptIn } from "./PushOptIn";
 
 export function FamilyHome() {
   return (
@@ -20,6 +23,7 @@ export function FamilyHome() {
         </div>
       </header>
       <PeopleList />
+      <PushOptIn />
     </>
   );
 }

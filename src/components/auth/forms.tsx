@@ -13,6 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { homePathForRole, ROUTES, type AppRole } from "@/config/routes";
 import { Button } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
+import { unsubscribeFromPushBeforeLogout } from "@/lib/push";
 import { LoginSchema, RegisterSchema } from "@/schemas/auth";
 import { RedeemCodeSchema } from "@/schemas/pairing";
 
@@ -315,9 +316,12 @@ export function PairForm() {
 
 // „Изход“ (in the site header): ends the session in this browser, then opens the home
 // page with a full page load, so the header is drawn again for a guest.
+// First it switches web push off for this browser (W2-05, best effort, at most 1.5 s),
+// so the next person using this browser doesn't get this account's alerts.
 export function LogoutButton() {
   const request = useFormRequest();
   async function logout() {
+    await unsubscribeFromPushBeforeLogout();
     const data = await request.post("/api/auth/logout", {});
     if (!data) return;
     if (data.ok === true) window.location.assign(ROUTES.home);

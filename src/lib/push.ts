@@ -1,5 +1,5 @@
-// Web push in the browser (task W2-05): the helpers behind Roberta's
-// „Включи известията“ button and the iPhone hint. No UI here, only functions.
+// Web push in the browser (task W2-05): the helpers behind the „Известия на телефона“
+// card (src/components/family/PushOptIn.tsx) and the iPhone hint. No UI here.
 //
 //   isPushEnabledOnServer()  should the button be shown at all? (FEATURE_PUSH + keys)
 //   isPushSupported()        can this browser do web push?
@@ -10,6 +10,7 @@
 //   subscribeToPush()        the button: asks permission, subscribes, tells our server
 //   unsubscribeFromPush()    switch off (also call it on logout, so the next person
 //                            using this browser doesn't get our alerts)
+//   unsubscribeFromPushBeforeLogout()  the same for „Изход“, never waits long
 //
 // IMPORTANT for the button: call subscribeToPush() DIRECTLY in the click handler.
 // Browsers (Safari above all) only show the permission question in answer to a tap.
@@ -284,5 +285,26 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+// „Изход“: switch push off for this browser before the session ends (the server
+// needs the login to delete the subscription), so the next person using this browser
+// doesn't get our alerts. Best effort: it never fails and never makes „Изход“ wait
+// longer than `timeoutMs`, even with a slow network or a stuck push service.
+// `unsubscribe` is a parameter only so the unit tests can pass a fake.
+export async function unsubscribeFromPushBeforeLogout(
+  unsubscribe: () => Promise<boolean> = unsubscribeFromPush,
+  timeoutMs = 1500,
+): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, timeoutMs);
+  });
+  try {
+    // Promise.race: whichever finishes first (like Python's asyncio.wait FIRST_COMPLETED).
+    await Promise.race([unsubscribe().catch(() => false), timeout]);
+  } finally {
+    clearTimeout(timer);
   }
 }

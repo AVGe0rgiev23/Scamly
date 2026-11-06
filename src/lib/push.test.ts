@@ -2,12 +2,13 @@
 // The parts that need a real browser (permission, service worker) are tested by hand
 // on a phone.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   isIosDevice,
   isPushSupported,
   needsHomeScreenForPush,
   sameBytes,
+  unsubscribeFromPushBeforeLogout,
   urlBase64ToUint8Array,
 } from "@/lib/push";
 
@@ -106,5 +107,34 @@ describe("sameBytes", () => {
     expect(sameBytes(Uint8Array.from([1, 2]), Uint8Array.from([1, 2]))).toBe(true);
     expect(sameBytes(Uint8Array.from([1, 2]), Uint8Array.from([1, 3]))).toBe(false);
     expect(sameBytes(Uint8Array.from([1, 2]), Uint8Array.from([1, 2, 3]))).toBe(false);
+  });
+});
+
+describe("unsubscribeFromPushBeforeLogout", () => {
+  it("waits for a quick unsubscribe", async () => {
+    let done = false;
+    await unsubscribeFromPushBeforeLogout(async () => {
+      done = true;
+      return true;
+    });
+    expect(done).toBe(true);
+  });
+
+  it("never fails, even when unsubscribing throws", async () => {
+    await expect(
+      unsubscribeFromPushBeforeLogout(() => Promise.reject(new Error("offline"))),
+    ).resolves.toBeUndefined();
+  });
+
+  it("gives up after the timeout, so „Изход“ never hangs", async () => {
+    vi.useFakeTimers();
+    try {
+      const stuck = () => new Promise<boolean>(() => {}); // never finishes
+      const logout = unsubscribeFromPushBeforeLogout(stuck, 1500);
+      await vi.advanceTimersByTimeAsync(1500);
+      await expect(logout).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
