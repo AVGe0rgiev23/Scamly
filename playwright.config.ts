@@ -24,6 +24,11 @@ export default defineConfig({
     baseURL: BASE_URL,
     // Save a trace (a recording of the test) when a test fails and is retried.
     trace: "on-first-retry",
+    // Our service worker (public/sw.js, W2-09) would pass page loads through itself,
+    // and page.route() can't see requests made by a service worker, so tests that
+    // fake a page would hit the real server. Blocked by default; tests/e2e/pwa.spec.ts
+    // allows it for the offline-card test.
+    serviceWorkers: "block",
   },
   projects: [
     {

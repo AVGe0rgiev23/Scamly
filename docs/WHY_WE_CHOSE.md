@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
@@ -1032,7 +1032,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** users asked for a recognisable alert sound; then a short free-licensed file.
 
-### PWA instead of a native Android/iOS app  (status: decided, not built yet (week 2))
+### PWA instead of a native Android/iOS app  (status: in use (W2-09: manifest, install card, offline card))
 
 **Used for:** making Scamly installable on the home screen, with web push and an offline "what to do" card.
 
@@ -1045,10 +1045,59 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - The jury can open it from a link during judging.
 
 **What we give up:**
-- **iOS limits:** web push only works after "Add to Home Screen" on iOS 16.4+ (risk R2).
+- **iOS limits:** web push only works after "Add to Home Screen" on iOS 16.4+ **and** only for a site with a web app manifest (`display: "standalone"`), opened from that icon (risk R2). The family has to do the 3 steps by hand; Safari has no install button.
 - A web app can't see incoming calls (and we don't want to: no call recording, by design).
 
 **We would reconsider if:** the project continued and we needed features only native apps get (e.g. a screen that appears during a call).
+
+### Web app manifest via the Next.js file convention (`src/app/manifest.ts`) (vs a hand-written `public/manifest.json`, vs a PWA plugin)  (status: in use (W2-09))
+
+**Used for:** telling phones that Scamly is an installable app (name, icons, colours, `display: "standalone"`), which iPhone web push needs.
+
+**Alternatives we considered:** a static `public/manifest.json` plus a hand-written `<link rel="manifest">`; a PWA plugin such as `next-pwa` / Serwist that also generates a service worker.
+
+**Why this one:**
+- **Built into Next.js 16:** `manifest.ts` returns a typed `MetadataRoute.Manifest`, so a typo in a field is a type error; Next.js serves it as `/manifest.webmanifest` and adds the `<link>` to every page by itself.
+- **Texts from `bg.ts`** (name and description) and colours from one file (`src/config/pwa.ts`), shared with the `theme-color` tags: nothing to keep in sync by hand.
+- **No plugin:** a PWA plugin brings its own build step and a generated service worker that caches pages, which we don't want (see "Offline card only on failed page loads"), and it would have to be merged with Alex's push worker.
+
+**What we give up:**
+- Next.js writes only the new `mobile-web-app-capable` tag, so we add Apple's old `apple-mobile-web-app-capable` ourselves (older iPhones).
+
+**We would reconsider if:** we needed per-user manifests (we don't).
+
+### Own app icons generated from SVG with Playwright's Chromium (vs downloaded icons, vs an online generator, vs `sharp`)  (status: in use (W2-09, `scripts/icons/`, `npm run icons`))
+
+**Used for:** the home-screen icons, the iPhone icon and the Android notification badge (`public/icons/`).
+
+**Alternatives we considered:** a free icon set; an online "PWA icon generator"; drawing PNGs in an image editor; a script with `sharp` (comes with Next.js).
+
+**Why this one:**
+- **Our own drawing** of the header logo (shield + phone): no licence or credit questions (GPL-3.0, `THIRD_PARTY_LICENSES.md`), and it looks like the site.
+- **Reproducible:** the SVG sources are in the repo; one command makes all five PNGs at the exact sizes. Playwright's Chromium is already installed for our browser tests, so no new package.
+- An online generator would need uploading and gives files we can't re-make; `sharp` is only an indirect dependency of Next.js and not ours to rely on.
+
+**What we give up:**
+- The generator needs Chromium installed (`npx playwright install chromium`), and the PNGs must be re-made by hand after an SVG change.
+
+**We would reconsider if:** a designer made a real logo; then we would replace the SVG sources.
+
+### Offline card only on failed page loads (vs caching app pages, vs no offline support)  (status: in use (W2-09, `public/sw.js`))
+
+**Used for:** showing „Няма връзка с интернет“ and the three rules when a page can't load without internet.
+
+**Alternatives we considered:** caching every page and file the app loads ("cache first" or "stale while revalidate", e.g. Workbox); caching the app shell; no offline support at all (the browser's own error page).
+
+**Why this one:**
+- **Never old data:** a cached page could show an old verdict, an old alert or someone's name after logout. Our worker keeps exactly **one** page with no data, and only for **navigations that fail** with a network error; everything else always comes from the network.
+- **Still useful without internet:** the most important advice (the police never ask for money, don't give money, call a relative yourself) reaches grandma exactly when Scamly can't check the call.
+- **Self-contained page:** inline CSS and SVG, so it looks right although `/_next/` files are not cached; no header with a name.
+- **Small and explainable:** one cache name with a version number, old caches deleted on `activate`; push and `notificationclick` untouched.
+
+**What we give up:**
+- Without internet the app itself (the big button) doesn't open from the icon; only the card does. The offline engine fallback (3.33) still helps on an already open page.
+
+**We would reconsider if:** the jury or users needed the call check fully offline; then we would cache the `/protected` app shell with careful versioning.
 
 ### Leaflet + OpenStreetMap for the scam map  (status: decided, not built yet (week 3))
 
@@ -2316,3 +2365,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-05 · W2-01 call check (Roberta): new entries in section 4 "Call check: one question per screen (vs one long form)" and "Praise first on the red result (vs only the warning)"; "The same engine on the phone as an offline fallback" now in use (4 s, background retries, server verdict stays official; vs an error screen, Background Sync, phone-only verdict); D9 and preview-page entries updated
 - 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new entries in section 4 (`useSyncExternalStore` for `?check=` vs `useSearchParams` + `<Suspense>`; Web Audio beep vs a sound file; one sentence per tap vs continuous listening; `FEATURE_VOICE` read at request time vs at build time) and section 5 (10 s safety poll while Realtime is connected vs trusting Realtime alone, the fix of the missed family message; one Realtime channel for all people vs one per person; 1.5 s cap on the push unsubscribe at logout); Web Speech API entry now in use, compared with recording and sending audio, with the honest note that Chrome's recognition runs on the browser's speech service; Realtime, Web Push and preview-page entries updated.
 - 2026-11-06 · W2-14 invite page + W2-06 wording (Roberta): new entries in section 3 "Invite page: send the token at once, remove it with `replaceState`, `no-referrer`" (vs a button, a server redirect, a lookup before redeeming) and "Safe `next` redirect after login" (vs an open redirect, no redirect, `sessionStorage`, an allowlist); the invite-token entry's open point (page must POST at once, `no-referrer`) is now done
+- 2026-11-06 · W2-09 PWA (Roberta): new entries in section 4 "Web app manifest via the Next.js file convention" (vs a static `manifest.json`, vs a PWA plugin), "Own app icons generated from SVG with Playwright's Chromium" (vs icon sets, online generators, `sharp`) and "Offline card only on failed page loads" (vs caching app pages, vs no offline support); the PWA entry is now in use and names the manifest as the iPhone push condition

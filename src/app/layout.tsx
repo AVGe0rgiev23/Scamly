@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   icons: {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  // Next.js writes the new standard name "mobile-web-app-capable"; older iPhones
+  // (before iOS 17.4) still look for Apple's old name, so we add it too.
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 // The colour of the browser bar (and of the installed app's top bar): the header

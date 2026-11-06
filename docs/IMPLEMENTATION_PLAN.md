@@ -156,7 +156,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ✅ wording proofread by Roberta (6 Nov: `bg.alertEmail` and `bg.push`) · ⬜ real Brevo e-mail: Alex (no account yet) |
 | W2-07 | Family dashboard UI | Roberta (took it over from Alex on 5 Nov) | 🔄 in progress |
 | W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
-| W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ⬜ |
+| W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ✅ manifest + own icons, „Инсталирай Scamly“ card (Android + iPhone steps), offline card on failed page loads; `pwa.spec.ts` 7 × 2 · ⬜ real install + push on a phone (iPhone: needs this manifest) |
 | W2-10 | ✂ Voice input | Alex (D23) | ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
 | W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
