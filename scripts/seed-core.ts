@@ -39,7 +39,8 @@ export function demoAccounts(): DemoAccount[] {
   ];
 }
 
-// The schema's static 28 districts are expected; all user/auth data must be empty.
+// The schema's static 28 districts and the 4 starter scam cards (migration
+// 20261109000001) are expected; all user/auth data must be empty.
 export const EMPTY_TABLES = [
   "profiles",
   "protected_persons",
@@ -51,7 +52,6 @@ export const EMPTY_TABLES = [
   "alerts",
   "push_subscriptions",
   "reports",
-  "scam_scripts",
   "audit_log",
   "rate_limits",
 ] as const satisfies readonly (keyof Database["public"]["Tables"])[];
