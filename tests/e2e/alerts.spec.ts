@@ -268,7 +268,9 @@ test("empty, no people and error states are in Bulgarian", async ({ page }) => {
   // Without the mocks the preview has no login: the API's Bulgarian 401 and „Опитай отново“.
   await page.unrouteAll();
   await page.goto("/dev/family/alerts");
-  await expect(page.getByRole("alert")).toBeVisible();
+  // Scoped to <main>: Next.js also renders a hidden route announcer with role="alert",
+  // and an unscoped getByRole("alert") sometimes matched both (strict-mode failure).
+  await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
   await expect(page.getByRole("button", { name: bg.family.retry })).toBeVisible();
 });
 
