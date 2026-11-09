@@ -1,8 +1,8 @@
-// /moderator: TEMPORARY page that only shows the name of the area (the site header shows
-// who is logged in). The real page comes later.
+// /moderator: the moderator's start page (W3-05): a card for the scam-script editor
+// and a „скоро“ card for the report queue (W3-04). The role guard is in layout.tsx.
 
-import { bg } from "@/i18n/bg";
+import { ModeratorHub } from "@/components/moderator/ModeratorHub";
 
 export default function ModeratorPage() {
-  return <h1 className="text-3xl font-bold">{bg.areas.moderator}</h1>;
+  return <ModeratorHub />;
 }

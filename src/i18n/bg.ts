@@ -396,6 +396,63 @@ export const bg = {
       "Кратки карти за „Полицай“, „Роднина в беда“, „Фалшив служител“ и „Колет или куриер“: как започват и какво да направите.",
     homeLink: "Как работи измамата",
   },
+  // The moderator's area (W3-05): the hub /moderator and the scam-script editor
+  // /moderator/scripts. Error messages of the API come from bg.scripts.
+  moderator: {
+    hubTitle: "Панел на модератора",
+    hubIntro: "Оттук поддържате картите „Как работи измамата“ и проверявате сигналите.",
+    scriptsCardTitle: "Схеми на измамите",
+    scriptsCardText:
+      "Картите на страницата „Как работи измамата“ и ключовите думи, по които проверката разпознава всяка схема.",
+    scriptsCardLink: "Отвори схемите",
+    queueCardTitle: "Сигнали за одобрение",
+    queueCardText: "Одобряване и отхвърляне на сигналите за картата на измамите.",
+    soon: "скоро",
+    libraryTitle: "Схеми на измамите",
+    libraryIntro:
+      "Само публикуваните схеми се виждат на страницата „Как работи измамата“ и се използват в проверката на обаждания.",
+    newScript: "Нова схема",
+    edit: "Редактирай",
+    statusPublished: "Публикувана",
+    statusDraft: "Чернова",
+    keywordCount: "Ключови думи: {count}",
+    empty: "Все още няма схеми. Създайте първата.",
+    loading: "Зареждане на схемите…",
+    retry: "Опитай отново",
+    backToHub: "Към панела на модератора",
+    backToList: "Към всички схеми",
+    newTitle: "Нова схема",
+    editTitle: "Редактиране на схема",
+    titleLabel: "Заглавие",
+    titleHint: "До 80 знака, например „Фалшив полицай“.",
+    typeLabel: "Вид измама",
+    slugLabel: "Адрес на страницата",
+    slugHint: "Малки латински букви, цифри и тирета. Картата ще е на /kak-raboti/{slug}.",
+    howItStartsLabel: "Как започва",
+    whatTheySayLabel: "Какво казват",
+    whatTheySayHint: "Всяка фраза в кавички „…“ се показва на отделен ред.",
+    whatToDoLabel: "Какво да направите",
+    whatToDoHint: "Всяко изречение се показва като отделна стъпка.",
+    charCount: "{count} от {max} знака",
+    keywordsTitle: "Ключови думи за проверката",
+    keywordsHelp:
+      "Начало на дума на кирилица, например „жетон“ за „жетони“. Думата се добавя към признаците на тази схема в проверката на обаждания. Тежестта на признака не се променя.",
+    keywordLabel: "Нова ключова дума",
+    keywordAdd: "Добави",
+    keywordRemove: "Премахни „{stem}“",
+    keywordDuplicate: "Тази дума вече е в списъка.",
+    keywordsEmpty: "Няма добавени ключови думи.",
+    keywordAdded: "Думата „{stem}“ е добавена.",
+    keywordRemoved: "Думата „{stem}“ е премахната.",
+    publishedLabel: "Публикувана",
+    publishedHint:
+      "Публикуваната схема се вижда от всички на „Как работи измамата“ и ключовите ѝ думи се използват в проверката.",
+    save: "Запази",
+    saving: "Запазване…",
+    saved: "Промените са запазени.",
+    created: "Схемата е създадена.",
+    viewPublic: "Виж публичната страница",
+  },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the
   // districts table in the database (migration 20261102000001); a unit test
   // (src/i18n/districts.test.ts) checks that the two lists stay equal.
@@ -759,7 +816,6 @@ export const bg = {
   areas: {
     forbiddenHelp:
       "Проверете дали сте влезли с правилния профил или се върнете към началната страница.",
-    moderator: "Панел на модератора",
     admin: "Панел на администратора",
     protected: "Телефон на защитения човек",
     placeholderNote: "Временна страница. Истинският дизайн предстои.",
