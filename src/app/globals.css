@@ -1327,3 +1327,135 @@ a.button {
   background: var(--surface);
   font-weight: 750;
 }
+
+/* Education pages „Как работи измамата“ (W3-05): /kak-raboti and /kak-raboti/<slug>.
+ * Big text (at least 1.15rem = 18.4 px) for older readers; also printed on paper. */
+.education {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 1rem;
+  font-size: 1.2rem;
+  line-height: 1.55;
+}
+.edu-intro {
+  display: grid;
+  gap: 0.75rem;
+}
+.edu-lead {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.edu-list-section {
+  display: grid;
+  gap: 1rem;
+}
+.edu-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+  list-style: none;
+}
+.edu-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.edu-tile > * + * {
+  margin-top: 0;
+}
+.edu-tile .button {
+  margin-top: auto;
+}
+.edu-type {
+  color: var(--primary);
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+.edu-message {
+  font-size: 1.2rem;
+  font-weight: 650;
+}
+.edu-unavailable {
+  display: grid;
+  gap: 1rem;
+}
+.edu-card {
+  display: grid;
+  gap: 1.25rem;
+}
+.edu-section h2 {
+  font-size: 1.4rem;
+}
+.edu-phrases {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  font-style: italic;
+}
+.edu-steps {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.75rem;
+  list-style: decimal;
+  font-weight: 650;
+}
+.edu-steps li::marker {
+  color: var(--primary);
+  font-weight: 800;
+}
+.edu-todo {
+  border-left: 6px solid var(--primary);
+}
+.edu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.edu-actions .button {
+  flex: 1 1 14rem;
+}
+.edu-print-only {
+  display: none;
+}
+.home-education .button {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Printing an education card: only the card, black on white, no menu or buttons. */
+@media print {
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .edu-no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+  .education {
+    max-width: none;
+    padding: 0;
+    font-size: 14pt;
+  }
+  .edu-card .card {
+    border: 1px solid #000000;
+    break-inside: avoid;
+  }
+  .edu-type,
+  .edu-steps li::marker {
+    color: #000000;
+  }
+  .edu-todo {
+    border-left: 6px solid #000000;
+  }
+  .edu-print-only {
+    display: block;
+    font-size: 12pt;
+  }
+}

@@ -2,7 +2,8 @@
 // and the compact theme switch.
 //
 // The menu depends on who is looking:
-//   - a guest sees „Вход“, „Регистрация“, „Свържи телефон“;
+//   - a guest sees „Вход“, „Регистрация“, „Свържи телефон“ and „Как работи измамата“
+//     (the public education cards, W3-05);
 //   - a logged-in person sees the link to their own area (e.g. „Моите близки“; a
 //     family member also „Сигнали“), their name and „Изход“ (the older person's
 //     phone: area link and name, never „Изход“).
@@ -33,6 +34,7 @@ const GUEST_LINKS: NavLink[] = [
   { href: ROUTES.login, label: bg.layout.login },
   { href: ROUTES.register, label: bg.layout.register },
   { href: ROUTES.pair, label: bg.layout.pair },
+  { href: ROUTES.education, label: bg.layout.education },
 ];
 
 // The little the header needs to know about a logged-in person.

@@ -17,9 +17,11 @@ export const ROUTES = {
   pair: "/svarzhi",
   invite: "/pokana", // accept an invite to become a trusted contact („покана“), W2-08
   forbidden: "/403",
+  education: "/kak-raboti", // the public education cards „Как работи измамата“, W3-05
   family: "/family",
   familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
   moderator: "/moderator",
+  moderatorScripts: "/moderator/scripts", // the scam-script editor, W3-05
   admin: "/admin",
   protected: "/protected",
 } as const;

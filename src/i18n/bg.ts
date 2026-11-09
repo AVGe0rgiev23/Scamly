@@ -32,6 +32,8 @@ export const bg = {
     login: "Вход",
     register: "Регистрация",
     pair: "Свържи телефон",
+    // The public education pages /kak-raboti (W3-05), for guests.
+    education: "Как работи измамата",
     // When logged in, the menu shows the link to the person's own area (by role),
     // the name („Влезли сте като …“) and „Изход“ (not on the older person's phone).
     accountFamily: "Моите близки",
@@ -369,6 +371,30 @@ export const bg = {
       courier: "Колет или куриер",
       unknown: "Друга схема",
     },
+  },
+  // The public education pages /kak-raboti and /kak-raboti/<card> (W3-05).
+  education: {
+    title: "Как работи измамата",
+    lead: "Как работят телефонните измами и какво да правите",
+    intro:
+      "Кратки карти за най-честите схеми в България: как започва обаждането, какво казват измамниците и какво да направите. Покажете ги на възрастните си близки или ги отпечатайте.",
+    listTitle: "Схеми на измамниците",
+    readCard: "Прочетете картата",
+    howItStarts: "Как започва",
+    whatTheySay: "Какво казват",
+    whatToDo: "Какво да направите",
+    print: "Отпечатай картата",
+    backToList: "Всички схеми",
+    loadError: "Картите не могат да се заредят в момента. Опитайте отново след малко.",
+    empty: "Все още няма публикувани карти.",
+    // Shown when the cards can't be loaded, so the page still helps.
+    rulesTitle: "Запомнете",
+    printNote: `${APP_NAME} · Проверете съмнително обаждане за 30 секунди.`,
+    // A link on the home page.
+    homeTitle: "Научете схемите на измамниците",
+    homeText:
+      "Кратки карти за „Полицай“, „Роднина в беда“, „Фалшив служител“ и „Колет или куриер“: как започват и какво да направите.",
+    homeLink: "Как работи измамата",
   },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the
   // districts table in the database (migration 20261102000001); a unit test
