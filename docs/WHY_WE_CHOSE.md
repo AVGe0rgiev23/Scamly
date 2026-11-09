@@ -1752,6 +1752,46 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ---
 
+### Moderator keywords attach to an existing scenario category (vs new weights, vs editing `dictionary.ts`)  (status: in use (`src/server/services/moderatorKeywords.ts`, W3-05))
+
+**Used for:** a moderator adds word stems (e.g. „томбол“) to a published scam card in `/moderator/scripts`. The check service passes them to `analyseCall()` as `extraKeywords`; each stem joins the scenario category of its card (`police` → `scenario_police`, `relative_in_trouble` → `scenario_relative`, `fake_official` → `scenario_official`, `courier` → `scenario_courier`; `unknown` is skipped).
+
+**Alternatives we considered:** letting the moderator choose a weight per keyword; letting the moderator pick any category (also `money` or `handover`, which can fire hard rules); a new "moderator" category with its own weight; changing `dictionary.ts` in code and redeploying.
+
+**Why this one:**
+- **The scoring stays explainable and tested.** The weights in `scoring.ts` and the hard rules (D10) are covered by 51 scenario tests; a weight typed into a form would bypass all of them. A keyword can only add evidence to a category that already exists, at most once (each category counts once), so it can raise a score by at most that category's weight (10–15).
+- **No accidental red.** Scenario categories don't fire hard rules on their own, so a careless keyword can't force a red verdict for normal calls.
+- **No deploy needed.** New scammer phrases appear every month; a moderator teaches them in a minute without a developer.
+
+**What we give up:** a moderator can't teach a new *kind* of signal (e.g. a new hard rule); that still needs a code change and tests. The phone's offline fallback runs the engine without the moderator keywords, so offline it can be slightly lower (the server verdict stays the official one).
+
+### Education cards in the database (vs hard-coded pages, vs Markdown files)  (status: in use (`scam_scripts`, migration `20261109000001`, `/kak-raboti`, W3-05))
+
+**Used for:** the four „Как работи измамата“ cards and the moderator's keywords live in the `scam_scripts` table; `/kak-raboti` reads the published rows at request time.
+
+**Alternatives we considered:** texts in `bg.ts` with one page per script; Markdown files in the repo; a headless CMS.
+
+**Why this one:**
+- **Moderators can change them** without a developer, a commit or a deploy (brief 5.2 F: "script library editor"), with RLS deciding who may write (moderators insert/update, only admins delete) and an audit line for every change.
+- **One place for the card and its keywords:** publishing a card also switches its keywords on for the engine, and unpublishing switches them off.
+- **Starter cards come with the schema** (a migration with `on conflict (slug) do nothing`), so every new database, the test database included, has them, and running it twice changes nothing.
+
+**What we give up:** the card texts are not in `bg.ts`, so the proofreading of W4-06 must also read the migration and the live rows; a CMS would have rich text and image upload, which we don't need.
+
+### 60-second in-memory cache for the moderator keywords (vs a query per check, vs `"use cache"`, vs build-time)  (status: in use (`createKeywordCache`, W3-05))
+
+**Used for:** the stems of all published cards are read at most once per 60 seconds per server instance (module-level variable), with the cookie-less public client.
+
+**Alternatives we considered:** reading them on every check; Next.js `"use cache"` with `cacheLife`; reading them once at `next build`; no keywords at all when the database is slow.
+
+**Why this one:**
+- **The check is the most important request** of the app; one tiny extra query per minute is nothing, one per check would add a round trip to grandma's 30 seconds.
+- **Plain and testable:** a function with a clock passed in (like `functools.lru_cache` with an expiry), unit-tested with a fake clock, no framework magic in a service.
+- **Never blocks a check:** a failure keeps the last good stems (or none) and the engine still has its own dictionary; a failure is also cached for 60 s, so an outage doesn't add a slow failing query to every check.
+- **Never frozen:** a moderator's new keyword works within a minute; a build-time list would wait for the next deploy.
+
+**What we give up:** on Vercel each server instance has its own cache, so for up to a minute two instances can use different keyword lists. For a teaching feature that is fine.
+
 ## 8. Testing and quality
 
 ### Vitest 5 (5.1.0) + V8 coverage  (status: in use)
@@ -2440,3 +2480,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-06 · W2-14 invite page + W2-06 wording (Roberta): new entries in section 3 "Invite page: send the token at once, remove it with `replaceState`, `no-referrer`" (vs a button, a server redirect, a lookup before redeeming) and "Safe `next` redirect after login" (vs an open redirect, no redirect, `sessionStorage`, an allowlist); the invite-token entry's open point (page must POST at once, `no-referrer`) is now done
 - 2026-11-06 · W2-09 PWA (Roberta): new entries in section 4 "Web app manifest via the Next.js file convention" (vs a static `manifest.json`, vs a PWA plugin), "Own app icons generated from SVG with Playwright's Chromium" (vs icon sets, online generators, `sharp`) and "Offline card only on failed page loads" (vs caching app pages, vs no offline support); the PWA entry is now in use and names the manifest as the iPhone push condition
 - 2026-11-09 · W3-01 public reports API (Alex): new entries "Honeypot: a silent 201 (vs an error, vs a CAPTCHA)" and "Caller number stored only as an HMAC" (section 3), "Rolling 7- and 28-day windows for scam waves (vs calendar weeks)" (section 7), "Cookie-less public client + 60 s CDN cache for the map" (section 9); server-only writes now explain the missing `anon` INSERT policy on `reports`; HMAC and rate-limiting entries now in use for reports
+- 2026-11-09 · W3-05 scam-script library (Roberta): new entries in section 7 "Moderator keywords attach to an existing scenario category", "Education cards in the database" and "60-second in-memory cache for the moderator keywords"

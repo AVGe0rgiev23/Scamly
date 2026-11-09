@@ -46,6 +46,7 @@ export function KeywordChips({ keywords, onChange, disabled }: KeywordChipsProps
 
   function remove(stem: string) {
     onChange(keywords.filter((keyword) => keyword !== stem));
+    setError(null);
     setAnnouncement(fill(bg.moderator.keywordRemoved, { stem }));
   }
 

@@ -69,16 +69,17 @@ function cardText(max: number, messageBg: string) {
     .max(max, { error: messageBg });
 }
 
-// The fields of a card, as one object (POST needs all of them).
+// The fields of a card, as one object (POST needs all of them). In the same order as
+// the editor's form, so the first error Zod reports is the first wrong field on screen.
 const scriptFields = {
+  titleBg: cardText(MAX_TITLE_LENGTH, bg.scripts.titleInvalid),
+  scriptType: z.enum(SCRIPT_TYPES, { error: bg.scripts.scriptTypeInvalid }),
   slug: z
     .string({ error: bg.scripts.slugInvalid })
     .trim()
     .min(1, { error: bg.scripts.slugInvalid })
     .max(MAX_SLUG_LENGTH, { error: bg.scripts.slugInvalid })
     .regex(SLUG_PATTERN, { error: bg.scripts.slugInvalid }),
-  scriptType: z.enum(SCRIPT_TYPES, { error: bg.scripts.scriptTypeInvalid }),
-  titleBg: cardText(MAX_TITLE_LENGTH, bg.scripts.titleInvalid),
   howItStartsBg: cardText(MAX_SCRIPT_TEXT_LENGTH, bg.scripts.textInvalid),
   whatTheySayBg: cardText(MAX_SCRIPT_TEXT_LENGTH, bg.scripts.textInvalid),
   whatToDoBg: cardText(MAX_SCRIPT_TEXT_LENGTH, bg.scripts.textInvalid),
