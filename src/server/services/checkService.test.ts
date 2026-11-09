@@ -7,6 +7,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppRole } from "@/config/routes";
+import type { ExtraKeyword } from "@/engine";
 import { bg } from "@/i18n/bg";
 import { AnswersSchema, type AnswersInput } from "@/schemas/checks";
 import type { Actor } from "@/server/auth/actor";
@@ -52,6 +53,8 @@ type World = {
   hits: Map<string, number>;
   failFanOut: boolean;
   raceOnSave: boolean; // saveAnswers finds the check already answered
+  extraKeywords: ExtraKeyword[]; // the moderators' keywords of the published cards
+  failKeywords: boolean; // loading the keywords fails
 };
 
 function newWorld(): World {
@@ -97,6 +100,8 @@ function newWorld(): World {
     hits: new Map(),
     failFanOut: false,
     raceOnSave: false,
+    extraKeywords: [],
+    failKeywords: false,
   };
 }
 
@@ -203,6 +208,10 @@ function depsFor(world: World, callerId: string): CheckDeps {
     },
     notifyVerdict: async (checkId) => {
       world.verdictCalls.push(checkId);
+    },
+    loadExtraKeywords: async () => {
+      if (world.failKeywords) throw new Error("database is down");
+      return world.extraKeywords;
     },
   };
 }
@@ -339,6 +348,57 @@ describe("submitAnswers", () => {
     expect(saved?.engine_version).toBe("1.0.0");
     expect(world.checks[0]?.status).toBe("answered");
     expect(world.verdictCalls).toEqual([checkId]);
+  });
+
+  // W3-05: a moderator teaches the engine a new phrase through a published scam card.
+  const PRIZE_TEXT = "Спечелихте томбола, обадете се.";
+  const TEXT_ONLY = {
+    claimedIdentity: null,
+    asksMoney: null,
+    rushing: null,
+    secrecy: null,
+    text: PRIZE_TEXT,
+  };
+
+  it("a moderator's keyword is found in the text and appears in the reasons", async () => {
+    const before = await submitAnswers(
+      depsFor(world, PHONE_1),
+      actorFor(world, PHONE_1),
+      await startOn(PHONE_1),
+      answers(TEXT_ONLY),
+    );
+    expect(before.verdict.reasons.map((reason) => reason.code)).not.toContain("scenario_police");
+
+    world.extraKeywords = [{ category: "scenario_police", stem: "томбол" }];
+    const checkId = await startOn(PHONE_2);
+    const after = await submitAnswers(
+      depsFor(world, PHONE_2),
+      actorFor(world, PHONE_2),
+      checkId,
+      answers(TEXT_ONLY),
+    );
+
+    const reason = after.verdict.reasons.find((r) => r.code === "scenario_police");
+    expect(reason?.evidence).toEqual(["томбола"]);
+    expect(after.verdict.scriptType).toBe("police");
+    expect(after.verdict.score).toBeGreaterThan(before.verdict.score);
+    expect(world.saved.at(-1)?.fields.reason_codes).toContain("scenario_police");
+  });
+
+  it("a failure to load the keywords never blocks a check (none are used)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    world.failKeywords = true;
+    const checkId = await startOn(PHONE_1);
+
+    const result = await submitAnswers(
+      depsFor(world, PHONE_1),
+      actorFor(world, PHONE_1),
+      checkId,
+      answers(POLICE_AND_MONEY),
+    );
+
+    expect(result.verdict.level).toBe("red");
+    expect(world.checks[0]?.status).toBe("answered");
   });
 
   it("returns the first contact WITH a phone for the „Обади се на …“ button", async () => {

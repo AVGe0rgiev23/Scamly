@@ -25,6 +25,7 @@ import {
   MAX_TEXT_LENGTH,
   redactPersonalData,
   SIGNAL_CATEGORIES,
+  type ExtraKeyword,
   type HardRuleId,
   type Reason,
 } from "@/engine";
@@ -65,6 +66,7 @@ import {
   notifyVerdict,
   type ContactRef,
 } from "@/server/services/alertService";
+import { loadModeratorKeywords } from "@/server/services/moderatorKeywords";
 import type { DbClient } from "@/server/supabase/userClient";
 
 // How many checks one page of GET /api/checks has.
@@ -92,6 +94,8 @@ export type CheckDeps = {
     at: Date,
   ) => Promise<"acknowledged" | "already">;
   writeAudit: (entry: AuditEntry) => Promise<void>;
+  // The moderators' extra keywords of the published scam cards (W3-05, cached 60 s).
+  loadExtraKeywords: () => Promise<ExtraKeyword[]>;
   // The alert service (alertService.ts).
   fanOutAlerts: (checkId: string) => Promise<void>;
   notifyVerdict: (checkId: string) => Promise<void>;
@@ -130,6 +134,18 @@ async function runAlertStep(name: string, step: () => Promise<void>): Promise<vo
   } catch (error) {
     const description = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     console.error(`[checks] ${name} failed:`, description);
+  }
+}
+
+// The moderators' keywords, or none if they can't be loaded: a check must never fail
+// or wait because of the script library (the engine then uses its own dictionary).
+async function extraKeywordsFor(deps: CheckDeps): Promise<ExtraKeyword[]> {
+  try {
+    return await deps.loadExtraKeywords();
+  } catch (error) {
+    const description = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error("[checks] moderator keywords unavailable:", description);
+    return [];
   }
 }
 
@@ -290,8 +306,11 @@ export async function submitAnswers(
     knownNames.push(person.display_name);
   }
 
-  // The engine reads the ORIGINAL text, exactly like the phone's offline fallback
-  // (BUILD_PLAN 4.9), so both always show the same verdict. That text stays in memory.
+  // The engine reads the ORIGINAL text, like the phone's offline fallback (BUILD_PLAN
+  // 4.9). That text stays in memory. The server also adds the moderators' keywords of
+  // the published scam cards (W3-05); they can only add evidence to an existing
+  // scenario category, so the offline verdict can only be the same or lower.
+  const extraKeywords = await extraKeywordsFor(deps);
   const verdict = analyseCall({
     claimedIdentity: answers.claimedIdentity,
     asksMoney: answers.asksMoney,
@@ -299,6 +318,7 @@ export async function submitAnswers(
     rushing: answers.rushing,
     secrecy: answers.secrecy,
     text: answers.text,
+    extraKeywords,
   });
 
   // Only the REDACTED text is ever stored (BUILD_PLAN 2.3, 4.8). A label can be longer
@@ -456,6 +476,7 @@ export function createCheckDeps(user: DbClient, admin: DbClient): CheckDeps {
     saveAnswers: (checkId, fields) => saveCheckAnswers(admin, checkId, fields),
     markAcknowledged: (checkId, userId, at) => acknowledgeCheck(admin, checkId, userId, at),
     writeAudit: (entry) => writeAudit(admin, entry),
+    loadExtraKeywords: loadModeratorKeywords,
     fanOutAlerts: async (checkId) => {
       await fanOut(alertDeps, checkId);
     },
