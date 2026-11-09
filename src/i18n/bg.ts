@@ -346,6 +346,30 @@ export const bg = {
       "Въведете българския номер, от който ви се обадиха, например 0888 123 456 или +359 888 123 456.",
     weeksInvalid: "Изберете период от 1 до 12 седмици.",
   },
+  // The scam-script library (W3-05): error messages of POST/PATCH /api/scripts, also
+  // shown by the moderator's editor, and the short name of each kind of scam.
+  scripts: {
+    slugInvalid:
+      "Адресът трябва да е до 60 малки латински букви, цифри и тирета, например rodnina-v-beda.",
+    slugTaken: "Вече има схема с този адрес. Изберете друг.",
+    scriptTypeInvalid: "Изберете вида на измамата от списъка.",
+    titleInvalid: "Заглавието трябва да е от 1 до 80 знака.",
+    textInvalid: "Всяко от трите описания трябва да е от 1 до 1500 знака.",
+    keywordLength: "Ключовата дума трябва да е от 3 до 30 букви.",
+    keywordLetters: "Ключовата дума може да съдържа само малки букви на кирилица, без интервали.",
+    keywordsInvalid: "Ключовите думи трябва да са списък от думи.",
+    keywordsTooMany: "Може да има най-много 30 ключови думи.",
+    publishedInvalid: "Изберете дали схемата е публикувана.",
+    nothingToChange: "Няма промени за запазване.",
+    // The short name of each script type (the database enum public.script_type).
+    typeNames: {
+      police: "Полицай",
+      relative_in_trouble: "Роднина в беда",
+      fake_official: "Фалшив служител",
+      courier: "Колет или куриер",
+      unknown: "Друга схема",
+    },
+  },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the
   // districts table in the database (migration 20261102000001); a unit test
   // (src/i18n/districts.test.ts) checks that the two lists stay equal.
