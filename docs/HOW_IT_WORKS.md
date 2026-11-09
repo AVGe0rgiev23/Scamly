@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-06**
+Last updated: **2026-11-09**
 
 **Contents**
 
@@ -37,11 +37,13 @@ The system has **layers**, and each layer only talks to the one below it: the **
 
 **Week 2 frontend (6 Nov, Alex):** the family's live alert page `/family/alerts` with „Обаждам ѝ се сега“ (3.34, header link „Сигнали“), the push opt-in card with the iPhone hint (3.35) and voice input on grandma's text step (3.36). Realtime got a reliability fix: a 10 s safety poll keeps running while connected (3.25). Live: 5/5 round trips, alert on the family page 2.3–3.9 s after the big button, the name on grandma's phone 0.8–1.3 s after the family member's tap. 521 unit tests, 58 e2e tests × 2 screens.
 
+**Week 3 backend (9 Nov, Alex):** the public reports API (3.39). A guest can report a scam call with `POST /api/reports` (rate-limited, honeypot, redacted text, hashed number, stored as `pending`), and `GET /api/map/stats` gives the map its counts of approved reports for all 28 districts plus "scam wave" flags. The report form (W3-02), the map (W3-03) and moderation (W3-04) are still to come. 558 unit tests.
+
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
-  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health, checks, realtime token, contacts, invites, push · ⬜ rest (week 2-3)"]
-  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, engine, checks, alerts (realtime, push, e-mail), contacts, invites · ⬜ rest (week 3)"]
+  API["API layer: route handlers + proxy<br/>src/app/api/**/route.ts, src/proxy.ts<br/>✅ auth, me, persons, pairing, health, checks, realtime token, contacts, invites, push, reports, map stats · ⬜ rest (week 3)"]
+  SVC["Services + detection engine<br/>src/server/services, src/engine<br/>✅ auth, persons, pairing, health, engine, checks, alerts (realtime, push, e-mail), contacts, invites, reports, map stats · ⬜ rest (week 3)"]
   REPO["Repositories (all SQL queries)<br/>src/server/repositories<br/>✅ 12 files · ⬜ more (week 3)"]
   PG[("PostgreSQL + RLS<br/>supabase/migrations<br/>✅ works, 171 tests")]
   AUTH["Supabase Auth (JWT)<br/>✅ sign-up, login, device logins · ⬜ designed pages"]
@@ -79,7 +81,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 529 tests in 55 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| Unit tests (Vitest) | ✅ 558 tests in 58 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
 | End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 78 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
@@ -88,8 +90,8 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | RLS helper functions (6) | ✅ | `..._000003_rls_helpers.sql` | `08_functions` (+ every policy test) |
 | RLS policies + column privileges | ✅ | `..._000004_rls_policies.sql` | `02` to `07` test files |
 | Append-only audit log | ✅ (written by pairing, checks, persons, invites; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
-| Map statistics function `get_map_stats` | ✅ (DB part) | `..._000005_functions.sql` | `06_public_reports_scripts` |
-| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks, push subscriptions) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
+| Map statistics function `get_map_stats` | ✅ (DB part; used by `GET /api/map/stats`, 3.39) | `..._000005_functions.sql` | `06_public_reports_scripts` |
+| Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks, push subscriptions, public reports) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
 | Realtime publication (checks, alerts) | ✅ (DB part; browser side: 3.25) | `..._000006_realtime.sql` | `01_schema` |
 | Contact list function `replace_trusted_contacts` (5.14) | ✅ tested · ✅ applied in the live project (4 Nov) | `20261104000002_replace_contacts.sql` | `11_replace_contacts` |
 | Pairing codes and devices tables (HMAC hash column) | ✅ | `..._000001_schema.sql`, `..._000004_rls_policies.sql` | `04_devices_pairing` |
@@ -121,7 +123,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Voice input „Говорете“ (3.36) | ✅ (W2-10, Alex) · real Bulgarian recognition on a phone untested | `src/components/protected/{VoiceInput.tsx,voice.ts,CallCheckPage.tsx}`, `CallerText.tsx` | `tests/e2e/voice.spec.ts` (4 tests × 2 screens), `voice` (9) |
 | Invite page `/pokana` + safe `next` after login (3.37) | ✅ (W2-14, Roberta) | `src/app/pokana/`, `src/components/auth/InviteAccept.tsx`, `src/config/routes.ts` (`safeNextPath`, `withNext`), `src/components/auth/forms.tsx`, `next.config.ts` (headers) | `tests/e2e/invite.spec.ts` (13 tests × 2 screens), `routes.test.ts` (`safeNextPath`, `withNext`) |
 | PWA: manifest + own icons, „Инсталирай Scamly“ card, offline card (3.38) | ✅ (W2-09, Roberta) · real install on a phone untested | `src/app/manifest.ts`, `src/config/pwa.ts`, `public/icons/`, `scripts/icons/`, `src/components/pwa/`, `src/lib/{install,offlinePage}.ts`, `src/app/offline/route.ts`, `public/sw.js`, `src/app/layout.tsx` | `tests/e2e/pwa.spec.ts` (7 tests × 2 screens), `offlinePage` (3) |
-| Public reports + scam map | ⬜ planned (week 3, W3-01 to W3-03) | | |
+| Public reports + scam map (3.39) | ✅ API (W3-01, Alex): `POST /api/reports`, `GET /api/map/stats` with wave flags · ⬜ report form (W3-02), map (W3-03), moderation (W3-04) | `src/app/api/reports/`, `src/app/api/map/stats/`, `src/schemas/reports.ts`, `src/server/services/{reportService,mapStatsService}.ts`, `src/server/repositories/reportsRepository.ts`, `src/server/supabase/publicClient.ts` | `schemas/reports` (13), `reportService` (8), `mapStatsService` (8); live smoke test |
 | Moderation, education pages | ⬜ planned (week 3, W3-04, W3-05) | | |
 | Admin (users, roles, stats, audit log view) | ⬜ planned (week 3, W3-06) | | |
 | AI second opinion (Gemini / Groq chain) | ⬜ planned (week 3, W3-07), first to cut (D12) | | |
@@ -408,12 +410,13 @@ Types copied by hand would drift from the SQL. Generated types make the database
 
 #### What it does
 
-Three ways to talk to Supabase, each for one job, and one shared setting for the login cookies.
+Several ways to talk to Supabase, each for one job, and one shared setting for the login cookies.
 
 | File | Function | Key | RLS | Used for |
 |---|---|---|---|---|
 | `src/server/supabase/userClient.ts` | `createUserClient()` | publishable key + the caller's cookies | applies (as the caller) | almost everything on the server |
 | `src/server/supabase/adminClient.ts` | `createAdminClient()` | secret service-role key | **bypassed** | only the uses listed in its header (BUILD_PLAN 2.4) |
+| `src/server/supabase/publicClient.ts` | `createPublicClient()` | publishable key, **no cookies** | applies (always as a guest) | public data that is the same for everybody: `GET /api/map/stats` (3.39) |
 | `src/lib/supabase/browser.ts` | `createBrowserSupabaseClient()` | publishable key | applies (as a guest) | not used yet; **not** for Realtime (see 3.25) |
 | `src/lib/realtime.ts` | its own `createClient(…, { accessToken })` | publishable key + the user's access token from `GET /api/realtime/token` | applies (as the user) | Realtime subscriptions only (3.25) |
 
@@ -565,7 +568,7 @@ try {
 
 #### What it does
 
-`rateLimit.ts` allows at most N attempts per time window for login, registration, pairing, invite links, call checks and push subscriptions; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
+`rateLimit.ts` allows at most N attempts per time window for login, registration, pairing, invite links, call checks, push subscriptions and public reports; `hash.ts` makes keyed fingerprints (HMAC-SHA256) of codes and IP addresses.
 
 #### How it works
 
@@ -581,11 +584,13 @@ try {
   | `inviteRedeemPerIp` | `invite:ip:<HMAC of IP>` | 10 per 15 min (3.28) |
   | `checkPerDevice` | `check:device:<device id>` | 10 per hour per phone (3.23; a device id is not personal data, so no HMAC) |
   | `pushPerUser` | `push:user:<user id>` | 20 per hour per account (3.29; counted after the body is valid) |
+  | `reportPerIp` | `report:ip:<HMAC of IP>` | 3 per hour (3.39; counted after the body is valid, honeypot hits too) |
+  | `reportGlobal` | `report:global` | 100 **stored** reports per hour (everybody together; honeypot hits don't count) |
 
 - `ipKey(rule, ip, HASH_PEPPER)` builds the key, so the database never stores a real IP.
 - `HitCounter` is a function type (like Python's `Callable[[str, int, int], Awaitable[bool]]`). The real one, `databaseHitCounter(admin)`, calls `admin.rpc("hit_rate_limit", …)` (section 5.11). If the call fails it throws: the limiter **fails closed** (no counting → no attempt).
 - `enforceRateLimit()` throws 429 `rate_limited` „Твърде много опити. Опитайте след малко.“; `enforceIpRateLimit(rule, ip)` is the shortcut the auth routes use.
-- Routes count the attempt **before** reading the input, so invalid attempts count too.
+- The auth and pairing routes count the attempt **before** reading the input, so invalid attempts count too. Push and reports count only valid bodies (a typo in the report form shouldn't use up one of the 3 reports).
 
 #### Why it works like that
 
@@ -1499,6 +1504,65 @@ Texts: `bg.install`, `bg.offline`; the iPhone steps reuse `bg.pushOptIn.iosStep*
 
 `tests/e2e/pwa.spec.ts`, 7 tests × 2 screens: the manifest is valid JSON with `display: "standalone"`, `lang`, `start_url`, `scope`, `any` + `maskable` icons, and every icon (plus the iPhone icon and the badge) loads with status 200 as a PNG of the stated size (read from the PNG header); the HTML has the manifest link, `apple-touch-icon`, `apple-mobile-web-app-capable`, the iPhone title and two `theme-color` tags; no card before `beforeinstallprompt`, the card after a fake event, „Не сега“ hides it also after a reload; „Инсталирай“ calls `prompt()` once and the card goes; iPhone user agent: the 3 steps and only „Не сега“, fits 360 px; iPhone on `/dev/family`: no install card next to the push card; the worker: `/sw.js` has `no-cache` and still the `push` and `notificationclick` handlers, it controls the page and has saved `/offline`, online pages come from the network, and with `context.setOffline(true)` opening `/vhod` shows the offline card with the three rules. `src/lib/offlinePage.test.ts`, 3 tests (title and rules; no scripts, links, images or `/_next/` files; HTML escaping). **Not yet tested:** a real install and push on a real iPhone and Android phone (by hand, with the deployed site).
 
+### 3.39 Public reports and the scam map API: `POST /api/reports`, `GET /api/map/stats` (W3-01)
+
+#### What it does
+
+- **`POST /api/reports`**: anyone, without an account, reports a scam call: district, kind of scam (`scriptType`), the day of the call, optionally what was said and the number that called. Answer `201 { ok: true }`; the report waits as `pending` until a moderator approves it (W3-04). Errors: 400 wrong input (Bulgarian message from `bg.reports`), 403 from another site, 429 after 3 reports per IP per hour or 100 stored reports per hour from everybody.
+- **`GET /api/map/stats?weeks=4`** (1–12, default 4): the numbers for the map (W3-03). Always **all 28 districts**, in code order, also those with 0:
+
+  ```json
+  { "weeks": 4, "districts": [
+    { "districtCode": "BG-02", "total": 7,
+      "byScript": { "police": 5, "relative_in_trouble": 1, "fake_official": 1, "courier": 0, "unknown": 0 },
+      "waves": [{ "scriptType": "police", "lastSevenDays": 5, "weeklyAverage": 0.5 }] } ] }
+  ```
+
+  Only **approved** reports count. `waves` lists the scripts that are a "scam wave" there right now (Q10).
+
+#### How it works
+
+**Submitting a report** (`route.ts` → `reportService.submitReport()`), in this order:
+
+| Step | What | If it fails |
+|---|---|---|
+| 0 | Same-origin check (3.12) | 403 |
+| 1 | Zod: `createReportSchema(today)` in `src/schemas/reports.ts`. District = one of the 28 codes; script = one of the 5 types; `occurredOn` a real day, not in the future, at most 90 days back; description ≤ 1000 characters (`""` → null); caller number only Bulgarian, normalised to `+359…` (`normalizeBulgarianPhone()`); `website` (the honeypot) accepts any text. **"Today" is the date in Bulgaria** (`todayInBulgaria()`, `Europe/Sofia`): the server runs in UTC, so between midnight and 2–3 a.m. a call from today would look like one from the future | 400 |
+| 2 | Per-IP limit `report:ip:<HMAC of IP>`, 3 per hour (`HASH_PEPPER`; the IP is never stored) | 429 |
+| 3 | Honeypot: `website` not empty → return `{ ok: true }` and store **nothing**. It already counted in step 2, so a bot also gets the 429 like a person would | (looks like success) |
+| 4 | Global cap `report:global`, 100 stored reports per hour. After the honeypot, so caught bots can't use it up and block real people | 429 |
+| 5 | `redactPersonalData()` on the description (3.21), cut to 1000 characters (a label like `[ИМЕЙЛ]` can be longer than what it replaced); the number becomes `hmacSha256(+359…, HASH_PEPPER)` | |
+| 6 | `insertReport()` with the **admin client** (BUILD_PLAN 2.4, use 5); `status` is the column default, `pending`. No id is returned | 500 |
+
+Guests have **no INSERT policy** on `reports` (migration `…_000004`), so this API is the only way in. The answer is the same `{ ok: true }` for a real and a honeypot report.
+
+**Map numbers** (`route.ts` → `mapStatsService.getMapStats()`):
+
+1. `MapStatsQuerySchema`: `weeks` from the address (`"4"` → 4), whole number 1–12, else 400.
+2. Three calls of `get_map_stats` (5.10) at the same time (`Promise.all`) with the **public client** (`createPublicClient()`: publishable key, no cookies, always a guest): `get_map_stats(weeks)` for the period, `get_map_stats(1)` = exactly the last 7 days, `get_map_stats(5)` = the last 35 days. The function counts a rolling window (`occurred_on > current_date - 7 × weeks`), so **(5) minus (1) = exactly the 28 days before the last 7**. No database change was needed.
+3. `buildMapStats()` (pure, no database, no clock) sums the weekly rows per district + script and builds all 28 districts.
+4. Wave rule `isScamWave(last, previous)`: `last ≥ 5` **and** `last × 4 ≥ 2 × previous` (the same as "at least 2× the weekly average of the 4 weeks before", in whole numbers, without rounding). With no history (`previous = 0`) 5 reports are enough. `unknown` never forms a wave („вълна от схемата Неизвестна“ would help nobody) but counts in `total` and `byScript`. `weeklyAverage` = previous / 4, one decimal.
+5. Answer with `Cache-Control: public, max-age=0, s-maxage=60`: Vercel's CDN may keep it 60 s for everybody, browsers always ask again. `await connection()` first, so the route is never built once at `next build` with numbers frozen on the deploy day. Errors keep `no-store` (`handleApiError`).
+
+Texts: `bg.reports` (8 error messages). Limits: `RATE_LIMITS.reportPerIp`, `reportGlobal` (3.13). No migration.
+
+#### Why it works like that
+
+- **API-only writes, no guest INSERT policy:** with a policy, a bot could insert straight into the database with the public key and skip our limiter, honeypot and redaction. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Server-only writes for sensitive tables".
+- **Honeypot answers 201 silently:** a bot that gets an error learns to leave the field empty; a CAPTCHA would stop older people too. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Honeypot: a silent 201 (vs an error, vs a CAPTCHA)".
+- **Zod before the limiter, honeypot before the global cap:** a typo doesn't use up a person's 3 reports, and caught bots can't fill the global 100.
+- **Global cap 100/h:** many IPs (a botnet) could pass the per-IP limit; the cap keeps the moderators' queue small.
+- **Caller number only as an HMAC:** moderators can see that two reports name the same number without anyone being able to read it. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Caller number stored only as an HMAC".
+- **Public client + 60 s CDN cache:** the answer is the same for everybody, so it can be shared; a client with cookies would make a shared cache unsafe. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Cookie-less public client + 60 s CDN cache for the map".
+- **Rolling 7/28 days:** "last 7 days" in Q10 means the last 7 days, not "this calendar week" (on a Monday that would be 1 day). [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Rolling 7- and 28-day windows for scam waves".
+- **Wave rule as a small pure function:** easy to test with exact edge numbers and to explain in the defense.
+
+#### How we know it works
+
+Unit tests (with fakes, no database): `src/schemas/reports.test.ts` (13: minimal report, today and day 90 accepted, future and day 91 rejected, invalid dates, all 28 districts only, 5 scripts, description trim and 1000 limit, Bulgarian numbers to E.164 and others rejected, any honeypot text accepted, Sofia date vs UTC, `addDays` across months and leap years, `weeks` 1–12 and default 4, 0 / 13 / 2.5 / text rejected); `reportService.test.ts` (8: stores a valid report; personal data removed **before** the repository; only the HMAC of the normalised number; honeypot → `{ ok: true }` and nothing stored; 4th report from one IP → 429, only 3 stored; the raw IP never in a key; the global cap of 100; invalid input → 400 before counting); `mapStatsService.test.ts` (8: wave needs ≥ 5; 5 with no history; needs 2× the average; all 28 districts with zeros; wave per district + script; average with one decimal; never `unknown`; asks for the period, 1 and 5 weeks).
+
+**Live smoke test (9 Nov, against the real Supabase project):** 2 reports sent, one with the honeypot filled → exactly **1** `pending` row, description redacted, number stored as a hash; it did **not** appear in `GET /api/map/stats` (not approved); the next report after the limit → 429; a request from another site → 403; the test row was deleted afterwards. **Not yet tested:** the form (W3-02) and the map (W3-03) in the browser.
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -2010,7 +2074,7 @@ group by r.district_code, r.script_type, week_start
 
 #### Why it works like that
 
-Guests have no SELECT on `reports` at all. The function reads the table with its owner's rights but hands out **only counts**: no descriptions, no single report's date, no caller hashes. The clamp stops anyone from downloading the whole history in one call. Pending and rejected reports never count, so spam can't reach the map before a moderator sees it. "Scam wave" detection (Q10) and the API route `/api/map/stats` are planned (week 3, W3-01).
+Guests have no SELECT on `reports` at all. The function reads the table with its owner's rights but hands out **only counts**: no descriptions, no single report's date, no caller hashes. The clamp stops anyone from downloading the whole history in one call. Pending and rejected reports never count, so spam can't reach the map before a moderator sees it. "Scam wave" detection (Q10) and the API route `GET /api/map/stats` are built on top of it in TypeScript (3.39), without changing the function.
 
 #### How we know it works
 
@@ -2048,7 +2112,7 @@ Only `service_role` may execute it.
 - **Clean-up after 1 hour**: keys will contain an HMAC of the IP address; we never keep it much longer than an hour (privacy).
 - **Server only**: if browsers could call it, they could fill the table with junk or use up someone else's limit.
 - Known limit of a fixed window: someone can do 5 attempts at 10:14:59 and 5 more at 10:15:00. That is acceptable for us; the global limit (100 per 15 min) still holds.
-- The TypeScript wrapper (section 3.13) uses it for login, registration and pairing; reports follow (week 3, W3-01).
+- The TypeScript wrapper (section 3.13) uses it for login, registration, pairing, invites, checks, push and public reports (3.39).
 
 #### How we know it works
 
@@ -2303,6 +2367,19 @@ Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `0
 
 ---
 
+### 7.8 A guest reports a scam call
+
+1. Someone in Пловдив got a call from a "police officer" yesterday. On the report form (W3-02, still to come) they choose „Пловдив“, the kind of scam, the date, write „Обади се инспектор Петров на 0888 123 456 и поиска 5000 лв.“ and give the number that called. The browser sends `POST /api/reports` `{ districtCode: "BG-16", scriptType: "police", occurredOn: "2026-11-08", description, callerNumber: "0888 123 456", website: "" }`.
+2. Same-origin check (a form on another site → 403). Zod checks the body with today's **Bulgarian** date; the number becomes `+359888123456`.
+3. `report:ip:<HMAC of the IP>`: this is their 1st report this hour (the 4th would get 429). The IP itself is never written anywhere.
+4. `website` is empty, so this is not a bot. (A bot that fills every field would get the same `201 { ok: true }`, and nothing would be stored.)
+5. `report:global`: fewer than 100 stored reports this hour.
+6. The description becomes „Обади се инспектор Петров на [ТЕЛЕФОН] и поиска 5000 лв.“ (`redactPersonalData()`; a guest's report has no known names to remove); the number becomes a 64-character HMAC.
+7. The admin client inserts one row, `status = 'pending'`. The guest gets `201 { ok: true }`, no id.
+8. The map (`GET /api/map/stats`) doesn't show it yet: only **approved** reports count. After a moderator approves it (W3-04), it appears within 60 s (the CDN cache). If it is the 5th approved police report in Пловдив in 7 days and the 4 weeks before had at most 10, `waves` gets `{ scriptType: "police", … }`.
+
+Proven by `reportService.test.ts`, `mapStatsService.test.ts` and the live smoke test (3.39).
+
 ## 8. Where the code differs from the plan
 
 Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md) or [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) say. This file describes the code; update the plan or the code if one of these should change.
@@ -2358,6 +2435,11 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 47 | W2-03 "done when": the alert on browser B in < 3 s | Live 2.3–3.9 s from the tap on grandma's phone (5 runs), including the server creating the check and the fan-out; Realtime itself is fast (111 ms), the rest is the `POST` and the page's re-read (3.25) |
 | 48 | W2-13 / 3.31: the logged-in header shows the name | With the extra „Сигнали“ link, a family member's name at 360 px is cut with „…“ sooner, so the menu still fits in one row (3.31, 3.34) |
 | 49 | W2-03: Realtime "with a 5 s polling fallback" | Also a 10 s safety poll while connected, a re-load after `SUBSCRIBED` and on wake-up (3.25). If the **first** token request fails, Realtime is not tried again; the page stays on 5 s polling until it is reloaded |
+| 50 | Q10: a wave is "≥ 5 approved reports for the same script … and ≥ 2× the weekly average" (any script) | `unknown` never forms a wave (it means "we couldn't tell"), but counts in the totals. The 4-week history is `get_map_stats(5)` minus `get_map_stats(1)`, so no new SQL (3.39) |
+| 51 | W3-01: "rate limit 3/h per IP" | Also a **global cap of 100 stored reports per hour** (`report:global`), so many IPs together can't flood the moderation queue (3.39) |
+| 52 | Not in the plan: which "today" the report date is checked against | The date in Bulgaria (`Europe/Sofia`), not the server's UTC date (3.39) |
+| 53 | Order of checks not specified; 3.13: routes count the attempt before reading the input | Reports: same-origin → Zod → per-IP limit → honeypot → global cap → redact + hash → store. Invalid input doesn't count; a honeypot hit counts against its IP but not against the global cap (3.39) |
+| 54 | W3-01 "done when": integration tests | Unit tests with fakes (29) + a live smoke test against the real project, as in #15 and #26 (3.39) |
 
 ---
 
@@ -2395,6 +2477,8 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | **HMAC** | A hash mixed with a secret key; in Python `hmac.new(key, msg, hashlib.sha256)`. Without the key you can't compute or check it. |
 | **Pepper** | The secret key used in our HMACs (`PAIRING_PEPPER`, `HASH_PEPPER`); kept in environment variables, never in the database. |
 | **Rate limiting** | Allowing only N attempts per time window (e.g. 5 pairing tries per 15 minutes). |
+| **Honeypot** | A form field hidden from people (here `website`); only bots fill it in. A filled honeypot gets the normal success answer, but nothing is stored (3.39). |
+| **CDN cache, `s-maxage`** | Vercel's CDN (servers near the visitor) may keep a copy of an answer and give it to everybody. `Cache-Control: public, max-age=0, s-maxage=60` = the CDN keeps it 60 s, browsers keep nothing. Only for answers that are the same for everybody (`GET /api/map/stats`). |
 | **pgTAP** | A unit-test framework for PostgreSQL; tests are SQL files. |
 | **Realtime** | Supabase service that pushes database changes to browsers live over a WebSocket, filtered by RLS. |
 | **`postgres_changes`** | The kind of Realtime subscription we use: "tell me when a row of this table changes" (INSERT/UPDATE/DELETE, optionally with a filter like `id=eq.<uuid>`). For us it is only a doorbell; the data is re-read from our API (3.25). |
@@ -2471,3 +2555,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new sections 3.34 (live alert page `/family/alerts`, header link „Сигнали“, `?check=` focus with `useSyncExternalStore`, `aria-live`, Web Audio beep only after a tap, „Обаждам ѝ се сега“ with „Вие поехте обаждането.“ / „<Име> вече се обажда.“, no `tel:`), 3.35 (push opt-in card with 6 states and iPhone hint, unsubscribe at logout ≤ 1.5 s) and 3.36 (voice input, Web Speech API `bg-BG`, `FEATURE_VOICE` at request time); 3.25 Realtime fix (10 s safety poll while connected, re-load after `SUBSCRIBED` and on wake-up, one load at a time, `onLive`, `watchChecksOfPersons()`, `newestFirst()`); 3.3, 3.29, 3.31, 3.33, 4.2, 4.3, walkthrough 7.7, status table, big picture; plan differences #46–#49; 521 unit tests, 58 e2e tests × 2 screens; live 5/5 round trips.
 - 2026-11-06 · W2-14 invite page (Roberta): new section 3.37 (`/pokana`: token sent at once, removed with `replaceState`, `Referrer-Policy: no-referrer`; safe `next` after login with `safeNextPath()`), status row, 3.28 risk note done; W2-06 wording (Roberta): `alertEmail` and `push` texts proofread, draft markers removed (3.4, 3.29, 3.30, status row)
 - 2026-11-06 · W2-09 PWA (Roberta): new section 3.38 (web app manifest via `src/app/manifest.ts`, own icons from SVG with `npm run icons`, `appleWebApp` + `apple-mobile-web-app-capable` + `theme-color`, „Инсталирай Scamly“ card with `beforeinstallprompt` and the shared iPhone steps, offline card `/offline` as a self-contained Route Handler, `sw.js` caches only that card and shows it only on failed navigations, navigation preload, worker registered for every visitor); 3.29 (iPhone push needs the installed PWA with this manifest; worker changes), 3.35 (shared `IosInstallSteps`), 4.3 (`pwa.spec.ts`, service workers blocked in the other browser tests); status table
+- 2026-11-09 · W3-01 public reports API (Alex): new section 3.39 (`POST /api/reports`: Zod with the Bulgarian date → 3/h per IP → silent honeypot → global cap 100/h → redaction + HMAC'd number → `pending` via the admin client; `GET /api/map/stats`: all 28 districts, wave flags from `get_map_stats(1)` and `(5)`, `unknown` excluded, cookie-less `publicClient`, `s-maxage=60`), 7.8 walkthrough, status rows, 3.9 public client, 3.13 report limits, 5.10/5.11 updated, differences #50–#54, glossary: honeypot, CDN cache; 558 unit tests

@@ -1,5 +1,6 @@
-// The rate limiter: "at most N attempts per time window" for login, registration and
-// pairing codes and invites, so nobody can guess passwords or codes by trying very fast.
+// The rate limiter: "at most N attempts per time window" for login, registration,
+// pairing codes, invites and public reports, so nobody can guess passwords or codes
+// (or flood us with reports) by trying very fast.
 //
 // The counting itself happens in the database, in the SQL function hit_rate_limit()
 // (supabase/migrations/20261102000005_functions.sql). It is atomic, so 100 parallel
@@ -42,6 +43,11 @@ export const RATE_LIMITS = {
   // Turning push notifications on/off: at most 20 times per account per hour (a real
   // person does it a few times; this stops a script from filling the table).
   pushPerUser: { name: "push:user", maxHits: 20, windowSeconds: ONE_HOUR },
+  // Public scam reports (W3-01): 3 per IP per hour (a real person sends one), and at
+  // most 100 stored reports per hour from everybody together, so a bot network with
+  // many IPs can't flood the moderators' queue.
+  reportPerIp: { name: "report:ip", maxHits: 3, windowSeconds: ONE_HOUR },
+  reportGlobal: { name: "report:global", maxHits: 100, windowSeconds: ONE_HOUR },
 } satisfies Record<string, RateLimitRule>;
 
 // The one thing the limiter needs from the outside world: "count one hit for this

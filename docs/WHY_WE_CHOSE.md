@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-06
+> Last updated: 2026-11-09
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -25,13 +25,13 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
-7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists
+7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
-9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · `pg_cron` · uptime monitor · pinned versions
+9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · cookie-less public client + 60 s CDN cache for the map · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
 11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `.catch()` fallback for optional env vars · `APP_NAME` constant · `server-only`
 12. [How to add an entry](#12-how-to-add-an-entry)
@@ -369,7 +369,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project; security is scored and our users are vulnerable.
 
-### Server-only writes for sensitive tables  (status: in use (no client write policies; the server writes `devices`, `pairing_codes`, `audit_log`, `rate_limits`, `checks`, `alerts`, `contact_invites`); reports: week 3)
+### Server-only writes for sensitive tables  (status: in use (no client write policies; the server writes `devices`, `pairing_codes`, `audit_log`, `rate_limits`, `checks`, `alerts`, `contact_invites`, and `reports` since W3-01))
 
 **Used for:** `checks`, `alerts`, `reports`, `devices`, `pairing_codes`, `audit_log`, `rate_limits` have **no INSERT/UPDATE policy** for browsers; only our server (service role) writes them, after checking permissions.
 
@@ -377,7 +377,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why this one:**
 - **The phone must not send its own verdict.** The server runs the engine and stores the result; a modified phone can't write "green".
-- Guests can't skip our rate limiter or honeypot by calling the database directly.
+- Guests can't skip our rate limiter or honeypot by calling the database directly. **`reports` has no INSERT policy for `anon` at all:** with one, a bot could post straight to Supabase with the public key and skip the limits, the honeypot and the redaction. `POST /api/reports` stores with the service role only after all its checks (W3-01).
 - The service role (which bypasses RLS) is used only in a short, listed set of functions (BUILD_PLAN 2.4), each with tests.
 
 **What we give up:**
@@ -386,7 +386,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for these tables.
 
-### HMAC-SHA256 with a secret pepper for pairing codes  (status: in use (pairing codes, invite tokens, IP addresses in the rate limiter); phone numbers: not built yet)
+### HMAC-SHA256 with a secret pepper for pairing codes  (status: in use (pairing codes, invite tokens, IP addresses in the rate limiter, caller numbers of public reports since W3-01))
 
 **Used for:** storing the 6-digit pairing codes (and caller phone numbers, IP addresses for rate limiting) as `HMAC-SHA256(value, PEPPER)`, never in plain text.
 
@@ -443,9 +443,9 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** Supabase offered a proper "device" login type.
 
-### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing, invite links, call checks per phone, push subscriptions per account; reports: week 3))
+### Rate limiting in PostgreSQL, with HMAC'd IP addresses  (status: in use (login, register, pairing, invite links, call checks per phone, push subscriptions per account, public reports since W3-01))
 
-**Used for:** limiting login (10 per 15 min per IP), registration (5 per hour per IP) and pairing-code guesses (5 per 15 min per IP + 100 per 15 min for everybody), later public reports. TypeScript wrapper: `src/server/security/rateLimit.ts`.
+**Used for:** limiting login (10 per 15 min per IP), registration (5 per hour per IP) and pairing-code guesses (5 per 15 min per IP + 100 per 15 min for everybody), and public reports (3 per hour per IP + 100 stored per hour for everybody). TypeScript wrapper: `src/server/security/rateLimit.ts`.
 
 **Alternatives we considered:** Redis / Upstash, Vercel or Cloudflare rate limiting, in-memory counters; storing the plain IP address.
 
@@ -760,6 +760,43 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - The old account's row for that endpoint stays until the push service calls it gone (404/410) and the channel deletes it.
 
 **We would reconsider if:** subscriptions changed often enough that the two steps mattered.
+
+### Honeypot: a silent 201 (vs an error, vs a CAPTCHA)  (status: in use (`website` field, `reportService.submitReport()`, W3-01))
+
+**Used for:** stopping simple bots on the public report form. The form has a field `website` hidden from people; if it arrives filled in, the API answers exactly like for a real report (`201 { ok: true }`) and stores nothing. The hit still counts against that IP's 3 per hour, but not against the global cap of 100.
+
+**Alternatives we considered:** answering 400 „бот“ for a filled honeypot; a CAPTCHA (Google reCAPTCHA, hCaptcha, Cloudflare Turnstile); no bot protection beyond the rate limit.
+
+**Why this one:**
+- **A bot learns nothing:** with an error, its author would see the field is a trap and leave it empty. The same answer, the same 429 after 3 tries, no id: nothing to compare.
+- **A CAPTCHA would stop the people we build for:** older people struggle with "click all traffic lights". Most CAPTCHAs are also a third-party service that sees our visitors (privacy, D11 free tier, one more key).
+- **Counts against the IP, not the global cap:** a caught bot can't use up the 100 per hour and block real people.
+- Costs one hidden field and one `if`; easy to explain and test.
+
+**What we give up:**
+- Only simple bots fill every field. A bot written for our form gets past it; then the rate limits and moderation (nothing reaches the map unapproved) are the next locks.
+- A browser autofill could fill the hidden field for a real person; that report would vanish silently, so the form (W3-02) must hide the field off-screen with `autocomplete="off"`.
+
+**We would reconsider if:** moderators saw lots of spam getting through; then a privacy-friendly CAPTCHA (e.g. Turnstile) only after the first report from an IP.
+
+### Caller number stored only as an HMAC  (status: in use (`caller_number_hash`, W3-01))
+
+**Used for:** the number that called, if the guest gives it, is normalised to `+359…` and stored only as `HMAC-SHA256(number, HASH_PEPPER)`. Only Bulgarian numbers are accepted.
+
+**Alternatives we considered:** storing the number in plain text; plain SHA-256; not asking for the number at all.
+
+**Why this one:**
+- **The number may belong to a real, innocent person** (scammers spoof numbers), so publishing or even keeping it is a GDPR risk. The hash still lets us see that several reports name the **same** number.
+- **Plain SHA-256 is reversible here:** Bulgarian mobile numbers are only about 10⁸ possibilities, hashed in seconds. The secret pepper (outside the database) is what protects it, as for pairing codes.
+- **Normalising first** (`0888 123 456` and `+359 888 123 456` → one value) is needed, or two spellings would give two hashes.
+- Only Bulgarian numbers: the form is for calls in Bulgaria, and one format keeps the normalising simple.
+
+**What we give up:**
+- Nobody, not even a moderator, can read the number or call it back; we can't publish a "known scam numbers" list.
+- Changing `HASH_PEPPER` breaks matching with older reports.
+- Foreign numbers (some scams call from abroad) can't be given.
+
+**We would reconsider if:** the police or a telecom asked for real numbers; that would need a legal basis and a separate, protected flow.
 
 ---
 
@@ -1695,6 +1732,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the generated Supabase types (`src/types/database.ts`) covered these enums well enough to import them in the engine without breaking the "no imports" rule.
 
+### Rolling 7- and 28-day windows for scam waves (vs calendar weeks)  (status: in use (`mapStatsService.ts`, W3-01))
+
+**Used for:** the "scam wave" rule (Q10): ≥ 5 approved reports of one script in a district in the **last 7 days**, and at least 2× the weekly average of the **28 days before**. Both come from `get_map_stats(1)` and `get_map_stats(5)` minus it; `unknown` never forms a wave.
+
+**Alternatives we considered:** calendar weeks (Monday–Sunday, the `week_start` rows of `get_map_stats`); a new SQL function only for waves; a moving average over 12 weeks.
+
+**Why this one:**
+- **A calendar week resets every Monday:** on a Monday "this week" has 1 day of reports, so a real wave would disappear from the map for days. A rolling window always looks at the full last 7 days.
+- **No migration:** `get_map_stats` already counts a rolling window (`occurred_on > current_date - 7 × weeks`), so (5 weeks) − (1 week) is exactly the 28 days before. Nothing to apply in the SQL Editor.
+- **Whole numbers:** `last × 4 ≥ 2 × previous` instead of `last ≥ 2 × previous / 4`, so no rounding edge cases; a pure function tested at the exact edges.
+- **`unknown` is "we couldn't tell"**, not a script; „вълна от схемата Неизвестна“ would help nobody.
+
+**What we give up:**
+- Three database calls per map request instead of one (fine with the 60 s CDN cache).
+- The calls run a moment apart; a report approved (or midnight passing) in between can shift the difference by one (we clamp it to ≥ 0).
+
+**We would reconsider if:** the map got so many visitors that one SQL function returning the wave flags directly became worth a migration.
+
 ---
 
 ## 8. Testing and quality
@@ -1914,6 +1969,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - If someone removed the public read policy on `districts`, health would turn red (which we'd notice at once).
 
 **We would reconsider if:** we needed a deeper check (e.g. Auth and e-mail too); that would be a separate, secret-protected endpoint.
+
+### Cookie-less public client + 60 s CDN cache for the map (vs the user client, vs no cache, vs a static page)  (status: in use (`src/server/supabase/publicClient.ts`, `GET /api/map/stats`, W3-01))
+
+**Used for:** `GET /api/map/stats` reads `get_map_stats` with a client that has only the publishable key and **no cookies** (always a guest), and answers with `Cache-Control: public, max-age=0, s-maxage=60`.
+
+**Alternatives we considered:** the user client (cookies); the admin client; no caching (`no-store`); building the numbers once at `next build`; a longer cache.
+
+**Why this one:**
+- **The same answer for everybody**, so the CDN may share it: at most one database round per minute however many people open the map (protects the free tier, D11). A client that reads cookies could make the answer depend on the visitor, and sharing that would be unsafe.
+- **Least privilege:** guest rights are enough (`get_map_stats` is open to `anon`); the service-role key isn't needed (like the health check above).
+- **60 s, browsers 0:** a moderator's approval shows on the map within a minute; browsers always ask the CDN again, so nobody looks at an hour-old map.
+- **Never built at `next build`** (`await connection()`): otherwise the map would show the numbers of the deploy day for ever.
+
+**What we give up:**
+- Up to 60 s delay after an approval.
+- A cache is one more thing to explain; errors are not cached (`no-store`), so a short database problem doesn't stick for a minute.
+
+**We would reconsider if:** moderators needed to see their decision on the map at once (then a shorter `s-maxage`, or a purge after approval).
 
 ### Keep-alive: GitHub Actions schedule (vs Vercel cron, vs only an external uptime monitor)  (status: in use (`.github/workflows/keep-alive.yml`); `HEALTH_URL` secret pending the first deploy)
 
@@ -2366,3 +2439,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-06 · W2-03/W2-04/W2-05 UI/W2-10 (Alex): new entries in section 4 (`useSyncExternalStore` for `?check=` vs `useSearchParams` + `<Suspense>`; Web Audio beep vs a sound file; one sentence per tap vs continuous listening; `FEATURE_VOICE` read at request time vs at build time) and section 5 (10 s safety poll while Realtime is connected vs trusting Realtime alone, the fix of the missed family message; one Realtime channel for all people vs one per person; 1.5 s cap on the push unsubscribe at logout); Web Speech API entry now in use, compared with recording and sending audio, with the honest note that Chrome's recognition runs on the browser's speech service; Realtime, Web Push and preview-page entries updated.
 - 2026-11-06 · W2-14 invite page + W2-06 wording (Roberta): new entries in section 3 "Invite page: send the token at once, remove it with `replaceState`, `no-referrer`" (vs a button, a server redirect, a lookup before redeeming) and "Safe `next` redirect after login" (vs an open redirect, no redirect, `sessionStorage`, an allowlist); the invite-token entry's open point (page must POST at once, `no-referrer`) is now done
 - 2026-11-06 · W2-09 PWA (Roberta): new entries in section 4 "Web app manifest via the Next.js file convention" (vs a static `manifest.json`, vs a PWA plugin), "Own app icons generated from SVG with Playwright's Chromium" (vs icon sets, online generators, `sharp`) and "Offline card only on failed page loads" (vs caching app pages, vs no offline support); the PWA entry is now in use and names the manifest as the iPhone push condition
+- 2026-11-09 · W3-01 public reports API (Alex): new entries "Honeypot: a silent 201 (vs an error, vs a CAPTCHA)" and "Caller number stored only as an HMAC" (section 3), "Rolling 7- and 28-day windows for scam waves (vs calendar weeks)" (section 7), "Cookie-less public client + 60 s CDN cache for the map" (section 9); server-only writes now explain the missing `anon` INSERT policy on `reports`; HMAC and rate-limiting entries now in use for reports

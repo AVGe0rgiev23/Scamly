@@ -3,6 +3,8 @@
 One line per change, newest first. The AI agent adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-09 · Alex · W3-01 reports API done (`POST /api/reports`, `GET /api/map/stats`); `unknown` excluded from scam waves, global cap of 100 stored reports per hour added next to 3/h per IP · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md` 3.39 and section 8 (#50–#54), `WHY_WE_CHOSE.md`
+- 2026-11-06 · Alex · Commits stay unsigned, no history rewrite (D24); manual test list added in `docs/evidence/manual-tests.md` · `PROJECT_BRIEF.md` section 0, `docs/evidence/`
 - 2026-11-06 · Alex · W2-03 live alert page, W2-04 „Обаждам ѝ се сега“ button, W2-05 opt-in UI + iOS hint and W2-10 voice input done (W2-05 real-phone test still open); new header link „Сигнали“ for family members; Realtime fix: a 10 s safety poll keeps running while connected (a lost event was never re-checked) · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md`, `WHY_WE_CHOSE.md`
 - 2026-11-05 · Roberta (told Alex) · W2-07 family dashboard moves from Alex to Roberta (+8 h frontend for Roberta, −8 h for Alex); Roberta's order: W2-07, then W2-01 · `IMPLEMENTATION_PLAN.md` section 5
 - 2026-11-05 · Alex · Week 2 step-by-step plan saved (phases 0–4, parallel work, checkpoints, shared-session rule „I'm Roberta / I'm Alex“); Week 1 status: W1-06/07 live demo logins verified, W1-13 live on Vercel · `IMPLEMENTATION_PLAN.md` sections 5 and 7

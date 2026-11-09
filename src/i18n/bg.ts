@@ -334,6 +334,18 @@ export const bg = {
     subscriptionInvalid: "Известията не могат да бъдат включени в този браузър. Опитайте отново.",
     endpointTaken: "Този браузър вече получава известия за друг профил. Опитайте отново.",
   },
+  // Errors of the public reports API (POST /api/reports, GET /api/map/stats, W3-01).
+  reports: {
+    districtInvalid: "Изберете област от списъка.",
+    scriptInvalid: "Изберете вида на измамата от списъка.",
+    dateInvalid: "Въведете датата на обаждането.",
+    dateInFuture: "Датата на обаждането не може да е в бъдещето.",
+    dateTooOld: "Можете да подадете сигнал за обаждане от последните 90 дни.",
+    descriptionTooLong: "Описанието може да е най-много 1000 знака.",
+    callerNumberInvalid:
+      "Въведете българския номер, от който ви се обадиха, например 0888 123 456 или +359 888 123 456.",
+    weeksInvalid: "Изберете период от 1 до 12 седмици.",
+  },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the
   // districts table in the database (migration 20261102000001); a unit test
   // (src/i18n/districts.test.ts) checks that the two lists stay equal.
