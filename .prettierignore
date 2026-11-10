@@ -11,3 +11,5 @@ next-env.d.ts
 LICENSE
 # Hand-written planning documents: we format these by hand.
 docs/
+# The simplified district shapes (scripts/geo/build-districts.mjs writes them on one line).
+public/geo/
