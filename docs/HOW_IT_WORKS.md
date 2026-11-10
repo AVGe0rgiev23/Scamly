@@ -41,6 +41,8 @@ The system has **layers**, and each layer only talks to the one below it: the **
 
 **Week 3 frontend + admin (10 Nov, Alex):** the public report form `/signal` (3.41), linked from the home page and the footer, and the admin area `/admin` (3.42): users and audited role changes, statistics with hand-made bar charts, and the audit log. 637 unit tests, 103 e2e tests × 2 screens.
 
+**Week 3 map + moderation API (10 Nov, Roberta):** moderators list the reports and approve or reject them through `GET`/`PATCH /api/moderation/reports` (3.43; the screen is Alex's W3-04 UI), and anyone can see the public scam map `/karta` (3.44): the 28 districts coloured by approved reports, the current scam waves, a panel and a table per district. Only an approved report reaches the map. 661 unit tests, 111 e2e tests × 2 screens.
+
 ```mermaid
 flowchart TB
   UI["UI: pages in the browser<br/>src/app/*.tsx<br/>✅ skeleton, design system, designed auth pages · ⬜ real screens"]
@@ -83,8 +85,8 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 637 tests in 69 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 103 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| Unit tests (Vitest) | ✅ 661 tests in 72 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 111 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
@@ -125,9 +127,10 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Voice input „Говорете“ (3.36) | ✅ (W2-10, Alex) · real Bulgarian recognition on a phone untested | `src/components/protected/{VoiceInput.tsx,voice.ts,CallCheckPage.tsx}`, `CallerText.tsx` | `tests/e2e/voice.spec.ts` (4 tests × 2 screens), `voice` (9) |
 | Invite page `/pokana` + safe `next` after login (3.37) | ✅ (W2-14, Roberta) | `src/app/pokana/`, `src/components/auth/InviteAccept.tsx`, `src/config/routes.ts` (`safeNextPath`, `withNext`), `src/components/auth/forms.tsx`, `next.config.ts` (headers) | `tests/e2e/invite.spec.ts` (13 tests × 2 screens), `routes.test.ts` (`safeNextPath`, `withNext`) |
 | PWA: manifest + own icons, „Инсталирай Scamly“ card, offline card (3.38) | ✅ (W2-09, Roberta) · real install on a phone untested | `src/app/manifest.ts`, `src/config/pwa.ts`, `public/icons/`, `scripts/icons/`, `src/components/pwa/`, `src/lib/{install,offlinePage}.ts`, `src/app/offline/route.ts`, `public/sw.js`, `src/app/layout.tsx` | `tests/e2e/pwa.spec.ts` (7 tests × 2 screens), `offlinePage` (3) |
-| Public reports + scam map (3.39) | ✅ API (W3-01, Alex): `POST /api/reports`, `GET /api/map/stats` with wave flags · ✅ report form (W3-02, 3.41) · ⬜ map (W3-03), moderation (W3-04) | `src/app/api/reports/`, `src/app/api/map/stats/`, `src/schemas/reports.ts`, `src/server/services/{reportService,mapStatsService}.ts`, `src/server/repositories/reportsRepository.ts`, `src/server/supabase/publicClient.ts` | `schemas/reports` (13), `reportService` (8), `mapStatsService` (8); live smoke test |
+| Public reports + scam map (3.39) | ✅ API (W3-01, Alex): `POST /api/reports`, `GET /api/map/stats` with wave flags · ✅ report form (W3-02, 3.41) · ✅ map (W3-03, 3.44) · ✅ moderation API (W3-04, 3.43) | `src/app/api/reports/`, `src/app/api/map/stats/`, `src/schemas/reports.ts`, `src/server/services/{reportService,mapStatsService}.ts`, `src/server/repositories/reportsRepository.ts`, `src/server/supabase/publicClient.ts` | `schemas/reports` (13), `reportService` (8), `mapStatsService` (8); live smoke test |
 | Scam-script library, education pages „Как работи измамата“, moderator script editor, moderator keywords in the engine (3.40) | ✅ (W3-05, Roberta) · ⬜ migration `20261109000001` still to run in the live project | `src/app/api/scripts/`, `src/schemas/scripts.ts`, `src/server/services/{scriptService,educationService,moderatorKeywords}.ts`, `src/server/repositories/scriptsRepository.ts`, `src/app/kak-raboti/`, `src/components/education/`, `src/app/moderator/`, `src/components/moderator/`, `supabase/migrations/20261109000001_seed_scam_scripts.sql` | `schemas/scripts` (12), `scriptService` (10), `educationService` (5), `moderatorKeywords` (4), `checkService` (+2), `text` (4), `scriptForm` (3); `12_scam_scripts_seed` (9); `tests/e2e/scripts.spec.ts` (10 tests × 2 screens) |
-| Moderation queue | ⬜ planned (week 3, W3-04) | | |
+| Moderation API: queue + approve/reject, audited (3.43) | ✅ API (W3-04, Roberta) · ⬜ moderation screen (W3-04 UI, Alex) | `src/app/api/moderation/reports/`, `src/schemas/moderation.ts`, `src/server/services/moderationService.ts`, `src/server/repositories/moderationRepository.ts` | `moderationService` (16), `tests/e2e/moderation.spec.ts` (1 × 2 screens); live check with the demo moderator |
+| Scam map `/karta`: choropleth, waves, district panel, table, links (3.44) | ✅ (W3-03, Roberta) | `src/app/karta/`, `src/components/map/`, `public/geo/bg-districts.json`, `scripts/geo/`, `src/app/page.tsx`, `SiteFooter.tsx`, `ReportForm.tsx` (success link) | `mapData` (5), `districtsGeo` (3), `tests/e2e/map.spec.ts` (7 tests × 2 screens); live check |
 | Public report form `/signal`, home card + footer link (3.41) | ✅ (W3-02, Alex) | `src/app/signal/`, `src/components/report/`, `src/components/ui/BigChoice.tsx` (`describedBy`), `src/app/page.tsx`, `src/components/layout/SiteFooter.tsx` | `reportForm` (9), `tests/e2e/report.spec.ts` (8 tests × 2 screens); live: one real report stored as `pending`, then deleted |
 | Admin area `/admin`: users + audited role change, statistics with hand-made charts, audit log (3.42) | ✅ (W3-06, Alex) | `src/app/api/admin/`, `src/schemas/admin.ts`, `src/server/services/{adminService,adminStats,auditSummary}.ts`, `src/server/repositories/adminRepository.ts`, `profilesRepository.ts` (`changeProfileRole`), `authUsersRepository.ts` (`listAuthEmails`), `src/components/admin/`, `src/app/admin/`, `/dev/admin` preview | `adminService` (17), `adminStats` (5), `auditSummary` (5), `adminFormat` (3), `tests/e2e/admin.spec.ts` (7 tests × 2 screens); live check with throwaway accounts |
 | AI second opinion (Gemini / Groq chain) | ⬜ planned (week 3, W3-07), first to cut (D12) | | |
@@ -1616,7 +1619,7 @@ Unit tests: `schemas/scripts.test.ts` (12: defaults, 5 types, slugs, title and t
 
 - Anyone, without an account, reports a scam call on `/signal` („сигнал“ in Latin letters, Q12; `ROUTES.report`). The page starts with a short intro and a card about privacy (anonymous, what is shown publicly, a moderator checks every report, no names or addresses), then the form: **district** (a list of the 28), **„Каква беше измамата?“** (five big answers, `BigChoice`, „Друго“ last), **the day of the call** (today already filled in, at most 90 days back), **what was said** (optional, with a counter „… от 1000 знака“) and **the number that called** (optional).
 - Problems are shown **all at once**, in Bulgarian, under each wrong field, and the keyboard focus jumps to the first wrong one. „Изпращаме сигнала…“ while sending; a double tap sends only once.
-- After `201` the form is replaced by „Благодарим!“ (focused, so it is read aloud) and three buttons: „Как работи измамата“ (`/kak-raboti`), the home page, and „Подай още един сигнал“ (an empty form). A link to the map comes with W3-03.
+- After `201` the form is replaced by „Благодарим!“ (focused, so it is read aloud) and three buttons: „Как работи измамата“ (`/kak-raboti`), the home page, „Виж картата на измамите“ (`/karta`, W3-03, 3.44) and „Подай още един сигнал“ (an empty form).
 - Too many reports (`429`) shows the form's own text „Твърде много сигнали от тази мрежа. Опитайте по-късно.“; no connection shows its own text too; other errors show the API's Bulgarian `messageBg`.
 - Linked from a **card on the home page** („Обадиха ли ви се измамници?“) and from the **footer of every page** („Подай сигнал за измама“, 48 px high). Not in the header: with five guest links the phone menu would no longer fit one row (3.31).
 
@@ -1709,6 +1712,81 @@ Unit tests `reportForm.test.ts` (9: body sent as typed with the honeypot; a good
 #### How we know it works
 
 Unit tests: `adminService.test.ts` (17: admin only; list with e-mails, no phones, own row marked; name search without LIKE wildcards, „@“ search, role filter; pages of 25; bad filter/cursor → Bulgarian 400; role change via the service role + one audit line without names; own role 409 and nothing written; phone 409; never `protected`, unknown fields 400; 404; same role → no change, no audit; changed meanwhile → 409, no audit; a failed audit write fails the request; stats read every page of both tables from the day before; page limit → `partial`; days 7..90; audit log 50 per page with names, summary and cursor; last page, bad cursor), `adminStats.test.ts` (5: period ends today in Bulgaria; Sofia days, every day listed; per-day levels with zero days, rows outside dropped; top 10 districts with ties by code; no data), `auditSummary.test.ts` (5: role names; script changes; other known facts; never ids, codes, dates, unknown keys; length limit), `adminFormat.test.ts` (3). Browser tests `tests/e2e/admin.spec.ts` (7 × 2 screens on `/dev/admin`): users list with e-mails, own row locked, role change after confirmation; API error stays in the window, search sends `q` and `role`; a 403 in Bulgarian; four charts with legends and tables, period selector; empty period; audit log 50 lines + „Покажи още“; every tab fits 360 px. **Live (10 Nov, real project):** 8 accounts listed with e-mails; real statistics (13 checks, 11 red; 2 reports); audit log paging; role changes on throwaway accounts (deleted afterwards). The live audit log keeps the **4 `role_changed` lines** of these tests (it is append-only, 5.9).
+
+### 3.43 Moderation API for public reports: `GET`/`PATCH /api/moderation/reports` (W3-04 backend)
+
+#### What it does
+
+- **`GET /api/moderation/reports?status=pending&cursor=<id>`** (moderator or admin): the queue, **newest first, 25 per page**. `status` is `pending` (default), `approved` or `rejected`. Each report: `id`, `districtCode`, `scriptType`, `occurredOn`, `submittedAt`, `description` (already redacted when it was stored, 3.39), `hasCallerNumber`, **`sameNumberReports`** (how many *other* reports name the same number; never the number or its hash), `status`, `reviewedAt`, `reviewedByName`, `rejectReason`. `nextCursor` is the id to send for the next page (`null` = last page).
+- **`PATCH /api/moderation/reports/:id`** (moderator or admin) with `{ "decision": "approve" }` or `{ "decision": "reject", "rejectReason": "…" }` (3–200 characters, required for reject; not stored for approve). Answer `200 { report: { id, status, reviewedAt, rejectReason } }`. Only a **pending** report can change: otherwise **409** „Този сигнал вече е прегледан от модератор. Заредете списъка отново.“; unknown id 404; another site 403; guest 401; family member or phone 403; wrong input 400 in Bulgarian. Every decision writes one audit line, `report_approved` or `report_rejected`, with only `{ district_code, script_type }` (no free text: never the reason or the description).
+- The moderator's screen (the „скоро“ card on `/moderator`) is Alex's part of W3-04.
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/schemas/moderation.ts` | Zod: `ModQueueQuerySchema` (`status`, `cursor` = a uuid) and `ModerateSchema` (`.strict()`, a `refine` that needs the reason for reject); DTO types for the screen. Texts: `bg.moderation`. |
+| `src/app/api/moderation/reports/route.ts`, `[id]/route.ts` | Thin routes: (same-origin check on PATCH) → `requireRole(MODERATION_ROLES)` → id must be a uuid (else 404) → service. Answers are `no-store`. |
+| `src/server/services/moderationService.ts` | The logic with `deps` (fakes in the tests). |
+| `src/server/repositories/moderationRepository.ts` | The queries, all with the moderator's **user client**. |
+
+- **Paging with a cursor:** the cursor is the id of the last report shown. The service reads that report's `submitted_at` and asks for `submitted_at < it, or the same moment with a smaller id`, ordered by `submitted_at desc, id desc`, `limit 26` (the 26th only says "there is more"). Unlike an offset, a report that a moderator approves meanwhile doesn't make the next page skip one. An unknown cursor → 400.
+- **Repeat callers:** for every *different* hash on the page one count query (`count: "exact", head: true`: PostgreSQL sends back only the number), minus the report itself. The hash stays inside the service.
+- **Reviewer names:** a moderator may read only their own profile (RLS), so the display names of the reviewers on the page are read with the **admin client** (`findDisplayNames()`, names only, only those ids). This is a small addition to BUILD_PLAN 2.4 use 6 (section 8, #62).
+- **Compare-and-set:** one `UPDATE reports SET status, reviewed_by, reviewed_at, reject_reason WHERE id = … AND status = 'pending'`, with the user client, so RLS ("Moderators can review reports") and the column privilege (only those four columns, migration `…_000004`) check again. No row changed → read the report: missing → 404, else 409; no audit line. Changed → the audit line (admin client, 5.9). If the audit write fails, the request fails (500), as in 3.42.
+- The map (3.39) counts only `approved` reports, so an approved report appears on `/karta` within 60 s (the CDN cache) and a rejected one never does.
+
+No migration: moderators could already read and review `reports` (RLS from Week 1).
+
+#### Why it works like that
+
+- **Compare-and-set:** two moderators at once can't overwrite each other, a decision is final, and the audit log has exactly one true line per decision. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Compare-and-set moderation".
+- **Count instead of the hash:** the moderator needs to know "this number called 3 more people", not an identifier that could be copied. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Repeat-caller count without showing the hash".
+- **User client for every read and write of `reports`:** two locks (BUILD_PLAN section 0); the admin client only where RLS must say no to everybody (audit log) or where a moderator can't read (other people's names).
+- **No free text in the audit log:** a reject reason could contain anything; district and script are public on the map anyway.
+
+#### How we know it works
+
+Unit tests `moderationService.test.ts` (16, fakes): guest 401, family/phone 403, moderator and admin allowed; status default and Bulgarian 400s; reject reason 3–200, required for reject, unknown fields refused; newest first, 25 per page, cursor to the next page; two reports at the same moment both shown once; unknown cursor 400; repeat-caller counts without the hash in the answer; reviewer names and reasons; approve sets who/when + `report_approved` with no free text; reject keeps the reason but not in the audit; approve never keeps a reason; reject without reason 400 and nothing changed; already reviewed 409 and no audit; two moderators at once → one 200, one 409, one audit line; unknown 404; failed audit fails the request. Browser test `tests/e2e/moderation.spec.ts`: a PATCH from another site → 403. **Live (10 Nov, real project, demo moderator):** guest 401; cross-site PATCH 403; 2 throwaway reports sent with the same number → queue showed 3 pending, both with `sameNumberReports: 1` and no hash in the answer; cursor page correct; bad cursor/status 400; reject without reason 400; approve 200, reject 200 with the reason, again → 409, unknown → 404; the rejected list showed „Демо модератор“; `GET /api/map/stats?weeks=1` counted the approved one in Ямбол (`courier: 1`), not the rejected one; both throwaway reports deleted by id with the service role (the demo reports untouched; the two audit lines stay, 5.9).
+
+### 3.44 Public scam map „Карта на измамите“: `/karta` (W3-03)
+
+#### What it does
+
+- Anyone, without an account, opens `/karta` („карта“ in Latin letters, `ROUTES.map`): the **28 districts** of Bulgaria coloured by the number of **approved** reports in the chosen period: **1, 4 (default) or 12 weeks**. Only districts are shown, never addresses.
+- Above the map: **„Вълни от измами“**, one line per wave, the biggest first, e.g. „Тази седмица в област Бургас: 14 сигнала за схемата „Полицай““, or „Няма вълни от измами в момента.“ (wave rule: 3.39).
+- **Not colour-only:** a legend with the five ranges (0, 1–2, 3–5, 6–10, над 10); on hover or keyboard focus a district shows „Бургас: 14 сигнала“; a click, Enter or Space opens the **district panel** (total + per kind of scam + its wave); and a table **„Всички области“** under the map lists all 28 with their number and wave, each name a button that opens the same panel (the way to reach tiny Sofia city on a phone).
+- The credit line „Граници на областите: Natural Earth (обществено достояние)…“ under the map and „Граници: Natural Earth“ in the map corner, plus „Подай сигнал за измама“.
+- Linked from a card on the home page („Отвори картата“), the footer of every page („Карта на измамите“) and the report form's thank-you screen („Виж картата на измамите“; a one-line change in Alex's `ReportForm.tsx`).
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/app/karta/page.tsx` | Server Component: title and intro (pre-rendered), then `<ScamMap />`. |
+| `src/components/map/ScamMap.tsx` | Client Component: the period buttons (`aria-pressed`), `GET /api/map/stats?weeks=…` with `callApi` (a new request when the period changes; error + „Опитай отново“), the waves, the legend, the panel (`aria-live="polite"`, so a screen reader reads it while the focus stays on the map) and the table. Loads `DistrictMap` with `next/dynamic(…, { ssr: false })`. |
+| `src/components/map/DistrictMap.tsx` | The only file that imports **Leaflet 1.9.4** (and its CSS): fetches `/geo/bg-districts.json` once, `L.geoJSON` → one SVG `<path>` per district, `fitBounds` (again on resize, `ResizeObserver`), no tiles, no dragging or zooming. Each path gets `tabindex="0"`, `role="button"`, `aria-label` „Бургас: 14 сигнала“, `aria-pressed`, a class `map-level-0…4` and a tooltip (plain text, never HTML). |
+| `src/components/map/mapData.ts` | Pure helpers: `LEVELS` + `levelOf()` (fixed ranges, so a colour always means the same numbers), `legendText()`, `reportsText()` („1 сигнал“ / „5 сигнала“), `waveTexts()`, `scriptCounts()`. |
+| `src/app/globals.css` | `.map*` styles; the five fill colours `--map-0…4` for light and dark (darker = more in light mode, lighter = more in dark mode). |
+| `public/geo/bg-districts.json`, `scripts/geo/build-districts.mjs` | The shapes (below). |
+| `src/i18n/bg.ts` | `bg.map` (all texts). |
+
+**The shapes:** Natural Earth 1:10m "Admin 1 – States, Provinces" **v5.1.2** (public domain), downloaded from the release tag on `raw.githubusercontent.com`. `node scripts/geo/build-districts.mjs <file>` keeps Bulgaria's 28 provinces, keeps one property `code` = their `iso_3166_2` (`BG-01` … `BG-28`, our `districts` codes; the names come from `bg.districts`), rounds every point to 3 decimals (≈ 100 m) and drops repeated points, and refuses to write if a code is missing or the file is ≥ 300 KB. Result: **about 56 KB** (14 KB gzipped). Shared borders stay identical after rounding, so no gaps or overlaps. Recorded in `THIRD_PARTY_LICENSES.md`.
+
+**Speed on 4G:** the page HTML is pre-rendered; Leaflet (≈ 40 KB gzipped) and the shapes (14 KB gzipped) load only on this page, in parallel with the numbers; there are no tile images.
+
+#### Why it works like that
+
+- **Districts, never addresses** (brief 5.2 D): a report says only the district, so a map can't point at anybody's home, and a guest's report can't be traced back to a person.
+- **Leaflet without tiles, fixed map:** [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Leaflet 1.9.4 without a base map".
+- **Natural Earth shapes, rounding only:** [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Natural Earth district shapes, simplified by rounding".
+- **Fixed colour ranges** (vs ranges from the data): the same colour means the same numbers in every period, and the legend can be read without knowing the maximum.
+- **A table and a panel as well as colours:** people who don't see colours well, screen readers and keyboard users get every number too (WCAG 1.4.1).
+- **The real page in the browser tests** (no `/dev` preview): `/karta` needs no login, so `page.route()` can fake `GET /api/map/stats` on the real page.
+
+#### How we know it works
+
+Unit tests `mapData.test.ts` (5: levels and legend; „1 сигнал“ / „сигнала“; wave texts in the brief's words, biggest first; none; script counts) and `scripts/geo/districtsGeo.test.ts` (3: exactly the 28 codes of `bg.districts` in order; < 300 KB; closed rings inside Bulgaria). Browser tests `tests/e2e/map.spec.ts` (7 × 2 screens, `page.route()` fakes the numbers, real shapes): 28 districts with levels and labels, legend with 5 ranges, table with 28 rows, both credits; wave text and „Няма вълни…“; the period switch asks for `?weeks=12`; Burgas by keyboard (focus → tooltip, Enter → panel with per-script numbers) and Varna from the table; API error → message and retry; home and footer links; no sideways scrolling at 360 px. A render of the 28 shapes was checked by eye against the real map of Bulgaria. **Live (10 Nov):** `/karta` against the real project showed the demo's approved report in „София (столица)“ and the throwaway approved report in Ямбол (3.43); screenshots at 390 × 844 (light, dark) and 1366 × 800 checked by eye.
 
 ## 4. Code quality, tests and CI
 
@@ -2595,6 +2673,11 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 59 | #32 `UsersQuery {q?, role?, cursor?}` | `cursor` is an offset (rows already shown); `q` with „@“ searches e-mails in `auth.users`, otherwise names. Phones (`protected`) are never listed. The audit log's cursor is the last id (3.42) |
 | 60 | W3-06 "done when": each admin action creates an audit row | Each **change** does; choosing the same role again changes nothing and writes no row. The update is a compare-and-set (409 if the role changed meanwhile) (3.42) |
 | 61 | #33 "can't demote yourself" | No change of one's own role at all (409), and phones can't be changed (409); the page hides the select on the own row. Extra preview page `/dev/admin` for the browser tests, like #41 (3.42) |
+| 62 | 2.4: the admin client only for the listed uses | The moderation queue also reads the **display names** of the reviewers on a page with the admin client (`findDisplayNames`), because a moderator may read only their own profile (3.43) |
+| 63 | #28 `ModQueueQuery {status, cursor?}` (cursor not specified); "oldest first" index for the queue | `cursor` = the id of the last report shown (keyset on `submitted_at`, `id`); the queue is **newest first**, as asked for W3-04; `status` defaults to `pending` (3.43) |
+| 64 | #29 `ModerateSchema` → "Approve or reject" (answer not specified) | Only a `pending` report can change (409 otherwise); the reason is 3–200 characters (the table allows 500); the answer is `{ report: { id, status, reviewedAt, rejectReason } }` (3.43) |
+| 65 | Brief 5.2 D, R17, `THIRD_PARTY_LICENSES.md`: OpenStreetMap-derived district shapes (ODbL), credit "© OpenStreetMap contributors" | **Natural Earth** v5.1.2 shapes (public domain), credited as „Граници: Natural Earth“; no ODbL terms. No base-map tiles at all (3.44) |
+| 66 | W3-03 browser tests (the `/dev` preview pattern) | `/karta` is public, so the tests fake `GET /api/map/stats` on the **real** page; no preview page (3.44) |
 
 ---
 
@@ -2713,3 +2796,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-09 · W3-01 public reports API (Alex): new section 3.39 (`POST /api/reports`: Zod with the Bulgarian date → 3/h per IP → silent honeypot → global cap 100/h → redaction + HMAC'd number → `pending` via the admin client; `GET /api/map/stats`: all 28 districts, wave flags from `get_map_stats(1)` and `(5)`, `unknown` excluded, cookie-less `publicClient`, `s-maxage=60`), 7.8 walkthrough, status rows, 3.9 public client, 3.13 report limits, 5.10/5.11 updated, differences #50–#54, glossary: honeypot, CDN cache; 558 unit tests
 - 2026-11-09 · W3-05 scam-script library (Roberta): new section 3.40 (`/api/scripts` GET/POST, `/api/scripts/:id` GET/PATCH with the user client + audit; 4 starter cards in migration `20261109000001`; `/kak-raboti` pages read at request time with the public client, print styles, header and home links; `/moderator` hub, `/moderator/scripts` list and editor with keyword chips; published keywords fed to `analyseCall` via a 60 s cache); status table; 598 unit tests, 180 pgTAP assertions, 88 e2e tests × 2 screens
 - 2026-11-10 · W3-02 report form + W3-06 admin area (Alex): new sections 3.41 (`/signal`: browser checks with `createReportSchema`, focus on the first wrong field, off-screen honeypot, own 429 text, success links, today read only in the browser; home card + footer link, not the header; `BigChoice` `describedBy`) and 3.42 (`/api/admin/{users,users/:id/role,stats,audit-log}`, user client for reads, service role only for role change, audit line and e-mails; compare-and-set, own role/phone 409, same role = no audit row; stats counted in TypeScript by Sofia day; allow-listed audit summary; hand-made charts instead of Recharts); status table, 4.2, 4.3, 5.8, 7.8, plan differences #55–#61; 637 unit tests, 103 e2e tests × 2 screens
+- 2026-11-10 · W3-03 map + W3-04 moderation API (Roberta): new sections 3.43 (`GET`/`PATCH /api/moderation/reports`: keyset cursor, repeat-caller counts without the hash, reviewer names via the admin client, compare-and-set with the user client, audit without free text; live check) and 3.44 (`/karta`: Leaflet without tiles loaded only in the browser, Natural Earth shapes rounded to 56 KB by `scripts/geo/build-districts.mjs`, fixed colour levels, waves, keyboard panel, table, credits; links from home, footer and the report form); big picture, status rows, 3.41 success link, section 8 #62–#66

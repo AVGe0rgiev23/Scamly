@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts)
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts)
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
@@ -850,6 +850,41 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** there were many admins and stepping down were common; then "allowed unless you are the last admin".
 
+### Compare-and-set moderation: only a pending report can be reviewed (vs a plain UPDATE, vs a lock)  (status: in use (`reviewPendingReport()` in `moderationRepository.ts`, W3-04))
+
+**Used for:** `PATCH /api/moderation/reports/:id`. One statement: `UPDATE reports SET status, reviewed_by, reviewed_at, reject_reason WHERE id = … AND status = 'pending'`, sent with the **moderator's own user client**. If no row changed, the service reads the report: missing → 404, otherwise 409 „Този сигнал вече е прегледан от модератор…“. Only a changed row writes the audit line `report_approved` / `report_rejected`.
+
+**Alternatives we considered:** a plain `UPDATE … WHERE id = …`; reading the status first and then updating (two steps); `SELECT … FOR UPDATE` in a SQL function.
+
+**Why this one:**
+- **Two moderators at once can't overwrite each other:** PostgreSQL runs the two UPDATEs one after the other; the second finds no pending row and gets a 409. With read-then-update, both could read "pending" and the second would silently replace the first decision.
+- **A decision is final:** an approved report can't be flipped to rejected (or back) by a stale page; a mistake is fixed by an admin, visibly in the audit log.
+- **The audit log stays true:** exactly one line per real decision, never one for a 409.
+- **Two locks:** the user client means RLS ("Moderators can review reports") and the column privilege (only `status`, `reviewed_*`, `reject_reason`) check again in the database, even if our code had a bug. No migration, no SQL function. Same idea as the role change (above) and `saveCheckAnswers`.
+
+**What we give up:**
+- A moderator who clicks late sees a 409 and has to reload the queue.
+- No "undo" for moderators.
+
+**We would reconsider if:** moderators needed to change their minds; then an explicit "reopen" action for admins, audited.
+
+### Repeat-caller count without showing the hash (vs showing the hash, vs nothing)  (status: in use (`listQueue()` in `moderationService.ts`, W3-04))
+
+**Used for:** the moderation queue tells the moderator, per report, whether a caller number was given (`hasCallerNumber`) and **how many other reports name the same number** (`sameNumberReports`). The HMAC itself never leaves the server.
+
+**Alternatives we considered:** sending `caller_number_hash` to the page and letting it group reports; not showing anything about the number; a SQL function that returns the counts (needs a migration).
+
+**Why this one:**
+- **Useful for spotting a real campaign:** "3 more reports name this number" makes a report more believable.
+- **Data minimisation:** a hash in the browser is an identifier that could be copied and compared elsewhere; a count is not. The moderator needs the count, not the identifier.
+- **No migration:** moderators may already read all reports (RLS), so the server asks PostgreSQL only for a count (`count: "exact", head: true`, no rows) per different number on the page: at most 25 tiny queries.
+
+**What we give up:**
+- Up to 25 extra small queries per page (fine for a queue of tens of reports).
+- The moderator can't list *which* reports share the number (not needed for approve/reject).
+
+**We would reconsider if:** the queue became large; then one SQL function returning the counts for a page, plus an index on `caller_number_hash`.
+
 ### Allow-listed audit summary (vs showing the raw `details` JSON, vs no details)  (status: in use (`summarizeAuditDetails()` in `auditSummary.ts`, W3-06))
 
 **Used for:** the „Дневник“ tab shows each line's `details` as a short Bulgarian summary built only from known keys: roles (`from`/`to`), a slug that looks like a slug, the number of changed `fields`, `published`, `priority`, `devices_revoked`, the reason `person_deleted`, `linked_existing_contact`. At most 160 characters.
@@ -1223,22 +1258,42 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the usability test (W4-05) showed people struggle with the date picker; then „Днес / Вчера / Друга дата“ buttons.
 
-### Leaflet + OpenStreetMap for the scam map  (status: decided, not built yet (week 3))
+### Leaflet 1.9.4 without a base map (vs OpenStreetMap tiles, vs Google Maps / Mapbox, vs a hand-drawn SVG)  (status: in use (`src/components/map/DistrictMap.tsx`, W3-03))
 
-**Used for:** the public map of Bulgaria's 28 districts, coloured by number of approved reports.
+**Used for:** the public map `/karta`: Bulgaria's 28 districts, coloured by the number of approved reports, with a tooltip, keyboard focus and a click per district.
 
-**Alternatives we considered:** Google Maps, Mapbox, a static SVG map.
+**Alternatives we considered:** Leaflet **with** the public OpenStreetMap tiles under the districts; Google Maps or Mapbox; drawing the districts ourselves as an SVG (projection, hit-testing and resizing by hand).
 
 **Why this one:**
-- **No API key, no billing account:** Google Maps and Mapbox need an account and a key, and charge above their free amounts (check current terms). D11 says no paid services.
-- Leaflet is small (good for cheap phones) and open source (BSD-2-Clause); the district shapes come from OpenStreetMap data (ODbL), which is free if we show the credit "© OpenStreetMap contributors".
-- A district choropleth is exactly what Leaflet + GeoJSON does well.
+- **No API key, no billing account, no paid service** (D11). Leaflet is open source (BSD-2-Clause), about 40 KB gzipped, and loaded **only in the browser and only on `/karta`** (`next/dynamic` with `ssr: false`), so no other page gets heavier.
+- **No tiles:** street maps add nothing at district level (we never show addresses), but would add dozens of image requests on 4G, a third-party server that sees every visitor's IP (our "no tracking" promise), the OSM tile usage policy (heavy use is not allowed, no guarantee) and an ODbL credit. Without tiles the districts sit on our own background and follow light/dark mode.
+- **A fixed map** (no dragging or zooming): on a phone a finger on the map never traps the page's scrolling, and older people can't "lose" Bulgaria. Small districts (Sofia city) are also in the table and its buttons.
+- Leaflet still does the hard parts for us: the projection, fitting Bulgaria into any box (`fitBounds`, again on resize), hit-testing, tooltips and one SVG `<path>` per district that we can make a keyboard button.
 
 **What we give up:**
-- Public OSM tile servers have usage rules and no guarantee; we must follow their policy (or show the districts without a tile background).
-- Fewer ready features than Google Maps (no street view, no places search, which we don't need).
+- No streets or towns under the districts (not needed, see above).
+- No zoom: very small districts are hard to tap on a 360 px phone; the table is the fallback.
+- A hand-drawn SVG would have no dependency at all, but we would own projection and resizing code.
 
-**We would reconsider if:** we needed street-level detail (we don't: privacy rule = district level only).
+**We would reconsider if:** we needed zoom for very small areas (then enable Leaflet's zoom buttons, still without tiles).
+
+### Natural Earth district shapes, simplified by rounding (vs OpenStreetMap-derived boundaries, vs geoBoundaries)  (status: in use (`public/geo/bg-districts.json`, `scripts/geo/build-districts.mjs`, W3-03))
+
+**Used for:** the shapes of the 28 districts on the map.
+
+**Alternatives we considered:** OpenStreetMap-derived boundaries (the brief's first idea, ODbL); geoBoundaries (CC BY / ODbL); drawing them by hand.
+
+**Why this one:**
+- **Public domain:** Natural Earth 1:10m "Admin 1 – States, Provinces" v5.1.2 needs no permission and no credit (we credit it anyway). OSM data would need the ODbL credit and share-alike terms for the derived file.
+- **We could actually download it here:** the file is on `raw.githubusercontent.com` at the release tag `v5.1.2`, so the build is reproducible. OSM extracts need an export service or large downloads.
+- **Exactly our codes:** every province has `iso_3166_2` = `BG-01` … `BG-28`, the codes of our `districts` table, so the mapping is one line, and a unit test checks all 28.
+- **Already generalised for small scales**, so rounding every point to 3 decimals (about 100 m) is enough: **about 56 KB** (14 KB gzipped), far under the 300 KB limit (R17). Rounding keeps the borders that two districts share identical, so there are no gaps or overlaps; simplifying each shape on its own (Douglas–Peucker) would create slivers.
+
+**What we give up:**
+- Natural Earth borders are less precise than OSM (fine at country size, not for a zoomed-in street map).
+- Sofia city (BG-22) is drawn next to Sofia district (BG-23), not as a hole inside it; that is how Natural Earth models it and it looks right.
+
+**We would reconsider if:** we needed municipalities (община), which Natural Earth does not have; then an OSM-derived set with the ODbL credit.
 
 ### Browser Web Speech API for voice input  (status: in use (`src/components/protected/VoiceInput.tsx`, W2-10) ✂ can be cut; real Bulgarian recognition on a phone not yet tested)
 
@@ -2590,3 +2645,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-09 · W3-01 public reports API (Alex): new entries "Honeypot: a silent 201 (vs an error, vs a CAPTCHA)" and "Caller number stored only as an HMAC" (section 3), "Rolling 7- and 28-day windows for scam waves (vs calendar weeks)" (section 7), "Cookie-less public client + 60 s CDN cache for the map" (section 9); server-only writes now explain the missing `anon` INSERT policy on `reports`; HMAC and rate-limiting entries now in use for reports
 - 2026-11-09 · W3-05 scam-script library (Roberta): new entries in section 7 "Moderator keywords attach to an existing scenario category", "Education cards in the database" and "60-second in-memory cache for the moderator keywords"
 - 2026-11-10 · W3-02 report form + W3-06 admin area (Alex): new entries in section 3 "Off-screen honeypot field" (vs `display:none`, `type="hidden"`, a CAPTCHA), "Compare-and-set role change" (vs a plain UPDATE, a version column), "Admins can't change their own role" (vs only no self-demotion) and "Allow-listed audit summary" (vs raw JSON, a block-list); section 4 "Native `<select>` and date input on the report form" (vs a date-picker library) and "Hand-made bar charts from HTML and CSS", which replaces "Recharts for admin statistics" (Q9; no new dependency); section 7 "Admin statistics counted in TypeScript" (vs a SQL function); honeypot entry and preview-pages status updated
+- 2026-11-10 · W3-03 map + W3-04 moderation API (Roberta): section 4 "Leaflet + OpenStreetMap" replaced by "Leaflet 1.9.4 without a base map" (vs OSM tiles, Google Maps / Mapbox, a hand-drawn SVG), new entry "Natural Earth district shapes, simplified by rounding" (vs OSM-derived, geoBoundaries; public domain, about 56 KB); section 3 new entries "Compare-and-set moderation" (vs a plain UPDATE, read-then-update, a lock) and "Repeat-caller count without showing the hash"
