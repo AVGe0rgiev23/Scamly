@@ -504,6 +504,15 @@ export const bg = {
     created: "Схемата е създадена.",
     viewPublic: "Виж публичната страница",
   },
+  // The moderation API for public reports (W3-04): GET/PATCH /api/moderation/reports.
+  moderation: {
+    statusInvalid: "Изберете състояние: чакащи, одобрени или отхвърлени.",
+    cursorInvalid: "Невалидна страница на списъка. Заредете списъка отначало.",
+    decisionInvalid: "Изберете дали одобрявате, или отхвърляте сигнала.",
+    rejectReasonRequired: "Напишете причина за отхвърлянето.",
+    rejectReasonLength: "Причината трябва да е от 3 до 200 знака.",
+    alreadyReviewed: "Този сигнал вече е прегледан от модератор. Заредете списъка отново.",
+  },
   // The 28 districts (области) by their ISO 3166-2:BG code. The same names as the
   // districts table in the database (migration 20261102000001); a unit test
   // (src/i18n/districts.test.ts) checks that the two lists stay equal.
