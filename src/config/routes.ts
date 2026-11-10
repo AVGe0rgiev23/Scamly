@@ -24,6 +24,7 @@ export const ROUTES = {
   familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
   moderator: "/moderator",
   moderatorScripts: "/moderator/scripts", // the scam-script editor, W3-05
+  moderatorReports: "/moderator/reports", // the report queue („Сигнали“), W3-04
   admin: "/admin",
   protected: "/protected",
 } as const;

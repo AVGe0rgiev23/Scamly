@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts)
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
@@ -1364,6 +1364,56 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed line charts over months or interactive charts; then Recharts, styled with our tokens.
 
+### One-click „Одобри“ vs a confirmation window for „Отхвърли“ (vs confirming both, vs undo)  (status: in use (`src/components/moderator/ReportQueue.tsx`, W3-04 UI))
+
+**Used for:** on `/moderator/reports` a pending report is approved with **one click** (the card disappears and a polite `aria-live` message says „Сигналът е одобрен и ще се появи на картата до минута.“). Rejecting opens a small window that needs a reason.
+
+**Alternatives we considered:** a confirmation window for both buttons (like role changes in the admin area); one click for both plus an „Отмени“ (undo) link for a few seconds; a checkbox list with one „Одобри избраните“ button.
+
+**Why this one:**
+- **Approving is the common, cheap case:** most reports are real. One click per report keeps the queue fast; a window for every report would train moderators to click „Да“ without reading.
+- **Rejecting needs information anyway** (a reason), so the window is not an extra step: it is where the reason is typed.
+- **No undo in the API:** a decision is final (compare-and-set, only `pending` can change). An undo link would need a new API state; we keep the rule simple to explain.
+- The risk of a wrong approval is small and visible: the report only adds 1 to a district's count on the map.
+
+**What we give up:**
+- A mis-click approves a report with no way back in the app (it can be fixed in the database by a person with access).
+
+**We would reconsider if:** wrong approvals happened in practice; then an „Отмени“ link for 10 s before the PATCH is sent.
+
+### Quick-pick reject reasons + a required free-text reason (vs free text only, vs a fixed list only)  (status: in use (`src/components/moderator/RejectDialog.tsx`, `bg.moderator.quickReasons`, W3-04 UI))
+
+**Used for:** the „Отхвърли“ window has a required text field (3–200 characters, with a counter) and five buttons that fill it with a common reason: „Спам“, „Не е измама“, „Лични данни“, „Грешна област“, „Дублиран сигнал“. The text can still be edited.
+
+**Alternatives we considered:** free text only; a fixed `<select>` of reasons only (stored as a code); no reason at all.
+
+**Why this one:**
+- **A reason is required by the API** (the decision log of other moderators: why was this report not counted?) and makes moderators decide on purpose.
+- **Fast on a phone:** one tap instead of typing; the field is still free text, so a special case can be explained.
+- **No new database column or enum:** the API already accepts a 3–200 character reason; a unit test checks that every quick reason passes the server's own Zod schema.
+- The browser checks the same 3–200 rule before sending (`rejectReasonError()`), the server checks it again.
+
+**What we give up:**
+- Reasons are free text, so statistics by reason would need grouping by exact text.
+
+**We would reconsider if:** we wanted statistics of rejected reports by reason; then a reason code next to the text.
+
+### Repeat-number badge shows only the count (vs the number, vs a link to the other reports)  (status: in use (`repeatBadgeText()` in `src/components/moderator/reportQueue.ts`, W3-04 UI))
+
+**Used for:** a report whose caller number is also named by other reports gets a small badge „Още 3 сигнала от същия номер“. Nothing else about the number is shown.
+
+**Alternatives we considered:** showing the (masked) number; a link that lists the other reports with that number; no badge.
+
+**Why this one:**
+- **The API never sends the number or its hash** (section 3, "Repeat-caller count without showing the hash"), so the page can't show it, and a moderator doesn't need it to approve or reject.
+- **Privacy:** the person who reported may have typed a wrong number (a relative's). A count can't hurt anybody; a number on a moderator's screen could be copied.
+- It still tells the moderator what matters: "this looks like a campaign, the report is believable". An e2e test checks that the cards never show a run of 5 or more digits.
+
+**What we give up:**
+- The moderator can't open the other reports with the same number.
+
+**We would reconsider if:** moderators needed to merge duplicates; then a server-side "same number" filter that still never sends the number.
+
 ---
 
 ## 5. Notifications
@@ -2646,3 +2696,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-09 · W3-05 scam-script library (Roberta): new entries in section 7 "Moderator keywords attach to an existing scenario category", "Education cards in the database" and "60-second in-memory cache for the moderator keywords"
 - 2026-11-10 · W3-02 report form + W3-06 admin area (Alex): new entries in section 3 "Off-screen honeypot field" (vs `display:none`, `type="hidden"`, a CAPTCHA), "Compare-and-set role change" (vs a plain UPDATE, a version column), "Admins can't change their own role" (vs only no self-demotion) and "Allow-listed audit summary" (vs raw JSON, a block-list); section 4 "Native `<select>` and date input on the report form" (vs a date-picker library) and "Hand-made bar charts from HTML and CSS", which replaces "Recharts for admin statistics" (Q9; no new dependency); section 7 "Admin statistics counted in TypeScript" (vs a SQL function); honeypot entry and preview-pages status updated
 - 2026-11-10 · W3-03 map + W3-04 moderation API (Roberta): section 4 "Leaflet + OpenStreetMap" replaced by "Leaflet 1.9.4 without a base map" (vs OSM tiles, Google Maps / Mapbox, a hand-drawn SVG), new entry "Natural Earth district shapes, simplified by rounding" (vs OSM-derived, geoBoundaries; public domain, about 56 KB); section 3 new entries "Compare-and-set moderation" (vs a plain UPDATE, read-then-update, a lock) and "Repeat-caller count without showing the hash"
+- 2026-11-10 · W3-04 moderation screen (Alex): section 4 new entries "One-click „Одобри“ vs a confirmation window for „Отхвърли“" (vs confirming both, vs undo), "Quick-pick reject reasons + a required free-text reason" (vs free text only, vs a fixed list) and "Repeat-number badge shows only the count" (vs the number, vs a link)

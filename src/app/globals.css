@@ -1478,10 +1478,6 @@ a.button {
 .mod-hub-card .button {
   margin-top: auto;
 }
-.mod-hub-soon {
-  border-style: dashed;
-  color: var(--muted);
-}
 .mod-badge {
   display: inline-block;
   padding: 0.1rem 0.6rem;
@@ -2252,4 +2248,85 @@ a.button {
 .map-attribution {
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+/* Report queue (W3-04 UI): /moderator/reports and its reject window. */
+.mod-queue:focus {
+  outline: none;
+}
+.mod-report {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.mod-report > * + * {
+  margin-top: 0;
+}
+.mod-report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+.mod-report-text {
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--border);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.mod-report-reason {
+  overflow-wrap: anywhere;
+}
+.mod-repeat {
+  width: fit-content;
+  max-width: 100%;
+}
+.mod-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.mod-report-actions .button {
+  flex: 1 1 10rem;
+}
+.mod-reject-form {
+  display: grid;
+  gap: 1rem;
+}
+.mod-reject-form textarea {
+  min-height: 6rem;
+}
+.mod-quick {
+  min-width: 0;
+  border: 0;
+}
+.mod-quick legend {
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+.mod-quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.mod-quick-reason {
+  min-height: 48px;
+  padding: 0.25rem 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.mod-quick-reason[aria-pressed="true"] {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.mod-quick-reason:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }

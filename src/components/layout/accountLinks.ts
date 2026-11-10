@@ -23,10 +23,15 @@ export function accountLinkFor(role: AppRole): NavLink {
 }
 
 // More links after the area link. A family member also gets „Сигнали“, the live
-// alert page (W2-03), so it is one tap away on every page.
+// alert page (W2-03), so it is one tap away on every page. A moderator gets
+// „Сигнали“ too: the report queue (W3-04). An admin's menu stays short (the admin
+// reaches the queue at /moderator/reports; the menu must fit on a phone).
 export function extraLinksFor(role: AppRole): NavLink[] {
   if (role === "family") {
     return [{ href: ROUTES.familyAlerts, label: bg.layout.accountFamilyAlerts }];
+  }
+  if (role === "moderator") {
+    return [{ href: ROUTES.moderatorReports, label: bg.layout.accountModeratorReports }];
   }
   return [];
 }

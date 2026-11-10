@@ -32,9 +32,12 @@ describe("extraLinksFor", () => {
     expect(extraLinksFor("family")).toEqual([{ href: "/family/alerts", label: "Сигнали" }]);
   });
 
+  it("gives a moderator the link to the report queue „Сигнали“", () => {
+    expect(extraLinksFor("moderator")).toEqual([{ href: "/moderator/reports", label: "Сигнали" }]);
+  });
+
   it("gives the other roles no extra links", () => {
     expect(extraLinksFor("protected")).toEqual([]);
-    expect(extraLinksFor("moderator")).toEqual([]);
     expect(extraLinksFor("admin")).toEqual([]);
   });
 });

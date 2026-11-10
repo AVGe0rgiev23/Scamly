@@ -137,17 +137,22 @@ test("the header and the home page link to „Как работи измамат
   await expect(page).toHaveURL(/\/kak-raboti$/);
 });
 
-test("the moderator hub links to the scripts and shows the queue as „скоро“", async ({ page }) => {
+test("the moderator hub links to the scripts and to the report queue", async ({ page }) => {
+  await page.route("**/api/moderation/reports?*", (route) =>
+    route.fulfill({ json: { reports: [], nextCursor: null } }),
+  );
   await page.goto("/dev/moderator");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.moderator.hubTitle);
   await expect(page.getByRole("link", { name: bg.moderator.scriptsCardLink })).toHaveAttribute(
     "href",
     "/moderator/scripts",
   );
-  const queue = page.getByRole("listitem").filter({ hasText: bg.moderator.queueCardTitle });
-  await expect(queue).toContainText(bg.moderator.soon);
-  await expect(queue.getByRole("link")).toHaveCount(0);
-  await expect(queue.getByRole("button")).toHaveCount(0);
+  const queue = page.getByRole("listitem").filter({ hasText: bg.moderator.reportsCardTitle });
+  await expect(queue.getByRole("link", { name: bg.moderator.reportsCardLink })).toHaveAttribute(
+    "href",
+    "/moderator/reports",
+  );
+  await expect(queue).toContainText(bg.moderator.reportsCardNone);
 });
 
 test("the moderator's list shows drafts and published cards", async ({ page }) => {

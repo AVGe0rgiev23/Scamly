@@ -40,6 +40,7 @@ export const bg = {
     // The family's live alert page /family/alerts (W2-03).
     accountFamilyAlerts: "Сигнали",
     accountModerator: "Модерация",
+    accountModeratorReports: "Сигнали",
     accountAdmin: "Администрация",
     accountProtected: "Проверка на обаждане",
     signedInAs: "Влезли сте като",
@@ -456,9 +457,6 @@ export const bg = {
     scriptsCardText:
       "Картите на страницата „Как работи измамата“ и ключовите думи, по които проверката разпознава всяка схема.",
     scriptsCardLink: "Отвори схемите",
-    queueCardTitle: "Сигнали за одобрение",
-    queueCardText: "Одобряване и отхвърляне на сигналите за картата на измамите.",
-    soon: "скоро",
     libraryTitle: "Схеми на измамите",
     libraryIntro:
       "Само публикуваните схеми се виждат на страницата „Как работи измамата“ и се използват в проверката на обаждания.",
@@ -503,6 +501,52 @@ export const bg = {
     saved: "Промените са запазени.",
     created: "Схемата е създадена.",
     viewPublic: "Виж публичната страница",
+    // The report queue /moderator/reports (W3-04 UI) and its card on the hub.
+    reportsCardTitle: "Сигнали за проверка",
+    reportsCardText: "Одобрените сигнали се показват на картата на измамите.",
+    reportsCardLink: "Отвори сигналите",
+    reportsCardPending: "Чакащи: {count}",
+    reportsCardNone: "Няма чакащи сигнали.",
+    reportsCardLoading: "Броене на чакащите сигнали…",
+    reportsTitle: "Сигнали за проверка",
+    reportsIntro:
+      "Одобрете сигнала, ако описва телефонна измама в правилната област. Само одобрените сигнали се броят на картата на измамите.",
+    reportsTabsLabel: "Състояние на сигналите",
+    tabPending: "Чакащи",
+    tabApproved: "Одобрени",
+    tabRejected: "Отхвърлени",
+    reportsLoading: "Зареждане на сигналите…",
+    emptyPending: "Няма сигнали, които чакат проверка.",
+    emptyApproved: "Все още няма одобрени сигнали.",
+    emptyRejected: "Все още няма отхвърлени сигнали.",
+    reportDistrict: "Област {district}",
+    reportCallDay: "Обаждане на {date}",
+    reportNoDescription: "Без описание.",
+    // The repeat-caller badge: only how many, never the number itself.
+    repeatOne: "Още 1 сигнал от същия номер",
+    repeatMany: "Още {count} сигнала от същия номер",
+    approvedBy: "Одобрен от {name} на {time}",
+    rejectedBy: "Отхвърлен от {name} на {time}",
+    deletedReviewer: "изтрит профил",
+    rejectReasonShown: "Причина: {reason}",
+    approve: "Одобри",
+    approving: "Одобряване…",
+    reject: "Отхвърли",
+    // Added for screen readers to „Одобри“ / „Отхвърли“: which report it is.
+    reportButtonContext: "сигнал „{type}“ от област {district}",
+    approvedNotice: "Сигналът е одобрен и ще се появи на картата до минута.",
+    rejectedNotice: "Сигналът е отхвърлен.",
+    conflictNotice: "Друг модератор вече е решил този сигнал.",
+    rejectTitle: "Отхвърляне на сигнал",
+    rejectText:
+      "Напишете защо сигналът не е подходящ за картата. Причината виждат само модераторите.",
+    rejectReasonLabel: "Причина за отхвърлянето",
+    quickReasonsLabel: "Бърз избор на причина",
+    // Ready-made reasons: one tap fills the text field (it can still be edited).
+    quickReasons: ["Спам", "Не е измама", "Лични данни", "Грешна област", "Дублиран сигнал"],
+    rejectConfirm: "Отхвърли сигнала",
+    rejecting: "Отхвърляне…",
+    cancel: "Отказ",
   },
   // The public scam map /karta „Карта на измамите“ (W3-03, src/components/map/).
   map: {
