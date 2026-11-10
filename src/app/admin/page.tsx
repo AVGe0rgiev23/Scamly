@@ -1,8 +1,8 @@
-// /admin: TEMPORARY page that only shows the name of the area (the site header shows
-// who is logged in). The real page comes later.
+// /admin: the admin's panel (W3-06) with three tabs: users and roles, statistics, audit
+// log. The role guard is in layout.tsx; every number comes from /api/admin/*.
 
-import { bg } from "@/i18n/bg";
+import { AdminHub } from "@/components/admin/AdminHub";
 
 export default function AdminPage() {
-  return <h1 className="text-3xl font-bold">{bg.areas.admin}</h1>;
+  return <AdminHub />;
 }

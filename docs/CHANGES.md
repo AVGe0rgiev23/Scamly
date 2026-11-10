@@ -3,6 +3,7 @@
 One line per change, newest first. The AI agent adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-10 · Alex · W3-02 report form `/signal` and W3-06 admin area done; no Recharts (Q9): hand-made HTML/CSS bar charts, no new dependency; the report form is linked from the home page and the footer, not the header (5 guest links don't fit one row on phones) · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md` 3.41, 3.42 and section 8 (#55–#61), `WHY_WE_CHOSE.md` sections 3, 4 and 7, `BUILD_PLAN.md` 2.4 use 6
 - 2026-11-09 · Alex · W3-01 reports API done (`POST /api/reports`, `GET /api/map/stats`); `unknown` excluded from scam waves, global cap of 100 stored reports per hour added next to 3/h per IP · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md` 3.39 and section 8 (#50–#54), `WHY_WE_CHOSE.md`
 - 2026-11-06 · Alex · Commits stay unsigned, no history rewrite (D24); manual test list added in `docs/evidence/manual-tests.md` · `PROJECT_BRIEF.md` section 0, `docs/evidence/`
 - 2026-11-06 · Alex · W2-03 live alert page, W2-04 „Обаждам ѝ се сега“ button, W2-05 opt-in UI + iOS hint and W2-10 voice input done (W2-05 real-phone test still open); new header link „Сигнали“ for family members; Realtime fix: a 10 s safety poll keeps running while connected (a lost event was never re-checked) · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md`, `WHY_WE_CHOSE.md`

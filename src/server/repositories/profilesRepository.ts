@@ -35,3 +35,27 @@ export async function setRoleProtected(admin: DbClient, userId: string): Promise
     throw new Error(`setRoleProtected failed: ${error.message}`);
   }
 }
+
+// Changes an account's role (admin area, W3-06, BUILD_PLAN 2.4 use 6, admin client:
+// nobody may change `role` through the user client). Only if the role is still
+// `fromRole`, so two admins clicking at the same moment can't overwrite each other
+// unnoticed (like a compare-and-set). Never touches a phone ("protected").
+// Returns false when nothing was changed (the role was different, or no such account).
+export async function changeProfileRole(
+  admin: DbClient,
+  userId: string,
+  fromRole: ProfileRow["role"],
+  toRole: ProfileRow["role"],
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from("profiles")
+    .update({ role: toRole })
+    .eq("id", userId)
+    .eq("role", fromRole)
+    .neq("role", "protected")
+    .select("id");
+  if (error) {
+    throw new Error(`changeProfileRole failed: ${error.message}`);
+  }
+  return data.length === 1;
+}

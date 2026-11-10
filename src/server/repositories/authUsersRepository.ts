@@ -44,3 +44,29 @@ export async function findAuthUserEmail(admin: DbClient, userId: string): Promis
   }
   return data.user.email ?? null;
 }
+
+// The login e-mail of every account, as a map id -> e-mail, for the admin's users list
+// (W3-06, admin client, BUILD_PLAN 2.4 use 6). Read page by page, 1000 at a time, at
+// most MAX_AUTH_PAGES pages (enough for a school project; a bigger site would keep a
+// copy of the address in its own table).
+export const MAX_AUTH_PAGES = 10;
+const AUTH_PAGE_SIZE = 1000;
+
+export async function listAuthEmails(admin: DbClient): Promise<Map<string, string>> {
+  const emails = new Map<string, string>();
+  for (let page = 1; page <= MAX_AUTH_PAGES; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: AUTH_PAGE_SIZE });
+    if (error) {
+      throw new Error(`listAuthEmails failed: ${error.message}`);
+    }
+    for (const user of data.users) {
+      if (user.email) {
+        emails.set(user.id, user.email);
+      }
+    }
+    if (data.users.length < AUTH_PAGE_SIZE) {
+      break;
+    }
+  }
+  return emails;
+}

@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-09**
+Last updated: **2026-11-10**
 
 **Contents**
 
@@ -38,6 +38,8 @@ The system has **layers**, and each layer only talks to the one below it: the **
 **Week 2 frontend (6 Nov, Alex):** the family's live alert page `/family/alerts` with „Обаждам ѝ се сега“ (3.34, header link „Сигнали“), the push opt-in card with the iPhone hint (3.35) and voice input on grandma's text step (3.36). Realtime got a reliability fix: a 10 s safety poll keeps running while connected (3.25). Live: 5/5 round trips, alert on the family page 2.3–3.9 s after the big button, the name on grandma's phone 0.8–1.3 s after the family member's tap. 521 unit tests, 58 e2e tests × 2 screens.
 
 **Week 3 backend (9 Nov, Alex):** the public reports API (3.39). A guest can report a scam call with `POST /api/reports` (rate-limited, honeypot, redacted text, hashed number, stored as `pending`), and `GET /api/map/stats` gives the map its counts of approved reports for all 28 districts plus "scam wave" flags. The report form (W3-02), the map (W3-03) and moderation (W3-04) are still to come. 558 unit tests.
+
+**Week 3 frontend + admin (10 Nov, Alex):** the public report form `/signal` (3.41), linked from the home page and the footer, and the admin area `/admin` (3.42): users and audited role changes, statistics with hand-made bar charts, and the audit log. 637 unit tests, 103 e2e tests × 2 screens.
 
 ```mermaid
 flowchart TB
@@ -81,15 +83,15 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Bulgarian text file | ✅ | `src/i18n/bg.ts` | `src/i18n/bg.test.ts`, `tests/e2e/home.spec.ts` |
 | Environment variable check | ✅ | `src/lib/env.ts` (server), `src/lib/publicEnv.ts` (public keys), `.env.example` | `src/lib/env.test.ts` |
 | Code quality tools (ESLint, Prettier, strict TypeScript) | ✅ | `eslint.config.mjs`, `.prettierrc`, `tsconfig.json`, `package.json` | CI job *checks* |
-| Unit tests (Vitest) | ✅ 598 tests in 64 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
-| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 88 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
+| Unit tests (Vitest) | ✅ 637 tests in 69 files | `vitest.config.mts`, `src/**/*.test.ts`, `scripts/seed.test.ts` | `npm test`; CI job *checks* |
+| End-to-end tests (Playwright, desktop + Pixel 5) | ✅ 103 tests × 2 screens | `playwright.config.ts`, `tests/e2e/` | `npm run e2e`; CI job *e2e* |
 | CI (3 jobs) + keep-alive schedule | ✅ CI · 🔄 keep-alive waits for `HEALTH_URL` | `.github/workflows/ci.yml`, `.github/workflows/keep-alive.yml` | green ✓ on GitHub |
 | Agent rules files (shared rules for Claude Code and Codex) | ✅ | `AGENTS.md`, `CLAUDE.md` | section 4.5; `next dev` leaves our rules in place |
 | Database tables (14) + enums (10) + 28 districts | ✅ | `supabase/migrations/20261102000001_schema.sql` | `supabase/tests/01_schema.test.sql` |
 | Triggers (2): new profile, owner as contact #1 | ✅ | `..._000002_triggers.sql` | `02_profiles`, `03_persons_contacts` |
 | RLS helper functions (6) | ✅ | `..._000003_rls_helpers.sql` | `08_functions` (+ every policy test) |
 | RLS policies + column privileges | ✅ | `..._000004_rls_policies.sql` | `02` to `07` test files |
-| Append-only audit log | ✅ (written by pairing, checks, persons, invites; more in W3) | `..._000004_rls_policies.sql` | `07_admin_audit` |
+| Append-only audit log | ✅ (written by pairing, checks, persons, invites, scripts, role changes; read in `/admin`, 3.42) | `..._000004_rls_policies.sql` | `07_admin_audit` |
 | Map statistics function `get_map_stats` | ✅ (DB part; used by `GET /api/map/stats`, 3.39) | `..._000005_functions.sql` | `06_public_reports_scripts` |
 | Rate limiter `hit_rate_limit` + TypeScript wrapper | ✅ (login, register, pairing, invites, checks, push subscriptions, public reports) | `..._000005_functions.sql`, `src/server/security/rateLimit.ts` | `08_functions`, `rateLimit.test.ts` |
 | Realtime publication (checks, alerts) | ✅ (DB part; browser side: 3.25) | `..._000006_realtime.sql` | `01_schema` |
@@ -123,10 +125,11 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | Voice input „Говорете“ (3.36) | ✅ (W2-10, Alex) · real Bulgarian recognition on a phone untested | `src/components/protected/{VoiceInput.tsx,voice.ts,CallCheckPage.tsx}`, `CallerText.tsx` | `tests/e2e/voice.spec.ts` (4 tests × 2 screens), `voice` (9) |
 | Invite page `/pokana` + safe `next` after login (3.37) | ✅ (W2-14, Roberta) | `src/app/pokana/`, `src/components/auth/InviteAccept.tsx`, `src/config/routes.ts` (`safeNextPath`, `withNext`), `src/components/auth/forms.tsx`, `next.config.ts` (headers) | `tests/e2e/invite.spec.ts` (13 tests × 2 screens), `routes.test.ts` (`safeNextPath`, `withNext`) |
 | PWA: manifest + own icons, „Инсталирай Scamly“ card, offline card (3.38) | ✅ (W2-09, Roberta) · real install on a phone untested | `src/app/manifest.ts`, `src/config/pwa.ts`, `public/icons/`, `scripts/icons/`, `src/components/pwa/`, `src/lib/{install,offlinePage}.ts`, `src/app/offline/route.ts`, `public/sw.js`, `src/app/layout.tsx` | `tests/e2e/pwa.spec.ts` (7 tests × 2 screens), `offlinePage` (3) |
-| Public reports + scam map (3.39) | ✅ API (W3-01, Alex): `POST /api/reports`, `GET /api/map/stats` with wave flags · ⬜ report form (W3-02), map (W3-03), moderation (W3-04) | `src/app/api/reports/`, `src/app/api/map/stats/`, `src/schemas/reports.ts`, `src/server/services/{reportService,mapStatsService}.ts`, `src/server/repositories/reportsRepository.ts`, `src/server/supabase/publicClient.ts` | `schemas/reports` (13), `reportService` (8), `mapStatsService` (8); live smoke test |
+| Public reports + scam map (3.39) | ✅ API (W3-01, Alex): `POST /api/reports`, `GET /api/map/stats` with wave flags · ✅ report form (W3-02, 3.41) · ⬜ map (W3-03), moderation (W3-04) | `src/app/api/reports/`, `src/app/api/map/stats/`, `src/schemas/reports.ts`, `src/server/services/{reportService,mapStatsService}.ts`, `src/server/repositories/reportsRepository.ts`, `src/server/supabase/publicClient.ts` | `schemas/reports` (13), `reportService` (8), `mapStatsService` (8); live smoke test |
 | Scam-script library, education pages „Как работи измамата“, moderator script editor, moderator keywords in the engine (3.40) | ✅ (W3-05, Roberta) · ⬜ migration `20261109000001` still to run in the live project | `src/app/api/scripts/`, `src/schemas/scripts.ts`, `src/server/services/{scriptService,educationService,moderatorKeywords}.ts`, `src/server/repositories/scriptsRepository.ts`, `src/app/kak-raboti/`, `src/components/education/`, `src/app/moderator/`, `src/components/moderator/`, `supabase/migrations/20261109000001_seed_scam_scripts.sql` | `schemas/scripts` (12), `scriptService` (10), `educationService` (5), `moderatorKeywords` (4), `checkService` (+2), `text` (4), `scriptForm` (3); `12_scam_scripts_seed` (9); `tests/e2e/scripts.spec.ts` (10 tests × 2 screens) |
 | Moderation queue | ⬜ planned (week 3, W3-04) | | |
-| Admin (users, roles, stats, audit log view) | ⬜ planned (week 3, W3-06) | | |
+| Public report form `/signal`, home card + footer link (3.41) | ✅ (W3-02, Alex) | `src/app/signal/`, `src/components/report/`, `src/components/ui/BigChoice.tsx` (`describedBy`), `src/app/page.tsx`, `src/components/layout/SiteFooter.tsx` | `reportForm` (9), `tests/e2e/report.spec.ts` (8 tests × 2 screens); live: one real report stored as `pending`, then deleted |
+| Admin area `/admin`: users + audited role change, statistics with hand-made charts, audit log (3.42) | ✅ (W3-06, Alex) | `src/app/api/admin/`, `src/schemas/admin.ts`, `src/server/services/{adminService,adminStats,auditSummary}.ts`, `src/server/repositories/adminRepository.ts`, `profilesRepository.ts` (`changeProfileRole`), `authUsersRepository.ts` (`listAuthEmails`), `src/components/admin/`, `src/app/admin/`, `/dev/admin` preview | `adminService` (17), `adminStats` (5), `auditSummary` (5), `adminFormat` (3), `tests/e2e/admin.spec.ts` (7 tests × 2 screens); live check with throwaway accounts |
 | AI second opinion (Gemini / Groq chain) | ⬜ planned (week 3, W3-07), first to cut (D12) | | |
 | Escalation chain | ⬜ planned (week 3, W3-09), may be cut (D12) | | |
 | Security hardening (CSP, headers, attack tests) | ⬜ planned (week 4, W4-01, W4-02) | | |
@@ -1607,6 +1610,106 @@ Unit tests (with fakes, no database): `src/schemas/reports.test.ts` (13: minimal
 
 Unit tests: `schemas/scripts.test.ts` (12: defaults, 5 types, slugs, title and text limits, keyword cleaning, Latin/digits/spaces/too short/too long rejected, max 30, unknown fields, empty PATCH, `checkKeyword`), `scriptService.test.ts` (10: public list hides drafts and keywords; editor list; 404; create + `script_created`; 409 without audit; bad keyword stops the insert; publish → `script_published` with who and when; other changes → `script_updated` with field names; only sent fields; 404/400/409), `educationService.test.ts` (5), `moderatorKeywords.test.ts` (4: mapping, `unknown` skipped, invalid and repeated stems dropped, at most one query per minute, failure keeps the last list), `checkService.test.ts` (+2: a moderator keyword appears in the reasons with its evidence and raises the score; a failure to load keywords still gives the red verdict), `text.test.ts` (4), `scriptForm.test.ts` (3). pgTAP `12_scam_scripts_seed` (9: the 4 published cards, texts within the API limits, each mentions 112, re-running the insert changes nothing, a guest and a family member see 4, a family member can't add, change or delete). Browser tests `tests/e2e/scripts.spec.ts` (10 × 2 screens): list + error state, one card (phrases, numbered steps, ≥ 18 px, print hides the header and buttons), header and home links to `/kak-raboti`, the hub's „скоро“ card has no link or button, the editor's list, bad keywords rejected without a request, empty title rejected, the publish switch sends exactly `{ "published": true }`, a 409 shown in Bulgarian, no sideways scrolling at 360 px. Screenshots at 390 × 844 (light, dark) and 1366 × 800 checked by eye. **Not yet done:** the migration in the live Supabase project (SQL Editor, before the push) and a live check with the demo moderator.
 
+### 3.41 Public report form „Подай сигнал за измама“: `/signal` (W3-02)
+
+#### What it does
+
+- Anyone, without an account, reports a scam call on `/signal` („сигнал“ in Latin letters, Q12; `ROUTES.report`). The page starts with a short intro and a card about privacy (anonymous, what is shown publicly, a moderator checks every report, no names or addresses), then the form: **district** (a list of the 28), **„Каква беше измамата?“** (five big answers, `BigChoice`, „Друго“ last), **the day of the call** (today already filled in, at most 90 days back), **what was said** (optional, with a counter „… от 1000 знака“) and **the number that called** (optional).
+- Problems are shown **all at once**, in Bulgarian, under each wrong field, and the keyboard focus jumps to the first wrong one. „Изпращаме сигнала…“ while sending; a double tap sends only once.
+- After `201` the form is replaced by „Благодарим!“ (focused, so it is read aloud) and three buttons: „Как работи измамата“ (`/kak-raboti`), the home page, and „Подай още един сигнал“ (an empty form). A link to the map comes with W3-03.
+- Too many reports (`429`) shows the form's own text „Твърде много сигнали от тази мрежа. Опитайте по-късно.“; no connection shows its own text too; other errors show the API's Bulgarian `messageBg`.
+- Linked from a **card on the home page** („Обадиха ли ви се измамници?“) and from the **footer of every page** („Подай сигнал за измама“, 48 px high). Not in the header: with five guest links the phone menu would no longer fit one row (3.31).
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/app/signal/page.tsx` | Server Component: title, intro, privacy card (pre-rendered at `next build`), then `<ReportForm />`. |
+| `src/components/report/ReportForm.tsx` | Client Component. Holds the values, errors and „sending“ state; `inFlight` ref against double sends; sends `POST /api/reports` and reads the answer safely (it may not even be JSON). `noValidate`: our own messages instead of the browser's. |
+| `src/components/report/reportForm.ts` | Pure helpers (no React): `REPORT_FIELDS` in form order, `reportBody()` (the body exactly as typed, honeypot included), `checkReport(values, today)`, `errorsFromApi()`, `firstInvalidField()`, `oldestReportDay()`, `SCRIPT_CHOICES`. |
+| `src/components/ui/BigChoice.tsx` | New optional prop `describedBy`: the `<fieldset>` gets `aria-describedby`, so the error under „Каква беше измамата?“ is read with the question. |
+| `src/app/page.tsx`, `src/components/layout/SiteFooter.tsx` | The home card and the footer link. |
+| `src/i18n/bg.ts` | `bg.reportForm` (all texts of the page, the home card and the footer link). |
+
+- **Same rules as the server:** `checkReport()` runs `createReportSchema(today)` from `src/schemas/reports.ts` (3.39), the schema the API uses. Only the first message per field is kept. If the server still answers 400, `errorsFromApi()` puts the API's message under the first field it names and the usual message under the others.
+- **The native controls:** `<select>` for the district and `<input type="date">` with `min`/`max` (90 days back … today), so the phone shows its own picker.
+- **"Today" only in the browser:** `useToday()` uses `useSyncExternalStore` with `""` on the server, so the pre-rendered page never contains a frozen build-day date. On submit an empty date becomes `todayInBulgaria(new Date())`.
+- **The honeypot `website`** sits in `.report-trap`: moved off the screen (`left: -10000px`, 1 × 1 px), **not** `display:none`; the wrapper has `aria-hidden="true"`, the input `tabIndex={-1}` and `autoComplete="off"`, so people never see it, Tab skips it, screen readers don't read it and autofill leaves it empty. A bot that fills it gets the same „Благодарим!“ and nothing is stored (3.39).
+- **Focus:** after errors, the first wrong field (for the big choice, its chosen or first answer); after success, the „Благодарим!“ heading (`tabIndex={-1}`).
+
+#### Why it works like that
+
+- **One Zod schema for browser and server:** the person sees every problem before sending, and the two can never disagree; the server still checks everything (never trust the client).
+- **Native `<select>` and date input** (vs a JavaScript date picker): big, familiar and accessible on a cheap phone, no new dependency. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Native select and date inputs on the report form".
+- **Off-screen honeypot** (vs `display:none`, vs a CAPTCHA). [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Off-screen honeypot field".
+- **Own 429 text:** the API's rate-limit message is the general „Твърде много опити. Опитайте след малко.“; the form says what it means here (this network, try later).
+- **Footer instead of header:** the guest menu already has four links; a fifth would wrap on a 360 px phone.
+
+#### How we know it works
+
+Unit tests `reportForm.test.ts` (9: body sent as typed with the honeypot; a good report passes; every missing field named in Bulgarian; future date and day 91 rejected; foreign or broken number rejected; API message to the first field; unknown fields ignored; form order; five types with „Друго“ last). Browser tests `tests/e2e/report.spec.ts` (8 × 2 screens, `page.route()` fakes the API): intro and every field with today as the date; a Bulgarian error under each wrong field and **no request sent**; the server's field error under that field; the honeypot is off the screen and never reached with Tab; send → „Благодарим!“ with the exact body; 429 text; home and footer links; no sideways scrolling at 360 px and tap targets ≥ 48 px. **Live (10 Nov):** one real report sent through the form on the live site was stored as `pending` (description redacted, number hashed) and then deleted.
+
+### 3.42 Admin area: `/admin` with users, statistics and the audit log (W3-06)
+
+#### What it does
+
+`/admin` (admins only) has three tabs: **„Потребители“**, **„Статистика“** and **„Дневник“**.
+
+- **Users:** every account except the phones of protected persons, 25 per page with „Покажи още“, newest first, with name, e-mail, role and date. Search: text with „@“ searches e-mails, anything else names; filter by role. Each row has a role select and „Смени ролята“, which opens a confirmation window. The admin's own row has no select, only „Това сте вие. Собствената си роля не можете да смените.“
+- **Statistics** for the last 7, 30 or 90 days (Bulgarian calendar days): checks per day stacked by result, checks by result, by kind of scam, and reports per district (top 10, by status). Four **hand-made HTML/CSS bar charts**, each with a legend and „Покажи числата“, a real table with the same numbers. An empty period says so; above 20,000 rows a yellow note says the numbers may be incomplete.
+- **Audit log:** newest first, 50 lines with „Покажи още“: when, what (in Bulgarian), who, about what, and a short safe summary (e.g. „Семейство → Модератор“).
+
+#### How it works
+
+**API** (all admin only; `requireRole(["admin"])` → 401/403):
+
+| Route | What |
+|---|---|
+| `GET /api/admin/users?q&role&cursor` | `{ users, nextCursor }`. `cursor` = how many rows are already shown („25“, „50“…) |
+| `PATCH /api/admin/users/:id/role` `{ role }` | `200 { user }` · 400 · 403 (also from another site) · 404 · 409 |
+| `GET /api/admin/stats?days=7..90` | the numbers of the charts (default 30) |
+| `GET /api/admin/audit-log?cursor` | `{ entries, nextCursor }`; `cursor` = the id of the last line shown |
+
+**Files:** `src/schemas/admin.ts` (Zod: `UsersQuerySchema`, `ChangeRoleSchema` with `.strict()`, `StatsQuerySchema`, `AuditQuerySchema`; the DTO types), `src/server/services/adminService.ts` (`listUsers`, `changeRole`, `getStats`, `listAuditLog`, deps for fakes), `adminStats.ts` (pure counting), `auditSummary.ts` (pure summary), `src/server/repositories/adminRepository.ts` (reads), `profilesRepository.changeProfileRole()`, `authUsersRepository.listAuthEmails()`.
+
+**Which client:** reads use the **admin's own user client**, so the RLS policies „Admins can read all profiles / checks“, „Moderators can read all reports“ (`is_moderator()` includes admins) and „Admins can read the audit log“ check the role a second time. The **service role** (admin client, BUILD_PLAN 2.4 use 6) only for: the role change, the audit line, and the e-mails, which live in `auth.users` (`listAuthEmails()` reads `auth.admin.listUsers` 1000 per page, at most 10 pages; `findAuthUserEmail()` uses `getUserById`).
+
+**Changing a role**, in this order:
+
+| Step | Rule | If not |
+|---|---|---|
+| 0 | same-origin check, admin role, id is a uuid | 403 / 401 / 404 |
+| 1 | body is exactly `{ role: "family" \| "moderator" \| "admin" }` (never `protected`, no other fields) | 400 |
+| 2 | not the admin's own account | 409 `own_role` |
+| 3 | the account exists (read with the user client) | 404 |
+| 4 | not a phone (`protected`) | 409 `device_account` |
+| 5 | the same role again → answer 200, **nothing changed, no audit line** | |
+| 6 | `UPDATE profiles SET role = new WHERE id = … AND role = <the role just read> AND role <> 'protected'` (compare-and-set) | 409 `role_changed_meanwhile` |
+| 7 | audit line `role_changed`, target `profile`, details only `{ from, to }` (no names or e-mails); if it fails, the request fails | 500 |
+
+**Users list:** phones are left out by the query (`role <> 'protected'`). An „@“ search filters the e-mail map from `auth.users` (at most 200 ids) and then asks `profiles` for those ids; a name search uses `ilike` with `%`, `_`, `*` and `\` removed first (`cleanNameSearch()`), so „50%“ can't mean "everything". Pages: `range(offset, offset + 25)` asks for 26 rows; a 26th means there is a next page.
+
+**Statistics:** `getStats()` reads only three columns of `checks` (`started_at, risk_level, script_type`) and of `reports` (`submitted_at, district_code, status`) from the day **before** the period (UTC midnight), 1000 rows per request, at most 20 pages per table, both tables at once (`Promise.all`); more → `partial: true`. `shapeStats()` (pure) counts in TypeScript: every **Sofia calendar day** of the period (also days with 0; rows outside the period dropped), `risk_level` null = „unfinished“, script types only for answered checks, the top 10 districts by total (ties by code).
+
+**Audit log:** `id < cursor` ordered by id, 51 rows asked; actor names read for that page only. `summarizeAuditDetails()` shows only **allow-listed** keys (`from`/`to` roles, a safe `slug`, the number of `fields`, `published`, `priority`, `devices_revoked`, the reason `person_deleted`, `linked_existing_contact`), at most 160 characters; never ids, codes, hashes, dates or unknown keys.
+
+**UI:** `src/app/admin/layout.tsx` + `src/components/admin/AdminGate.tsx` (`requirePageRole(["admin"])` inside `<Suspense>`, replaces the temporary `RoleGate` here), `AdminHub.tsx` (WAI-ARIA tabs: ← → Home End), `UsersPanel.tsx` (with `ConfirmDialog`), `StatsPanel.tsx`, `Charts.tsx` (`DayChart`, `BarChart`, `NumbersTable`: bars are `aria-hidden` divs with widths in % of the biggest value; theme colours; stripes on yellow and „unfinished“, plus symbol and word in the legend, so colour is never the only hint), `AuditPanel.tsx`, `adminFormat.ts`. Preview `/dev/admin` without the role guard for the browser tests (no data; the API still checks every request), like `/dev/moderator`. Texts: `bg.admin`.
+
+#### Why it works like that
+
+- **User client for reads:** two locks: our role check and RLS. The secret key only where RLS must refuse everybody (roles, audit, `auth.users`).
+- **Compare-and-set** (vs a plain UPDATE): two admins clicking at once can't overwrite each other unnoticed, and the audit line's `from` is really what was replaced. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Compare-and-set role change".
+- **No change of one's own role:** an admin can't lock themselves (or the last admin) out by accident, and a stolen admin session can't hide by demoting itself. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Admins can't change their own role".
+- **Same role = no audit line:** the log records changes, not clicks.
+- **Phones untouchable:** `protected` is created only by pairing; turning a phone into an admin would be a back door.
+- **Counting in TypeScript** (vs a new SQL function): no migration, pure and unit-tested, enough for our numbers. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Admin statistics counted in TypeScript".
+- **Hand-made charts** (vs Recharts, Q9). [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Hand-made bar charts".
+- **Allow-listed summary:** `details` may hold ids of people; the admin page should not become a way to collect them. [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Allow-listed audit summary".
+
+#### How we know it works
+
+Unit tests: `adminService.test.ts` (17: admin only; list with e-mails, no phones, own row marked; name search without LIKE wildcards, „@“ search, role filter; pages of 25; bad filter/cursor → Bulgarian 400; role change via the service role + one audit line without names; own role 409 and nothing written; phone 409; never `protected`, unknown fields 400; 404; same role → no change, no audit; changed meanwhile → 409, no audit; a failed audit write fails the request; stats read every page of both tables from the day before; page limit → `partial`; days 7..90; audit log 50 per page with names, summary and cursor; last page, bad cursor), `adminStats.test.ts` (5: period ends today in Bulgaria; Sofia days, every day listed; per-day levels with zero days, rows outside dropped; top 10 districts with ties by code; no data), `auditSummary.test.ts` (5: role names; script changes; other known facts; never ids, codes, dates, unknown keys; length limit), `adminFormat.test.ts` (3). Browser tests `tests/e2e/admin.spec.ts` (7 × 2 screens on `/dev/admin`): users list with e-mails, own row locked, role change after confirmation; API error stays in the window, search sends `q` and `role`; a 403 in Bulgarian; four charts with legends and tables, period selector; empty period; audit log 50 lines + „Покажи още“; every tab fits 360 px. **Live (10 Nov, real project):** 8 accounts listed with e-mails; real statistics (13 checks, 11 red; 2 reports); audit log paging; role changes on throwaway accounts (deleted afterwards). The live audit log keeps the **4 `role_changed` lines** of these tests (it is append-only, 5.9).
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -1663,7 +1766,7 @@ Tests small pieces of code (one function at a time) in milliseconds.
 - Server files start with `import "server-only"`. `vitest.config.mts` maps that package to its empty version, because a test is not a browser.
 - **Fakes instead of Supabase (dependency injection).** A service gets everything it needs from outside as a parameter: `PairingDeps` (pairing), `CheckDeps`, `AlertDeps`, `PushChannelDeps`, `PushSubscriptionDeps`, `EmailChannelDeps` (a fake `fetch` for Brevo), `PersonDeps`, `ContactDeps`, `InviteDeps` (Week 2; the last three share the fake world `src/server/services/__tests__/familyWorld.ts`), `AuthGateway` (auth), `ActorReader` (`loadActor`), `HitCounter` (rate limiter). The real ones are built from Supabase (`createPairingDeps`, `supabaseAuthGateway`, …); tests pass small in-memory fakes. `pairingService.test.ts` keeps a "fake world" of plain arrays that behave like our tables, including what RLS would let each caller see. No `vi.mock`, no network, milliseconds per test. The real SQL rules are proven separately by pgTAP (section 6).
 
-Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7; and from Week 2 (W2-02/03/04/08) `checkService` 24, `inviteService` 17, `contactService` 12, `schemas/contacts` 11, `personService` 10, `schemas/checks` 8, `alertService` 7, `realtime` 6, `realtimeService` 3 and 2 more in `origin` (now 9); from W2-05/W2-06 `pushChannel` 19, `emailProviders` 10, `lib/push` 9, `alertEmail` 9, `emailChannel` 8, `pushSubscriptionService` 7, `schemas/push` 7, `pushSender` 4, `siteUrl` 3, and 1 more in `alertService` (now 8) and 3 more in `env` (now 7). Total: 44 files, **449 tests**.
+Current tests: `features` 5, `bg` 2, `env` 4, `engine/types` 4, and from Session E `routes` 6, `schemas` 9, `requireRole` 8, `errors` 5, `request` 5, `hash` 3, `origin` 7, `rateLimit` 7, `authService` 9, `pairingService` 18, `healthService` 6 (Session I); plus `engine/data` 3 and `scripts/seed` 5; from Session H the engine: `scenarios` 51, `verdict` 24, `fuzzy` 17, `hardRules` 16, `redact` 16, `signals` 14, `normalise` 10, `scoring` 8, `transliterate` 7; and from Week 2 (W2-02/03/04/08) `checkService` 24, `inviteService` 17, `contactService` 12, `schemas/contacts` 11, `personService` 10, `schemas/checks` 8, `alertService` 7, `realtime` 6, `realtimeService` 3 and 2 more in `origin` (now 9); from W2-05/W2-06 `pushChannel` 19, `emailProviders` 10, `lib/push` 9, `alertEmail` 9, `emailChannel` 8, `pushSubscriptionService` 7, `schemas/push` 7, `pushSender` 4, `siteUrl` 3, and 1 more in `alertService` (now 8) and 3 more in `env` (now 7). Total: 44 files, **449 tests**. Week 3 (10 Nov) adds among others `adminService` 17, `reportForm` 9, `adminStats` 5, `auditSummary` 5, `adminFormat` 3: `npx vitest run` → 69 files, **637 tests**.
 
 #### Why it works like that
 
@@ -1687,6 +1790,7 @@ Opens the real app in a real browser and checks what a user would see.
 - `tests/e2e/auth-forms.spec.ts` adds nine scenarios per screen using controlled API responses; these verify UI contracts without real accounts (section 3.17).
 - `tests/e2e/family.spec.ts` (family dashboard, 10 tests, section 3.32) uses the same idea: `page.route()` answers the API calls of the `/dev/family` preview pages, so it needs no database and no login.
 - `tests/e2e/alerts.spec.ts` (8 tests, 3.34), `push-optin.spec.ts` (7, 3.35) and `voice.spec.ts` (4, 3.36) use the same idea with the previews `/dev/family/alerts`, `/dev/family` and `/dev/protected`; push and speech recognition are faked inside the page.
+- `tests/e2e/report.spec.ts` (8 tests, 3.41) fakes `POST /api/reports` on the real `/signal` page (it needs no login); `tests/e2e/admin.spec.ts` (7 tests, 3.42) uses the preview `/dev/admin`. Total on 10 Nov: 103 tests × 2 screens.
 - `tests/e2e/pwa.spec.ts` (7 tests, 3.38): manifest, icons, install card with a fake `beforeinstallprompt` and an iPhone user agent, and the real service worker with `context.setOffline(true)`. Service workers are **blocked** for all other tests (`serviceWorkers: "block"` in `playwright.config.ts`), because `page.route()` can't see requests a service worker makes.
 - `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 7 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
@@ -2060,7 +2164,7 @@ Trying `update profiles set role = 'admin' ...` fails with error `42501` before 
 
 #### Why it works like that
 
-An RLS policy decides *which rows* you may update, not *which columns*. The policy "you may update your own profile" would, alone, also let you update your own `role` to `admin`. The column privilege closes that hole. Role changes will happen only through the admin API (planned, W3-06): server code, `service_role`, a line in `audit_log`, and no self-demotion.
+An RLS policy decides *which rows* you may update, not *which columns*. The policy "you may update your own profile" would, alone, also let you update your own `role` to `admin`. The column privilege closes that hole. Role changes happen only through the admin API (`PATCH /api/admin/users/:id/role`, W3-06, 3.42): server code, `service_role`, a line in `audit_log`, and no change of one's own role.
 
 #### How we know it works
 
@@ -2413,7 +2517,7 @@ Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `0
 
 ### 7.8 A guest reports a scam call
 
-1. Someone in Пловдив got a call from a "police officer" yesterday. On the report form (W3-02, still to come) they choose „Пловдив“, the kind of scam, the date, write „Обади се инспектор Петров на 0888 123 456 и поиска 5000 лв.“ and give the number that called. The browser sends `POST /api/reports` `{ districtCode: "BG-16", scriptType: "police", occurredOn: "2026-11-08", description, callerNumber: "0888 123 456", website: "" }`.
+1. Someone in Пловдив got a call from a "police officer" yesterday. On the report form `/signal` (W3-02, 3.41) they choose „Пловдив“, the kind of scam, the date, write „Обади се инспектор Петров на 0888 123 456 и поиска 5000 лв.“ and give the number that called. The browser sends `POST /api/reports` `{ districtCode: "BG-16", scriptType: "police", occurredOn: "2026-11-08", description, callerNumber: "0888 123 456", website: "" }`.
 2. Same-origin check (a form on another site → 403). Zod checks the body with today's **Bulgarian** date; the number becomes `+359888123456`.
 3. `report:ip:<HMAC of the IP>`: this is their 1st report this hour (the 4th would get 429). The IP itself is never written anywhere.
 4. `website` is empty, so this is not a bot. (A bot that fills every field would get the same `201 { ok: true }`, and nothing would be stored.)
@@ -2422,7 +2526,7 @@ Proven by `checkService.test.ts`, `alertService.test.ts`, `realtime.test.ts`, `0
 7. The admin client inserts one row, `status = 'pending'`. The guest gets `201 { ok: true }`, no id.
 8. The map (`GET /api/map/stats`) doesn't show it yet: only **approved** reports count. After a moderator approves it (W3-04), it appears within 60 s (the CDN cache). If it is the 5th approved police report in Пловдив in 7 days and the 4 weeks before had at most 10, `waves` gets `{ scriptType: "police", … }`.
 
-Proven by `reportService.test.ts`, `mapStatsService.test.ts` and the live smoke test (3.39).
+Proven by `reportService.test.ts`, `mapStatsService.test.ts`, `report.spec.ts` and the live checks (3.39, 3.41).
 
 ## 8. Where the code differs from the plan
 
@@ -2484,6 +2588,13 @@ Short notes where the code is not exactly what [`BUILD_PLAN.md`](./BUILD_PLAN.md
 | 52 | Not in the plan: which "today" the report date is checked against | The date in Bulgaria (`Europe/Sofia`), not the server's UTC date (3.39) |
 | 53 | Order of checks not specified; 3.13: routes count the attempt before reading the input | Reports: same-origin → Zod → per-IP limit → honeypot → global cap → redact + hash → store. Invalid input doesn't count; a honeypot hit counts against its IP but not against the global cap (3.39) |
 | 54 | W3-01 "done when": integration tests | Unit tests with fakes (29) + a live smoke test against the real project, as in #15 and #26 (3.39) |
+| 55 | W3-02: a report form for guests (where it is linked is not specified) | Linked from a home-page card and the footer of every page, **not** the header: five guest links would not fit one row on a phone (3.41) |
+| 56 | Forms show the API's Bulgarian `messageBg` (3.32 pattern) | The report form shows its own 429 text („Твърде много сигнали от тази мрежа…“) and its own no-connection text; other errors keep `messageBg` (3.41) |
+| 57 | Q9: Recharts for the admin charts | No chart library: four hand-made HTML/CSS bar charts with a table of the same numbers each; no new dependency (3.42) |
+| 58 | #34 `GET /api/admin/stats` (how it is counted is not specified; the map uses a SQL function, 5.10) | Rows read with the admin's user client (3 columns, 1000 per request, at most 20,000 per table, then `partial`) and counted in TypeScript by Sofia day; no migration (3.42) |
+| 59 | #32 `UsersQuery {q?, role?, cursor?}` | `cursor` is an offset (rows already shown); `q` with „@“ searches e-mails in `auth.users`, otherwise names. Phones (`protected`) are never listed. The audit log's cursor is the last id (3.42) |
+| 60 | W3-06 "done when": each admin action creates an audit row | Each **change** does; choosing the same role again changes nothing and writes no row. The update is a compare-and-set (409 if the role changed meanwhile) (3.42) |
+| 61 | #33 "can't demote yourself" | No change of one's own role at all (409), and phones can't be changed (409); the page hides the select on the own row. Extra preview page `/dev/admin` for the browser tests, like #41 (3.42) |
 
 ---
 
@@ -2601,3 +2712,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-06 · W2-09 PWA (Roberta): new section 3.38 (web app manifest via `src/app/manifest.ts`, own icons from SVG with `npm run icons`, `appleWebApp` + `apple-mobile-web-app-capable` + `theme-color`, „Инсталирай Scamly“ card with `beforeinstallprompt` and the shared iPhone steps, offline card `/offline` as a self-contained Route Handler, `sw.js` caches only that card and shows it only on failed navigations, navigation preload, worker registered for every visitor); 3.29 (iPhone push needs the installed PWA with this manifest; worker changes), 3.35 (shared `IosInstallSteps`), 4.3 (`pwa.spec.ts`, service workers blocked in the other browser tests); status table
 - 2026-11-09 · W3-01 public reports API (Alex): new section 3.39 (`POST /api/reports`: Zod with the Bulgarian date → 3/h per IP → silent honeypot → global cap 100/h → redaction + HMAC'd number → `pending` via the admin client; `GET /api/map/stats`: all 28 districts, wave flags from `get_map_stats(1)` and `(5)`, `unknown` excluded, cookie-less `publicClient`, `s-maxage=60`), 7.8 walkthrough, status rows, 3.9 public client, 3.13 report limits, 5.10/5.11 updated, differences #50–#54, glossary: honeypot, CDN cache; 558 unit tests
 - 2026-11-09 · W3-05 scam-script library (Roberta): new section 3.40 (`/api/scripts` GET/POST, `/api/scripts/:id` GET/PATCH with the user client + audit; 4 starter cards in migration `20261109000001`; `/kak-raboti` pages read at request time with the public client, print styles, header and home links; `/moderator` hub, `/moderator/scripts` list and editor with keyword chips; published keywords fed to `analyseCall` via a 60 s cache); status table; 598 unit tests, 180 pgTAP assertions, 88 e2e tests × 2 screens
+- 2026-11-10 · W3-02 report form + W3-06 admin area (Alex): new sections 3.41 (`/signal`: browser checks with `createReportSchema`, focus on the first wrong field, off-screen honeypot, own 429 text, success links, today read only in the browser; home card + footer link, not the header; `BigChoice` `describedBy`) and 3.42 (`/api/admin/{users,users/:id/role,stats,audit-log}`, user client for reads, service role only for role change, audit line and e-mails; compare-and-set, own role/phone 409, same role = no audit row; stats counted in TypeScript by Sofia day; allow-listed audit summary; hand-made charts instead of Recharts); status table, 4.2, 4.3, 5.8, 7.8, plan differences #55–#61; 637 unit tests, 103 e2e tests × 2 screens

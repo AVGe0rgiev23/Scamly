@@ -344,7 +344,7 @@ Helper functions (`SECURITY DEFINER`, `STABLE`, `search_path = ''`, so policies 
 4. `alertService.fanOut()` / `notifyVerdict()`: reads the check, the person and the contacts and creates alert rows for *other* users (one INSERT); push/email will plug in as `AlertChannel`s (W2-05, W2-06).
 4b. `checkService.acknowledge()`: the family member's „Обаждам ѝ се сега“ writes `acknowledged_by` on the check (one `UPDATE … WHERE acknowledged_by IS NULL`; no client UPDATE policy on `checks`) and the `check_acknowledged` audit line.
 5. `reportService.submit()`: guest reports. Guests have no `INSERT` policy, so a bot can't skip our rate limiter by calling the database directly.
-6. `adminService.changeRole()` and `audit.log()`.
+6. `adminService.changeRole()` and `audit.log()`. In the code: `changeProfileRole()` (only while the role is still the one just read) and `writeAudit()`; the admin area also reads login e-mails from `auth.users` with `listAuthEmails()` (`auth.admin.listUsers`) and `findAuthUserEmail()` (`auth.admin.getUserById`). All other admin reads use the admin's own user client.
 7. `rateLimiter.hit()`.
 8. `GET /api/health` (keep-alive).
 9. `inviteService.createInvite()` / `redeemInvite()`: stores an invite (browsers have no INSERT right on `contact_invites`); on redeem reads the invite, the person and the contact list, uses the invite up (one atomic UPDATE, given back if adding fails) and adds or links the contact **with `user_id`**, which only the server may set. The owner check before creating uses the user client.

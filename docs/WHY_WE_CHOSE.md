@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-09
+> Last updated: 2026-11-10
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -25,11 +25,11 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
-3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · Recharts
+3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet + OpenStreetMap · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts)
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
-7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves
+7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · cookie-less public client + 60 s CDN cache for the map · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
@@ -775,7 +775,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **What we give up:**
 - Only simple bots fill every field. A bot written for our form gets past it; then the rate limits and moderation (nothing reaches the map unapproved) are the next locks.
-- A browser autofill could fill the hidden field for a real person; that report would vanish silently, so the form (W3-02) must hide the field off-screen with `autocomplete="off"`.
+- A browser autofill could fill the hidden field for a real person; that report would vanish silently, so the form (W3-02) hides the field off-screen with `autocomplete="off"` (next entry).
 
 **We would reconsider if:** moderators saw lots of spam getting through; then a privacy-friendly CAPTCHA (e.g. Turnstile) only after the first report from an IP.
 
@@ -797,6 +797,75 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - Foreign numbers (some scams call from abroad) can't be given.
 
 **We would reconsider if:** the police or a telecom asked for real numbers; that would need a legal basis and a separate, protected flow.
+
+### Off-screen honeypot field (vs `display:none`, vs `type="hidden"`, vs a CAPTCHA)  (status: in use (`.report-trap` in `ReportForm.tsx`, W3-02))
+
+**Used for:** the `website` trap field on `/signal`. It is moved off the screen (`position: absolute; left: -10000px`, 1 × 1 px), its wrapper has `aria-hidden="true"`, the input has `tabIndex={-1}` and `autoComplete="off"`.
+
+**Alternatives we considered:** `display:none` or the `hidden` attribute; `<input type="hidden">`; a CAPTCHA; no field at all (rate limit only).
+
+**Why this one:**
+- **Bots still see a normal text field.** Simple bots fill every visible-looking input; many skip fields with `display:none` or `type="hidden"`, because those are well-known traps.
+- **People never meet it:** not on the screen, Tab skips it, screen readers don't read it, and `autocomplete="off"` keeps autofill from filling it, which would make a real report vanish silently (previous entry).
+- **No CAPTCHA:** older people struggle with them, and they are a third-party service (same reasons as the previous entry).
+- Tested in the browser: `report.spec.ts` checks the field is off the screen and that Tab never reaches it.
+
+**What we give up:**
+- A bot that renders the page and checks positions can tell; then the rate limits and moderation stop it.
+- One more rule to keep: whoever changes the form must not move the field back on screen.
+
+**We would reconsider if:** spam got through; see the previous entry (Turnstile after the first report).
+
+### Compare-and-set role change (vs a plain UPDATE, vs a row version column)  (status: in use (`changeProfileRole()` in `profilesRepository.ts`, W3-06))
+
+**Used for:** `PATCH /api/admin/users/:id/role`. The service reads the account's role, then runs `UPDATE profiles SET role = new WHERE id = … AND role = <the role just read> AND role <> 'protected'`. If no row changed, the answer is 409 „Ролята на този профил току-що е била променена от друг администратор…“ and no audit line is written.
+
+**Alternatives we considered:** a plain `UPDATE … WHERE id = …`; a `version` column (optimistic locking); a database lock (`SELECT … FOR UPDATE`) in a SQL function.
+
+**Why this one:**
+- **Two admins at once can't overwrite each other unnoticed:** the second one gets a 409 and sees the new role after reloading.
+- **The audit line is true:** `{ from, to }` names the role that was really replaced.
+- **The phone rule is checked again in the same statement**, not only in code before it.
+- One extra `WHERE`; no migration, no new column, no SQL function. The same idea as `saveCheckAnswers` (`WHERE status = 'started'`) and the invite's atomic use.
+
+**What we give up:**
+- The admin sees a 409 instead of a merge; they have to reload and choose again.
+- It protects only the `role` column; a version column would protect a whole row (we change nothing else).
+
+**We would reconsider if:** admins could edit more fields of a profile; then a `version` or `updated_at` check.
+
+### Admins can't change their own role (vs "can't demote yourself", vs allowing it)  (status: in use (`changeRole()` → 409 `own_role`, W3-06))
+
+**Used for:** `PATCH /api/admin/users/<own id>/role` is refused with 409 „Не можете да смените собствената си роля…“; the page shows no role select on the admin's own row.
+
+**Alternatives we considered:** the plan's "can't demote yourself" (only refuse lowering); allowing it with a confirmation; refusing only if they are the last admin.
+
+**Why this one:**
+- **No accidental lock-out:** an admin can't remove the last admin account by mistake, and nobody needs to count admins in a race-free way.
+- **A stolen admin session can't hide** by demoting itself after doing damage; another admin must act, and that is audited.
+- An admin is already the highest role, so "change your own role" can only mean demote: refusing every change is the same rule, stated more simply.
+
+**What we give up:**
+- An admin who wants to step down must ask another admin (or we change it in the SQL Editor).
+
+**We would reconsider if:** there were many admins and stepping down were common; then "allowed unless you are the last admin".
+
+### Allow-listed audit summary (vs showing the raw `details` JSON, vs no details)  (status: in use (`summarizeAuditDetails()` in `auditSummary.ts`, W3-06))
+
+**Used for:** the „Дневник“ tab shows each line's `details` as a short Bulgarian summary built only from known keys: roles (`from`/`to`), a slug that looks like a slug, the number of changed `fields`, `published`, `priority`, `devices_revoked`, the reason `person_deleted`, `linked_existing_contact`. At most 160 characters.
+
+**Alternatives we considered:** showing the raw JSON; a block-list (hide `*_id` keys); no details, only the action.
+
+**Why this one:**
+- **`details` may hold ids of people** (`protected_person_id`, `invite_id`). The admin page should not become a tool to collect them; an allow-list can't leak a key someone adds later, a block-list can.
+- **Readable for the defense and for older admins:** „Семейство → Модератор“ instead of `{"from":"family","to":"moderator"}`.
+- A pure function, so every rule has a unit test (ids, dates, unknown keys and strange values are dropped).
+
+**What we give up:**
+- A new audit action shows only the action name until we add its keys to the list.
+- For deep investigation the raw rows are still in the database (SQL Editor), not in the app.
+
+**We would reconsider if:** admins needed details for an investigation; then a separate view with a reason and its own audit line.
 
 ---
 
@@ -1136,6 +1205,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the jury or users needed the call check fully offline; then we would cache the `/protected` app shell with careful versioning.
 
+### Native `<select>` and date input on the report form (vs a JavaScript date picker, vs a map to pick the district)  (status: in use (`ReportForm.tsx`, W3-02))
+
+**Used for:** the district (a `<select>` with the 28 names) and the day of the call (`<input type="date">` with `min` = 90 days back and `max` = today, filled in with today) on `/signal`.
+
+**Alternatives we considered:** a date-picker library (e.g. `react-day-picker`); three separate fields for day, month and year; picking the district on a map.
+
+**Why this one:**
+- **The phone's own picker:** on Android the date input opens the system calendar, big and familiar; the `<select>` opens the system list. Older people already know them.
+- **Accessible for free:** keyboard, screen readers and zoom work without our code.
+- **No new dependency** and nothing to style for dark mode beyond our tokens.
+- `min`/`max` stop most wrong dates before Zod; Zod still checks (the browser may ignore them).
+
+**What we give up:**
+- The date input looks different in each browser, and the desktop version is small; we can't style the calendar.
+- A 28-item list is long; a map would be more fun but much harder to use and to make accessible.
+
+**We would reconsider if:** the usability test (W4-05) showed people struggle with the date picker; then „Днес / Вчера / Друга дата“ buttons.
+
 ### Leaflet + OpenStreetMap for the scam map  (status: decided, not built yet (week 3))
 
 **Used for:** the public map of Bulgaria's 28 districts, coloured by number of approved reports.
@@ -1203,21 +1290,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the switch were never used; then it could be removed instead.
 
-### Recharts for admin statistics  (status: decided (Q9), not built yet (week 3))
+### Hand-made bar charts from HTML and CSS (vs Recharts, vs Chart.js, vs hand-made SVG)  (status: in use (`src/components/admin/Charts.tsx`, W3-06; replaces the Q9 choice of Recharts))
 
-**Used for:** charts of checks per day, script types and regions on the admin dashboard.
+**Used for:** the four charts of „Статистика“ in `/admin`: checks per day stacked by result, checks by result, by kind of scam, reports per district (top 10). Each bar is a `<div>` whose width (or height) is a percentage of the biggest value; each chart has a legend and „Покажи числата“, a real `<table>` with the same numbers.
 
-**Alternatives we considered:** Chart.js, D3, drawing SVG by hand.
+**Alternatives we considered:** Recharts (the plan's choice, Q9); Chart.js (canvas); D3; drawing SVG by hand.
 
 **Why this one:**
-- Made for React (charts are components), MIT licence, widely used.
-- We style it with our own tokens so it matches our design and dark mode.
-- D3 is very powerful but much more to learn; hand-made SVG takes too long.
+- **No new dependency:** Recharts brings its own packages and JavaScript for four simple bar charts; our version is about 170 lines we can explain line by line in the defense.
+- **Accessible by design:** the bars are only a picture (`aria-hidden`); screen readers get the table. Colour is never the only hint: the levels have their symbol and word, yellow and „unfinished“ have stripes. Canvas charts (Chart.js) are invisible to screen readers.
+- **Our tokens, dark mode for free:** the fills are the same CSS variables as the verdicts.
+- **Fits a 360 px phone** without sideways scrolling, because widths are percentages.
+- Bar charts are all we need; SVG by hand would add axes and coordinates for no gain.
 
 **What we give up:**
-- Adds JavaScript to the admin pages (but those aren't for cheap phones).
+- No tooltips, zoom, animations or line charts; a new chart type means writing it ourselves.
+- The plan said Recharts (Q9); this is a change to the plan (`CHANGES.md`, 10 Nov).
 
-**We would reconsider if:** the bundle got too big; then a lighter chart library.
+**We would reconsider if:** we needed line charts over months or interactive charts; then Recharts, styled with our tokens.
 
 ---
 
@@ -1792,6 +1882,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **What we give up:** on Vercel each server instance has its own cache, so for up to a minute two instances can use different keyword lists. For a teaching feature that is fine.
 
+### Admin statistics counted in TypeScript (vs a SQL function like `get_map_stats`, vs a view)  (status: in use (`adminStats.ts`, `adminService.getStats()`, W3-06))
+
+**Used for:** `GET /api/admin/stats`. The server reads three columns of `checks` and of `reports` for the period (1000 rows per request, at most 20 pages per table), and the pure function `shapeStats()` counts them by Sofia calendar day, level, script type, district and status.
+
+**Alternatives we considered:** a new SQL function (`GROUP BY` in PostgreSQL, like `get_map_stats`, 5.10); a database view; Supabase's aggregate functions in PostgREST.
+
+**Why this one:**
+- **No migration:** nothing to run in the SQL Editor before a push, no new pgTAP tests, no risk to the live database three weeks before the deadline.
+- **RLS still applies:** the rows are read with the admin's own user client, so the database checks the admin role; a `SECURITY DEFINER` function would have to repeat that check itself.
+- **Pure and unit-tested:** Sofia days (a check at 00:30 Sofia time belongs to that day, not to the UTC day before), zero days and the top 10 are exact edge cases in `adminStats.test.ts`.
+- Our numbers are small (tens of checks a day); 20,000 rows per table is far above what the tournament will produce.
+
+**What we give up:**
+- More data over the network than a `GROUP BY` answer; slower with many rows.
+- Above 20,000 rows the numbers are incomplete; the page then says so („… числата може да не са пълни…“) instead of hiding it.
+
+**We would reconsider if:** a real launch brought thousands of checks a day; then a SQL function with `GROUP BY date_trunc('day', started_at AT TIME ZONE 'Europe/Sofia')`.
+
 ## 8. Testing and quality
 
 ### Vitest 5 (5.1.0) + V8 coverage  (status: in use)
@@ -1848,7 +1956,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for this project.
 
-### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`; W2-01: `/dev/protected`; W2-03: `/dev/family/alerts`))
+### Preview pages without the role guard for the browser tests (vs a test login, vs component tests)  (status: in use (W2-07: `/dev/family`, `/dev/family/new`, `/dev/family/person`; W2-01: `/dev/protected`; W2-03: `/dev/family/alerts`; W3-06: `/dev/admin`))
 
 **Used for:** testing the family dashboard in a real browser in CI, where there is no database.
 
@@ -2481,3 +2589,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-06 · W2-09 PWA (Roberta): new entries in section 4 "Web app manifest via the Next.js file convention" (vs a static `manifest.json`, vs a PWA plugin), "Own app icons generated from SVG with Playwright's Chromium" (vs icon sets, online generators, `sharp`) and "Offline card only on failed page loads" (vs caching app pages, vs no offline support); the PWA entry is now in use and names the manifest as the iPhone push condition
 - 2026-11-09 · W3-01 public reports API (Alex): new entries "Honeypot: a silent 201 (vs an error, vs a CAPTCHA)" and "Caller number stored only as an HMAC" (section 3), "Rolling 7- and 28-day windows for scam waves (vs calendar weeks)" (section 7), "Cookie-less public client + 60 s CDN cache for the map" (section 9); server-only writes now explain the missing `anon` INSERT policy on `reports`; HMAC and rate-limiting entries now in use for reports
 - 2026-11-09 · W3-05 scam-script library (Roberta): new entries in section 7 "Moderator keywords attach to an existing scenario category", "Education cards in the database" and "60-second in-memory cache for the moderator keywords"
+- 2026-11-10 · W3-02 report form + W3-06 admin area (Alex): new entries in section 3 "Off-screen honeypot field" (vs `display:none`, `type="hidden"`, a CAPTCHA), "Compare-and-set role change" (vs a plain UPDATE, a version column), "Admins can't change their own role" (vs only no self-demotion) and "Allow-listed audit summary" (vs raw JSON, a block-list); section 4 "Native `<select>` and date input on the report form" (vs a date-picker library) and "Hand-made bar charts from HTML and CSS", which replaces "Recharts for admin statistics" (Q9; no new dependency); section 7 "Admin statistics counted in TypeScript" (vs a SQL function); honeypot entry and preview-pages status updated

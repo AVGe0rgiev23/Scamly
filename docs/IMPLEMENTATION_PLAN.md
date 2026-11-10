@@ -169,7 +169,9 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 |---|---|---|
 | W3-01 … W3-11 | Reports, map, moderation, education, admin, AI ✂, escalation ✂ | ⬜ |
 | W3-01 | Reports API (`POST /api/reports`, `GET /api/map/stats` + wave flags) | ✅ (Alex, 9 Nov) · 29 unit tests; live smoke test (honeypot, 429, 403, redaction, hashed number) |
+| W3-02 | Public report form `/signal`: browser checks with the server's Zod rules, off-screen honeypot, own 429 text; linked from the home page and the footer | ✅ (Alex, 10 Nov) · 9 unit tests, `report.spec.ts` 8 × 2 screens; live: one real report stored as `pending`, then deleted |
 | W3-05 | Scam-script library: `/api/scripts` API, 4 starter cards (migration `20261109000001`), education pages `/kak-raboti`, moderator editor `/moderator/scripts`, moderator keywords fed to the engine | ✅ code (Roberta, 9 Nov) · unit, pgTAP and browser tests pass · ⬜ migration to run in the Supabase SQL Editor before the push |
+| W3-06 | Admin area `/admin`: users + role change (audited, compare-and-set, no own role, no phones), statistics with 4 hand-made charts (no Recharts), audit log | ✅ (Alex, 10 Nov) · 30 unit tests, `admin.spec.ts` 7 × 2 screens; live: 8 accounts, real stats, audit paging, role change on throwaway accounts (deleted) |
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |
 
