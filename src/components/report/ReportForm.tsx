@@ -225,6 +225,9 @@ export function ReportForm() {
           <Link href={ROUTES.education} className="button button-primary">
             {bg.reportForm.successEducation}
           </Link>
+          <Link href={ROUTES.map} className="button button-secondary">
+            {bg.map.successLink}
+          </Link>
           <Link href={ROUTES.home} className="button button-secondary">
             {bg.reportForm.successHome}
           </Link>

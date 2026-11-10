@@ -2039,3 +2039,217 @@ a.button {
 .admin-audit-summary {
   font-weight: 650;
 }
+
+/* Scam map „Карта на измамите“ (W3-03): /karta. Five fill levels from few to many
+   reports (one blue scale; darker = more in light mode, lighter = more in dark mode),
+   with the border colour between districts.
+   The numbers are always also written in the legend, tooltips, panel and table. */
+:root,
+[data-theme="light"] {
+  --map-0: #e9eef4;
+  --map-1: #c6dbef;
+  --map-2: #7fb0dc;
+  --map-3: #3a7cc0;
+  --map-4: #174ea6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --map-0: #2a3746;
+    --map-1: #234b70;
+    --map-2: #2f73b3;
+    --map-3: #6aaee8;
+    --map-4: #c3e1fb;
+  }
+}
+[data-theme="dark"] {
+  --map-0: #2a3746;
+  --map-1: #234b70;
+  --map-2: #2f73b3;
+  --map-3: #6aaee8;
+  --map-4: #c3e1fb;
+}
+.map {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 1rem;
+}
+.map > *,
+.map-page > * {
+  min-width: 0;
+}
+.map-page {
+  display: grid;
+  gap: 1.25rem;
+}
+.map-periods .admin-period {
+  max-width: 14rem;
+}
+.map-waves {
+  border-left: 6px solid var(--red-fg);
+}
+.map-waves h2,
+.map-panel h2,
+.map-table-section h2 {
+  font-size: 1.35rem;
+}
+.map-waves ul {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+  font-weight: 650;
+}
+.map-layout {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .map-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    align-items: start;
+  }
+}
+.map-frame {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.map-canvas,
+.map-canvas-loading {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+.map-canvas-loading {
+  display: grid;
+  place-items: center;
+}
+/* Leaflet's own grey background and font → ours. */
+.map-canvas.leaflet-container {
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.85rem;
+}
+.map-canvas .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--muted);
+}
+.map-canvas .leaflet-control-attribution a {
+  color: var(--primary);
+}
+.map-district {
+  stroke: var(--border);
+  fill-opacity: 1;
+}
+.map-district:focus {
+  outline: none;
+}
+.map-district:focus-visible,
+.map-district.map-selected {
+  stroke: var(--foreground);
+  stroke-width: 3px;
+}
+.map-district:focus-visible {
+  stroke: var(--primary);
+  stroke-width: 4px;
+}
+.map-level-0 {
+  fill: var(--map-0);
+  background: var(--map-0);
+}
+.map-level-1 {
+  fill: var(--map-1);
+  background: var(--map-1);
+}
+.map-level-2 {
+  fill: var(--map-2);
+  background: var(--map-2);
+}
+.map-level-3 {
+  fill: var(--map-3);
+  background: var(--map-3);
+}
+.map-level-4 {
+  fill: var(--map-4);
+  background: var(--map-4);
+}
+.map-tooltip {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.map-legend {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.map-legend figcaption {
+  font-weight: 700;
+}
+.map-legend ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+}
+.map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.map-swatch {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+}
+.map-panel ul {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.map-panel-total {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.map-panel-wave {
+  color: var(--red-fg);
+  font-weight: 700;
+}
+.map-table-section {
+  display: grid;
+  gap: 0.75rem;
+}
+.map-table th[scope="row"] {
+  font-weight: 400;
+}
+.map-table-button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.map-table-button[aria-pressed="true"] {
+  color: var(--foreground);
+  text-decoration-thickness: 3px;
+}
+.map-attribution {
+  color: var(--muted);
+  font-size: 0.95rem;
+}

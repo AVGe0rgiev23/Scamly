@@ -11,17 +11,18 @@ The versions and licences are read from each package's own `package.json` in
 
 These are part of the app that runs on the server and in the browser.
 
-| Package               | Version | Licence | What we use it for                                              |
-| --------------------- | ------- | ------- | --------------------------------------------------------------- |
-| @supabase/ssr         | 0.12.7  | MIT     | Keeps the Supabase login session in cookies (server and proxy)  |
-| @supabase/supabase-js | 2.118.0 | MIT     | Talks to our Supabase database, Auth and Realtime               |
-| next                  | 16.4.4  | MIT     | Web framework (pages, API routes, build)                        |
-| qrcode                | 1.5.4   | MIT     | Makes the QR code for pairing a phone, in the browser           |
-| react                 | 19.3.1  | MIT     | User-interface library                                          |
-| react-dom             | 19.3.1  | MIT     | Draws React components in the browser                           |
-| server-only           | 0.0.1   | MIT     | Makes the build fail if browser code imports a server-only file |
-| web-push              | 3.6.7   | MPL-2.0 | Encrypts, signs (VAPID) and sends web push notifications        |
-| zod                   | 4.6.7   | MIT     | Checks input data and environment variables                     |
+| Package               | Version | Licence      | What we use it for                                                               |
+| --------------------- | ------- | ------------ | -------------------------------------------------------------------------------- |
+| @supabase/ssr         | 0.12.7  | MIT          | Keeps the Supabase login session in cookies (server and proxy)                   |
+| @supabase/supabase-js | 2.118.0 | MIT          | Talks to our Supabase database, Auth and Realtime                                |
+| leaflet               | 1.9.4   | BSD-2-Clause | Draws the district map on /karta (loaded only in the browser, only on that page) |
+| next                  | 16.4.4  | MIT          | Web framework (pages, API routes, build)                                         |
+| qrcode                | 1.5.4   | MIT          | Makes the QR code for pairing a phone, in the browser                            |
+| react                 | 19.3.1  | MIT          | User-interface library                                                           |
+| react-dom             | 19.3.1  | MIT          | Draws React components in the browser                                            |
+| server-only           | 0.0.1   | MIT          | Makes the build fail if browser code imports a server-only file                  |
+| web-push              | 3.6.7   | MPL-2.0      | Encrypts, signs (VAPID) and sends web push notifications                         |
+| zod                   | 4.6.7   | MIT          | Checks input data and environment variables                                      |
 
 ## Development dependencies
 
@@ -31,6 +32,7 @@ These are only used while writing, checking, testing and building the code.
 | ---------------------- | ------- | ---------- | --------------------------------------------------------- |
 | @playwright/test       | 1.63.0  | Apache-2.0 | End-to-end tests in a real browser                        |
 | @tailwindcss/turbopack | 4.3.4   | MIT        | Lets the Next.js bundler process Tailwind CSS             |
+| @types/leaflet         | 1.9.22  | MIT        | TypeScript types for Leaflet (brings @types/geojson, MIT) |
 | @types/node            | 22.20.5 | MIT        | TypeScript types for Node.js                              |
 | @types/qrcode          | 1.5.6   | MIT        | TypeScript types for qrcode                               |
 | @types/react           | 19.3.0  | MIT        | TypeScript types for React                                |
@@ -64,6 +66,9 @@ Packages that our dependencies install for us, worth knowing about:
 | http_ece, asn1.js, bn.js, jws, jwa, https-proxy-agent, agent-base, minimist     | MIT               | web-push              | Message encryption, key handling, the VAPID signature, proxy support               |
 
 The seed runner tsx also uses esbuild (MIT) for TypeScript transformation.
+
+Leaflet uses the BSD 2-Clause licence, which is compatible with GPL-3.0; its copyright
+notice is kept in the bundled code, and the map shows a "Leaflet" credit link.
 
 web-push uses the Mozilla Public License 2.0 (MPL-2.0). MPL-2.0 is compatible with
 GPL-3.0 (its section 3.3 allows combining it with GPL code), and we use the library

@@ -19,6 +19,7 @@ export const ROUTES = {
   forbidden: "/403",
   education: "/kak-raboti", // the public education cards „Как работи измамата“, W3-05
   report: "/signal", // the public report form „Подай сигнал за измама“ („сигнал“), W3-02
+  map: "/karta", // the public scam map „Карта на измамите“ („карта“), W3-03
   family: "/family",
   familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
   moderator: "/moderator",

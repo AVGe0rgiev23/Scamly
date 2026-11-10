@@ -504,6 +504,56 @@ export const bg = {
     created: "Схемата е създадена.",
     viewPublic: "Виж публичната страница",
   },
+  // The public scam map /karta „Карта на измамите“ (W3-03, src/components/map/).
+  map: {
+    title: "Карта на измамите",
+    lead: "Къде в България хората са получили обаждания от измамници. Показваме само области, никога адреси.",
+    note: "Броим само сигнали, одобрени от модератор. Картата се обновява до минута след одобрението.",
+    periodLabel: "Период",
+    // The three periods, by number of weeks.
+    periods: { 1: "1 седмица", 4: "4 седмици", 12: "12 седмици" },
+    wavesTitle: "Вълни от измами",
+    // A "scam wave" (BUILD_PLAN Q10): this kind of scam is suddenly frequent there.
+    wave: "Тази седмица в област {district}: {count} сигнала за схемата „{script}“",
+    noWaves: "Няма вълни от измами в момента.",
+    mapLabel: "Карта на 28-те области с броя одобрени сигнали",
+    loading: "Зареждане на картата…",
+    loadError: "Картата не може да се зареди в момента. Опитайте отново след малко.",
+    retry: "Опитай отново",
+    empty: "Няма одобрени сигнали за този период.",
+    legendTitle: "Одобрени сигнали за периода",
+    // The legend's ranges (number of approved reports in a district).
+    legendRange: "{from}–{to}",
+    legendOver: "над {from}",
+    // "1 сигнал", "5 сигнала"
+    reportsOne: "{count} сигнал",
+    reportsMany: "{count} сигнала",
+    // Read by screen readers on each district of the map and shown in its tooltip.
+    districtLabel: "{district}: {reports}",
+    panelEmptyTitle: "Подробности за област",
+    panelHint: "Изберете област на картата или в таблицата, за да видите подробности.",
+    panelTitle: "Област {district}",
+    panelTotal: "Одобрени сигнали за периода: {count}",
+    panelByScript: "По вид измама",
+    panelWave: "Вълна: {script}",
+    tableTitle: "Всички области",
+    tableCaption: "Одобрени сигнали по области за избрания период",
+    tableDistrict: "Област",
+    tableTotal: "Сигнали",
+    tableWave: "Вълна от измами",
+    tableNoWave: "—",
+    tableSelect: "Покажи подробности за област {district}",
+    // The data credit under the map (the shapes are public domain; we credit anyway).
+    attribution: `Граници на областите: Natural Earth (обществено достояние). Данни: сигнали, одобрени от модераторите на ${APP_NAME}.`,
+    mapAttribution: "Граници: Natural Earth",
+    reportLink: "Подай сигнал за измама",
+    // On the home page, in the footer and after sending a report.
+    homeTitle: "Карта на измамите",
+    homeText: "Вижте в кои области хората получават най-много обаждания от измамници тази седмица.",
+    homeLink: "Отвори картата",
+    footerLink: "Карта на измамите",
+    successLink: "Виж картата на измамите",
+  },
   // The moderation API for public reports (W3-04): GET/PATCH /api/moderation/reports.
   moderation: {
     statusInvalid: "Изберете състояние: чакащи, одобрени или отхвърлени.",
