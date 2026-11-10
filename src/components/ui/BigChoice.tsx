@@ -33,6 +33,8 @@ type BigChoiceProps = {
   // true: the question is only read aloud, because the page shows it as a heading.
   hideQuestion?: boolean;
   disabled?: boolean;
+  // Id(s) of a hint or error message read together with the question (optional).
+  describedBy?: string;
 };
 
 export function BigChoice({
@@ -44,6 +46,7 @@ export function BigChoice({
   size = "normal",
   hideQuestion = false,
   disabled = false,
+  describedBy,
 }: BigChoiceProps) {
   // useId gives each instance a unique name, like generating a unique Python dict key.
   const name = useId();
@@ -61,6 +64,7 @@ export function BigChoice({
     <fieldset
       className={`big-choice big-choice-${size}`}
       disabled={disabled}
+      aria-describedby={describedBy}
       onKeyDown={() => {
         pressedByPointer.current = false;
       }}

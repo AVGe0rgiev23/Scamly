@@ -1,6 +1,6 @@
 // The home page ("/"): what Scamly is for, the 3 steps, the start buttons and three
 // rules to remember, a link to the education cards „Как работи измамата“ (W3-05),
-// plus the „Инсталирай Scamly“ card (W2-09, a Client Component).
+// a link to the report form „Подай сигнал“ (W3-02), plus the „Инсталирай Scamly“ card (W2-09, a Client Component).
 // A Server Component; all text comes from src/i18n/bg.ts.
 
 import Link from "next/link";
@@ -64,6 +64,15 @@ export default function HomePage() {
         <p>{bg.education.homeText}</p>
         <Link href={ROUTES.education} className="button button-secondary">
           {bg.education.homeLink}
+        </Link>
+      </section>
+
+      {/* The public report form (W3-02): anyone can report a scam call, no login. */}
+      <section className="card home-education" aria-labelledby="report-title">
+        <h2 id="report-title">{bg.reportForm.homeTitle}</h2>
+        <p>{bg.reportForm.homeText}</p>
+        <Link href={ROUTES.report} className="button button-secondary">
+          {bg.reportForm.homeLink}
         </Link>
       </section>
     </main>

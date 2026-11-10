@@ -1600,3 +1600,442 @@ a.button {
 .mod-publish p {
   grid-column: 1 / -1;
 }
+
+/* Public report form „Подай сигнал за измама“ (W3-02): /signal. */
+.report {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 1rem;
+  font-size: 1.1rem;
+}
+.report > * {
+  min-width: 0;
+}
+.report-intro {
+  display: grid;
+  gap: 0.75rem;
+}
+.report-lead {
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+.report-privacy {
+  border-left: 6px solid var(--primary);
+}
+.report-privacy h2 {
+  font-size: 1.35rem;
+}
+.report-privacy ul {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.report-privacy li::marker {
+  color: var(--primary);
+}
+.report-form fieldset {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+.report-field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.report-form .form-field textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 9rem;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+}
+.report-form .form-field textarea:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.report-form .form-field textarea[aria-invalid="true"],
+.report-field .big-choice[aria-describedby] .choice {
+  border-color: var(--red-fg);
+}
+.report-counter {
+  font-size: 1rem;
+}
+.report-field-error {
+  color: var(--red-fg);
+  font-weight: 700;
+}
+.report-sending {
+  font-weight: 700;
+}
+.report-submit {
+  width: 100%;
+}
+/* The honeypot: off the screen (NOT display:none, which some bots notice). */
+.report-trap {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.report-success h2:focus {
+  outline: none;
+}
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.report-actions .button {
+  flex: 1 1 14rem;
+}
+/* The footer link to /signal: a big enough tap target (48 px high). */
+.site-footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Admin area (W3-06): /admin with users, statistics and the audit log. */
+.family.admin {
+  max-width: 64rem;
+}
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--border);
+}
+.admin-tab {
+  flex: 1 1 8rem;
+  min-height: 56px;
+  padding: 0.5rem 1rem;
+  border: 2px solid transparent;
+  border-bottom: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.admin-tab[aria-selected="true"] {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: inset 0 -4px 0 var(--primary);
+}
+@media (max-width: 640px) {
+  .admin-tabs {
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+  }
+  .admin-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.5rem 0.1rem;
+    font-size: 0.9rem;
+  }
+}
+@media (max-width: 400px) {
+  .admin-tab {
+    font-size: 0.82rem;
+  }
+}
+.admin-tab:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.admin-panel,
+.admin-section {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.admin-section > h2 {
+  font-size: 1.5rem;
+}
+.admin-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+}
+.admin-filter-submit {
+  margin-top: 2.1rem;
+  min-height: 56px;
+}
+@media (max-width: 640px) {
+  .admin-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-filter-submit {
+    margin-top: 0;
+  }
+}
+.admin-user {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 16rem);
+  align-items: start;
+  gap: 1rem;
+}
+.admin-user > * + * {
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .admin-user {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.admin-user h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.admin-user-email {
+  overflow-wrap: anywhere;
+}
+.admin-you {
+  color: var(--primary);
+}
+.admin-more {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.admin-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.admin-period {
+  flex: 1 1 6rem;
+  min-height: 56px;
+}
+.admin-period[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+.admin-period-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+}
+.admin-partial {
+  background: var(--yellow-bg);
+  color: var(--yellow-fg);
+}
+.admin-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 1rem;
+}
+.admin-chart {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+}
+.admin-chart > * + * {
+  margin-top: 0;
+}
+.admin-chart:first-child {
+  grid-column: 1 / -1;
+}
+/* The fills of the bars: the level colours (with stripes where two could be confused)
+   and the primary colour for counts that have no level. */
+.admin-fill-red {
+  background: var(--red-fg);
+}
+.admin-fill-yellow {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--yellow-fg) 0 6px,
+    color-mix(in srgb, var(--yellow-fg) 70%, var(--surface)) 6px 9px
+  );
+}
+.admin-fill-green {
+  background: var(--green-fg);
+}
+.admin-fill-unfinished {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--muted) 0 3px,
+    color-mix(in srgb, var(--muted) 35%, var(--surface)) 3px 6px
+  );
+}
+.admin-fill-primary {
+  background: var(--primary);
+}
+.admin-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+}
+.admin-level-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.admin-swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.35rem;
+  color: var(--surface);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.admin-swatch.admin-fill-yellow,
+.admin-swatch.admin-fill-unfinished {
+  color: var(--foreground);
+  background-color: var(--surface);
+  border: 2px solid var(--border);
+}
+.admin-days {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.admin-days-max,
+.admin-days-axis {
+  font-size: 0.85rem;
+}
+.admin-days-plot {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  height: 12rem;
+  padding: 0 1px;
+  border-bottom: 2px solid var(--border);
+  border-left: 2px solid var(--border);
+}
+.admin-day {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column-reverse;
+  min-width: 0;
+}
+.admin-day-part {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+}
+.admin-days-axis {
+  display: flex;
+  justify-content: space-between;
+}
+.admin-bars {
+  display: grid;
+  gap: 0.6rem;
+  list-style: none;
+}
+.admin-bar-row {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.admin-bar-label {
+  overflow-wrap: anywhere;
+}
+.admin-bar-track {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.admin-bar {
+  display: block;
+  height: 1.25rem;
+  min-width: 2px;
+  max-width: calc(100% - 3.5rem);
+  border-radius: 0 0.35rem 0.35rem 0;
+}
+.admin-bar-value {
+  flex: 0 0 auto;
+  font-weight: 750;
+}
+.admin-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+}
+.admin-numbers {
+  min-width: 0;
+}
+.admin-numbers summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  color: var(--primary);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.admin-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.admin-table th,
+.admin-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.admin-table .admin-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.admin-audit {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+.admin-audit-row {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.admin-audit-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+.admin-audit-summary {
+  font-weight: 650;
+}

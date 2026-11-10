@@ -348,6 +348,57 @@ export const bg = {
       "Въведете българския номер, от който ви се обадиха, например 0888 123 456 или +359 888 123 456.",
     weeksInvalid: "Изберете период от 1 до 12 седмици.",
   },
+  // The public report form /signal „Подай сигнал за измама“ (W3-02), its links on the
+  // home page and in the footer. Errors of single fields come from bg.reports.
+  reportForm: {
+    title: "Подай сигнал за измама",
+    lead: "Обадиха ли ви се измамници? Разкажете ни накратко и предупредете другите.",
+    privacyTitle: "Какво трябва да знаете",
+    privacy: [
+      "Сигналът е анонимен: не ви трябва профил и не пазим кой го е изпратил.",
+      "На картата на измамите се вижда само областта и видът на измамата.",
+      "Модератор проверява всеки сигнал, преди да се появи на картата.",
+      "Моля, не пишете адреси и имена.",
+    ],
+    formLabel: "Сигнал за измама",
+    district: "Област, в която живеете",
+    districtPlaceholder: "Изберете област",
+    scriptQuestion: "Каква беше измамата?",
+    // The answers of the big choice, in this order.
+    scriptOptions: {
+      police: "Фалшив полицай",
+      relative_in_trouble: "Роднина в беда",
+      fake_official: "Фалшив служител",
+      courier: "Колет или куриер",
+      unknown: "Друго",
+    },
+    date: "Кога ви се обадиха?",
+    dateHint: "Днес или до 90 дни назад.",
+    description: "Какво ви казаха? (по желание)",
+    descriptionHint: "Не пишете имена, телефони или адреси — ще бъдат премахнати автоматично.",
+    descriptionCounter: "{count} от {max} знака",
+    callerNumber: "От кой номер ви се обадиха? (по желание)",
+    callerNumberHint:
+      "Номерът се пази само в шифрован вид и никога не се показва. Така разбираме дали един и същи номер звъни на много хора.",
+    // The honeypot: hidden from people, only bots fill it in.
+    honeypot: "Не попълвайте това поле",
+    submit: "Изпрати сигнала",
+    sending: "Изпращаме сигнала…",
+    fixErrors: "Поправете отбелязаните полета.",
+    rateLimited: "Твърде много сигнали от тази мрежа. Опитайте по-късно.",
+    networkError: "Няма връзка със сървъра. Проверете интернета си и опитайте отново.",
+    successTitle: "Благодарим!",
+    successText: "Сигналът ви ще бъде проверен от модератор, преди да се появи на картата.",
+    successEducation: "Как работи измамата",
+    successHome: "Към началната страница",
+    another: "Подай още един сигнал",
+    // On the home page and in the footer.
+    homeTitle: "Обадиха ли ви се измамници?",
+    homeText:
+      "Подайте анонимен сигнал. След проверка от модератор той ще предупреди хората от вашата област.",
+    homeLink: "Подай сигнал",
+    footerLink: "Подай сигнал за измама",
+  },
   // The scam-script library (W3-05): error messages of POST/PATCH /api/scripts, also
   // shown by the moderator's editor, and the short name of each kind of scam.
   scripts: {
@@ -811,6 +862,143 @@ export const bg = {
     errorNoMicrophone: "Не намерих микрофон. Можете да напишете текста.",
     errorNetwork: "Гласовото въвеждане се нуждае от интернет. Можете да напишете текста.",
     errorOther: "Гласовото въвеждане не проработи. Можете да напишете текста.",
+  },
+  // The admin area /admin (W3-06, src/components/admin/): users and roles, statistics
+  // charts and the audit log. Also the error messages of /api/admin/*.
+  admin: {
+    hubTitle: "Панел на администратора",
+    hubIntro:
+      "Оттук управлявате ролите на профилите, следите статистиката и преглеждате дневника на важните действия.",
+    tabsLabel: "Раздели на панела",
+    tabUsers: "Потребители",
+    tabStats: "Статистика",
+    tabAudit: "Дневник",
+    loading: "Зареждане…",
+    retry: "Опитай отново",
+    showMore: "Покажи още",
+    loadingMore: "Зареждане на още…",
+    // API errors
+    searchTooLong: "Търсенето може да е най-много 100 знака.",
+    roleInvalid: "Изберете роля: семейство, модератор или администратор.",
+    cursorInvalid: "Невалидна страница на списъка. Презаредете страницата.",
+    daysInvalid: "Изберете период от 7 до 90 дни.",
+    ownRole: "Не можете да смените собствената си роля. Помолете друг администратор, ако е нужно.",
+    deviceAccount: "Това е телефон на защитен човек. Ролята му не може да се променя оттук.",
+    roleChangedMeanwhile:
+      "Ролята на този профил току-що е била променена от друг администратор. Презаредете списъка.",
+    // The role names (the database enum public.app_role).
+    roleNames: {
+      family: "Семейство",
+      moderator: "Модератор",
+      admin: "Администратор",
+      protected: "Телефон на защитен човек",
+    },
+    // Users
+    usersTitle: "Потребители",
+    usersIntro:
+      "Телефоните на защитените хора не са в този списък: те получават ролята си само чрез код за свързване.",
+    searchLabel: "Търсене по име или имейл",
+    searchHint: "Част от името или имейл с „@“.",
+    roleFilterLabel: "Роля",
+    roleFilterAll: "Всички роли",
+    search: "Търси",
+    usersEmpty: "Няма профили, които отговарят на търсенето.",
+    noEmail: "Без имейл",
+    createdOn: "Регистриран на {date}",
+    roleSelectLabel: "Роля на {name}",
+    selfNote: "Това сте вие. Собствената си роля не можете да смените.",
+    youBadge: "вие",
+    confirmTitle: "Да сменим ли ролята?",
+    confirmText:
+      "{name} ще стане „{role}“ (досега: „{oldRole}“). Промяната важи веднага и се записва в дневника.",
+    confirmButton: "Смени ролята",
+    confirmPending: "Сменяме…",
+    cancel: "Отказ",
+    roleChanged: "Ролята на {name} вече е „{role}“.",
+    // Statistics
+    statsTitle: "Статистика",
+    periodLabel: "Период",
+    periodDays: "{days} дни",
+    periodRange: "От {from} до {to}",
+    totalsChecks: "Проверки: {count}",
+    totalsReports: "Сигнали: {count}",
+    partialNote:
+      "Данните са твърде много, затова числата може да не са пълни. Изберете по-кратък период.",
+    noData: "Няма данни за този период.",
+    showNumbers: "Покажи числата",
+    tableDate: "Ден",
+    tableTotal: "Общо",
+    tableCount: "Брой",
+    tableDistrict: "Област",
+    tableLevel: "Ниво",
+    tableScript: "Вид измама",
+    maxLabel: "най-много {count} на ден",
+    checksPerDayTitle: "Проверки по дни",
+    checksPerDayText: "Всеки стълб е един ден; цветовете показват резултата от проверката.",
+    checksByLevelTitle: "Резултат от проверките",
+    checksByScriptTitle: "Видове измами в проверките",
+    checksByScriptText: "Само завършените проверки.",
+    reportsByDistrictTitle: "Сигнали по области",
+    reportsByDistrictText: "Десетте области с най-много сигнали, подадени през периода.",
+    reportStatuses: {
+      approved: "Одобрени",
+      pending: "Чакат преглед",
+      rejected: "Отхвърлени",
+    },
+    levelNames: {
+      red: "Признаци на измама",
+      yellow: "Съмнително обаждане",
+      green: "Без типични признаци",
+      unfinished: "Незавършена проверка",
+    },
+    // Audit log
+    auditTitle: "Дневник на действията",
+    auditIntro:
+      "Всеки ред е важно действие: смяна на роля, свързан или премахнат телефон, промяна на схема. Редовете не могат да се променят или изтриват.",
+    auditEmpty: "Дневникът е празен.",
+    auditNoActor: "Без профил",
+    auditBy: "От: {name}",
+    auditTarget: "Обект: {target}",
+    // Short names of the actions in audit_log.action (unknown ones show the code).
+    actions: {
+      role_changed: "Смяна на роля",
+      pairing_code_created: "Създаден код за свързване",
+      device_paired: "Свързан телефон",
+      device_revoked: "Премахнат телефон",
+      person_deleted: "Изтрит защитен човек",
+      invite_created: "Създадена покана",
+      invite_redeemed: "Приета покана",
+      check_acknowledged: "Близък пое обаждането",
+      script_created: "Създадена схема",
+      script_updated: "Променена схема",
+      script_published: "Публикувана схема",
+      report_approved: "Одобрен сигнал",
+      report_rejected: "Отхвърлен сигнал",
+    },
+    // Names of audit_log.target_type.
+    targets: {
+      profile: "Профил",
+      device: "Телефон",
+      pairing_code: "Код за свързване",
+      protected_person: "Защитен човек",
+      contact_invite: "Покана",
+      trusted_contact: "Доверен контакт",
+      check: "Проверка",
+      scam_script: "Схема",
+      report: "Сигнал",
+    },
+    // Pieces of the short summary of audit_log.details (built on the server).
+    summary: {
+      roleChange: "{from} → {to}",
+      slug: "адрес: {slug}",
+      published: "публикувана",
+      draft: "чернова",
+      fields: "променени полета: {count}",
+      priority: "място в списъка: {priority}",
+      devicesRevoked: "премахнати телефони: {count}",
+      personDeleted: "при изтриване на защитен човек",
+      linkedExisting: "свързан със съществуващ контакт",
+    },
   },
   // Temporary pages of the logged-in areas (designed later in Session F).
   areas: {

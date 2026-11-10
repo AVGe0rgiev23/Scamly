@@ -18,6 +18,7 @@ export const ROUTES = {
   invite: "/pokana", // accept an invite to become a trusted contact („покана“), W2-08
   forbidden: "/403",
   education: "/kak-raboti", // the public education cards „Как работи измамата“, W3-05
+  report: "/signal", // the public report form „Подай сигнал за измама“ („сигнал“), W3-02
   family: "/family",
   familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
   moderator: "/moderator",
