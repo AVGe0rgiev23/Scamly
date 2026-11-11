@@ -2,5 +2,9 @@
 import { RoleHelp } from "@/components/help/RoleHelp";
 
 export default function HelpPage() {
-  return <RoleHelp role="protected" />;
+  return (
+    <main>
+      <RoleHelp role="protected" />
+    </main>
+  );
 }

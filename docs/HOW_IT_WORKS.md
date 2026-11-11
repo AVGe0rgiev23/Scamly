@@ -2843,3 +2843,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-11 · W3-08 first step (Roberta): each dashboard links to its own help page at the nested /pomosht route. The existing role layouts wrap those pages. RoleHelp renders Bulgarian instructions from bg.help and links back to the dashboard. Screenshots are pending.
 
 - 2026-11-11 · Report form and moderation queue helper filenames use a Helpers suffix so TypeScript can resolve the component and helper imports on case-insensitive Windows filesystems.
+
+- 2026-11-11 · W3-08 screenshots: each guide shows the relevant screen captured from the browser previews with fictional data. The image descriptions are in bg.help.
