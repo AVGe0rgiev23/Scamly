@@ -921,6 +921,7 @@ export const bg = {
     // Offline fallback (BUILD_PLAN 4.9): the server did not answer within 4 s, so the
     // phone computed the verdict itself and keeps sending the answers in the background.
     localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
+    emergencyCallAdvice: "Ако сте в непосредствена опасност, обадете се на 112.",
   },
   // The „Известия на телефона“ card on /family (W2-05, src/components/family/PushOptIn.tsx).
   pushOptIn: {

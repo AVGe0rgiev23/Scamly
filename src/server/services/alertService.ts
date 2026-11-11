@@ -36,6 +36,7 @@ import { createRealEmailChannel } from "@/server/notifications/email/emailChanne
 import { createRealPushChannel } from "@/server/notifications/pushChannel";
 import {
   insertAlerts,
+  listAlertedRecipients,
   type AlertChannelName,
   type AlertStatus,
   type NewAlert,
@@ -90,11 +91,15 @@ export const realtimeChannel: AlertChannel = {
 // Everything the alert service needs from the outside world (tests pass fakes).
 export type AlertDeps = {
   now: () => Date;
-  findCheck: (
-    checkId: string,
-  ) => Promise<{ protected_person_id: string; risk_level: RiskLevel | null } | null>;
+  findCheck: (checkId: string) => Promise<{
+    protected_person_id: string;
+    risk_level: RiskLevel | null;
+    escalation_due_at?: string | null;
+    escalation_exhausted_at?: string | null;
+  } | null>;
   findPersonName: (personId: string) => Promise<string | null>;
   listContacts: (personId: string) => Promise<ContactRef[]>;
+  listAlertedRecipients: (checkId: string) => Promise<string[]>;
   insertAlerts: (alerts: NewAlert[]) => Promise<void>;
   channels: AlertChannel[];
 };
@@ -123,7 +128,11 @@ async function loadAlertContext(
   }
   const personId = check.protected_person_id;
   const personName = (await deps.findPersonName(personId)) ?? "";
-  const recipients = recipientsFrom(await deps.listContacts(personId));
+  let recipients = recipientsFrom(await deps.listContacts(personId));
+  if (kind === "verdict" && usesEscalation(check)) {
+    const alerted = await deps.listAlertedRecipients(checkId);
+    recipients = recipients.filter((recipient) => alerted.includes(recipient.userId));
+  }
   const payload: AlertPayload = {
     kind,
     checkId,
@@ -132,6 +141,18 @@ async function loadAlertContext(
     riskLevel: check.risk_level,
   };
   return { payload, recipients };
+}
+
+// Existing checks have neither timestamp. An exhausted chain still used escalation.
+export function usesEscalation(check: {
+  escalation_due_at?: string | null;
+  escalation_exhausted_at?: string | null;
+}): boolean {
+  return Boolean(check.escalation_due_at ?? check.escalation_exhausted_at);
+}
+
+export function getEscalationSecret(): string | undefined {
+  return process.env.CRON_SECRET?.trim() || undefined;
 }
 
 // A short, safe description of a failed delivery for alerts.error (no stack trace).
@@ -180,19 +201,28 @@ export async function fanOut(deps: AlertDeps, checkId: string): Promise<number> 
   if (context === null) {
     return 0;
   }
+  return sendAlerts(deps, context.payload, context.recipients, deps.channels);
+}
 
+async function sendAlerts(
+  deps: AlertDeps,
+  payload: AlertPayload,
+  recipients: AlertRecipient[],
+  channels: AlertChannel[],
+  escalationStep?: number,
+): Promise<number> {
   // Start every (family member, channel) delivery, then wait for all of them at once
   // (Promise.all is like asyncio.gather in Python; the results keep the same order).
   const deliveries: Promise<NewAlert | null>[] = [];
-  for (const recipient of context.recipients) {
-    for (const channel of deps.channels) {
-      deliveries.push(deliver(deps, checkId, recipient, channel, context.payload));
+  for (const recipient of recipients) {
+    for (const channel of channels) {
+      deliveries.push(deliver(deps, payload.checkId, recipient, channel, payload));
     }
   }
   const rows: NewAlert[] = [];
   for (const row of await Promise.all(deliveries)) {
     if (row !== null) {
-      rows.push(row);
+      rows.push(escalationStep === undefined ? row : { ...row, escalationStep });
     }
   }
   // All rows in ONE insert: one trip to the database, and every family member's
@@ -201,6 +231,38 @@ export async function fanOut(deps: AlertDeps, checkId: string): Promise<number> 
     await deps.insertAlerts(rows);
   }
   return rows.length;
+}
+
+// The database claims each recipient once and records Realtime before returning.
+// E-mail and push run outside the SQL transaction, like normal alert fan-out.
+export async function escalateAlerts(admin: DbClient, checkId?: string): Promise<number> {
+  const { data, error } = await admin.rpc(
+    "claim_alert_escalations",
+    checkId === undefined ? {} : { p_check_id: checkId },
+  );
+  if (error) throw new Error(`claim_alert_escalations failed: ${error.message}`);
+  if (data.length === 0) return 0;
+
+  const deps = createAlertDeps(admin);
+  const channels = deps.channels.filter((channel) => channel.name !== "realtime");
+  await Promise.all(
+    data.map((delivery) =>
+      sendAlerts(
+        deps,
+        {
+          kind: "started",
+          checkId: delivery.check_id,
+          protectedPersonId: delivery.protected_person_id,
+          personName: delivery.person_name,
+          riskLevel: delivery.risk_level,
+        },
+        [{ userId: delivery.recipient_id, displayName: delivery.recipient_name }],
+        channels,
+        delivery.escalation_step,
+      ),
+    ),
+  );
+  return data.length;
 }
 
 // ---------------------------------------------------------------------------------
@@ -261,6 +323,7 @@ export function createAlertDeps(admin: DbClient): AlertDeps {
       return person === null ? null : person.display_name;
     },
     listContacts: (personId) => listContacts(admin, personId),
+    listAlertedRecipients: (checkId) => listAlertedRecipients(admin, checkId),
     insertAlerts: (alerts) => insertAlerts(admin, alerts),
     channels: alertChannels(admin),
   };

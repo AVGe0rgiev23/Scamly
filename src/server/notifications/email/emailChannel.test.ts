@@ -73,6 +73,7 @@ function setup(options: {
     }),
     findPersonName: async () => "Мария Петрова",
     listContacts: async () => CONTACTS,
+    listAlertedRecipients: async () => [],
     insertAlerts: async (alerts) => {
       inserted.push(...alerts);
     },

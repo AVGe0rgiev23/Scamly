@@ -67,6 +67,7 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
   const [checkId, setCheckId] = useState<string | null>(null);
   // „Иван ще ви се обади веднага.“ once a family member answers (null until then).
   const [message, setMessage] = useState<string | null>(null);
+  const [suggestEmergencyCall, setSuggestEmergencyCall] = useState(false);
   // true = „Обаждането вече приключи — искам да проверя“ (no „Затворете телефона.“).
   const [afterCall, setAfterCall] = useState(false);
   // The running POST /api/checks (a Promise is like a Python asyncio Task).
@@ -86,6 +87,7 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
     setResult(null);
     setCheckId(null);
     setMessage(null);
+    setSuggestEmergencyCall(false);
     setStage("questions");
   }
 
@@ -190,6 +192,7 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
     }
     return watchCheck(watchedCheckId, (check) => {
       const text = familyMessage(check.acknowledgement);
+      setSuggestEmergencyCall(check.suggestEmergencyCall === true && text === null);
       if (text !== null) {
         setMessage(text);
       }
@@ -234,6 +237,7 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
           afterCall={afterCall}
           local={result.local}
           familyMessage={message}
+          suggestEmergencyCall={suggestEmergencyCall && message === null}
           onNewCheck={goHome}
         />
       ) : null}

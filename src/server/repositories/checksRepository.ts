@@ -57,7 +57,7 @@ export async function listChecksOfPerson(
 // Creates a new check with status 'started' (admin client). Returns its id.
 export async function insertCheck(
   admin: DbClient,
-  check: { protectedPersonId: string; deviceId: string },
+  check: { protectedPersonId: string; deviceId: string; escalationDueAt?: string },
 ): Promise<string> {
   const { data, error } = await admin
     .from("checks")
@@ -65,6 +65,7 @@ export async function insertCheck(
       protected_person_id: check.protectedPersonId,
       device_id: check.deviceId,
       status: "started",
+      ...(check.escalationDueAt === undefined ? {} : { escalation_due_at: check.escalationDueAt }),
     })
     .select("id")
     .single();

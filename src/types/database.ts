@@ -131,6 +131,8 @@ export type Database = {
           claimed_identity: Database["public"]["Enums"]["claimed_identity"] | null;
           device_id: string | null;
           engine_version: string | null;
+          escalation_due_at: string | null;
+          escalation_exhausted_at: string | null;
           handover: Database["public"]["Enums"]["handover_method"] | null;
           hard_rules: string[];
           id: string;
@@ -157,6 +159,8 @@ export type Database = {
           claimed_identity?: Database["public"]["Enums"]["claimed_identity"] | null;
           device_id?: string | null;
           engine_version?: string | null;
+          escalation_due_at?: string | null;
+          escalation_exhausted_at?: string | null;
           handover?: Database["public"]["Enums"]["handover_method"] | null;
           hard_rules?: string[];
           id?: string;
@@ -182,6 +186,8 @@ export type Database = {
           claimed_identity?: Database["public"]["Enums"]["claimed_identity"] | null;
           device_id?: string | null;
           engine_version?: string | null;
+          escalation_due_at?: string | null;
+          escalation_exhausted_at?: string | null;
           handover?: Database["public"]["Enums"]["handover_method"] | null;
           hard_rules?: string[];
           id?: string;
@@ -649,6 +655,18 @@ export type Database = {
       app_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["app_role"];
+      };
+      claim_alert_escalations: {
+        Args: { p_check_id?: string };
+        Returns: {
+          check_id: string;
+          escalation_step: number;
+          person_name: string;
+          protected_person_id: string;
+          recipient_id: string;
+          recipient_name: string;
+          risk_level: Database["public"]["Enums"]["risk_level"] | null;
+        }[];
       };
       get_map_stats: {
         Args: { weeks?: number };

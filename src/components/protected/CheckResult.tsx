@@ -27,6 +27,7 @@ type CheckResultProps = {
   afterCall: boolean; // the call has already ended: no „Затворете телефона.“
   local: boolean; // computed on the phone (offline fallback): show the small note
   familyMessage: string | null; // „Иван ще ви се обади веднага.“, null until then
+  suggestEmergencyCall: boolean;
   onNewCheck: () => void;
 };
 
@@ -37,6 +38,7 @@ export function CheckResult({
   afterCall,
   local,
   familyMessage,
+  suggestEmergencyCall,
   onNewCheck,
 }: CheckResultProps) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -68,6 +70,11 @@ export function CheckResult({
             {familyMessage}
           </p>
         )}
+      </div>
+      <div role="status">
+        {suggestEmergencyCall ? (
+          <p className="check-family">{bg.protectedCheck.emergencyCallAdvice}</p>
+        ) : null}
       </div>
       {callContact === null ? null : <CallContactButton contact={callContact} />}
       <Button variant="secondary" onClick={onNewCheck}>

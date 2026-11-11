@@ -283,6 +283,7 @@ describe("push inside the alert fan-out (alertService)", () => {
       findCheck: async () => ({ protected_person_id: PERSON, risk_level: riskLevel }),
       findPersonName: async () => "Елена Петрова",
       listContacts: async () => CONTACTS,
+      listAlertedRecipients: async () => [],
       insertAlerts: async (alerts) => {
         inserted.push(...alerts);
       },

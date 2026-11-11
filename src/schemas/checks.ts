@@ -126,6 +126,8 @@ export type CheckDto = {
   };
   verdict: VerdictDto | null; // null while the check is only "started"
   acknowledgement: AcknowledgementDto | null;
+  alertVisible?: false; // The family can view its history before it receives an alert.
+  suggestEmergencyCall?: true; // The contact list was exhausted without an answer.
 };
 
 // PUT /api/checks/:id/answers

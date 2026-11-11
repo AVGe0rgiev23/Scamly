@@ -68,6 +68,7 @@ type MockOptions = {
   // How PUT /api/checks/:id/answers behaves: answer, fail (no network) or answer late.
   answers?: "ok" | "fail" | "slow";
   start?: "ok" | "fail";
+  escalationExhausted?: boolean;
 };
 
 async function mockApi(page: Page, options: MockOptions = {}): Promise<Calls> {
@@ -100,7 +101,15 @@ async function mockApi(page: Page, options: MockOptions = {}): Promise<Calls> {
     (url) => url.pathname === `/api/checks/${CHECK_ID}`,
     (route) => {
       calls.reads++;
-      return route.fulfill({ json: { check: checkDto(calls.reads >= 2) } });
+      const acknowledged = calls.reads >= 2;
+      return route.fulfill({
+        json: {
+          check: {
+            ...checkDto(acknowledged),
+            suggestEmergencyCall: options.escalationExhausted && !acknowledged,
+          },
+        },
+      });
     },
   );
   // No Realtime in the tests: the helper falls back to polling every 5 s.
@@ -114,6 +123,20 @@ async function mockApi(page: Page, options: MockOptions = {}): Promise<Calls> {
 function noSideScroll(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 }
+
+test("emergency advice after escalation disappears when a family member answers", async ({
+  page,
+}) => {
+  await mockApi(page, { escalationExhausted: true });
+  await page.goto("/dev/protected");
+  await answerPoliceMoney(page);
+  await page.getByRole("button", { name: bg.protectedCheck.check, exact: true }).click();
+
+  const advice = page.getByText(bg.protectedCheck.emergencyCallAdvice);
+  await expect(advice).toBeVisible();
+  await expect(page.getByText("Иван ще ви се обади веднага.")).toBeVisible({ timeout: 15_000 });
+  await expect(advice).toHaveCount(0);
+});
 
 function question(page: Page, text: string) {
   return page.getByRole("heading", { level: 1, name: text });

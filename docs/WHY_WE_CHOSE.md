@@ -2274,7 +2274,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never during the competition.
 
-### `pg_cron` for frequent jobs  (status: decided, not built yet (week 3) ✂ stretch)
+### `pg_cron` for frequent jobs  (status: built, production setup pending)
 
 **Used for:** the escalation job (every minute: an alert nobody acknowledged → notify the next contact), using Supabase's `pg_cron` scheduler calling our secret-protected `/api/cron/escalate` endpoint.
 
@@ -2285,8 +2285,10 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - `pg_cron` runs inside our database, which is already always on.
 
 **What we give up:**
-- The job's schedule lives in the database, not in our code files, so we must record it in a migration.
-- Calling HTTP from the database needs an extra extension (e.g. `pg_net`) and the cron secret stored safely.
+- The job runs in Supabase. The checked-in script in `supabase/ops/` installs it after deployment with `pg_net` and Vault.
+- The two-minute wait is measured by PostgreSQL. The next one-minute tick can add up to a minute before the next contact is alerted.
+
+The claim and Realtime insert share one database transaction so two job runs cannot advance the same check twice. Reusing the existing push and email channels keeps notification delivery separate from the database lock.
 
 **We would reconsider if:** we dropped the escalation feature (it's a stretch goal).
 

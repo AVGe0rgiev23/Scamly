@@ -131,6 +131,8 @@ function startedRow(world: World, personId: string, deviceId: string | null): Ch
     hard_rules: [],
     reason_codes: [],
     engine_version: null,
+    escalation_due_at: null,
+    escalation_exhausted_at: null,
     ai_provider: null,
     ai_level: null,
     acknowledged_by: null,
@@ -178,6 +180,7 @@ function depsFor(world: World, callerId: string): CheckDeps {
     },
     listContactsForCaller: async (personId) =>
       canSeePerson(world, callerId, personId) ? (world.contacts.get(personId) ?? []) : [],
+    listAlertedChecksForCaller: async () => [],
     insertCheck: async (check) => {
       const row = startedRow(world, check.protectedPersonId, check.deviceId);
       world.checks.push(row);
@@ -540,11 +543,42 @@ describe("getCheck", () => {
     expect(check.status).toBe("started");
     expect(check.verdict).toBeNull();
   });
+
+  it("only suggests an emergency call after the chain is exhausted and nobody has answered", async () => {
+    const row = startedRow(world, PERSON, actorFor(world, PHONE_1).device?.id ?? null);
+    row.escalation_due_at = world.now.toISOString();
+    world.checks.push(row);
+    const phone = actorFor(world, PHONE_1);
+    const deps = depsFor(world, PHONE_1);
+    expect((await getCheck(deps, phone, row.id)).suggestEmergencyCall).toBeUndefined();
+
+    row.escalation_due_at = null;
+    row.escalation_exhausted_at = world.now.toISOString();
+    expect((await getCheck(deps, phone, row.id)).suggestEmergencyCall).toBe(true);
+
+    await acknowledge(depsFor(world, OWNER), actorFor(world, OWNER), row.id);
+    expect((await getCheck(deps, phone, row.id)).suggestEmergencyCall).toBeUndefined();
+  });
 });
 
 // --- 4. GET /api/checks?personId=… -------------------------------------------------
 
 describe("listChecks", () => {
+  it("keeps checks in history but marks them invisible in alerts until the caller is notified", async () => {
+    const row = startedRow(world, PERSON, null);
+    row.escalation_due_at = world.now.toISOString();
+    world.checks.push(row);
+    const deps = depsFor(world, CONTACT);
+    const query = { personId: PERSON };
+
+    expect((await listChecks(deps, query)).checks[0]).toMatchObject({
+      id: row.id,
+      alertVisible: false,
+    });
+    deps.listAlertedChecksForCaller = async () => [row.id];
+    expect((await listChecks(deps, query)).checks[0]?.alertVisible).toBeUndefined();
+  });
+
   it("lists the person's checks newest first, 20 per page, with a cursor", async () => {
     for (let i = 0; i < CHECKS_PAGE_SIZE + 2; i++) {
       // A new minute for every check, so the order is clear.
