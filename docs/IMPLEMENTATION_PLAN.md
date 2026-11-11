@@ -148,7 +148,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| W2-01 | Protected UI: big button, wizard, result, `tel:` button (incl. offline fallback) | Roberta | ⬜ |
+| W2-01 | Protected UI: big button, wizard, result, `tel:` button (incl. offline fallback) | Roberta | ✅ 5 Nov: call-check flow, live family response and offline fallback; browser and unit tests, live check on a paired device (HOW_IT_WORKS §3.33) |
 | W2-02 | Checks API + service (engine on the server) | Alex | ✅ backend · offline fallback is part of W2-01 (Roberta) |
 | W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ (Alex) · `/family/alerts` live page, header link „Сигнали“, `?check=` focus, sound only after a tap · Realtime fix: 10 s safety poll while connected · live 5/5, alert visible after 2.3–3.9 s |
 | W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ (Alex) · button on each alert; phone shows the name 0.8–1.3 s after the tap (live) · two-browser e2e in W2-11 |
@@ -173,6 +173,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W3-03 | Scam map `/karta`: Leaflet 1.9.4 without tiles (browser only), Natural Earth district shapes (public domain, 56 KB), fixed colour levels + legend, scam-wave texts, keyboard district panel, table of all 28; links from home, footer and the report form's thank-you screen | ✅ (Roberta, 10 Nov) · 8 unit tests, 7 browser tests × 2 screens; live check |
 | W3-04 | Moderation: API `GET`/`PATCH /api/moderation/reports` (queue 25 per page, repeat-caller count without the hash, compare-and-set approve/reject, audited) · moderation screen | API ✅ (Roberta, 10 Nov) · 16 unit tests; live check with the demo moderator · UI ✅ (Alex, 10 Nov) · `/moderator/reports` (tabs, one-click approve, reject window with quick reasons, 409 refresh), hub card with the pending count, header link „Сигнали“; 12 unit tests, 10 e2e tests × 2 screens; live check: 1 approved + 1 rejected through the UI, map counted it, both deleted |
 | W3-05 | Scam-script library: `/api/scripts` API, 4 starter cards (migration `20261109000001`), education pages `/kak-raboti`, moderator editor `/moderator/scripts`, moderator keywords fed to the engine | ✅ code (Roberta, 9 Nov) · unit, pgTAP and browser tests pass · ⬜ migration to run in the Supabase SQL Editor before the push |
+| W3-08 | Role-specific help pages | Roberta | 🔄 text guides and dashboard links in place; screenshots pending |
 | W3-06 | Admin area `/admin`: users + role change (audited, compare-and-set, no own role, no phones), statistics with 4 hand-made charts (no Recharts), audit log | ✅ (Alex, 10 Nov) · 30 unit tests, `admin.spec.ts` 7 × 2 screens; live: 8 accounts, real stats, audit paging, role change on throwaway accounts (deleted) |
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |

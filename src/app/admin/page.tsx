@@ -3,6 +3,15 @@
 
 import { AdminHub } from "@/components/admin/AdminHub";
 
+import { HelpLink } from "@/components/help/RoleHelp";
+
 export default function AdminPage() {
-  return <AdminHub />;
+  return (
+    <>
+      <AdminHub />
+      <p>
+        <HelpLink role="admin" />
+      </p>
+    </>
+  );
 }

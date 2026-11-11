@@ -5,6 +5,15 @@
 
 import { CallCheckPage } from "@/components/protected/CallCheckPage";
 
+import { HelpLink } from "@/components/help/RoleHelp";
+
 export default function ProtectedPage() {
-  return <CallCheckPage />;
+  return (
+    <>
+      <CallCheckPage />
+      <p>
+        <HelpLink role="protected" />
+      </p>
+    </>
+  );
 }

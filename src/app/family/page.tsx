@@ -4,6 +4,15 @@
 
 import { FamilyHome } from "@/components/family/FamilyHome";
 
+import { HelpLink } from "@/components/help/RoleHelp";
+
 export default function FamilyPage() {
-  return <FamilyHome />;
+  return (
+    <>
+      <FamilyHome />
+      <p>
+        <HelpLink role="family" />
+      </p>
+    </>
+  );
 }

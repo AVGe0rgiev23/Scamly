@@ -4,6 +4,15 @@
 
 import { ModeratorHub } from "@/components/moderator/ModeratorHub";
 
+import { HelpLink } from "@/components/help/RoleHelp";
+
 export default function ModeratorPage() {
-  return <ModeratorHub />;
+  return (
+    <>
+      <ModeratorHub />
+      <p>
+        <HelpLink role="moderator" />
+      </p>
+    </>
+  );
 }
