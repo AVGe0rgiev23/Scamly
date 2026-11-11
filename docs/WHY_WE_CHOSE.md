@@ -2703,3 +2703,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-11 · Report form and moderation queue helper filenames use a Helpers suffix so TypeScript can resolve the component and helper imports on case-insensitive Windows filesystems.
 
 - 2026-11-11 · W3-08 screenshots use the existing test previews with fictional data. The images match the current controls and the ordered text instructions remain available at every screen width.
+
+- 2026-11-11 · W3-10: a browser print stylesheet lets the team maintain one copy of the card. The permanent pairing URL on the QR remains valid when an individual pairing code expires.

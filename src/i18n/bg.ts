@@ -424,6 +424,19 @@ export const bg = {
       unknown: "Друга схема",
     },
   },
+  // The A5 reminder linked from the education page (W3-10).
+  fridgeCard: {
+    link: "Карта за хладилник (A5)",
+    title: "Съмнително обаждане?",
+    steps: [
+      "Затворете телефона.",
+      "Обадете се на близък на номер, който вече знаете.",
+      "Не давайте пари, лични данни или кодове.",
+    ],
+    check: "За проверка отворете Scamly на свързания телефон.",
+    pairing: "За да свържете телефон, сканирайте кода и въведете кода за свързване от ваш близък.",
+    qrLabel: "QR код към страницата за свързване на телефон със Scamly.",
+  },
   // The public education pages /kak-raboti and /kak-raboti/<card> (W3-05).
   education: {
     title: "Как работи измамата",
