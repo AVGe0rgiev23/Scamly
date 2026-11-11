@@ -10,7 +10,7 @@ import { fill } from "@/components/family/format";
 import { Button } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
 import { MAX_REJECT_REASON } from "@/schemas/moderation";
-import { rejectReasonError } from "./reportQueue";
+import { rejectReasonError } from "./reportQueueHelpers";
 
 type RejectDialogProps = {
   open: boolean;

@@ -1631,7 +1631,7 @@ Unit tests: `schemas/scripts.test.ts` (12: defaults, 5 types, slugs, title and t
 |---|---|
 | `src/app/signal/page.tsx` | Server Component: title, intro, privacy card (pre-rendered at `next build`), then `<ReportForm />`. |
 | `src/components/report/ReportForm.tsx` | Client Component. Holds the values, errors and „sending“ state; `inFlight` ref against double sends; sends `POST /api/reports` and reads the answer safely (it may not even be JSON). `noValidate`: our own messages instead of the browser's. |
-| `src/components/report/reportForm.ts` | Pure helpers (no React): `REPORT_FIELDS` in form order, `reportBody()` (the body exactly as typed, honeypot included), `checkReport(values, today)`, `errorsFromApi()`, `firstInvalidField()`, `oldestReportDay()`, `SCRIPT_CHOICES`. |
+| `src/components/report/reportFormHelpers.ts` | Pure helpers (no React): `REPORT_FIELDS` in form order, `reportBody()` (the body exactly as typed, honeypot included), `checkReport(values, today)`, `errorsFromApi()`, `firstInvalidField()`, `oldestReportDay()`, `SCRIPT_CHOICES`. |
 | `src/components/ui/BigChoice.tsx` | New optional prop `describedBy`: the `<fieldset>` gets `aria-describedby`, so the error under „Каква беше измамата?“ is read with the question. |
 | `src/app/page.tsx`, `src/components/layout/SiteFooter.tsx` | The home card and the footer link. |
 | `src/i18n/bg.ts` | `bg.reportForm` (all texts of the page, the home card and the footer link). |
@@ -1808,7 +1808,7 @@ Unit tests `mapData.test.ts` (5: levels and legend; „1 сигнал“ / „с
 | `src/components/moderator/ReportQueue.tsx` | Client Component: tabs (WAI-ARIA tabs, ← → Home End, like the admin panel 3.42), the list, „Покажи още“, approve, the 409 handling and the live messages. All requests through `callApi()` (3.32). |
 | `src/components/moderator/RejectDialog.tsx` | The reject window on the browser's own `<dialog>` with `showModal()` (like `ConfirmDialog`): labelled by its title, focus starts in the reason field, Tab stays inside, Esc closes it, focus goes back to the „Отхвърли“ button. The form inside is mounted only while the window is open, so every opening starts empty. |
 | `src/components/moderator/PendingReportsCard.tsx` | The hub card: one `GET …?status=pending`, then the count. |
-| `src/components/moderator/reportQueue.ts` | Pure helpers (unit-tested): `queueUrl`, `callDayText`, `repeatBadgeText`, `reviewedText`, `reportContext`, `rejectReasonError` (the same 3–200 rule as `ModerateSchema`), `pendingCountText`. |
+| `src/components/moderator/reportQueueHelpers.ts` | Pure helpers (unit-tested): `queueUrl`, `callDayText`, `repeatBadgeText`, `reviewedText`, `reportContext`, `rejectReasonError` (the same 3–200 rule as `ModerateSchema`), `pendingCountText`. |
 | `src/components/layout/accountLinks.ts` | `extraLinksFor("moderator")` → „Сигнали“ → `/moderator/reports`. |
 | `src/app/dev/moderator/reports/page.tsx` | The test preview (no guard, no data: the API answers 401 without a login). |
 
@@ -2841,3 +2841,5 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-10 · W3-04 moderation screen (Alex): new section 3.45 (`/moderator/reports`: tabs, one-click approve with a live message, reject window with a required reason and quick picks, count-only repeat-number badge, 409 message + reload; hub card „Сигнали за проверка“ with the pending count / „25+“; moderator header link „Сигнали“; preview `/dev/moderator/reports`); big picture, status row, 3.43 pointer; 673 unit tests, 121 e2e tests × 2 screens
 
 - 2026-11-11 · W3-08 first step (Roberta): each dashboard links to its own help page at the nested /pomosht route. The existing role layouts wrap those pages. RoleHelp renders Bulgarian instructions from bg.help and links back to the dashboard. Screenshots are pending.
+
+- 2026-11-11 · Report form and moderation queue helper filenames use a Helpers suffix so TypeScript can resolve the component and helper imports on case-insensitive Windows filesystems.

@@ -23,7 +23,13 @@ import type {
   ModerationStatus,
 } from "@/schemas/moderation";
 import { RejectDialog } from "./RejectDialog";
-import { callDayText, queueUrl, repeatBadgeText, reportContext, reviewedText } from "./reportQueue";
+import {
+  callDayText,
+  queueUrl,
+  repeatBadgeText,
+  reportContext,
+  reviewedText,
+} from "./reportQueueHelpers";
 
 const TABS: { status: ModerationStatus; label: string; empty: string }[] = [
   { status: "pending", label: bg.moderator.tabPending, empty: bg.moderator.emptyPending },

@@ -1398,7 +1398,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we wanted statistics of rejected reports by reason; then a reason code next to the text.
 
-### Repeat-number badge shows only the count (vs the number, vs a link to the other reports)  (status: in use (`repeatBadgeText()` in `src/components/moderator/reportQueue.ts`, W3-04 UI))
+### Repeat-number badge shows only the count (vs the number, vs a link to the other reports)  (status: in use (`repeatBadgeText()` in `src/components/moderator/reportQueueHelpers.ts`, W3-04 UI))
 
 **Used for:** a report whose caller number is also named by other reports gets a small badge „Още 3 сигнала от същия номер“. Nothing else about the number is shown.
 
@@ -2699,3 +2699,5 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-10 · W3-04 moderation screen (Alex): section 4 new entries "One-click „Одобри“ vs a confirmation window for „Отхвърли“" (vs confirming both, vs undo), "Quick-pick reject reasons + a required free-text reason" (vs free text only, vs a fixed list) and "Repeat-number badge shows only the count" (vs the number, vs a link)
 
 - 2026-11-11 · W3-08: nested help pages reuse the existing role layouts and one server-rendered guide component. Each role sees instructions for the controls it uses, and the steps remain readable without JavaScript.
+
+- 2026-11-11 · Report form and moderation queue helper filenames use a Helpers suffix so TypeScript can resolve the component and helper imports on case-insensitive Windows filesystems.

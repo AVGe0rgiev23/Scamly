@@ -11,7 +11,7 @@ import { callApi } from "@/components/family/api";
 import { fill } from "@/components/family/format";
 import { bg } from "@/i18n/bg";
 import type { ModerationPageDto } from "@/schemas/moderation";
-import { pendingCountText, queueUrl } from "./reportQueue";
+import { pendingCountText, queueUrl } from "./reportQueueHelpers";
 
 // null = still loading or the count could not be read (the link still works).
 type Count = { text: string; none: boolean } | null;
