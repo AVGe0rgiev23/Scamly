@@ -38,7 +38,7 @@ Scamly helps older people in Bulgaria check a suspicious phone call in 30 second
 - If the person hasn't said who they are, ask: "Alex or Roberta?"
 - Check the git author (in this repo only):
   - **Alex (cloud session):** run `git config user.name "Alex Georgiev"` and `git config user.email "controx9@gmail.com"`.
-  - **Roberta (her computer):** her own local git config is used. Check that `git config user.name` prints `Roberta Hristova` before the first commit. Don't change her config; if it's wrong or empty, stop and ask her.
+  - **Roberta (her computer):** her own local git config is used. Check that `git config user.name` prints `RFHristova23` before the first commit. Don't change her config; if it's wrong or empty, stop and ask her.
 - Run `git pull origin main`.
 - Show the next tasks for that person from the status board (`docs/IMPLEMENTATION_PLAN.md` section 5).
 

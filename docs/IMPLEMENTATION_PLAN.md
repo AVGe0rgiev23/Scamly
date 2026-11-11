@@ -159,7 +159,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ✅ manifest + own icons, „Инсталирай Scamly“ card (Android + iPhone steps), offline card on failed page loads; `pwa.spec.ts` 7 × 2 · ⬜ real install + push on a phone (iPhone: needs this manifest) |
 | W2-10 | ✂ Voice input | Alex (D23) | ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
 | W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
-| W2-12 | `docs/learning/week-2.md` | Alex + Roberta | ⬜ |
+| W2-12 | `docs/learning/week-2.md` | Alex + Roberta | Roberta's screens and PWA notes written · Alex's Realtime, push and e-mail notes pending |
 | W2-13 | Site layout + home page (D22) | Roberta | ✅ 5 Nov: header + logo + nav, compact theme switch, footer, home page with the 3 steps, e2e |
 | W2-14 | `/pokana` invite page (D23) | Roberta | ✅ 6 Nov · token sent at once, removed from the address, `no-referrer`; safe `next` after login; `invite.spec.ts` · live redeem with two real accounts pending |
 
@@ -177,6 +177,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W3-08 | Role-specific help pages | ✅ (Roberta) · Bulgarian text guides, dashboard links and screenshots for all four roles |
 | W3-09 | Escalation to the next trusted contact after two minutes without acknowledgement, then 112 advice if in immediate danger | ✅ code (Roberta, 11 Nov) · database and browser checks pass locally · production migration, Cron setup and live check pending |
 | W3-10 | Printable A5 fridge card with large Bulgarian instructions and pairing QR | ✅ (Roberta, 11 Nov) · one A5 portrait page verified in Edge |
+| W3-11 | `docs/learning/week-3.md` | Roberta's notes written · Alex's section pending |
 | W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |
 
