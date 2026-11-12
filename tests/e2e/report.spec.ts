@@ -171,7 +171,7 @@ test("no sideways scrolling at 360 px, and big tap targets", async ({ page }) =>
   await page.goto("/signal");
   expect(await noSidewaysScroll(page)).toBe(true);
   for (const name of Object.values(bg.reportForm.scriptOptions)) {
-    const choice = page.locator("label.choice", { hasText: name });
+    const choice = page.locator("fieldset label", { hasText: name });
     expect((await choice.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(48);
   }
   const submit = page.getByRole("button", { name: bg.reportForm.submit });
