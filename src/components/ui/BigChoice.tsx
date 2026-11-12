@@ -1,17 +1,20 @@
-// A big multiple-choice question (yes / no by default, or any list of answers).
-// Native radios provide keyboard navigation and an accessible question: the screen
-// reader says the question (legend), each answer and which one is chosen.
+// A multiple-choice question as large tiles (yes / no by default, or any list of
+// answers). Native radios underneath give keyboard navigation and an accessible
+// question: the screen reader says the question (legend), each answer and which one
+// is chosen. The chosen tile gets the accent frame AND a filled dot, never colour
+// alone.
 "use client";
 
-import { useId, useRef } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { bg } from "@/i18n/bg";
+import { cn } from "./cn";
 
-// One answer: the value we store, the words on screen and an optional picture
-// (an emoji, hidden from screen readers). Like a small Python dataclass.
+// One answer: the value we store, the words on screen and an optional small drawing
+// (an icon component, hidden from screen readers). Like a small Python dataclass.
 export type ChoiceOption = {
   value: string;
   label: string;
-  icon?: string;
+  icon?: ReactNode;
 };
 
 const YES_NO: ChoiceOption[] = [
@@ -60,21 +63,26 @@ export function BigChoice({
     pressedByPointer.current = false;
   }
 
+  const large = size === "large";
   return (
     <fieldset
-      className={`big-choice big-choice-${size}`}
+      className="min-w-0 border-0 p-0"
       disabled={disabled}
       aria-describedby={describedBy}
       onKeyDown={() => {
         pressedByPointer.current = false;
       }}
     >
-      <legend className={hideQuestion ? "sr-only" : undefined}>{question}</legend>
-      <div className="choice-options">
+      <legend className={hideQuestion ? "sr-only" : "mb-3 font-semibold text-fg"}>{question}</legend>
+      <div className={cn("grid gap-3", large ? "grid-cols-1" : "grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]")}>
         {options.map((option) => (
           <label
-            className="choice"
             key={option.value}
+            className={cn(
+              "pressable relative flex cursor-pointer items-center gap-4 rounded-md border border-line-strong bg-surface-1 font-semibold text-fg",
+              "hover:bg-surface-2 has-checked:border-accent has-checked:bg-accent-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-3 has-focus-visible:outline-ring has-disabled:cursor-not-allowed has-disabled:text-fg-subtle",
+              large ? "min-h-[4.5rem] px-5 py-3 text-xl" : "min-h-14 px-4 py-2 text-base",
+            )}
             onPointerDown={() => {
               pressedByPointer.current = true;
             }}
@@ -86,13 +94,21 @@ export function BigChoice({
               checked={value === option.value}
               onChange={() => onChange(option.value)}
               onClick={() => handleClick(option.value)}
+              className="peer sr-only"
             />
+            {/* Our own radio mark: a ring, with a dot when chosen. */}
+            <span
+              aria-hidden="true"
+              className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-line-strong peer-checked:border-accent peer-checked:[&>span]:scale-100"
+            >
+              <span className="block size-3 scale-0 rounded-full bg-accent transition-transform duration-150 ease-out" />
+            </span>
             {option.icon === undefined ? null : (
-              <span className="choice-icon" aria-hidden="true">
+              <span aria-hidden="true" className="shrink-0 text-fg-muted [&>svg]:size-[1.4em]">
                 {option.icon}
               </span>
             )}
-            <span>{option.label}</span>
+            <span className="min-w-0">{option.label}</span>
           </label>
         ))}
       </div>

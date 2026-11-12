@@ -42,18 +42,27 @@ type HeaderAccount = { role: AppRole; displayName: string };
 
 export function SiteHeader() {
   return (
-    <header className="site-header">
-      <div className="site-header-inner">
-        <Link href={ROUTES.home} className="site-logo">
+    <header className="sticky top-0 z-(--z-index-header) border-b border-line bg-canvas print:hidden">
+      {/* On a phone the menu gets its own row under the logo; nothing is hidden behind
+          a "hamburger" button, because older people do not look for hidden menus. */}
+      <div className="shell flex flex-wrap items-center gap-x-6 md:min-h-16 md:flex-nowrap">
+        <Link
+          href={ROUTES.home}
+          className="flex min-h-14 items-center gap-2.5 font-display text-xl font-bold tracking-tight text-fg no-underline"
+        >
           <LogoMark />
           <span>{bg.app.name}</span>
           {/* sr-only: hidden on screen, read by screen readers. */}
           <span className="sr-only">, {bg.layout.homeLink}</span>
         </Link>
-        <Suspense fallback={<SiteNav account={null} />}>
-          <AccountNav />
-        </Suspense>
-        <ThemeToggle />
+        <div className="order-last w-full min-w-0 md:order-none md:w-auto md:flex-1">
+          <Suspense fallback={<SiteNav account={null} />}>
+            <AccountNav />
+          </Suspense>
+        </div>
+        <div className="ml-auto">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
@@ -84,38 +93,48 @@ async function readHeaderAccount(): Promise<HeaderAccount | null> {
   }
 }
 
+// One menu link: at least 48 px high, with an underline that marks hover.
+const NAV_LINK =
+  "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg md:text-base";
+const NAV_LIST = "-mx-2.5 flex items-center overflow-x-auto md:mx-0 md:justify-end md:gap-1";
+
 // The menu itself: guest links, or the logged-in person's area link, name and logout.
 function SiteNav({ account }: { account: HeaderAccount | null }) {
   if (account === null) {
     return (
-      <nav aria-label={bg.layout.navLabel} className="site-nav">
-        <ul>
+      <nav aria-label={bg.layout.navLabel}>
+        <ul className={NAV_LIST}>
           {GUEST_LINKS.map((link) => (
             <li key={link.href}>
-              <Link href={link.href}>{link.label}</Link>
+              <Link href={link.href} className={NAV_LINK}>
+                {link.label}
+              </Link>
             </li>
           ))}
         </ul>
       </nav>
     );
   }
-
   const area = accountLinkFor(account.role);
   return (
-    <nav aria-label={bg.layout.navLabel} className="site-nav">
-      <ul>
+    <nav aria-label={bg.layout.navLabel}>
+      <ul className={NAV_LIST}>
         <li>
-          <Link href={area.href}>{area.label}</Link>
+          <Link href={area.href} className={NAV_LINK}>
+            {area.label}
+          </Link>
         </li>
         {extraLinksFor(account.role).map((link) => (
           <li key={link.href}>
-            <Link href={link.href}>{link.label}</Link>
+            <Link href={link.href} className={NAV_LINK}>
+              {link.label}
+            </Link>
           </li>
         ))}
-        <li className="site-user">
+        <li className="ml-auto flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm text-fg-muted md:ml-4">
           {/* On a phone „Влезли сте като“ is only read aloud, to save space. */}
-          <span className="site-user-prefix">{bg.layout.signedInAs} </span>
-          <strong>{account.displayName}</strong>
+          <span className="max-md:sr-only">{bg.layout.signedInAs}&nbsp;</span>
+          <strong className="font-semibold text-fg">{account.displayName}</strong>
         </li>
         {showsLogout(account.role) ? (
           <li>

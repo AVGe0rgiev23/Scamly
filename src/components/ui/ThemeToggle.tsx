@@ -1,113 +1,86 @@
-// Compact theme switch in the site header: three small picture buttons for
-// „Според устройството“, light and dark (a "segmented control").
-// Remembers the chosen theme; system mode continues following the device setting.
+// The theme switch in the header: three small picture buttons (device, light, dark).
+// Native radio buttons, so the arrow keys move between them. The choice is saved in
+// the browser (localStorage) and put on <html data-theme="…">; globals.css picks the
+// colours from that attribute. A tiny script in the root layout applies the saved
+// choice before the first paint, so the page never flashes in the wrong theme.
 "use client";
 
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { bg } from "@/i18n/bg";
 
 type Theme = "system" | "light" | "dark";
 
-// The three choices, in the order they are shown. Each label is read aloud by screen
-// readers and shown as a tooltip; on screen there is only the small picture.
-const OPTIONS: { value: Theme; label: string }[] = [
-  { value: "system", label: bg.theme.system },
-  { value: "light", label: bg.theme.light },
-  { value: "dark", label: bg.theme.dark },
+export const THEME_STORAGE_KEY = "scamly-theme";
+
+const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
+  { value: "system", label: bg.theme.system, Icon: Monitor },
+  { value: "light", label: bg.theme.light, Icon: Sun },
+  { value: "dark", label: bg.theme.dark, Icon: Moon },
 ];
 
-// Our own small line pictures (inline SVG, no image files): a screen for "device",
-// a sun for light and a moon for dark. They take the text colour (currentColor).
-function ThemeIcon({ theme }: { theme: Theme }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {theme === "system" ? (
-        <>
-          <rect x="3" y="4" width="18" height="12" rx="2" />
-          <path d="M8 20h8M12 16v4" />
-        </>
-      ) : null}
-      {theme === "light" ? (
-        <>
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-        </>
-      ) : null}
-      {theme === "dark" ? <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /> : null}
-    </svg>
-  );
-}
-
-// Applies and remembers a choice. Only called after a click, never while the page renders.
 function changeTheme(value: Theme) {
   document.documentElement.dataset.theme = value;
   try {
-    localStorage.setItem("scamly-theme", value);
+    localStorage.setItem(THEME_STORAGE_KEY, value);
   } catch {
-    // Keep the current choice usable even when it cannot be remembered.
+    // Private browsing may block storage: the theme still changes for this page.
   }
 }
 
 export function ThemeToggle() {
-  // useId gives unique ids for the radio group's name and its label.
   const name = useId();
   const labelId = useId();
   const group = useRef<HTMLDivElement>(null);
 
+  // After the page loads: tick the radio of the saved theme, and listen for changes.
   useEffect(() => {
     const radios = group.current;
     if (!radios) return;
     try {
-      const saved = localStorage.getItem("scamly-theme");
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
       if (saved === "light" || saved === "dark" || saved === "system") {
         document.documentElement.dataset.theme = saved;
-        // Tick the saved choice after hydration (the page HTML always starts on "system").
         const input = radios.querySelector<HTMLInputElement>(`input[value="${saved}"]`);
         if (input) input.checked = true;
       }
     } catch {
-      // The system theme still works when browser storage is unavailable.
+      // No storage: stay on "system".
     }
-    // We listen to the browser's own "change" event (like registering a Python callback).
-    // React's onChange would miss a click here: it doesn't know that we ticked the saved
-    // choice above, so it would think the other radio button was still selected.
     function onChange(event: Event) {
       const input = event.target as HTMLInputElement;
       changeTheme(input.value as Theme);
     }
     radios.addEventListener("change", onChange);
-    // Clean-up when the component disappears, so the listener is not added twice.
     return () => radios.removeEventListener("change", onChange);
   }, []);
 
   return (
-    <div className="theme-control">
-      {/* On a phone this label is hidden on screen (but still read aloud) to save space. */}
-      <span id={labelId} className="theme-label">
+    <div className="flex shrink-0 items-center">
+      <span id={labelId} className="sr-only">
         {bg.theme.label}
       </span>
-      {/* Native radio buttons: arrow keys move between the choices, like in BigChoice. */}
-      <div role="radiogroup" aria-labelledby={labelId} className="theme-options" ref={group}>
-        {OPTIONS.map((option) => (
-          <label key={option.value} className="theme-option" title={option.label}>
+      <div
+        role="radiogroup"
+        aria-labelledby={labelId}
+        ref={group}
+        className="flex rounded-md border border-line bg-surface-1 p-0.5"
+      >
+        {OPTIONS.map(({ value, label, Icon }) => (
+          <label
+            key={value}
+            title={label}
+            className="relative flex size-11 cursor-pointer items-center justify-center rounded-sm text-fg-subtle hover:text-fg has-checked:bg-surface-3 has-checked:text-fg has-focus-visible:outline-2 has-focus-visible:outline-ring"
+          >
             <input
               type="radio"
               name={name}
-              value={option.value}
-              defaultChecked={option.value === "system"}
+              value={value}
+              defaultChecked={value === "system"}
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
-            <ThemeIcon theme={option.value} />
-            <span className="sr-only">{option.label}</span>
+            <Icon className="size-5" aria-hidden="true" />
+            <span className="sr-only">{label}</span>
           </label>
         ))}
       </div>

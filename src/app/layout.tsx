@@ -9,6 +9,8 @@ import { bg } from "@/i18n/bg";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { RegisterServiceWorker } from "@/components/pwa/RegisterServiceWorker";
+import { Toaster } from "@/components/ui/Toast";
+import { jetbrains, sofia, sofiaCondensed } from "./fonts";
 import "./globals.css";
 
 // Title and description shown in the browser tab and in search results.
@@ -40,23 +42,41 @@ export const viewport: Viewport = {
   ],
 };
 
+// Runs before the first paint: puts the saved theme on <html>, so a person who chose
+// the light theme never sees a dark flash (and the other way round). Plain text,
+// no user data. The same key as in src/components/ui/ThemeToggle.tsx.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("scamly-theme");if(t==="light"||t==="dark"||t==="system")document.documentElement.dataset.theme=t}catch(e){}`;
+
 // `{ children }: { children: ReactNode }` means: this function receives one argument,
 // an object with a `children` field (the page to show), like a Python keyword argument.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="bg" className="h-full antialiased">
-      <body className="flex min-h-full flex-col font-sans">
+    // suppressHydrationWarning: the theme script above changes data-theme before
+    // React starts, which is expected.
+    <html
+      lang="bg"
+      className={`h-full antialiased ${sofia.variable} ${sofiaCondensed.variable} ${jetbrains.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
+      <body className="flex min-h-full flex-col">
         {/* The first thing a keyboard user reaches: jumps over the menu to the page. */}
-        <a href="#content" className="skip-link">
+        <a
+          href="#content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-(--z-index-toast) focus:rounded-md focus:bg-accent focus:px-4 focus:py-3 focus:font-semibold focus:text-on-accent"
+        >
           {bg.layout.skipToContent}
         </a>
         <SiteHeader />
         {/* The page itself. It grows to fill the screen, so a short page still has
             the footer at the bottom. tabIndex={-1} lets the skip link move focus here. */}
-        <div id="content" tabIndex={-1} className="site-content">
+        <div id="content" tabIndex={-1} className="flex flex-1 flex-col">
           {children}
         </div>
         <SiteFooter />
+        <Toaster />
         {/* The service worker: push alerts and the offline card (W2-09). */}
         <RegisterServiceWorker />
       </body>

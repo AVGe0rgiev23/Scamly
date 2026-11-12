@@ -1,22 +1,27 @@
 // A small verdict label for lists (e.g. the family's check history): the same
-// colours and symbols as <Verdict />, plus a short word, so the level is never
-// shown by colour alone. `null` = the check was started but not answered yet.
-import { bg } from "@/i18n/bg";
-import { VERDICT_SYMBOLS } from "./Verdict";
+// colours as <Verdict />, with an icon and a short word, so the level is never shown
+// by colour alone. `null` = the check was started but not answered yet.
 
-export function VerdictBadge({ level }: { level: "red" | "yellow" | "green" | null }) {
+import { Clock } from "lucide-react";
+import { bg } from "@/i18n/bg";
+import { StatusPill } from "./Badge";
+import { LEVEL_STATUS, type VerdictLevel } from "./Verdict";
+
+export function VerdictBadge({ level }: { level: VerdictLevel | null }) {
   if (level === null) {
     return (
-      <span className="verdict-badge verdict-pending">
-        <span aria-hidden="true">…</span>
+      <StatusPill
+        status="neutral"
+        className="verdict-badge"
+        icon={<Clock className="size-[1.15em] shrink-0" aria-hidden="true" />}
+      >
         {bg.verdictBadge.pending}
-      </span>
+      </StatusPill>
     );
   }
   return (
-    <span className={`verdict-badge verdict verdict-${level}`}>
-      <span aria-hidden="true">{VERDICT_SYMBOLS[level]}</span>
+    <StatusPill status={LEVEL_STATUS[level]} className="verdict-badge" data-level={level}>
       {bg.verdictBadge[level]}
-    </span>
+    </StatusPill>
   );
 }
