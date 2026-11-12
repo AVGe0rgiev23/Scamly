@@ -41,14 +41,17 @@ type ErrorStateProps = {
 export function ErrorState({ text, retryLabel, onRetry, className }: ErrorStateProps) {
   return (
     <div
-      role="alert"
       className={cn(
         "rounded-lg border border-danger-line bg-danger-bg px-5 py-6 md:px-8",
         className,
       )}
     >
       <SignalLine state="alert" className="mb-4 h-6 max-w-40" />
-      <p className="max-w-[60ch] text-fg">{text}</p>
+      {/* Only the message is the alert, so a screen reader does not read the button
+          text as part of it. */}
+      <p role="alert" className="max-w-[60ch] text-fg">
+        {text}
+      </p>
       {onRetry === undefined || retryLabel === undefined ? null : (
         <Button variant="secondary" className="mt-4" onClick={onRetry}>
           {retryLabel}

@@ -1,19 +1,26 @@
 // The moderator's report queue (/moderator/reports, W3-04 UI): tabs „Чакащи“,
-// „Одобрени“ and „Отхвърлени“, one card per public report, „Покажи още“ for the next
-// page, and on a pending card „Одобри“ (one click) and „Отхвърли“ (a window with a
-// required reason).
+// „Одобрени“ and „Отхвърлени“ (ui/Tabs), one hairline-separated row per public report,
+// „Покажи още“ for the next page, and on a pending row „Одобри“ (one click) and
+// „Отхвърли“ (a window with a required reason).
 //
 // A Client Component: everything comes from our API (/api/moderation/reports), which
 // checks the role on every request; RLS checks every row again. The caller's number
 // never reaches the browser: only how many OTHER reports name the same number.
-// The tabs follow the WAI-ARIA "tabs" pattern, like the admin panel (AdminHub).
+// The tabs follow the WAI-ARIA "tabs" pattern (ui/Tabs handles the arrow keys).
 "use client";
 
+import { ArrowLeft, Check, Repeat, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { districtName, fill } from "@/components/family/format";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
+import { Notice as NoticeBox } from "@/components/ui/Notice";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/States";
+import { Tabs } from "@/components/ui/Tabs";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import type {
@@ -22,6 +29,7 @@ import type {
   ModerationReportDto,
   ModerationStatus,
 } from "@/schemas/moderation";
+import { BACK_LINK } from "./ModeratorFrame";
 import { RejectDialog } from "./RejectDialog";
 import {
   callDayText,
@@ -56,7 +64,6 @@ export function ReportQueue() {
   const [rejecting, setRejecting] = useState<ModerationReportDto | null>(null);
   const [rejectPending, setRejectPending] = useState(false);
   const [rejectError, setRejectError] = useState<string | null>(null);
-  const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const panel = useRef<HTMLElement>(null);
   // A new number = move the focus to the list. In an effect, so it runs after the
   // reject window has closed (a child's effects run before its parent's).
@@ -95,23 +102,6 @@ export function ReportQueue() {
     if (next === status) return;
     setNotice(null);
     reload(next);
-  }
-
-  // Arrow keys move the selection (and the focus) to the next / previous tab.
-  function onTabKey(event: KeyboardEvent<HTMLDivElement>) {
-    const index = TABS.findIndex((tab) => tab.status === status);
-    let next = index;
-    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
-    else if (event.key === "ArrowLeft") next = (index - 1 + TABS.length) % TABS.length;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = TABS.length - 1;
-    else return;
-    event.preventDefault();
-    const tab = TABS[next];
-    if (tab !== undefined) {
-      selectTab(tab.status);
-      tabButtons.current[next]?.focus();
-    }
   }
 
   async function loadMore() {
@@ -196,52 +186,36 @@ export function ReportQueue() {
 
   return (
     <>
-      <header className="family-heading">
-        <Link href={ROUTES.moderator} className="family-back">
-          {bg.moderator.backToHub}
-        </Link>
-        <h1>{bg.moderator.reportsTitle}</h1>
-        <p className="muted">{bg.moderator.reportsIntro}</p>
+      <Link href={ROUTES.moderator} className={BACK_LINK}>
+        <ArrowLeft className="size-5" aria-hidden="true" />
+        {bg.moderator.backToHub}
+      </Link>
+      <header className="mb-10 max-w-[60ch]">
+        <h1 className="text-h1">{bg.moderator.reportsTitle}</h1>
+        <p className="mt-4 text-lg text-fg-muted">{bg.moderator.reportsIntro}</p>
       </header>
 
-      <div
-        role="tablist"
-        aria-label={bg.moderator.reportsTabsLabel}
-        className="admin-tabs"
-        onKeyDown={onTabKey}
-      >
-        {TABS.map((item, index) => (
-          <button
-            key={item.status}
-            ref={(element) => {
-              tabButtons.current[index] = element;
-            }}
-            type="button"
-            role="tab"
-            id={`${tabIds}-tab-${item.status}`}
-            aria-controls={`${tabIds}-panel`}
-            aria-selected={status === item.status}
-            tabIndex={status === item.status ? 0 : -1}
-            className="admin-tab"
-            onClick={() => selectTab(item.status)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label={bg.moderator.reportsTabsLabel}
+        tabs={TABS.map((item) => ({ id: item.status, label: item.label }))}
+        value={status}
+        onChange={selectTab}
+        tabId={(id) => `${tabIds}-tab-${id}`}
+        panelId={() => `${tabIds}-panel`}
+      />
 
       {/* Always in the page, so screen readers hear every new message. */}
-      <p
-        role="status"
-        aria-live="polite"
-        className={notice?.kind === "success" ? "form-message form-message-success" : "sr-only"}
-      >
-        {notice?.kind === "success" ? notice.text : ""}
-      </p>
+      <div role="status" aria-live="polite" className={notice?.kind === "success" ? "mt-6" : ""}>
+        {notice?.kind === "success" ? (
+          <NoticeBox status="safe" className="appear">
+            {notice.text}
+          </NoticeBox>
+        ) : null}
+      </div>
       {notice?.kind === "error" ? (
-        <p role="alert" className="form-message form-message-error">
+        <NoticeBox status="danger" role="alert" className="appear mt-6">
           {notice.text}
-        </p>
+        </NoticeBox>
       ) : null}
 
       <section
@@ -250,7 +224,7 @@ export function ReportQueue() {
         id={`${tabIds}-panel`}
         aria-labelledby={`${tabIds}-tab-${status}`}
         tabIndex={-1}
-        className="admin-panel mod-queue"
+        className="mt-2"
       >
         <QueueRows
           state={state}
@@ -266,13 +240,18 @@ export function ReportQueue() {
           onRetry={() => reload(status)}
         />
         {state.kind === "ready" && state.nextCursor !== null ? (
-          <div className="admin-more">
+          <div className="mt-6 flex flex-col items-start gap-3">
             {moreError ? (
-              <p role="alert" className="form-message form-message-error">
+              <NoticeBox status="danger" role="alert">
                 {moreError}
-              </p>
+              </NoticeBox>
             ) : null}
-            <Button variant="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
+            <Button
+              variant="secondary"
+              loading={loadingMore}
+              disabled={loadingMore}
+              onClick={() => void loadMore()}
+            >
               {loadingMore ? bg.admin.loadingMore : bg.admin.showMore}
             </Button>
           </div>
@@ -303,28 +282,24 @@ function QueueRows(props: {
   const { state } = props;
   if (state.kind === "loading") {
     return (
-      <p role="status" className="muted">
-        {bg.moderator.reportsLoading}
-      </p>
+      <>
+        <p role="status" className="sr-only">
+          {bg.moderator.reportsLoading}
+        </p>
+        <SkeletonList rows={3} />
+      </>
     );
   }
   if (state.kind === "error") {
     return (
-      <div className="family-error">
-        <p role="alert" className="form-message form-message-error">
-          {state.message}
-        </p>
-        <Button variant="secondary" onClick={props.onRetry}>
-          {bg.moderator.retry}
-        </Button>
-      </div>
+      <ErrorState text={state.message} retryLabel={bg.moderator.retry} onRetry={props.onRetry} />
     );
   }
   if (state.reports.length === 0) {
-    return <p className="card">{props.empty}</p>;
+    return <EmptyState text={props.empty} />;
   }
   return (
-    <ul className="person-list">
+    <ul>
       {state.reports.map((report) => (
         <ReportCard
           key={report.id}
@@ -339,6 +314,8 @@ function QueueRows(props: {
   );
 }
 
+// One report: a row between hairlines. Left: the type of scheme, where and when, the
+// text and the badges; right (below on a phone): the two decisions.
 function ReportCard(props: {
   report: ModerationReportDto;
   approving: boolean;
@@ -351,30 +328,56 @@ function ReportCard(props: {
   const reviewed = reviewedText(report);
   const context = reportContext(report);
   return (
-    <li className="card mod-report">
-      <h2>{bg.scripts.typeNames[report.scriptType]}</h2>
-      <p className="mod-report-meta">
-        <span>
-          {fill(bg.moderator.reportDistrict, { district: districtName(report.districtCode) })}
-        </span>
-        <span>{callDayText(report.occurredOn)}</span>
-      </p>
-      {/* Plain text: React escapes it, so a report can never add HTML to the page. */}
-      <p className="mod-report-text">{report.description ?? bg.moderator.reportNoDescription}</p>
-      {repeat !== null ? <p className="mod-status mod-repeat">{repeat}</p> : null}
-      {reviewed !== null ? <p className="muted">{reviewed}</p> : null}
-      {report.status === "rejected" && report.rejectReason !== null ? (
-        <p className="mod-report-reason">
-          {fill(bg.moderator.rejectReasonShown, { reason: report.rejectReason })}
+    <li className="flex flex-col gap-4 border-b border-line py-6 md:flex-row md:items-start md:gap-8">
+      <div className="min-w-0 flex-1">
+        <h2 className="text-lg font-semibold">{bg.scripts.typeNames[report.scriptType]}</h2>
+        <p className="tabular mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-sm text-fg-muted">
+          <span>
+            {fill(bg.moderator.reportDistrict, { district: districtName(report.districtCode) })}
+          </span>
+          <span>{callDayText(report.occurredOn)}</span>
         </p>
-      ) : null}
+        {/* Plain text: React escapes it, so a report can never add HTML to the page. */}
+        <p
+          className={cn(
+            "mt-3 max-w-[65ch] break-words",
+            report.description === null && "text-fg-subtle",
+          )}
+        >
+          {report.description ?? bg.moderator.reportNoDescription}
+        </p>
+        {repeat !== null ? (
+          <p className="mt-3">
+            <Badge status="caution">
+              <Repeat className="size-4" aria-hidden="true" />
+              {repeat}
+            </Badge>
+          </p>
+        ) : null}
+        {reviewed !== null ? (
+          <p className="tabular mt-3 text-sm text-fg-subtle">{reviewed}</p>
+        ) : null}
+        {report.status === "rejected" && report.rejectReason !== null ? (
+          <p className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-fg-muted">
+            {fill(bg.moderator.rejectReasonShown, { reason: report.rejectReason })}
+          </p>
+        ) : null}
+      </div>
       {report.status === "pending" ? (
-        <div className="mod-report-actions">
-          <Button disabled={props.busy} onClick={props.onApprove}>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={props.approving}
+            disabled={props.busy}
+            onClick={props.onApprove}
+          >
+            {props.approving ? null : <Check className="size-5" aria-hidden="true" />}
             {props.approving ? bg.moderator.approving : bg.moderator.approve}
             <span className="sr-only">: {context}</span>
           </Button>
-          <Button variant="danger" disabled={props.busy} onClick={props.onReject}>
+          <Button variant="ghost" size="sm" disabled={props.busy} onClick={props.onReject}>
+            <X className="size-5" aria-hidden="true" />
             {bg.moderator.reject}
             <span className="sr-only">: {context}</span>
           </Button>

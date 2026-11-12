@@ -2,14 +2,24 @@
 // and change a role after a confirmation window. Phones of protected persons are not
 // in the list (the API leaves them out). The admin's own row has no role select: the
 // API refuses a change of one's own role anyway (409), the page only says so earlier.
+// Looks: a search row (Field + role Select), then hairline-separated rows that line up
+// in columns on a wide screen and stack on a phone. The list keeps role="list" (the
+// tests and screen readers count the profiles as list items).
 // A Client Component: every request goes to /api/admin/users, which checks the role.
 "use client";
 
+import { Search } from "lucide-react";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { callApi } from "@/components/family/api";
 import { fill, formatDateTime } from "@/components/family/format";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { cn } from "@/components/ui/cn";
+import { ConfirmDialog } from "@/components/ui/Dialog";
+import { Field, Input, Select } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/States";
 import { bg } from "@/i18n/bg";
 import {
   ASSIGNABLE_ROLES,
@@ -121,14 +131,25 @@ export function UsersPanel() {
   }
 
   return (
-    <div className="admin-section">
-      <h2>{bg.admin.usersTitle}</h2>
-      <p className="muted">{bg.admin.usersIntro}</p>
+    <div>
+      <header className="mb-8 max-w-[60ch]">
+        <h2 className="text-h3">{bg.admin.usersTitle}</h2>
+        <p className="mt-2 text-fg-muted">{bg.admin.usersIntro}</p>
+      </header>
 
-      <form className="admin-filter" role="search" onSubmit={onSearch}>
-        <div className="form-field admin-filter-q">
-          <label htmlFor={ids.search}>{bg.admin.searchLabel}</label>
-          <input
+      <form
+        className="mb-6 grid gap-4 md:grid-cols-12 md:items-start"
+        role="search"
+        onSubmit={onSearch}
+      >
+        <Field
+          label={bg.admin.searchLabel}
+          htmlFor={ids.search}
+          hint={bg.admin.searchHint}
+          hintId={ids.searchHint}
+          className="md:col-span-6"
+        >
+          <Input
             id={ids.search}
             type="search"
             value={typed.q}
@@ -136,13 +157,9 @@ export function UsersPanel() {
             aria-describedby={ids.searchHint}
             onChange={(event) => setTyped({ ...typed, q: event.target.value })}
           />
-          <p id={ids.searchHint} className="muted">
-            {bg.admin.searchHint}
-          </p>
-        </div>
-        <div className="form-field">
-          <label htmlFor={ids.role}>{bg.admin.roleFilterLabel}</label>
-          <select
+        </Field>
+        <Field label={bg.admin.roleFilterLabel} htmlFor={ids.role} className="md:col-span-4">
+          <Select
             id={ids.role}
             value={typed.role}
             onChange={(event) =>
@@ -155,16 +172,22 @@ export function UsersPanel() {
                 {bg.admin.roleNames[role]}
               </option>
             ))}
-          </select>
-        </div>
-        <Button type="submit" className="admin-filter-submit">
+          </Select>
+        </Field>
+        {/* Lined up with the fields (under their labels) on a wide screen. */}
+        <Button type="submit" variant="secondary" className="self-start md:col-span-2 md:mt-8">
+          <Search className="size-5" aria-hidden="true" />
           {bg.admin.search}
         </Button>
       </form>
 
-      <p role="status" className={notice === "" ? "sr-only" : "form-message form-message-success"}>
-        {notice}
-      </p>
+      <div role="status">
+        {notice === "" ? null : (
+          <Notice status="safe" className="appear mb-6">
+            {notice}
+          </Notice>
+        )}
+      </div>
 
       <UserRows
         state={state}
@@ -180,13 +203,18 @@ export function UsersPanel() {
       />
 
       {state.kind === "ready" && state.nextCursor !== null ? (
-        <div className="admin-more">
+        <div className="mt-6 flex flex-col items-start gap-3">
           {moreError ? (
-            <p role="alert" className="form-message form-message-error">
+            <Notice status="danger" role="alert">
               {moreError}
-            </p>
+            </Notice>
           ) : null}
-          <Button variant="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
+          <Button
+            variant="secondary"
+            loading={loadingMore}
+            disabled={loadingMore}
+            onClick={() => void loadMore()}
+          >
             {loadingMore ? bg.admin.loadingMore : bg.admin.showMore}
           </Button>
         </div>
@@ -210,6 +238,7 @@ export function UsersPanel() {
         pending={saving}
         error={dialogError}
         onConfirm={() => void confirmChange()}
+        tone="primary"
         onCancel={() => setPending(null)}
       />
     </div>
@@ -227,17 +256,22 @@ function UserRows({
 }) {
   if (state.kind === "loading") {
     return (
-      <p role="status" className="muted">
-        {bg.admin.loading}
-      </p>
+      <>
+        <p role="status" className="sr-only">
+          {bg.admin.loading}
+        </p>
+        <SkeletonList rows={3} className="border-t border-line" />
+      </>
     );
   }
   if (state.kind === "error") {
+    // Not ui/ErrorState: its role="alert" box also holds the retry button, and here the
+    // alert must read only the API's message (the e2e test checks the exact text).
     return (
-      <div className="family-error">
-        <p role="alert" className="form-message form-message-error">
+      <div className="flex flex-col items-start gap-4">
+        <Notice status="danger" role="alert">
           {state.message}
-        </p>
+        </Notice>
         <Button variant="secondary" onClick={onRetry}>
           {bg.admin.retry}
         </Button>
@@ -245,10 +279,10 @@ function UserRows({
     );
   }
   if (state.users.length === 0) {
-    return <p className="card">{bg.admin.usersEmpty}</p>;
+    return <EmptyState text={bg.admin.usersEmpty} />;
   }
   return (
-    <ul className="person-list admin-users" aria-label={bg.admin.usersTitle}>
+    <ul className="border-t border-line" aria-label={bg.admin.usersTitle}>
       {state.users.map((user) => (
         <UserRow key={user.id} user={user} onPickRole={onPickRole} />
       ))}
@@ -256,6 +290,9 @@ function UserRows({
   );
 }
 
+// One profile: a row between hairlines. On a wide screen the name (with the date under
+// it) and the e-mail sit in columns like a table, with the role select on the right;
+// on a phone they stack.
 function UserRow({
   user,
   onPickRole,
@@ -266,23 +303,30 @@ function UserRow({
   const selectId = useId();
   const noteId = useId();
   return (
-    <li className="card admin-user">
-      <div className="admin-user-who">
-        <h3>
+    <li className="grid gap-4 border-b border-line py-5 md:grid-cols-12 md:items-center md:gap-6">
+      <div className="min-w-0 md:col-span-4">
+        <h3 className="flex flex-wrap items-center gap-2 text-base font-semibold">
           {user.displayName}
-          {user.isSelf ? <span className="mod-badge admin-you">{bg.admin.youBadge}</span> : null}
+          {user.isSelf ? <Badge status="info">{bg.admin.youBadge}</Badge> : null}
         </h3>
-        <p className="admin-user-email">{user.email ?? bg.admin.noEmail}</p>
-        <p className="muted">
+        <p className="tabular mt-1 font-mono text-xs text-fg-subtle">
           {fill(bg.admin.createdOn, { date: formatDateTime(user.createdAt) })}
         </p>
       </div>
-      <div className="form-field admin-user-role">
-        <label htmlFor={selectId}>
+      <p
+        className={cn(
+          "min-w-0 break-all md:col-span-5",
+          user.email === null ? "text-fg-subtle" : "text-fg-muted",
+        )}
+      >
+        {user.email ?? bg.admin.noEmail}
+      </p>
+      <div className="flex flex-col gap-1.5 md:col-span-3">
+        <label htmlFor={selectId} className="text-sm font-medium text-fg-muted">
           {fill(bg.admin.roleSelectLabel, { name: user.displayName })}
         </label>
         {/* The select always shows the saved role; a choice only opens the confirmation. */}
-        <select
+        <Select
           id={selectId}
           value={user.role}
           disabled={user.isSelf}
@@ -294,9 +338,9 @@ function UserRow({
               {bg.admin.roleNames[role]}
             </option>
           ))}
-        </select>
+        </Select>
         {user.isSelf ? (
-          <p id={noteId} className="muted">
+          <p id={noteId} className="text-sm text-fg-subtle">
             {bg.admin.selfNote}
           </p>
         ) : null}

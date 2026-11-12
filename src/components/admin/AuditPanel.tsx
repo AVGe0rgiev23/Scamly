@@ -1,12 +1,16 @@
 // „Дневник“ in the admin panel (W3-06): the audit log, newest first, 50 lines at a
 // time with „Покажи още“. Data: GET /api/admin/audit-log?cursor, which checks the role.
-// Each line: when, what (in Bulgarian), who, about what, and a short safe summary.
+// Each line: when, what (in Bulgarian), who, about what, and a short safe summary;
+// a timeline of hairline rows with the time in the data font on the left.
 "use client";
 
 import { useEffect, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { fill, formatDateTime } from "@/components/family/format";
 import { Button } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { bg } from "@/i18n/bg";
 import type { AuditEntryDto, AuditPageDto } from "@/schemas/admin";
 import { actionLabel, targetLabel } from "./adminFormat";
@@ -59,65 +63,80 @@ export function AuditPanel() {
   }
 
   return (
-    <div className="admin-section">
-      <h2>{bg.admin.auditTitle}</h2>
-      <p className="muted">{bg.admin.auditIntro}</p>
+    <div>
+      <header className="mb-8 max-w-[60ch]">
+        <h2 className="text-h3">{bg.admin.auditTitle}</h2>
+        <p className="mt-2 text-fg-muted">{bg.admin.auditIntro}</p>
+      </header>
       {state.kind === "loading" ? (
-        <p role="status" className="muted">
-          {bg.admin.loading}
-        </p>
+        <>
+          <p role="status" className="sr-only">
+            {bg.admin.loading}
+          </p>
+          <SkeletonList rows={5} className="border-t border-line" />
+        </>
       ) : null}
       {state.kind === "error" ? (
-        <div className="family-error">
-          <p role="alert" className="form-message form-message-error">
-            {state.message}
-          </p>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setState({ kind: "loading" });
-              setAttempt(attempt + 1);
-            }}
-          >
-            {bg.admin.retry}
-          </Button>
-        </div>
+        <ErrorState
+          text={state.message}
+          retryLabel={bg.admin.retry}
+          onRetry={() => {
+            setState({ kind: "loading" });
+            setAttempt(attempt + 1);
+          }}
+        />
       ) : null}
       {state.kind === "ready" && state.entries.length === 0 ? (
-        <p className="card">{bg.admin.auditEmpty}</p>
+        <EmptyState text={bg.admin.auditEmpty} />
       ) : null}
       {state.kind === "ready" && state.entries.length > 0 ? (
-        <ol className="admin-audit" aria-label={bg.admin.auditTitle}>
+        <ol className="border-t border-line" aria-label={bg.admin.auditTitle}>
           {state.entries.map((entry) => (
-            <li key={entry.id} className="admin-audit-row">
-              <p className="admin-audit-head">
-                <strong>{actionLabel(entry.action)}</strong>
-                <time dateTime={entry.createdAt} className="muted">
-                  {formatDateTime(entry.createdAt)}
-                </time>
-              </p>
-              <p>
-                {fill(bg.admin.auditBy, { name: entry.actorName ?? bg.admin.auditNoActor })}
-                {entry.targetType ? (
-                  <>
-                    {" · "}
-                    {fill(bg.admin.auditTarget, { target: targetLabel(entry.targetType) })}
-                  </>
+            <li
+              key={entry.id}
+              className="grid gap-1 border-b border-line py-4 md:grid-cols-12 md:gap-6"
+            >
+              {/* Left: when (data font). Right: what, who, about what, the summary. */}
+              <time
+                dateTime={entry.createdAt}
+                className="tabular font-mono text-xs text-fg-subtle md:col-span-3 md:pt-1"
+              >
+                {formatDateTime(entry.createdAt)}
+              </time>
+              <div className="min-w-0 md:col-span-9">
+                <p className="font-semibold">{actionLabel(entry.action)}</p>
+                <p className="text-sm text-fg-muted">
+                  {fill(bg.admin.auditBy, { name: entry.actorName ?? bg.admin.auditNoActor })}
+                  {entry.targetType ? (
+                    <>
+                      {" · "}
+                      {fill(bg.admin.auditTarget, { target: targetLabel(entry.targetType) })}
+                    </>
+                  ) : null}
+                </p>
+                {entry.summary ? (
+                  <p className="mt-1 font-mono text-xs break-words text-fg-muted">
+                    {entry.summary}
+                  </p>
                 ) : null}
-              </p>
-              {entry.summary ? <p className="admin-audit-summary">{entry.summary}</p> : null}
+              </div>
             </li>
           ))}
         </ol>
       ) : null}
       {state.kind === "ready" && state.nextCursor !== null ? (
-        <div className="admin-more">
+        <div className="mt-6 flex flex-col items-start gap-3">
           {moreError ? (
-            <p role="alert" className="form-message form-message-error">
+            <Notice status="danger" role="alert">
               {moreError}
-            </p>
+            </Notice>
           ) : null}
-          <Button variant="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
+          <Button
+            variant="secondary"
+            loading={loadingMore}
+            disabled={loadingMore}
+            onClick={() => void loadMore()}
+          >
             {loadingMore ? bg.admin.loadingMore : bg.admin.showMore}
           </Button>
         </div>

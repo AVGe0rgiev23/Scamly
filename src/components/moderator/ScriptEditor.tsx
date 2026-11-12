@@ -1,5 +1,7 @@
 // The form „Нова схема“ / „Редактиране на схема“ (W3-05): every field of an education
-// card, the keyword chips, the „Публикувана“ switch and „Запази“.
+// card, the keyword chips, the „Публикувана“ switch and „Запази“. One column (max
+// 44 rem) of design-system fields, sections split by hairlines; „Запази“ is the only
+// primary button.
 //
 //   new card  -> POST  /api/scripts      with all fields
 //   edit card -> PATCH /api/scripts/:id  with ONLY the changed fields (changedFields)
@@ -10,12 +12,17 @@
 // (e.g. „Вече има схема с този адрес“) are shown here as they are.
 "use client";
 
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { callApi } from "@/components/family/api";
 import { FormMessage, SelectField, TextField, type FormNotice } from "@/components/family/fields";
 import { fill } from "@/components/family/format";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Field, Textarea } from "@/components/ui/Field";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/States";
+import { Switch } from "@/components/ui/Toggle";
 import { ROUTES } from "@/config/routes";
 import { SCRIPT_TYPES, type ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
@@ -27,6 +34,7 @@ import {
   type ScriptDto,
 } from "@/schemas/scripts";
 import { KeywordChips } from "./KeywordChips";
+import { BACK_LINK } from "./ModeratorFrame";
 import { changedFields, draftFromScript, EMPTY_DRAFT, type ScriptDraft } from "./scriptForm";
 
 type ScriptEditorProps = {
@@ -143,39 +151,47 @@ export function ScriptEditor({ scriptId, basePath = ROUTES.moderatorScripts }: S
 
   return (
     <>
-      <header className="family-heading">
-        <Link href={basePath} className="family-back">
-          {bg.moderator.backToList}
-        </Link>
-        <h1>{id === null ? bg.moderator.newTitle : bg.moderator.editTitle}</h1>
+      <Link href={basePath} className={BACK_LINK}>
+        <ArrowLeft className="size-5" aria-hidden="true" />
+        {bg.moderator.backToList}
+      </Link>
+      <header className="mb-10 flex max-w-[44rem] flex-col items-start gap-4">
+        <h1 className="text-h1">{id === null ? bg.moderator.newTitle : bg.moderator.editTitle}</h1>
         {saved?.published ? (
-          <Link href={`${ROUTES.education}/${saved.slug}`} className="family-link">
+          <ButtonLink href={`${ROUTES.education}/${saved.slug}`} variant="secondary" size="sm">
             {bg.moderator.viewPublic}
-          </Link>
+            <ArrowUpRight className="size-5" aria-hidden="true" />
+          </ButtonLink>
         ) : null}
       </header>
 
       {load.kind === "loading" ? (
-        <p role="status" className="muted">
-          {bg.common.loading}
-        </p>
+        <div className="max-w-[44rem]">
+          <p role="status" className="sr-only">
+            {bg.common.loading}
+          </p>
+          {/* The shape of the form: a few labels with their fields. */}
+          <div className="flex flex-col gap-8" aria-hidden="true">
+            {["h-12", "h-12", "h-12", "h-36", "h-36"].map((height, index) => (
+              <div key={index} className="flex flex-col gap-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className={height} />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : null}
 
       {load.kind === "error" ? (
-        <div className="family-error">
-          <p role="alert" className="form-message form-message-error">
-            {load.message}
-          </p>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setLoad({ kind: "loading" });
-              setAttempt(attempt + 1);
-            }}
-          >
-            {bg.moderator.retry}
-          </Button>
-        </div>
+        <ErrorState
+          className="max-w-[44rem]"
+          text={load.message}
+          retryLabel={bg.moderator.retry}
+          onRetry={() => {
+            setLoad({ kind: "loading" });
+            setAttempt(attempt + 1);
+          }}
+        />
       ) : null}
 
       {load.kind === "ready" ? (
@@ -183,9 +199,9 @@ export function ScriptEditor({ scriptId, basePath = ROUTES.moderatorScripts }: S
           noValidate
           onSubmit={submit}
           aria-busy={pending}
-          className="family-form card mod-form"
+          className="flex max-w-[44rem] flex-col gap-6 border-t border-line pt-8"
         >
-          <fieldset disabled={pending}>
+          <fieldset disabled={pending} className="flex min-w-0 flex-col gap-8">
             <TextField
               id="script-title"
               label={bg.moderator.titleLabel}
@@ -198,34 +214,37 @@ export function ScriptEditor({ scriptId, basePath = ROUTES.moderatorScripts }: S
               invalid={invalidField === "titleBg"}
               errorId={errorId}
             />
-            <SelectField
-              id="script-type"
-              label={bg.moderator.typeLabel}
-              value={draft.scriptType}
-              onChange={(event) => update("scriptType", event.target.value as ScriptType)}
-              invalid={invalidField === "scriptType"}
-              errorId={errorId}
-            >
-              {SCRIPT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {bg.scripts.typeNames[type]}
-                </option>
-              ))}
-            </SelectField>
-            <TextField
-              id="script-slug"
-              label={bg.moderator.slugLabel}
-              hint={fill(bg.moderator.slugHint, { slug: draft.slug || "…" })}
-              type="text"
-              autoComplete="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              maxLength={60}
-              value={draft.slug}
-              onChange={(event) => update("slug", event.target.value)}
-              invalid={invalidField === "slug"}
-              errorId={errorId}
-            />
+            <div className="grid gap-8 sm:grid-cols-2 sm:gap-6">
+              <SelectField
+                id="script-type"
+                label={bg.moderator.typeLabel}
+                value={draft.scriptType}
+                onChange={(event) => update("scriptType", event.target.value as ScriptType)}
+                invalid={invalidField === "scriptType"}
+                errorId={errorId}
+              >
+                {SCRIPT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {bg.scripts.typeNames[type]}
+                  </option>
+                ))}
+              </SelectField>
+              <TextField
+                id="script-slug"
+                label={bg.moderator.slugLabel}
+                hint={fill(bg.moderator.slugHint, { slug: draft.slug || "…" })}
+                type="text"
+                mono
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={60}
+                value={draft.slug}
+                onChange={(event) => update("slug", event.target.value)}
+                invalid={invalidField === "slug"}
+                errorId={errorId}
+              />
+            </div>
             {TEXT_FIELDS.map((field) => (
               <TextAreaField
                 key={field.name}
@@ -238,26 +257,26 @@ export function ScriptEditor({ scriptId, basePath = ROUTES.moderatorScripts }: S
                 errorId={errorId}
               />
             ))}
-            <KeywordChips
-              keywords={draft.extraKeywords}
-              onChange={(keywords) => update("extraKeywords", keywords)}
-              disabled={pending}
-            />
-            <div className="mod-publish">
-              <input
+            <div className="border-t border-line pt-8">
+              <KeywordChips
+                keywords={draft.extraKeywords}
+                onChange={(keywords) => update("extraKeywords", keywords)}
+                disabled={pending}
+              />
+            </div>
+            <div className="border-t border-line pt-6">
+              <Switch
                 id="script-published"
-                type="checkbox"
-                role="switch"
+                label={bg.moderator.publishedLabel}
                 checked={draft.published}
                 onChange={(event) => update("published", event.target.checked)}
                 aria-describedby="script-published-hint"
               />
-              <label htmlFor="script-published">{bg.moderator.publishedLabel}</label>
-              <p id="script-published-hint" className="muted">
+              <p id="script-published-hint" className="ml-15 text-sm text-fg-muted">
                 {bg.moderator.publishedHint}
               </p>
             </div>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" loading={pending} className="self-start">
               {pending ? bg.moderator.saving : bg.moderator.save}
             </Button>
           </fieldset>
@@ -287,9 +306,8 @@ function TextAreaField(props: {
     .filter(Boolean)
     .join(" ");
   return (
-    <div className="form-field">
-      <label htmlFor={props.id}>{props.label}</label>
-      <textarea
+    <Field label={props.label} htmlFor={props.id} hint={props.hint} hintId={`${props.id}-hint`}>
+      <Textarea
         id={props.id}
         rows={5}
         maxLength={MAX_SCRIPT_TEXT_LENGTH}
@@ -298,14 +316,9 @@ function TextAreaField(props: {
         aria-invalid={props.invalid || undefined}
         aria-describedby={describedBy}
       />
-      {props.hint ? (
-        <p id={`${props.id}-hint`} className="muted">
-          {props.hint}
-        </p>
-      ) : null}
-      <p id={counterId} className="muted mod-counter">
+      <p id={counterId} className="tabular text-right font-mono text-xs text-fg-subtle">
         {fill(bg.moderator.charCount, { count: props.value.length, max: MAX_SCRIPT_TEXT_LENGTH })}
       </p>
-    </div>
+    </Field>
   );
 }

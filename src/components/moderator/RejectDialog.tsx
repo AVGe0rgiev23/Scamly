@@ -1,13 +1,17 @@
 // The „Отхвърли“ window of the report queue (W3-04 UI): a required reason (3–200
-// characters) with a counter, and quick-pick buttons that fill in a common reason.
-// Built on the browser's own <dialog> with showModal(), like ConfirmDialog: the page
+// characters) with a counter, and quick-pick chips that fill in a common reason.
+// Built on the browser's own <dialog> with showModal(), like ui/Dialog: the page
 // behind it can't be clicked, Tab stays inside the window, Esc closes it, and the
 // browser gives the focus back to the „Отхвърли“ button that opened it.
+// It looks like ui/Dialog with variant="sheet" (on a phone it slides up from the bottom
+// edge); it keeps its own <dialog> element because it also needs aria-describedby.
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { fill } from "@/components/family/format";
 import { Button } from "@/components/ui/Button";
+import { Field, Textarea } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
 import { bg } from "@/i18n/bg";
 import { MAX_REJECT_REASON } from "@/schemas/moderation";
 import { rejectReasonError } from "./reportQueueHelpers";
@@ -41,7 +45,8 @@ export function RejectDialog(props: RejectDialogProps) {
   return (
     <dialog
       ref={dialog}
-      className="confirm-dialog mod-reject"
+      // The same classes as ui/Dialog with variant="sheet".
+      className="dialog dialog-sheet m-auto w-[min(34rem,calc(100vw-2rem))] rounded-lg border border-line-strong bg-surface-1 p-6 text-fg shadow-overlay max-md:mx-0 max-md:mt-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none md:p-8"
       aria-labelledby={ids.title}
       aria-describedby={ids.text}
       // Esc: the browser wants to close the window; we let the parent decide.
@@ -50,8 +55,10 @@ export function RejectDialog(props: RejectDialogProps) {
         if (!props.pending) props.onCancel();
       }}
     >
-      <h2 id={ids.title}>{bg.moderator.rejectTitle}</h2>
-      <p id={ids.text}>
+      <h2 id={ids.title} className="mb-3 text-h3">
+        {bg.moderator.rejectTitle}
+      </h2>
+      <p id={ids.text} className="text-fg-muted">
         {bg.moderator.rejectText} <span className="sr-only">({props.context})</span>
       </p>
       {/* Mounted only while open, so every opening starts with an empty field. */}
@@ -81,10 +88,14 @@ function RejectForm(props: RejectDialogProps) {
   const describedBy = [ids.count, fieldError ? ids.error : null].filter(Boolean).join(" ");
 
   return (
-    <form className="mod-reject-form" noValidate onSubmit={onSubmit}>
-      <div className="form-field">
-        <label htmlFor={ids.field}>{bg.moderator.rejectReasonLabel}</label>
-        <textarea
+    <form className="mt-5 flex flex-col gap-5" noValidate onSubmit={onSubmit}>
+      <Field
+        label={bg.moderator.rejectReasonLabel}
+        htmlFor={ids.field}
+        error={fieldError}
+        errorId={ids.error}
+      >
+        <Textarea
           ref={field}
           id={ids.field}
           rows={3}
@@ -98,23 +109,21 @@ function RejectForm(props: RejectDialogProps) {
             if (fieldError !== null) setFieldError(null);
           }}
         />
-        <p id={ids.count} className="muted mod-counter">
+        <p id={ids.count} className="tabular text-right font-mono text-xs text-fg-subtle">
           {fill(bg.moderator.charCount, { count: reason.length, max: MAX_REJECT_REASON })}
         </p>
-        {fieldError ? (
-          <p id={ids.error} role="alert" className="form-message form-message-error">
-            {fieldError}
-          </p>
-        ) : null}
-      </div>
-      <fieldset className="mod-quick">
-        <legend>{bg.moderator.quickReasonsLabel}</legend>
-        <div className="mod-quick-list">
+      </Field>
+      <fieldset className="min-w-0">
+        <legend className="mb-2 text-sm font-semibold text-fg-muted">
+          {bg.moderator.quickReasonsLabel}
+        </legend>
+        <div className="flex flex-wrap gap-2">
           {bg.moderator.quickReasons.map((quick) => (
-            <button
+            <Button
               key={quick}
-              type="button"
-              className="mod-quick-reason"
+              variant="secondary"
+              size="sm"
+              className="rounded-sm! font-medium aria-pressed:border-accent-line aria-pressed:bg-accent-bg"
               aria-pressed={reason.trim() === quick}
               disabled={props.pending}
               onClick={() => {
@@ -124,16 +133,16 @@ function RejectForm(props: RejectDialogProps) {
               }}
             >
               {quick}
-            </button>
+            </Button>
           ))}
         </div>
       </fieldset>
       {props.error ? (
-        <p role="alert" className="form-message form-message-error">
+        <Notice status="danger" role="alert">
           {props.error}
-        </p>
+        </Notice>
       ) : null}
-      <div className="confirm-actions">
+      <div className="mt-1 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="secondary" disabled={props.pending} onClick={props.onCancel}>
           {bg.moderator.cancel}
         </Button>

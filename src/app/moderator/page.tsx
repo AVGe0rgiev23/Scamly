@@ -10,7 +10,7 @@ export default function ModeratorPage() {
   return (
     <>
       <ModeratorHub />
-      <p>
+      <p className="mt-12 border-t border-line pt-6">
         <HelpLink role="moderator" />
       </p>
     </>

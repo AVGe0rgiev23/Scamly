@@ -9,7 +9,7 @@ export default function AdminPage() {
   return (
     <>
       <AdminHub />
-      <p>
+      <p className="mt-12 border-t border-line pt-6">
         <HelpLink role="admin" />
       </p>
     </>
