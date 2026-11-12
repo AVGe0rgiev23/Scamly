@@ -16,6 +16,7 @@ These are part of the app that runs on the server and in the browser.
 | @supabase/ssr         | 0.12.7  | MIT          | Keeps the Supabase login session in cookies (server and proxy)                   |
 | @supabase/supabase-js | 2.118.0 | MIT          | Talks to our Supabase database, Auth and Realtime                                |
 | leaflet               | 1.9.4   | BSD-2-Clause | Draws the district map on /karta (loaded only in the browser, only on that page) |
+| lucide-react          | 1.72.0  | ISC          | Line icons (imported one by one, only the used icons are bundled)                |
 | next                  | 16.4.4  | MIT          | Web framework (pages, API routes, build)                                         |
 | qrcode                | 1.5.4   | MIT          | Makes the QR code for pairing a phone, in the browser                            |
 | react                 | 19.3.1  | MIT          | User-interface library                                                           |
@@ -75,6 +76,15 @@ GPL-3.0 (its section 3.3 allows combining it with GPL code), and we use the libr
 unchanged from npm.
 
 ## Data and assets
+
+Fonts (self-hosted in `src/fonts/`, subset to Latin + Cyrillic, licence texts next to the files):
+
+| Font                                  | Author                | Licence                   | Use                   |
+| ------------------------------------- | --------------------- | ------------------------- | --------------------- |
+| Sofia Sans, Sofia Sans Semi Condensed | Lettersoup (Bulgaria) | SIL Open Font License 1.1 | Text and headings     |
+| JetBrains Mono                        | JetBrains             | SIL Open Font License 1.1 | Numbers, codes, times |
+
+The grain texture is our own generated SVG noise (no third-party asset).
 
 | Item                  | Licence       | Status                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

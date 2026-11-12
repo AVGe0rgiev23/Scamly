@@ -924,28 +924,24 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed a large set of complex widgets (date pickers, data grids) fast; then a component kit would save time.
 
-### Our own design system  (status: in use; W1-11 verified)
+### Our own design system "Signal"  (status: in use; rebuilt in the v2 redesign)
 
-The homepage uses deep teal, warm ivory and a mint advice panel. Teal identifies service actions while red, amber and green identify verdicts with labels and symbols. A Cyrillic-capable system font stack renders immediately on the phones that need the check. We chose the teal concept over the indigo and yellow notice concept because the advice has its own space and the verdict colours retain their meaning. A brief pointer-press transition starts with a fast ease-out so the click registers visually right away. Questions and results appear immediately, and reduced-motion users get static controls. The standalone offline document uses the same palette so the advice is recognisable when the network is down.
+**Used for:** every screen: the tokens in `src/app/globals.css`, the components in `src/components/ui/`, the gallery `/dev/ui`. Details: `docs/redesign/03-design-system.md`.
 
-**Used for:** `Button`, `Card`, `Verdict`, `BigChoice`, `ThemeToggle` and colour/typography tokens in `src/components/ui/`, shown on a `/dev/ui` preview page.
-
-**Alternatives we considered:** a ready component library.
+**Alternatives we considered:** keep restyling the old teal design; a ready kit (shadcn/ui, Material UI); copying animated components from libraries such as Magic UI or React Bits.
 
 **Why this one:**
-- Scored directly ("original components and design").
-- Our main user needs things kits don't offer by default: very large tap targets (≥ 64 px), base font ≥ 18 px, very high contrast, three verdict colours with words, not colour alone.
-- We check WCAG AA contrast for every colour pair, in both themes.
-- The theme select uses an explicit label/for association to keep its label separate from the option text. We installed Playwright Chromium locally and verified the production build with six browser runs. Build/browser commands need approved execution outside the Codex Windows sandbox because Turbopack workers use local TCP connections; no bundler or dependency changes were needed.
-- Native buttons and fieldset/radio groups preserve keyboard and screen-reader behaviour without another UI dependency. Component props are explained as Python keyword arguments in the code.
-- A three-choice theme control allows an explicit light/dark preference or the device setting (since W2-13 a compact radio-button switch in the header, see "Compact theme switch in the header" below). `localStorage` remembers only this non-sensitive preference; denied storage does not stop the control working, and system mode tracks device changes.
-- Verdicts include words alongside colours and use the D9 green wording. The preview shows both palettes together so changes can be reviewed consistently.
+- The jury scores "original components and design". Two earlier restyles kept the same structure and looked like a generic template; this time the old visual layer was deleted and the design started from the product's own idea, the signal line (jagged = scam, calm = no typical signs).
+- Dark-first near-black canvas with one accent (Signal Cyan) for actions, and four status colours used only for their meaning, always with icon and words.
+- Tailwind's own palette is switched off in `@theme`, so only our tokens compile. A unit test checks AA contrast for every text/surface pair in both themes.
+- The reference sites were studied component by component (`docs/redesign/01-component-research.md`), but no code, colours or assets were copied; the patterns we liked were rebuilt with our tokens and with no new animation library (`docs/redesign/LICENSES.md`).
+- Motion follows Emil Kowalski's design-engineering rules: only `transform` and `opacity`, under 300 ms, custom ease-out, nothing on page load, reduced motion respected (`docs/redesign/02-motion-decisions.md`).
 
 **What we give up:**
-- More work; accessibility details (focus rings, keyboard use) are now our responsibility.
-- A saved browser preference is available after client initialization; without browser JavaScript the stylesheet can still follow the device palette, but the control cannot save a new choice.
+- More work; accessibility details (focus rings, keyboard use, dialogs) are our responsibility.
+- A dark default is less common for older users; the light theme is fully designed and the device setting is followed.
 
-**We would reconsider if:** time ran out; then we'd keep our own look for the protected screens and use simpler styling for admin pages.
+**We would reconsider if:** a jury test with older users showed the dark default confuses them; then light becomes the default (one line in `globals.css`).
 
 ### Shared schemas and native auth forms (status: in use, Session F)
 
@@ -1090,21 +1086,30 @@ The homepage uses deep teal, warm ivory and a mint advice panel. Teal identifies
 
 **We would reconsider if:** the library were abandoned with a security problem; then another MIT QR library with the same `create()` idea.
 
-### System fonts instead of web fonts  (status: in use)
+### Sofia Sans + JetBrains Mono, self-hosted (vs system fonts, vs Inter, Onest or Golos)  (status: in use since the v2 redesign; replaced "system fonts")
 
-**Used for:** all text uses the phone's or computer's built-in font (`font-sans`); we removed the Geist web font that `create-next-app` adds.
+**Used for:** text (Sofia Sans), headings (Sofia Sans Semi Condensed) and numbers, codes and times (JetBrains Mono). Files in `src/fonts/`, loaded with `next/font/local`.
 
-**Alternatives we considered:** Google Fonts / Geist via `next/font`, our own font files.
+**Alternatives we considered:** system fonts (our earlier choice), Inter, Onest, Golos Text, Google Fonts served from Google.
 
 **Why this one:**
-- **Faster on slow phones:** no font file to download.
-- Built-in fonts on Android, iOS and Windows support Cyrillic well. Geist was chosen by the template for Latin text, not for Bulgarian.
-- No font licence to track, no request to a font server (privacy).
+- Sofia Sans is drawn by the Bulgarian studio Lettersoup and has the Bulgarian letter shapes („българска кирилица“), which fits a Bulgarian product and reads well. We rendered a specimen: Onest and Golos Text have no „ѝ“ (used in „Обаждам ѝ се сега“) and fell back to another font for that letter.
+- A mono face for data makes pairing codes, phone numbers and risk scores line up and look precise.
+- Self-hosted and subset to Latin + Cyrillic (45–59 kB per file): no request to a font server (privacy), and `next/font` adds a fallback with the same measurements, so the layout does not jump.
+- SIL Open Font License 1.1 (licence files next to the fonts).
 
 **What we give up:**
-- The app looks slightly different on each device, and we can't guarantee the Bulgarian-style Cyrillic letter shapes.
+- About 160 kB of fonts on the first visit (cached afterwards); the offline card still uses system fonts.
 
-**We would reconsider if:** our design needed a specific font for the brand; then we'd self-host one with a free licence (e.g. OFL) that supports Bulgarian Cyrillic.
+**We would reconsider if:** the first load on a slow phone became a problem; then we would drop the condensed cut and use Sofia Sans for headings too.
+
+### Lucide icons (vs emoji, vs drawing our own)  (status: in use since the v2 redesign)
+
+**Used for:** every icon (`lucide-react`, ISC licence): answer tiles, status labels, the call button, arrows, theme switch.
+
+**Why this one:** emoji look different on every phone and read as unprofessional; a consistent stroke icon set matches the thin signal line. Each icon is imported by name, so only the used icons are in the bundle. Icons are always next to words and hidden from screen readers.
+
+**What we give up:** one new runtime dependency.
 
 ### Call check: one question per screen (vs one long form)  (status: in use (W2-01, `src/components/protected/QuestionWizard.tsx`))
 

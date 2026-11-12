@@ -372,27 +372,29 @@ Describes the shape of everything the engine reads and returns, and holds the en
 
 ---
 
-### 3.7 Design system (W1-11)
+### 3.7 Design system "Signal" (W1-11, rebuilt in the v2 redesign)
 
 #### What it does
 
-Provides reusable `Button`, `Card`, `Verdict`, `BigChoice` and `ThemeToggle` components. The `/dev/ui` page shows interactive examples in both light and dark themes. This is a component preview, not the finished call-check flow.
+Gives every screen the same look: colour tokens for a dark and a light theme, three self-hosted typefaces, a type scale, and about twenty small components in `src/components/ui/` (buttons, fields, switches, choice tiles, status labels, dialogs, tabs, toasts, skeletons, empty and error states, the verdict, the risk meter and the signal line). `/dev/ui` shows all of them in both themes side by side. The full description is `docs/redesign/03-design-system.md`; every animation and its reason is in `docs/redesign/02-motion-decisions.md`.
 
 #### How it works
 
-- CSS variables in `src/app/globals.css` hold semantic colours for backgrounds, text, controls and the three verdict levels. The stylesheet uses a base font of at least 18 px and gives standard action buttons at least 64 px of height. The teal and warm neutral tokens apply to the public pages and role dashboards in both themes. The offline document carries the same palette in its inline stylesheet so it can render without fetching CSS. The homepage presents phone pairing first and keeps immediate hang-up advice next to the setup actions. The check entry has a visible heading above its action, which spans at least 30% of the viewport height, and verdict cards keep the spoken label, advice and reasons alongside a visible symbol and coloured edge. Fine-pointer presses get a 120 ms ease-out when reduced motion is off.
-- Components receive **props**: named inputs such as children, disabled state or the selected answer. Think of props as Python function keyword arguments; React uses them to produce the HTML.
-- `Button` uses a native button, `Card` groups content, and `BigChoice` uses a fieldset with native radio inputs. Browser keyboard behaviour and form semantics remain available instead of being recreated with clickable divs.
-- `Verdict` displays a written level and explanation alongside its colour. Its green wording follows D9: no typical signs were found, but the person should hang up and call a familiar number if in doubt. All visible Bulgarian strings come from `src/i18n/bg.ts`.
-- `ThemeToggle` offers system, light and dark choices. Since W2-13 it is a compact control in the site header: three small picture buttons (native radio buttons in a group named „Изглед“), not a full-width select above the page (section 3.31). It remembers the preference in `localStorage`, follows device-theme changes in system mode and continues to work if browser storage is denied. It is a client component because it needs browser settings and interaction; the static page content can remain server-rendered.
+- **Tokens.** `src/app/globals.css` defines CSS variables (`--bg`, `--surface-1`, `--text`, `--accent`, `--danger-solid`, …) for the dark theme (the default) and the light theme. A `@theme` block maps them to Tailwind class names (`bg-canvas`, `text-fg-muted`, `bg-danger-solid`, …) and switches Tailwind's own palette off, so a class like `bg-blue-500` simply does not exist. Components only use the token classes.
+- **Theme.** `<html data-theme="system|light|dark">`. A tiny inline script in `src/app/layout.tsx` reads the saved choice from `localStorage` before the first paint, so the page never flashes in the wrong theme. `ThemeToggle` (three radio buttons in the header) changes and saves it.
+- **Fonts.** Sofia Sans (text), Sofia Sans Semi Condensed (headings) and JetBrains Mono (numbers and codes) are variable `woff2` files in `src/fonts/`, cut down to Latin + Cyrillic, loaded with `next/font/local` (it adds a fallback with the same measurements, so text does not jump).
+- **The signal line** (`SignalLine.tsx`) is one SVG path, jagged in two bursts. For "scam" it is drawn at full height in red, for "suspicious" at half height in amber, for "no typical signs" almost flat in green, and flat in the text colour as a divider. Changing state only squeezes it (`scaleY`) and cross-fades the coloured copies, so the browser animates it cheaply.
+- **Status colours** are used only for their meaning: `danger` = scam or a destructive action, `caution` = suspicious, `safe` = no typical signs or success, `info` = neutral. `StatusPill`, `Notice` and `Verdict` always add an icon and words, so colour is never the only signal.
+- **Loading.** Each list or panel that loads data shows a skeleton with the shape of the real content and a hidden „Зареждане…“ for screen readers; empty and failed loads use `EmptyState` and `ErrorState` with one next step.
+- Components receive **props**: named inputs, like Python keyword arguments. Native elements (button, input, fieldset with radios, dialog, details) keep the browser's keyboard and screen-reader behaviour.
 
 #### Why it works like that
 
-Large controls and readable text support older people using small phones. Shared tokens keep both themes consistent. Native controls provide established keyboard and screen-reader behaviour. Words as well as colours communicate the verdict, and D9 avoids promising that an unfamiliar call is safe. The theme setting contains only a display preference, no personal or account data.
+The product is a measuring instrument for phone calls: calm surfaces, one accent colour for actions, and colours with a meaning reserved for verdicts. Older users get very large targets (64 px and more on their screens) and text of at least 17 px everywhere. Switching off Tailwind's palette makes "use only our tokens" a rule the build enforces, not a promise.
 
 #### How we know it works
 
-`npm run check` passes (lint, types, formatting and 15 unit tests). WCAG sRGB contrast calculations confirm the documented text pairs exceed 4.5:1. All six production browser runs pass: home, saved theme and device changes, keyboard answers, 360 px layout and 64 px buttons on desktop and phone profiles. The theme select uses an explicit label/for association so its label excludes option text. No database files change in this task.
+`src/app/tokens.test.ts` reads `globals.css` and checks WCAG AA contrast (4.5 : 1 for every text colour on every surface, 3 : 1 for control borders) in both themes, and that the two copies of the light theme are identical. `tests/e2e/ui.spec.ts` and `layout.spec.ts` check the theme switch, the 360 px layout and the target sizes.
 
 ### 3.8 Generated database types: `src/types/database.ts`
 
