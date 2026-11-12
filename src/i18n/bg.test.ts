@@ -10,8 +10,8 @@ describe("bg strings", () => {
     expect(bg.app.metaTitle).toContain(APP_NAME);
   });
 
-  it("has the agreed tagline", () => {
-    expect(bg.app.tagline).toBe("Обаждат ли ви се за пари? Проверете за 30 секунди.");
+  it("uses the short call-check heading", () => {
+    expect(bg.app.tagline).toBe("Съмнително обаждане?");
   });
 
   it("never calls a green check safe (D9)", () => {
