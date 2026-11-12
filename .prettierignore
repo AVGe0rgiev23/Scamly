@@ -5,6 +5,7 @@ out/
 build/
 coverage/
 playwright-report/
+playwright-report-roundtrip/
 test-results/
 package-lock.json
 next-env.d.ts

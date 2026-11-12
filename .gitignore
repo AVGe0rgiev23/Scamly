@@ -14,6 +14,7 @@
 # testing
 /coverage
 /playwright-report
+/playwright-report-roundtrip
 /test-results
 /blob-report
 /playwright/.cache

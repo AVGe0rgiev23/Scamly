@@ -158,7 +158,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
 | W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ✅ manifest + own icons, „Инсталирай Scamly“ card (Android + iPhone steps), offline card on failed page loads; `pwa.spec.ts` 7 × 2 · ⬜ real install + push on a phone (iPhone: needs this manifest) |
 | W2-10 | ✂ Voice input | Alex (D23) | ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
-| W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ⬜ |
+| W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ✅ (Alex, 12 Nov) · two browsers on a real local Supabase (Auth, RLS, Realtime), no faked API: login → add person → pairing code → pair → big button → red verdict → live alert → „Обаждам ѝ се сега“ → name on grandma's phone; `npm run e2e:roundtrip`, CI job *roundtrip*; green 3 × 3 |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | Roberta's screens and PWA notes written · Alex's Realtime, push and e-mail notes pending |
 | W2-13 | Site layout + home page (D22) | Roberta | ✅ 5 Nov: header + logo + nav, compact theme switch, footer, home page with the 3 steps, e2e |
 | W2-14 | `/pokana` invite page (D23) | Roberta | ✅ 6 Nov · token sent at once, removed from the address, `no-referrer`; safe `next` after login; `invite.spec.ts` · live redeem with two real accounts pending |
@@ -196,7 +196,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W4-08 | Release: freeze `main`, tag `v1.0.0`, production demo accounts | Alex + Roberta | ⬜ |
 | W4-09 | **Register on the tournament site by 27.11** | Alex + Roberta | ⬜ |
 
-Open items from Weeks 1–3 (live checks): W1-13 `HEALTH_URL` secret + Supabase Site URL (Alex) · W2-05 push on a real phone (Alex) · W2-06 real Brevo e-mail (Alex) · W2-09 install + push on a phone (Roberta) · W2-10 Bulgarian voice on a phone (Alex) · W2-11 e2e button → alert → acknowledge (Alex leads) · W2-14 live invite with two accounts (Roberta) · W3-09 production migration + Cron + live check (Roberta) · learning notes W1-14, W2-12, W3-11 (Alex's sections).
+Open items from Weeks 1–3 (live checks): W1-13 `HEALTH_URL` secret + Supabase Site URL (Alex) · W2-05 push on a real phone (Alex) · W2-06 real Brevo e-mail (Alex) · W2-09 install + push on a phone (Roberta) · W2-10 Bulgarian voice on a phone (Alex) · W2-14 live invite with two accounts (Roberta) · W3-09 production migration + Cron + live check (Roberta) · learning notes W1-14, W2-12, W3-11 (Alex's sections).
 
 | ID range | Theme | Status |
 |---|---|---|

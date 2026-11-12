@@ -36,6 +36,16 @@ Problems found:
 
 \* Local-only console errors: no database on the local build (the map's data request answers 500) and the CSP's `upgrade-insecure-requests` turning a `localhost` request into https. Neither happens on the live site.
 
+## After the deploy (live site, 12 Nov, 20:17 UTC)
+
+| Page | Performance | Accessibility | Best practices | SEO | LCP |
+| --- | --- | --- | --- | --- | --- |
+| `/` | 98 | 100 | 100 | 60 (Vercel `noindex`) | 1.0 s |
+| `/dev/protected` | 91 | 100 | 100 | 60 (Vercel + ours, on purpose) | 3.2 s |
+| `/karta` | 100 | 100 | 100 | 60 (Vercel `noindex`) | 0.9 s |
+
+The only failing check left on every page is „Page is blocked from indexing“ (problem 4). The call check's performance moves between 91 and 97 from run to run (network timing of the streamed part).
+
 ## Known, accepted
 
 - **Call check LCP 2.9 s (simulated slow 4G).** The largest element is the big button „Обаждат ми се за пари!“. The page reads the voice-input switch (`FEATURE_VOICE`) at request time, so the button arrives in the streamed part of the page, after the static shell. Measured without throttling it is about 0.8 s (time to first byte 0.33 s + render 0.5 s). Making it faster means reading the switch differently; not worth the risk before the release.

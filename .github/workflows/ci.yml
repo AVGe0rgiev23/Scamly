@@ -115,3 +115,37 @@ jobs:
 
       - name: Run pgTAP tests
         run: supabase test db
+
+  # W2-11: the whole demo flow in two browsers (grandma's phone + a family member's
+  # laptop) against a REAL local Supabase: database, Auth and Realtime, no faked API.
+  # scripts/e2e/roundtrip.sh starts Supabase in Docker, then builds and runs the app.
+  roundtrip:
+    name: Round trip on a real database (Playwright + Supabase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (version from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install the Chromium browser for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the round trip
+        run: npm run e2e:roundtrip
+
+      - name: Upload the round-trip report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-roundtrip
+          path: playwright-report-roundtrip/
+          if-no-files-found: ignore

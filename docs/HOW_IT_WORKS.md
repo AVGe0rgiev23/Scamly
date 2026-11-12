@@ -2112,6 +2112,8 @@ Opens the real app in a real browser and checks what a user would see.
 - `tests/e2e/pwa.spec.ts` (7 tests, 3.38): manifest, icons, install card with a fake `beforeinstallprompt` and an iPhone user agent, and the real service worker with `context.setOffline(true)`. Service workers are **blocked** for all other tests (`serviceWorkers: "block"` in `playwright.config.ts`), because `page.route()` can't see requests a service worker makes.
 - `tests/e2e/home.spec.ts` (section 3.1), `tests/e2e/layout.spec.ts` (site frame and home page, 7 tests, section 3.31), `tests/e2e/ui.spec.ts` (Roberta's design system, 2 tests, section 3.7) and `tests/e2e/auth-guards.spec.ts` (3 tests: guests are sent to `/vhod` or `/svarzhi`, section 3.10). They need no Supabase project: a guest has no session. `tests/e2e/health.spec.ts` (1 test, section 3.22) accepts both the healthy 200 and the 503 answer, because CI has no Supabase keys.
 
+- **The round trip on a real database (W2-11):** `tests/roundtrip/roundtrip.spec.ts` is the one test that fakes nothing. `npm run e2e:roundtrip` (`scripts/e2e/roundtrip.sh`) starts a slim local Supabase in Docker (database, Auth, REST, Realtime; our migrations applied), reads its local URL and keys, and runs `playwright.roundtrip.config.ts`, which builds and starts the app against it. The test creates a fresh family account through Supabase's admin API, then drives **two browsers at once**: the family laptop logs in, adds grandma and creates a pairing code; grandma's phone (393 px wide) pairs with the code, presses the big button, answers and gets the red verdict; the family's live alert page shows the new alert with the red verdict by itself; the family presses „Обаждам ѝ се сега“; grandma's phone shows „Мария Тестова ще ви се обади веднага.“ without reloading. Afterwards the account (and with it grandma, her checks and the phone) is deleted.
+
 First time on your own computer: `npx playwright install chromium`, then `npm run e2e`. In the Codex Windows sandbox, Turbopack worker loopback connections can fail with EACCES, misleadingly reported as a CSS worker exiting with code 0. Run build/browser checks with approved execution outside the sandbox; the normal production build succeeds without framework changes.
 
 #### Why it works like that
@@ -2120,7 +2122,7 @@ The older person will use a cheap Android phone, so every screen must be tested 
 
 #### How we know it works
 
-CI job *e2e*: 78 tests × 2 screens = 156 runs, all passing locally on 6 Nov (W2-03/04 added 8, W2-05 7, W2-10 4, W2-14 13, W2-09 7). The report is uploaded as the artifact `playwright-report`.
+CI job *roundtrip* (W2-11): the two-browser flow on a real local Supabase, green 3 times in a row on 12 Nov (20 s with a fresh build, 5 s afterwards). CI job *e2e*: 78 tests × 2 screens = 156 runs, all passing locally on 6 Nov (W2-03/04 added 8, W2-05 7, W2-10 4, W2-14 13, W2-09 7). The report is uploaded as the artifact `playwright-report`.
 
 ### 4.4 CI (GitHub Actions)
 

@@ -30,7 +30,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
-8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
+8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · one round trip on a real local Supabase · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · cookie-less public client + 60 s CDN cache for the map · `pg_cron` · uptime monitor · pinned versions
 10. [Project process and documentation](#10-project-process-and-documentation): one `main` branch · student-only commits · Claude Code + Codex · shared `AGENTS.md` rules · GPL-3.0 · English code + Bulgarian UI · Markdown docs · rolling planning · feature switches
 11. [Small configuration choices](#11-small-configuration-choices): `next typegen` · `cacheComponents` · `.npmrc save-exact` · Turbopack · `proxy.ts` · npm · EditorConfig · env check with Zod · `.catch()` fallback for optional env vars · `APP_NAME` constant · `server-only`
@@ -2414,6 +2414,21 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 **We would reconsider if:** we moved the repo away from GitHub.
 
 ---
+
+### One round-trip test on a real local Supabase (vs faking the API, vs testing against the live project)  (status: in use since W2-11)
+
+**Used for:** `tests/roundtrip/roundtrip.spec.ts`, run by `npm run e2e:roundtrip` and the CI job *roundtrip*.
+
+**Alternatives we considered:** the faked API our other browser tests use; running the test against the live Supabase project.
+
+**Why this one:**
+- The demo's key promise (grandma presses → family alerted live → family answers → grandma sees it) crosses the database, RLS, Auth, Realtime and two browsers. Fakes can't prove that the pieces fit together; a real local Supabase can.
+- Local Supabase in Docker uses our real migrations and RLS, and every run starts clean, so the test never touches real users or the live project.
+- Only the services the flow needs are started (database, Auth, REST, Realtime), which keeps CI fast.
+
+**What we give up:** needs Docker (about 3 minutes of downloads the first time); one test, not a whole suite, because each run builds the app.
+
+**We would reconsider if:** the flow grew more branches; then a few more round-trip tests in the same folder.
 
 ## 9. Hosting and operations
 
