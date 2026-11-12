@@ -274,7 +274,7 @@ test("slow server: local verdict after 4 s, then the server's verdict replaces i
   await answerPoliceMoney(page);
   await page.getByRole("button", { name: bg.protectedCheck.skip }).click();
 
-  await expect(page.getByText(bg.protectedCheck.checking)).toBeVisible();
+  await expect(page.getByRole("button", { name: bg.protectedCheck.checking })).toBeDisabled();
   // Within 5 s of pressing: the phone's own verdict and the note.
   await expect(page.getByText(bg.protectedCheck.localNote)).toBeVisible({ timeout: 5_000 });
   await expect(page.getByRole("heading", { level: 1, name: bg.verdict.red.title })).toBeVisible();

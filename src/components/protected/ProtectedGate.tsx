@@ -20,7 +20,13 @@ export async function ProtectedGate({ children }: { children: ReactNode }) {
 export function ProtectedLoading() {
   return (
     <main className="call-check">
-      <p role="status">{bg.common.loading}</p>
+      <p role="status" className="sr-only">
+        {bg.common.loading}
+      </p>
+      <div className="check-skeleton" aria-hidden="true">
+        <span />
+        <span />
+      </div>
     </main>
   );
 }

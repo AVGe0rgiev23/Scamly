@@ -5,9 +5,8 @@
 // When a family member presses „Обаждам ѝ се сега“, a big message appears:
 // „Иван ще ви се обади веднага.“ (CallCheck watches the check live).
 //
-// Red starts with praise, „Добре направихте, че проверихте.“ (IDEAS #8), then the
-// clear instruction „Затворете телефона.“: a calm, kind voice helps a frightened
-// person act. Green shows exactly the D9 wording and never says "safe".
+// Red leads with the risk and the instruction „Затворете телефона.“ The call
+// action comes before the explanation and reassurance. Green shows exactly the D9 wording and never says "safe".
 
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
@@ -51,15 +50,13 @@ export function CheckResult({
 
   return (
     <section className={`check-result check-result-${level}`}>
-      {level === "red" ? <p className="check-praise">{bg.protectedCheck.praise}</p> : null}
       <Verdict
         level={level}
         headingLevel={1}
         headingRef={heading}
         lead={level === "red" && !afterCall ? bg.protectedCheck.hangUp : undefined}
-        reasons={reasons.slice(0, MAX_REASONS)}
-        reasonsTitle={bg.protectedCheck.reasonsTitle}
       />
+      {callContact === null ? null : <CallContactButton contact={callContact} />}
       {local ? <p className="check-local-note">{bg.protectedCheck.localNote}</p> : null}
       {/* role="status": a live region, there from the start, so a screen reader reads
           the family message aloud the moment it appears. */}
@@ -76,7 +73,17 @@ export function CheckResult({
           <p className="check-family">{bg.protectedCheck.emergencyCallAdvice}</p>
         ) : null}
       </div>
-      {callContact === null ? null : <CallContactButton contact={callContact} />}
+      {reasons.length ? (
+        <div className="card">
+          <h2>{bg.protectedCheck.reasonsTitle}</h2>
+          <ul className="verdict-reasons">
+            {reasons.slice(0, MAX_REASONS).map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {level === "red" ? <p className="check-praise">{bg.protectedCheck.praise}</p> : null}
       <Button variant="secondary" onClick={onNewCheck}>
         {bg.protectedCheck.newCheck}
       </Button>

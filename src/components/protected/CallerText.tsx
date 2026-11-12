@@ -66,17 +66,15 @@ export function CallerText({
         disabled={sending}
         onSpoken={(spoken) => onTextChange(appendSpoken(text, spoken, MAX_TEXT_LENGTH))}
       />
-      {sending ? (
-        <p role="status" className="check-sending">
-          {bg.protectedCheck.checking}
-        </p>
-      ) : null}
+      <p role="status" className="sr-only">
+        {sending ? bg.protectedCheck.checking : null}
+      </p>
       <div className="check-nav">
         <Button variant="secondary" onClick={() => onSubmit("")} disabled={sending}>
           {bg.protectedCheck.skip}
         </Button>
         <Button onClick={() => onSubmit(text)} disabled={sending}>
-          {bg.protectedCheck.check}
+          {sending ? bg.protectedCheck.checking : bg.protectedCheck.check}
         </Button>
       </div>
       <Button variant="secondary" onClick={onBack} disabled={sending}>

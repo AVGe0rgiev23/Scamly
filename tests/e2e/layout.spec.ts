@@ -73,12 +73,12 @@ test("the theme switch changes the colours and is remembered", async ({ page }) 
 
   await dark.check();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(16, 35, 33)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 16, 32)");
 
   // Remembered after a reload and on another page.
   await page.reload();
   await expect(dark).toBeChecked();
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(16, 35, 33)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 16, 32)");
   await page.getByRole("banner").getByRole("link", { name: bg.layout.register }).click();
   await expect(page).toHaveURL(/\/registratsia$/);
   await expect(dark).toBeChecked();
@@ -88,7 +88,7 @@ test("the theme switch changes the colours and is remembered", async ({ page }) 
   await dark.focus();
   await page.keyboard.press("ArrowRight");
   await expect(theme.getByRole("radio", { name: bg.theme.system, exact: true })).toBeChecked();
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(247, 245, 238)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 246, 250)");
 });
 
 test("the menu and the logo lead to the right pages", async ({ page }) => {
@@ -133,14 +133,16 @@ test("the home page shows the 3 steps, the rules and the start buttons", async (
     await expect(page.getByText(rule, { exact: true })).toBeVisible();
   }
 
-  // The two main actions are big (at least 64 px high) and open the right pages.
+  // The check is the main action and sends an unpaired phone to setup.
   const main = page.getByRole("main");
   const register = main.getByRole("link", { name: bg.home.register, exact: true });
   const pair = main.getByRole("link", { name: bg.home.pair, exact: true });
   await expect(main.getByRole("link", { name: bg.home.login, exact: true })).toBeVisible();
-  for (const button of [register, pair]) {
-    expect((await button.boundingBox())?.height).toBeGreaterThanOrEqual(64);
-  }
+  const check = main.getByRole("link", { name: bg.home.startCheck, exact: true });
+  expect((await check.boundingBox())?.height).toBeGreaterThanOrEqual(64);
+  await check.click();
+  await expect(page).toHaveURL(/\/svarzhi$/);
+  await page.goBack();
   await register.click();
   await expect(page).toHaveURL(/\/registratsia$/);
   await page.goBack();

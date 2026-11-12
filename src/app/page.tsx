@@ -8,6 +8,11 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
+const signal = [
+  5, 7, 10, 16, 25, 33, 20, 14, 9, 12, 24, 43, 68, 90, 75, 52, 35, 18, 11, 8, 13, 22, 35, 25, 15, 8,
+  11, 6, 5,
+];
+
 export default function HomePage() {
   return (
     <main className="home">
@@ -17,27 +22,26 @@ export default function HomePage() {
           <h1 id="home-title">{bg.app.tagline}</h1>
           <p className="home-lead">{bg.home.problem}</p>
           <div className="home-actions">
-            <Link href={ROUTES.pair} className="button button-primary">
-              {bg.home.pair}
+            <Link href={ROUTES.protected} className="button button-primary">
+              {bg.home.startCheck}
               <span aria-hidden="true"> →</span>
-            </Link>
-            <Link href={ROUTES.register} className="button button-secondary">
-              {bg.home.register}
-            </Link>
-            <Link href={ROUTES.login} className="home-login">
-              {bg.home.login}
             </Link>
           </div>
           <p className="muted">{bg.home.pairNote}</p>
         </div>
-        <aside className="home-advice" aria-labelledby="home-advice-title">
-          <span className="home-advice-mark" aria-hidden="true">
-            ☎
-          </span>
-          <h2 id="home-advice-title">{bg.home.adviceTitle}</h2>
-          <p>{bg.home.advice}</p>
-        </aside>
+        <div className="home-signal" aria-hidden="true">
+          <div className="home-wave">
+            {signal.map((height, index) => (
+              <span key={index} style={{ height: `${height}%` }} />
+            ))}
+          </div>
+        </div>
       </section>
+
+      <aside className="home-advice" aria-labelledby="home-advice-title">
+        <h2 id="home-advice-title">{bg.home.adviceTitle}</h2>
+        <p>{bg.home.advice}</p>
+      </aside>
 
       {/* „Инсталирай Scamly“: only appears when this phone can install the app (W2-09). */}
       <InstallPrompt />
@@ -57,6 +61,18 @@ export default function HomePage() {
           ))}
         </ol>
       </section>
+
+      <nav className="home-actions" aria-label={bg.home.setupLinks}>
+        <Link href={ROUTES.pair} className="home-login">
+          {bg.home.pair}
+        </Link>
+        <Link href={ROUTES.register} className="home-login">
+          {bg.home.register}
+        </Link>
+        <Link href={ROUTES.login} className="home-login">
+          {bg.home.login}
+        </Link>
+      </nav>
 
       <section className="card home-rules" aria-labelledby="rules-title">
         <h2 id="rules-title">{bg.home.rulesTitle}</h2>

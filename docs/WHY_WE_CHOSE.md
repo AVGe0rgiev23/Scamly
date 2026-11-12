@@ -2709,3 +2709,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 - 2026-11-11 · W3-08 screenshots use the existing test previews with fictional data. The images match the current controls and the ordered text instructions remain available at every screen width.
 
 - 2026-11-11 · W3-10: a browser print stylesheet lets the team maintain one copy of the card. The permanent pairing URL on the QR remains valid when an individual pairing code expires.
+
+### Midnight Signal
+
+The ink and periwinkle theme gives Scamly a recognizable call checker identity. Its porcelain and cobalt light counterpart follows the existing theme preference. CSS draws the waveform without a download or animation. The primary action has its own colors, while the result also uses words and a symbol so the risk is clear without relying on color. Focus uses a separate ring, and static placeholders reserve space during real waits.

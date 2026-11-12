@@ -2855,3 +2855,7 @@ One line per update of this file, newest last. Format: `date · what changed`.
 - 2026-11-11 · W3-08 screenshots: each guide shows the relevant screen captured from the browser previews with fictional data. The image descriptions are in bg.help.
 
 - 2026-11-11 · W3-10: the education page links to /karta-za-hladilnik. The card has three large Bulgarian instructions and a QR to /svarzhi, where the phone owner can enter a current pairing code. The print button opens the browser dialog and the print stylesheet formats the card as one A5 portrait page.
+
+### Midnight Signal core screens
+
+The homepage leads to the protected check route. An unpaired phone is redirected to pairing by the existing guard. A static decorative call trace sits beside the hero on desktop and is hidden on mobile. The check entry uses the brand action color. During the role check, a static skeleton reserves space and exposes a single loading status. During answer submission the controls stay in place, and the verdict shows the next action before supporting reasons.
