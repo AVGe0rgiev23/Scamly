@@ -167,10 +167,9 @@ test("the people list shows each person, their district and the caller's role", 
 test("the people list has an empty state and a Bulgarian error with „Опитай отново“", async ({
   page,
 }) => {
-  let calls = 0;
+  let retryRequested = false;
   await page.route("**/api/persons", (route) => {
-    calls++;
-    if (calls === 1) {
+    if (!retryRequested) {
       return route.fulfill({
         status: 401,
         json: { error: { code: "unauthorized", messageBg: bg.errors.unauthorized } },
@@ -180,6 +179,7 @@ test("the people list has an empty state and a Bulgarian error with „Опит�
   });
   await page.goto("/dev/family");
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(bg.errors.unauthorized);
+  retryRequested = true;
   await page.getByRole("button", { name: bg.family.retry }).click();
   await expect(page.getByRole("heading", { name: bg.family.emptyTitle })).toBeVisible();
   await expect(page.getByText(bg.family.emptyText)).toBeVisible();
