@@ -3,7 +3,7 @@ import { RoleHelp } from "@/components/help/RoleHelp";
 
 export default function HelpPage() {
   return (
-    <main>
+    <main className="shell py-10 md:py-16">
       <RoleHelp role="protected" />
     </main>
   );

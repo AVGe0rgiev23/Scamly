@@ -10,6 +10,7 @@ import { callApi } from "@/components/family/api";
 import { bg } from "@/i18n/bg";
 import type { PublicScriptDto } from "@/schemas/scripts";
 import { EducationIntro } from "./EducationIntro";
+import { CardLoading, ListLoading } from "./Loading";
 import { ScriptCard } from "./ScriptCard";
 import { ScriptList, ScriptsUnavailable } from "./ScriptList";
 
@@ -39,11 +40,13 @@ function usePublishedScripts(): LoadState {
 export function EducationListPreview() {
   const state = usePublishedScripts();
   return (
-    <main className="education">
+    <main className="shell py-10 md:py-16">
       <EducationIntro />
-      <section aria-labelledby="edu-list-title" className="edu-list-section">
-        <h2 id="edu-list-title">{bg.education.listTitle}</h2>
-        {state.kind === "loading" ? <p className="edu-message">{bg.common.loading}</p> : null}
+      <section aria-labelledby="edu-list-title">
+        <h2 id="edu-list-title" className="mb-6 text-h3 text-fg-muted">
+          {bg.education.listTitle}
+        </h2>
+        {state.kind === "loading" ? <ListLoading /> : null}
         {state.kind === "error" ? <ScriptsUnavailable /> : null}
         {state.kind === "ready" ? (
           <ScriptList
@@ -67,11 +70,11 @@ export function EducationCardPreview() {
         )
       : undefined;
   return (
-    <main className="education">
-      {state.kind === "loading" ? <p className="edu-message">{bg.common.loading}</p> : null}
+    <main className="shell py-10 md:py-16">
+      {state.kind === "loading" ? <CardLoading /> : null}
       {state.kind === "error" ? <ScriptsUnavailable /> : null}
       {state.kind === "ready" && script === undefined ? (
-        <p className="edu-message">{bg.common.notFoundText}</p>
+        <p className="text-lg text-fg-muted">{bg.common.notFoundText}</p>
       ) : null}
       {script !== undefined ? <ScriptCard script={script} listHref={PREVIEW_PATH} /> : null}
     </main>

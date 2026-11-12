@@ -6,14 +6,23 @@
 // Leaflet (the map drawing, DistrictMap.tsx) is loaded only in the browser and in its
 // own small file (next/dynamic, ssr: false); everything else shows without it.
 // Not colour-only: every number is also in the tooltips, the panel and the table.
+//
+// Look: the period switch as a segmented control; the map large on the left (8 of 12
+// columns), the district panel and the waves on the right; the table of districts
+// below with mono counts. A skeleton with the map's shape while loading, an error
+// state with „Опитай отново“ and an empty state when there are no reports yet.
 "use client";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { fill } from "@/components/family/format";
-import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/components/ui/cn";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import type { DistrictCode, DistrictStatsDto, MapStatsDto } from "@/schemas/reports";
@@ -34,9 +43,12 @@ import {
 const DistrictMap = dynamic(() => import("./DistrictMap"), {
   ssr: false,
   loading: () => (
-    <p role="status" className="muted map-canvas-loading">
-      {bg.map.loading}
-    </p>
+    <div>
+      <p role="status" className="sr-only">
+        {bg.map.loading}
+      </p>
+      <Skeleton className="aspect-[3/2] w-full rounded-md" />
+    </div>
   ),
 });
 
@@ -70,13 +82,17 @@ export function ScamMap() {
   const onSelect = useCallback((code: DistrictCode) => setSelected(code), []);
 
   return (
-    <div className="map-page">
-      <div role="group" aria-label={bg.map.periodLabel} className="admin-periods map-periods">
+    <div className="flex flex-col gap-10">
+      <div
+        role="group"
+        aria-label={bg.map.periodLabel}
+        className="inline-flex max-w-full self-start rounded-md border border-line-strong bg-surface-1 p-1"
+      >
         {MAP_PERIODS.map((period) => (
           <button
             key={period}
             type="button"
-            className="button button-secondary admin-period"
+            className="pressable min-h-11 cursor-pointer rounded-sm border border-transparent px-4 font-semibold text-fg-muted hover:text-fg aria-pressed:border-accent-line aria-pressed:bg-accent-bg aria-pressed:text-fg"
             aria-pressed={weeks === period}
             onClick={() => {
               if (period === weeks) return;
@@ -89,37 +105,51 @@ export function ScamMap() {
         ))}
       </div>
 
-      {state.kind === "loading" ? (
-        <p role="status" className="muted">
-          {bg.map.loading}
-        </p>
-      ) : null}
+      {state.kind === "loading" ? <MapLoading /> : null}
       {state.kind === "error" ? (
-        <div className="family-error">
-          <p role="alert" className="form-message form-message-error">
-            {state.message}
-          </p>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setState({ kind: "loading" });
-              setAttempt(attempt + 1);
-            }}
-          >
-            {bg.map.retry}
-          </Button>
-        </div>
+        <ErrorState
+          text={state.message}
+          retryLabel={bg.map.retry}
+          onRetry={() => {
+            setState({ kind: "loading" });
+            setAttempt(attempt + 1);
+          }}
+        />
       ) : null}
       {state.kind === "ready" ? (
         <MapBody stats={state.stats} selected={selected} onSelect={onSelect} />
       ) : null}
 
-      <p className="map-attribution">{bg.map.attribution}</p>
-      <p>
-        <Link href={ROUTES.report} className="site-footer-link">
-          {bg.map.reportLink}
-        </Link>
+      <div className="flex flex-col gap-2 border-t border-line pt-6">
+        <p className="text-sm text-fg-subtle">{bg.map.attribution}</p>
+        <p>
+          <Link
+            href={ROUTES.report}
+            className="inline-flex min-h-12 items-center gap-2 font-semibold text-accent underline underline-offset-4 hover:text-accent-hover"
+          >
+            {bg.map.reportLink}
+            <ArrowRight className="size-5" aria-hidden="true" />
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// The shape of the page while the numbers load: the map box, the panel and the table.
+function MapLoading() {
+  return (
+    <div>
+      <p role="status" className="sr-only">
+        {bg.map.loading}
       </p>
+      <div className="grid gap-6 md:grid-cols-12" aria-hidden="true">
+        <Skeleton className="aspect-[3/2] w-full rounded-lg md:col-span-8" />
+        <div className="flex flex-col gap-6 md:col-span-4">
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <SkeletonText lines={4} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -137,54 +167,73 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
 
   return (
     <>
-      <section className="card map-waves" aria-labelledby="map-waves-title">
-        <h2 id="map-waves-title">{bg.map.wavesTitle}</h2>
-        {waves.length === 0 ? (
-          <p>{bg.map.noWaves}</p>
-        ) : (
-          <ul>
-            {waves.map((text) => (
-              <li key={text}>{text}</li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       {empty ? (
-        <p role="status" className="muted">
-          {bg.map.empty}
-        </p>
+        <div role="status">
+          <EmptyState text={bg.map.empty} />
+        </div>
       ) : null}
 
-      <div className="map-layout">
-        <div className="map-frame">
-          <DistrictMap stats={stats} selected={selected} onSelect={onSelect} />
+      <div className="grid gap-6 md:grid-cols-12">
+        <div className="flex flex-col gap-4 md:col-span-8">
+          <div className="rounded-lg border border-line bg-surface-1 p-2 grid-lines md:p-4">
+            <DistrictMap stats={stats} selected={selected} onSelect={onSelect} />
+          </div>
           <Legend />
         </div>
-        <DistrictPanel district={chosen} />
+        <div className="flex flex-col gap-6 md:col-span-4">
+          <DistrictPanel district={chosen} />
+          <section aria-labelledby="map-waves-title" className="border-t border-line pt-5">
+            <h2 id="map-waves-title" className="text-h3">
+              {bg.map.wavesTitle}
+            </h2>
+            {waves.length === 0 ? (
+              <p className="mt-3 text-fg-muted">{bg.map.noWaves}</p>
+            ) : (
+              <ul className="mt-3 flex flex-col">
+                {waves.map((text) => (
+                  <li key={text} className="border-t border-line py-3 first:border-t-0">
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
 
-      <section aria-labelledby="map-table-title" className="map-table-section">
-        <h2 id="map-table-title">{bg.map.tableTitle}</h2>
-        <div className="admin-table-wrap">
-          <table className="admin-table map-table">
+      <section aria-labelledby="map-table-title">
+        <h2 id="map-table-title" className="text-h3">
+          {bg.map.tableTitle}
+        </h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-left">
             <caption className="sr-only">{bg.map.tableCaption}</caption>
             <thead>
-              <tr>
-                <th scope="col">{bg.map.tableDistrict}</th>
-                <th scope="col" className="admin-num">
+              <tr className="border-b border-line-strong text-sm text-fg-muted">
+                <th scope="col" className="py-2 pr-4 font-semibold">
+                  {bg.map.tableDistrict}
+                </th>
+                <th scope="col" className="py-2 pr-4 text-right font-semibold">
                   {bg.map.tableTotal}
                 </th>
-                <th scope="col">{bg.map.tableWave}</th>
+                <th scope="col" className="py-2 font-semibold">
+                  {bg.map.tableWave}
+                </th>
               </tr>
             </thead>
             <tbody>
               {stats.districts.map((district) => (
-                <tr key={district.districtCode}>
-                  <th scope="row">
+                <tr
+                  key={district.districtCode}
+                  className={cn(
+                    "border-b border-line",
+                    district.districtCode === selected && "bg-surface-2",
+                  )}
+                >
+                  <th scope="row" className="pr-4 font-normal">
                     <button
                       type="button"
-                      className="map-table-button"
+                      className="min-h-11 cursor-pointer text-left font-semibold text-fg underline-offset-4 hover:text-accent hover:underline aria-pressed:text-accent"
                       aria-label={fill(bg.map.tableSelect, {
                         district: districtName(district.districtCode),
                       })}
@@ -194,8 +243,8 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
                       {districtName(district.districtCode)}
                     </button>
                   </th>
-                  <td className="admin-num">{district.total}</td>
-                  <td>
+                  <td className="tabular py-2 pr-4 text-right font-mono">{district.total}</td>
+                  <td className="py-2 text-fg-muted">
                     {district.waves.length === 0
                       ? bg.map.tableNoWave
                       : district.waves.map((wave) => scriptName(wave.scriptType)).join(", ")}
@@ -214,11 +263,14 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
 function Legend() {
   return (
     <figure className="map-legend">
-      <figcaption>{bg.map.legendTitle}</figcaption>
-      <ul>
+      <figcaption className="text-sm text-fg-muted">{bg.map.legendTitle}</figcaption>
+      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
         {LEVELS.map((range) => (
-          <li key={range.level}>
-            <span className={`map-swatch map-level-${range.level}`} aria-hidden="true" />
+          <li key={range.level} className="tabular flex items-center gap-2 font-mono text-xs">
+            <span
+              className={`map-swatch map-level-${range.level} size-4 rounded-sm border border-line-strong`}
+              aria-hidden="true"
+            />
             {legendText(range)}
           </li>
         ))}
@@ -231,26 +283,32 @@ function Legend() {
 // numbers when a district is chosen, while the focus stays on the map or the table.
 function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
   return (
-    <section className="card map-panel" aria-live="polite" aria-labelledby="map-panel-title">
+    <section
+      className="map-panel min-h-40 rounded-lg border border-line bg-surface-1 p-5 md:p-6"
+      aria-live="polite"
+      aria-labelledby="map-panel-title"
+    >
       {district === null ? (
         <>
           <h2 id="map-panel-title" className="sr-only">
             {bg.map.panelEmptyTitle}
           </h2>
-          <p className="muted">{bg.map.panelHint}</p>
+          <p className="text-fg-muted">{bg.map.panelHint}</p>
         </>
       ) : (
         <>
-          <h2 id="map-panel-title">
+          <h2 id="map-panel-title" className="text-h3">
             {fill(bg.map.panelTitle, { district: districtName(district.districtCode) })}
           </h2>
-          <p className="map-panel-total">{fill(bg.map.panelTotal, { count: district.total })}</p>
+          <p className="tabular mt-2 font-mono text-sm text-fg-muted">
+            {fill(bg.map.panelTotal, { count: district.total })}
+          </p>
           {scriptCounts(district).length > 0 ? (
             <>
-              <h3>{bg.map.panelByScript}</h3>
-              <ul>
+              <h3 className="mt-5 text-base font-semibold">{bg.map.panelByScript}</h3>
+              <ul className="mt-2 flex flex-col">
                 {scriptCounts(district).map(({ script, count }) => (
-                  <li key={script}>
+                  <li key={script} className="border-t border-line py-2">
                     {scriptName(script)}: {reportsText(count)}
                   </li>
                 ))}
@@ -258,8 +316,8 @@ function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
             </>
           ) : null}
           {district.waves.map((wave) => (
-            <p key={wave.scriptType} className="map-panel-wave">
-              {fill(bg.map.panelWave, { script: scriptName(wave.scriptType) })}
+            <p key={wave.scriptType} className="mt-3">
+              <Badge>{fill(bg.map.panelWave, { script: scriptName(wave.scriptType) })}</Badge>
             </p>
           ))}
         </>

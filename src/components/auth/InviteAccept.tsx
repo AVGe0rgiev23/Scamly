@@ -7,6 +7,8 @@
 //     (history.replaceState), then the result is shown;
 //   - any other role: „Тази покана е за профил на близък.“
 //
+// Look: the AuthPage frame; buttons from the Signal primitives, results in a Notice.
+//
 // We don't know whose invite it is before it is used: the API reveals the person's
 // name only to the family member who redeems it, so a leaked link shows nothing.
 "use client";
@@ -14,7 +16,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { AUTH_LINK } from "@/components/auth/AuthPage";
 import { callApi } from "@/components/family/api";
+import { ButtonLink } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
+import { SkeletonText } from "@/components/ui/Skeleton";
 import { ROUTES, withNext } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { RedeemInviteSchema } from "@/schemas/invites";
@@ -86,43 +92,47 @@ export function InviteAccept() {
 
   if (view.kind === "checking" || view.kind === "redeeming") {
     return (
-      <p role="status" className="muted">
-        {view.kind === "checking" ? bg.common.loading : bg.invitePage.redeeming}
-      </p>
+      <div className="flex flex-col gap-4">
+        <p role="status" className="text-lg text-fg-muted">
+          {view.kind === "checking" ? bg.common.loading : bg.invitePage.redeeming}
+        </p>
+        <SkeletonText lines={2} className="max-w-sm" />
+      </div>
     );
   }
 
   if (view.kind === "guest") {
     const back = `${ROUTES.invite}?t=${token}`;
     return (
-      <div className="auth-form">
-        <p>{bg.invitePage.guestText}</p>
-        <Link
-          className="button button-primary"
-          href={withNext(ROUTES.login, back)}
-          prefetch={false}
-        >
-          {bg.invitePage.loginButton}
-        </Link>
-        <Link
-          className="button button-secondary"
-          href={withNext(ROUTES.register, back)}
-          prefetch={false}
-        >
-          {bg.invitePage.registerButton}
-        </Link>
-        <p className="muted">{bg.invitePage.registerHint}</p>
+      <div className="flex flex-col gap-6">
+        <p className="text-lg">{bg.invitePage.guestText}</p>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <ButtonLink href={withNext(ROUTES.login, back)} prefetch={false} size="lg">
+            {bg.invitePage.loginButton}
+          </ButtonLink>
+          <ButtonLink
+            href={withNext(ROUTES.register, back)}
+            prefetch={false}
+            variant="secondary"
+            size="lg"
+          >
+            {bg.invitePage.registerButton}
+          </ButtonLink>
+        </div>
+        <p className="text-fg-muted">{bg.invitePage.registerHint}</p>
       </div>
     );
   }
 
   if (view.kind === "wrongRole") {
     return (
-      <div className="auth-form">
-        <p className="form-message form-message-error" role="alert">
-          {bg.invitePage.wrongRole}
-        </p>
-        <p className="muted">{bg.invitePage.wrongRoleHint}</p>
+      <div className="flex flex-col gap-4">
+        <div role="alert">
+          <Notice status="caution">
+            <p>{bg.invitePage.wrongRole}</p>
+          </Notice>
+        </div>
+        <p className="text-fg-muted">{bg.invitePage.wrongRoleHint}</p>
       </div>
     );
   }
@@ -133,17 +143,20 @@ export function InviteAccept() {
 
   const name = view.result.personName;
   return (
-    <div className="auth-form">
-      <p className="form-message form-message-success" role="status">
-        {fill(bg.invitePage.success, { name, n: String(view.result.priority) })}
-      </p>
-      <p>{fill(bg.invitePage.successNext, { name })}</p>
-      <Link
-        className="button button-primary"
+    <div className="appear flex flex-col gap-6">
+      <div role="status">
+        <Notice status="safe">
+          <p>{fill(bg.invitePage.success, { name, n: String(view.result.priority) })}</p>
+        </Notice>
+      </div>
+      <p className="text-lg">{fill(bg.invitePage.successNext, { name })}</p>
+      <ButtonLink
         href={`${ROUTES.family}/${view.result.protectedPersonId}`}
+        size="lg"
+        className="self-start"
       >
         {fill(bg.invitePage.openPerson, { name })}
-      </Link>
+      </ButtonLink>
     </div>
   );
 }
@@ -151,11 +164,13 @@ export function InviteAccept() {
 // An error from the API (already in Bulgarian) and the way back.
 function InviteError({ message }: { message: string }) {
   return (
-    <div className="auth-form">
-      <p className="form-message form-message-error" role="alert">
-        {message}
-      </p>
-      <Link className="auth-action-link" href={ROUTES.home}>
+    <div className="flex flex-col gap-4">
+      <div role="alert">
+        <Notice status="danger">
+          <p>{message}</p>
+        </Notice>
+      </div>
+      <Link className={AUTH_LINK} href={ROUTES.home}>
         {bg.common.backHome}
       </Link>
     </div>

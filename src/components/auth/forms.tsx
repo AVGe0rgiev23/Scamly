@@ -1,4 +1,6 @@
-// Accessible forms call the existing JSON API; session cookies stay on the server.
+// Accessible sign-in, registration and pairing forms (and the header's „Изход“) on the
+// Signal design: labelled fields, a large submit button, errors in a Notice that gets
+// focus. They call the existing JSON API; session cookies stay on the server.
 "use client";
 
 import {
@@ -14,7 +16,11 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { homePathForRole, ROUTES, safeNextPath, withNext, type AppRole } from "@/config/routes";
+import { AUTH_LINK } from "@/components/auth/AuthPage";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
+import { Field, Input } from "@/components/ui/Field";
+import { Notice } from "@/components/ui/Notice";
 import { bg } from "@/i18n/bg";
 import { unsubscribeFromPushBeforeLogout } from "@/lib/push";
 import { LoginSchema, RegisterSchema } from "@/schemas/auth";
@@ -86,56 +92,77 @@ function formValues(form: HTMLFormElement): Record<string, FormDataEntryValue> {
   return Object.fromEntries(new FormData(form));
 }
 
-function Field({
+// One labelled input of these forms. `large` is for the older person's pairing
+// screen: a big mono input for the code and a hint in large text.
+function AuthField({
   label,
   hint,
   id,
   validation,
+  large = false,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
   label: string;
   hint?: string;
   id: string;
   validation: { field: string | null; messageId: string };
+  large?: boolean;
 }) {
   const invalid = validation.field === props.name;
   const description =
     [hint ? `${id}-hint` : null, invalid ? validation.messageId : null].filter(Boolean).join(" ") ||
     undefined;
   return (
-    <div className="auth-field">
-      <label htmlFor={id}>{label}</label>
-      <input
+    <Field
+      label={<span className={large ? "text-xl" : undefined}>{label}</span>}
+      htmlFor={id}
+      hint={large ? undefined : hint}
+      hintId={`${id}-hint`}
+    >
+      <Input
         id={id}
         aria-describedby={description}
         aria-invalid={invalid || undefined}
+        size={large ? "lg" : "md"}
+        mono={large}
+        className={large ? "max-w-[16rem] text-h3 tracking-[0.35em]" : undefined}
         {...props}
       />
-      {hint ? (
-        <p id={`${id}-hint`} className="muted">
+      {large && hint ? (
+        <p id={`${id}-hint`} className="text-xl text-fg-muted">
           {hint}
         </p>
       ) : null}
-    </div>
+    </Field>
   );
 }
 
-function Feedback({ message, id }: { message: Message; id: string }) {
-  const summary = useRef<HTMLParagraphElement>(null);
+function Feedback({
+  message,
+  id,
+  className,
+}: {
+  message: Message;
+  id: string;
+  className?: string;
+}) {
+  const summary = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (message?.kind === "error") summary.current?.focus();
   }, [message]);
   if (!message) return null;
   return (
-    <p
+    <div
       id={id}
       ref={summary}
       tabIndex={-1}
-      className={`form-message form-message-${message.kind}`}
+      className={cn("appear", className)}
       role={message.kind === "error" ? "alert" : "status"}
     >
-      {message.text}
-    </p>
+      <Notice status={message.kind === "error" ? "danger" : "safe"}>
+        <p>{message.text}</p>
+      </Notice>
+    </div>
   );
 }
 
@@ -167,7 +194,7 @@ function useQueryString(): string {
 export function KeepNextLink({ href, children }: { href: string; children: ReactNode }) {
   const next = safeNextPath(new URLSearchParams(useQueryString()).get("next"));
   return (
-    <Link href={withNext(href, next)} prefetch={false}>
+    <Link href={withNext(href, next)} prefetch={false} className={AUTH_LINK}>
       {children}
     </Link>
   );
@@ -194,12 +221,13 @@ export function LoginForm() {
     else request.showError(bg.errors.internal);
   }
   return (
-    <form noValidate onSubmit={submit} aria-busy={request.pending} className="auth-form">
+    <form noValidate onSubmit={submit} aria-busy={request.pending} className="flex flex-col gap-6">
       <fieldset
+        className="flex min-w-0 flex-col gap-6 border-0 p-0"
         disabled={request.pending}
         aria-describedby={request.message ? request.feedbackId : undefined}
       >
-        <Field
+        <AuthField
           validation={request.validation}
           id="login-email"
           name="email"
@@ -210,7 +238,7 @@ export function LoginForm() {
           maxLength={254}
           required
         />
-        <Field
+        <AuthField
           validation={request.validation}
           id="login-password"
           name="password"
@@ -220,7 +248,7 @@ export function LoginForm() {
           maxLength={200}
           required
         />
-        <Button type="submit" disabled={request.pending}>
+        <Button type="submit" size="xl" className="w-full sm:w-auto" disabled={request.pending}>
           {request.pending ? bg.auth.submitting : bg.auth.loginButton}
         </Button>
       </fieldset>
@@ -254,12 +282,13 @@ export function RegisterForm() {
     else request.showError(bg.errors.internal);
   }
   return (
-    <form noValidate onSubmit={submit} aria-busy={request.pending} className="auth-form">
+    <form noValidate onSubmit={submit} aria-busy={request.pending} className="flex flex-col gap-6">
       <fieldset
+        className="flex min-w-0 flex-col gap-6 border-0 p-0"
         disabled={request.pending}
         aria-describedby={request.message ? request.feedbackId : undefined}
       >
-        <Field
+        <AuthField
           validation={request.validation}
           id="register-name"
           name="displayName"
@@ -269,7 +298,7 @@ export function RegisterForm() {
           maxLength={60}
           required
         />
-        <Field
+        <AuthField
           validation={request.validation}
           id="register-email"
           name="email"
@@ -280,7 +309,7 @@ export function RegisterForm() {
           maxLength={254}
           required
         />
-        <Field
+        <AuthField
           validation={request.validation}
           id="register-password"
           name="password"
@@ -292,7 +321,7 @@ export function RegisterForm() {
           hint={bg.auth.passwordHint}
           required
         />
-        <Button type="submit" disabled={request.pending}>
+        <Button type="submit" size="xl" className="w-full sm:w-auto" disabled={request.pending}>
           {request.pending ? bg.auth.submitting : bg.auth.registerButton}
         </Button>
       </fieldset>
@@ -325,13 +354,14 @@ export function PairForm() {
       noValidate
       onSubmit={submit}
       aria-busy={request.pending}
-      className="auth-form pairing-form"
+      className="pairing-form flex flex-col gap-8"
     >
       <fieldset
+        className="flex min-w-0 flex-col gap-6 border-0 p-0"
         disabled={request.pending}
         aria-describedby={request.message ? request.feedbackId : undefined}
       >
-        <Field
+        <AuthField
           validation={request.validation}
           key={initialCode}
           id="pairing-code"
@@ -344,14 +374,15 @@ export function PairForm() {
           maxLength={6}
           defaultValue={initialCode}
           hint={bg.pairing.codeHint}
+          large
           required
         />
-        <Button type="submit" disabled={request.pending}>
+        <Button type="submit" size="xl" className="w-full sm:w-auto" disabled={request.pending}>
           {request.pending ? bg.pairing.submitting : bg.pairing.button}
         </Button>
       </fieldset>
       <Feedback message={request.message} id={request.feedbackId} />
-      <p className="muted">{bg.pairing.retryHint}</p>
+      <p className="max-w-[40ch] text-xl text-fg-muted">{bg.pairing.retryHint}</p>
     </form>
   );
 }
@@ -370,11 +401,17 @@ export function LogoutButton() {
     else request.showError(bg.errors.internal);
   }
   return (
-    <div className="auth-form">
-      <Button variant="secondary" disabled={request.pending} onClick={logout}>
+    <div className="flex flex-col items-end gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="min-h-12"
+        disabled={request.pending}
+        onClick={logout}
+      >
         {request.pending ? bg.auth.submitting : bg.auth.logoutButton}
       </Button>
-      <Feedback message={request.message} id={request.feedbackId} />
+      <Feedback message={request.message} id={request.feedbackId} className="text-sm" />
     </div>
   );
 }

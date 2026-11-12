@@ -8,6 +8,7 @@
 
 import type { ReactNode } from "react";
 import type { AppRole } from "@/config/routes";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 import { bg } from "@/i18n/bg";
 import { requirePageRole } from "@/server/auth/requireRole";
 
@@ -20,9 +21,11 @@ type RoleGateProps = {
 export async function RoleGate(props: RoleGateProps) {
   await requirePageRole(props.allowedRoles, props.loginPage);
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-6 py-16">
+    <main className="shell flex flex-1 flex-col gap-6 py-10 md:py-16">
       {props.children}
-      <p className="text-base">{bg.areas.placeholderNote}</p>
+      <p className="max-w-[60ch] border-t border-line pt-4 text-sm text-fg-muted">
+        {bg.areas.placeholderNote}
+      </p>
     </main>
   );
 }
@@ -31,8 +34,12 @@ export async function RoleGate(props: RoleGateProps) {
 // Components it must sit inside <Suspense>; this is its fallback.
 export function AreaLoading() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <p className="text-lg">{bg.common.loading}</p>
+    <main className="shell flex-1 py-10 md:py-16">
+      <p role="status" className="sr-only">
+        {bg.common.loading}
+      </p>
+      <Skeleton className="mb-6 h-14 w-2/3 max-w-xl" />
+      <SkeletonText lines={3} className="max-w-xl" />
     </main>
   );
 }

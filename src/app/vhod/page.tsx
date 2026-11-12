@@ -1,6 +1,6 @@
 // Family, moderator and administrator sign-in with the shared accessible form.
 import Link from "next/link";
-import { AuthPage } from "@/components/auth/AuthPage";
+import { AUTH_LINK, AuthPage } from "@/components/auth/AuthPage";
 import { KeepNextLink, LoginForm } from "@/components/auth/forms";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
@@ -13,7 +13,9 @@ export default function LoginPage() {
       footer={
         <>
           <KeepNextLink href={ROUTES.register}>{bg.auth.toRegister}</KeepNextLink>
-          <Link href={ROUTES.pair}>{bg.auth.toPair}</Link>
+          <Link href={ROUTES.pair} className={AUTH_LINK}>
+            {bg.auth.toPair}
+          </Link>
         </>
       }
     >

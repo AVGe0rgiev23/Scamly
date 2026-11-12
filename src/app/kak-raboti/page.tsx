@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { EducationIntro } from "@/components/education/EducationIntro";
+import { ListLoading } from "@/components/education/Loading";
 import { ScriptList, ScriptsUnavailable } from "@/components/education/ScriptList";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
@@ -23,11 +24,13 @@ export const metadata: Metadata = {
 
 export default function EducationPage() {
   return (
-    <main className="education">
+    <main className="shell py-10 md:py-16">
       <EducationIntro />
-      <section aria-labelledby="edu-list-title" className="edu-list-section">
-        <h2 id="edu-list-title">{bg.education.listTitle}</h2>
-        <Suspense fallback={<p className="edu-message">{bg.common.loading}</p>}>
+      <section aria-labelledby="edu-list-title">
+        <h2 id="edu-list-title" className="mb-6 text-h3 text-fg-muted">
+          {bg.education.listTitle}
+        </h2>
+        <Suspense fallback={<ListLoading />}>
           <PublishedCards />
         </Suspense>
       </section>

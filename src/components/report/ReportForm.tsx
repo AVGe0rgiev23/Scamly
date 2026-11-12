@@ -1,4 +1,6 @@
 // The public report form „Подай сигнал за измама“ on /signal (W3-02). Anyone, no login.
+// Look: one column (max 36rem) of labelled fields, the script type as big radio tiles,
+// a mono counter under the description and a calm success panel after sending.
 // Sends POST /api/reports and then shows „Благодарим!“. The browser checks the fields
 // first with the same Zod rules as the server (checkReport), so every problem is shown
 // at once next to its field; the server checks everything again (never trust the client).
@@ -8,13 +10,13 @@
 // the report.
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { fill } from "@/components/family/format";
 import { FormMessage, SelectField, TextField, type FormNotice } from "@/components/family/fields";
 import { BigChoice } from "@/components/ui/BigChoice";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { StatusIcon } from "@/components/ui/Badge";
+import { Textarea } from "@/components/ui/Field";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { DISTRICT_CODES, MAX_DESCRIPTION_LENGTH, todayInBulgaria } from "@/schemas/reports";
@@ -81,7 +83,7 @@ function FieldError({ field, errors }: { field: ReportField; errors: FieldErrors
   const message = errors[field];
   if (message === undefined) return null;
   return (
-    <p id={`${IDS[field]}-error`} className="report-field-error">
+    <p id={`${IDS[field]}-error`} className="mt-2 text-sm font-medium text-danger-fg">
       {message}
     </p>
   );
@@ -216,26 +218,28 @@ export function ReportForm() {
 
   if (sent) {
     return (
-      <Card className="report-success" role="status">
-        <h2 ref={successHeading} tabIndex={-1}>
+      <div
+        className="appear max-w-[36rem] rounded-lg border border-safe-line bg-safe-bg p-6 md:p-8"
+        role="status"
+      >
+        <StatusIcon status="safe" className="size-8 text-safe-fg" />
+        <h2 ref={successHeading} tabIndex={-1} className="mt-4 text-h2">
           {bg.reportForm.successTitle}
         </h2>
-        <p>{bg.reportForm.successText}</p>
-        <div className="report-actions">
-          <Link href={ROUTES.education} className="button button-primary">
-            {bg.reportForm.successEducation}
-          </Link>
-          <Link href={ROUTES.map} className="button button-secondary">
+        <p className="mt-3 text-lg">{bg.reportForm.successText}</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <ButtonLink href={ROUTES.education}>{bg.reportForm.successEducation}</ButtonLink>
+          <ButtonLink href={ROUTES.map} variant="secondary">
             {bg.map.successLink}
-          </Link>
-          <Link href={ROUTES.home} className="button button-secondary">
+          </ButtonLink>
+          <ButtonLink href={ROUTES.home} variant="secondary">
             {bg.reportForm.successHome}
-          </Link>
-          <Button variant="secondary" onClick={startAgain}>
+          </ButtonLink>
+          <Button variant="ghost" onClick={startAgain}>
             {bg.reportForm.another}
           </Button>
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -245,10 +249,10 @@ export function ReportForm() {
       onSubmit={submit}
       aria-label={bg.reportForm.formLabel}
       aria-busy={pending}
-      className="card report-form"
+      className="relative max-w-[36rem]"
     >
-      <fieldset disabled={pending}>
-        <div className="report-field">
+      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-8 border-0 p-0">
+        <div>
           <SelectField
             id={IDS.districtCode}
             name="districtCode"
@@ -268,19 +272,18 @@ export function ReportForm() {
           <FieldError field="districtCode" errors={errors} />
         </div>
 
-        <div id={IDS.scriptType} className="report-field">
+        <div id={IDS.scriptType}>
           <BigChoice
             question={bg.reportForm.scriptQuestion}
             value={values.scriptType === "" ? null : values.scriptType}
             onChange={(value) => change("scriptType", value)}
             options={SCRIPT_CHOICES}
-            size="large"
             describedBy={describedBy("scriptType", false)}
           />
           <FieldError field="scriptType" errors={errors} />
         </div>
 
-        <div className="report-field">
+        <div>
           <TextField
             id={IDS.occurredOn}
             name="occurredOn"
@@ -293,14 +296,18 @@ export function ReportForm() {
             onChange={(event) => change("occurredOn", event.target.value)}
             invalid={errors.occurredOn !== undefined}
             errorId={`${IDS.occurredOn}-error`}
+            mono
+            className="max-w-[16rem]"
           />
           <FieldError field="occurredOn" errors={errors} />
         </div>
 
-        <div className="report-field">
-          <div className="form-field">
-            <label htmlFor={IDS.description}>{bg.reportForm.description}</label>
-            <textarea
+        <div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={IDS.description} className="font-semibold text-fg">
+              {bg.reportForm.description}
+            </label>
+            <Textarea
               id={IDS.description}
               name="description"
               rows={5}
@@ -316,20 +323,25 @@ export function ReportForm() {
                 .filter(Boolean)
                 .join(" ")}
             />
-            <p id={`${IDS.description}-hint`} className="muted">
-              {bg.reportForm.descriptionHint}
-            </p>
-            <p id={`${IDS.description}-counter`} className="muted report-counter">
-              {fill(bg.reportForm.descriptionCounter, {
-                count: values.description.length,
-                max: MAX_DESCRIPTION_LENGTH,
-              })}
-            </p>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <p id={`${IDS.description}-hint`} className="text-sm text-fg-muted">
+                {bg.reportForm.descriptionHint}
+              </p>
+              <p
+                id={`${IDS.description}-counter`}
+                className="tabular font-mono text-xs text-fg-subtle"
+              >
+                {fill(bg.reportForm.descriptionCounter, {
+                  count: values.description.length,
+                  max: MAX_DESCRIPTION_LENGTH,
+                })}
+              </p>
+            </div>
           </div>
           <FieldError field="description" errors={errors} />
         </div>
 
-        <div className="report-field">
+        <div>
           <TextField
             id={IDS.callerNumber}
             name="callerNumber"
@@ -342,13 +354,17 @@ export function ReportForm() {
             onChange={(event) => change("callerNumber", event.target.value)}
             invalid={errors.callerNumber !== undefined}
             errorId={`${IDS.callerNumber}-error`}
+            mono
           />
           <FieldError field="callerNumber" errors={errors} />
         </div>
 
         {/* The honeypot: moved off the screen (not display:none, which some bots
             skip), out of the Tab order and hidden from screen readers. */}
-        <div className="report-trap" aria-hidden="true">
+        <div
+          className="report-trap absolute -left-[9999px] h-px w-px overflow-hidden"
+          aria-hidden="true"
+        >
           <label htmlFor={IDS.website}>{bg.reportForm.honeypot}</label>
           <input
             id={IDS.website}
@@ -363,16 +379,24 @@ export function ReportForm() {
 
         {/* Field errors: a short note here, the messages under the fields. */}
         {firstInvalidField(errors) !== null ? (
-          <p className="form-message form-message-error">{bg.reportForm.fixErrors}</p>
+          <div className="flex items-start gap-3 rounded-md border border-danger-line bg-danger-bg px-4 py-3">
+            <StatusIcon status="danger" className="mt-[0.2em] text-danger-fg" />
+            <p className="text-fg">{bg.reportForm.fixErrors}</p>
+          </div>
         ) : null}
         {/* Other errors (no connection, too many reports): announced and focused. */}
         <FormMessage notice={notice} id={ERROR_ID} />
         {pending ? (
-          <p role="status" className="report-sending">
+          <p role="status" className="text-fg-muted">
             {bg.reportForm.sending}
           </p>
         ) : null}
-        <Button type="submit" className="report-submit">
+        <Button
+          type="submit"
+          size="lg"
+          loading={pending}
+          className="w-full sm:w-auto sm:self-start"
+        >
           {bg.reportForm.submit}
         </Button>
       </fieldset>

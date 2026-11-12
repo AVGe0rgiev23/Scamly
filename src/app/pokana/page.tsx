@@ -7,6 +7,7 @@
 
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { InviteAccept } from "@/components/auth/InviteAccept";
 import { bg } from "@/i18n/bg";
@@ -21,7 +22,16 @@ export const metadata: Metadata = {
 export default function InvitePage() {
   return (
     <AuthPage title={bg.invitePage.title} description={bg.invitePage.intro}>
-      <Suspense fallback={<p role="status">{bg.common.loading}</p>}>
+      <Suspense
+        fallback={
+          <div>
+            <p role="status" className="sr-only">
+              {bg.common.loading}
+            </p>
+            <Skeleton className="h-64 w-full max-w-md" />
+          </div>
+        }
+      >
         <InviteAccept />
       </Suspense>
     </AuthPage>

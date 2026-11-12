@@ -13,11 +13,16 @@
 // Accessibility: every district is a focusable button (Tab), with its name and number
 // as its label. Focus or hover shows the same text as a tooltip; Enter, Space or a
 // click opens the district's panel (onSelect).
+//
+// Look: map.css restyles Leaflet (transparent background, our tooltip and attribution)
+// and colours the districts with a one-hue scale of the info colour (.map-level-0…4).
 "use client";
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./map.css";
 import { useEffect, useRef, useState } from "react";
+import { StatusIcon } from "@/components/ui/Badge";
 import { bg } from "@/i18n/bg";
 import type { DistrictCode, MapStatsDto } from "@/schemas/reports";
 import { districtLabel, levelOf } from "./mapData";
@@ -155,13 +160,17 @@ export default function DistrictMap({ stats, selected, onSelect }: Props) {
   return (
     <>
       {failed ? (
-        <p role="alert" className="form-message form-message-error">
-          {bg.map.loadError}
-        </p>
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-md border border-danger-line bg-danger-bg px-4 py-3"
+        >
+          <StatusIcon status="danger" className="mt-[0.2em] text-danger-fg" />
+          <p className="text-fg">{bg.map.loadError}</p>
+        </div>
       ) : null}
       <div
         ref={container}
-        className="map-canvas"
+        className="map-canvas aspect-[3/2] w-full"
         role="group"
         aria-label={bg.map.mapLabel}
         data-ready={ready ? "true" : "false"}

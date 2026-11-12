@@ -1,0 +1,95 @@
+/* The scam map's look (/karta, DistrictMap.tsx). Leaflet draws real DOM and SVG, so
+   it needs real CSS: this file restyles Leaflet's container, controls, attribution and
+   tooltip and colours the districts. Only the design tokens of globals.css are used.
+
+   Colour scale: one hue (the neutral "info" blue) mixed into the surface in five
+   steps, from "no reports" (.map-level-0) to "over 10" (.map-level-4). Never the
+   red/amber/green status colours: on this site those mean a verdict on a call. */
+
+/* Leaflet's own box: transparent (the frame around it draws the panel) and our font. */
+.map-canvas.leaflet-container {
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--text);
+  outline: none;
+}
+
+/* The districts. Leaflet writes stroke/fill attributes; CSS wins over them. */
+.map-canvas .map-district {
+  stroke: var(--bg);
+  stroke-width: 1.5;
+  fill-opacity: 1;
+  cursor: pointer;
+}
+
+.map-level-0 {
+  fill: var(--surface-2);
+  background-color: var(--surface-2);
+}
+.map-level-1 {
+  fill: color-mix(in oklab, var(--info-solid) 25%, var(--surface-2));
+  background-color: color-mix(in oklab, var(--info-solid) 25%, var(--surface-2));
+}
+.map-level-2 {
+  fill: color-mix(in oklab, var(--info-solid) 45%, var(--surface-2));
+  background-color: color-mix(in oklab, var(--info-solid) 45%, var(--surface-2));
+}
+.map-level-3 {
+  fill: color-mix(in oklab, var(--info-solid) 70%, var(--surface-2));
+  background-color: color-mix(in oklab, var(--info-solid) 70%, var(--surface-2));
+}
+.map-level-4 {
+  fill: var(--info-solid);
+  background-color: var(--info-solid);
+}
+
+/* Hover and keyboard focus: an outline in the text colour; the chosen district: the
+   accent. (An SVG path has no outline, so the stroke is the outline.) */
+.map-canvas .map-district:hover,
+.map-canvas .map-district:focus-visible {
+  stroke: var(--text);
+  stroke-width: 2.5;
+  outline: none;
+}
+.map-canvas .map-district.map-selected {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+/* The tooltip: a small raised label with the district's name and number. */
+.leaflet-tooltip.map-tooltip {
+  background: var(--surface-1);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-raised);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+}
+.leaflet-tooltip-top.map-tooltip::before {
+  border-top-color: var(--border-strong);
+}
+.leaflet-tooltip-bottom.map-tooltip::before {
+  border-bottom-color: var(--border-strong);
+}
+
+/* The attribution in the corner: quiet, on the panel colour. */
+.map-canvas .leaflet-control-attribution {
+  background: var(--surface-1);
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  border-top-left-radius: var(--radius-sm);
+  padding: 0 0.375rem;
+}
+.map-canvas .leaflet-control-attribution a {
+  color: var(--text-muted);
+}
+.map-canvas .leaflet-bar,
+.map-canvas .leaflet-bar a {
+  background: var(--surface-1);
+  color: var(--text);
+  border-color: var(--border-strong);
+}

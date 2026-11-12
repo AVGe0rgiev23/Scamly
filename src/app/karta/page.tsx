@@ -16,11 +16,11 @@ export const metadata: Metadata = {
 
 export default function MapPage() {
   return (
-    <main className="map">
-      <header className="report-intro">
-        <h1>{bg.map.title}</h1>
-        <p className="report-lead">{bg.map.lead}</p>
-        <p className="muted">{bg.map.note}</p>
+    <main className="shell py-10 md:py-16">
+      <header className="mb-10 max-w-[60ch]">
+        <h1 className="text-h1">{bg.map.title}</h1>
+        <p className="mt-4 text-lg">{bg.map.lead}</p>
+        <p className="mt-2 text-fg-muted">{bg.map.note}</p>
       </header>
       <ScamMap />
     </main>

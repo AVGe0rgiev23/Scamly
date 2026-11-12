@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { CardLoading } from "@/components/education/Loading";
 import { ScriptCard } from "@/components/education/ScriptCard";
 import { ScriptsUnavailable } from "@/components/education/ScriptList";
 import { bg } from "@/i18n/bg";
@@ -21,8 +22,8 @@ export const metadata: Metadata = {
 
 export default function EducationCardPage({ params }: PageProps<"/kak-raboti/[slug]">) {
   return (
-    <main className="education">
-      <Suspense fallback={<p className="edu-message">{bg.common.loading}</p>}>
+    <main className="shell py-10 md:py-16">
+      <Suspense fallback={<CardLoading />}>
         <PublishedCard params={params} />
       </Suspense>
     </main>
