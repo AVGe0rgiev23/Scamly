@@ -2,11 +2,16 @@
 // The owner can remove („Премахни“) a phone, e.g. a lost one, after a clear
 // confirmation window: DELETE /api/devices/:id deletes the phone's account, so its
 // very next request is refused. Trusted contacts see the list without the button.
+// Look: hairline-separated rows; the state is a StatusPill (icon + word); the remove
+// trigger is a ghost button, the red button exists only inside the confirmation.
 "use client";
 
+import { RefreshCw, Smartphone } from "lucide-react";
 import { useState } from "react";
+import { StatusPill } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDialog } from "@/components/ui/Dialog";
+import { EmptyState } from "@/components/ui/States";
 import { bg } from "@/i18n/bg";
 import { callApi, type DeviceDto, type PersonDetailsDto } from "./api";
 import { FormMessage, type FormNotice } from "./fields";
@@ -60,22 +65,29 @@ export function DevicesList({ personId, devices, canEdit, onChange }: DevicesLis
   }
 
   return (
-    <div className="devices">
+    <div className="flex flex-col items-start gap-4">
       {devices.length === 0 ? (
-        <p className="muted">{bg.family.devicesEmpty}</p>
+        <EmptyState text={bg.family.devicesEmpty} className="w-full" />
       ) : (
-        <ul className="device-list">
+        <ul className="w-full border-t border-line">
           {devices.map((device) => (
-            <li key={device.id} className="device-row">
-              <p className="contact-name">{nameOf(device)}</p>
-              <p>{fill(bg.family.devicePairedAt, { time: formatDateTime(device.pairedAt) })}</p>
-              <p className={device.revoked ? "device-status muted" : "device-status"}>
-                <span aria-hidden="true">{device.revoked ? "✕ " : "✓ "}</span>
+            <li
+              key={device.id}
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-4"
+            >
+              <Smartphone className="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+              <div className="min-w-0 flex-1 basis-40">
+                <p className="font-semibold text-fg">{nameOf(device)}</p>
+                <p className="tabular text-sm text-fg-muted">
+                  {fill(bg.family.devicePairedAt, { time: formatDateTime(device.pairedAt) })}
+                </p>
+              </div>
+              <StatusPill status={device.revoked ? "neutral" : "safe"}>
                 {device.revoked ? bg.family.deviceRevoked : bg.family.deviceActive}
-              </p>
+              </StatusPill>
               {canEdit && !device.revoked ? (
                 <Button
-                  variant="danger"
+                  variant="ghost"
                   aria-label={fill(bg.family.revokeLabel, { name: nameOf(device) })}
                   onClick={() => {
                     setDialogError(null);
@@ -89,10 +101,13 @@ export function DevicesList({ personId, devices, canEdit, onChange }: DevicesLis
           ))}
         </ul>
       )}
-      <Button variant="secondary" onClick={refresh} disabled={refreshing}>
+      <Button variant="secondary" onClick={refresh} loading={refreshing}>
+        {refreshing ? null : <RefreshCw className="size-5" aria-hidden="true" />}
         {refreshing ? bg.common.loading : bg.family.refreshDevices}
       </Button>
-      <FormMessage notice={notice} />
+      <div className="w-full empty:hidden">
+        <FormMessage notice={notice} />
+      </div>
 
       <ConfirmDialog
         open={toRevoke !== null}

@@ -3,7 +3,8 @@
 // variant: "primary" (one per view, Signal Cyan), "secondary" (outlined), "ghost"
 //          (text only), "danger" (deletes something, always behind a ConfirmDialog).
 // size:    "md" 48 px (default), "sm" 44 px (dense tables), "lg" 56 px,
-//          "xl" 64 px and bigger text (the older person's screens).
+//          "xl" 64 px and bigger text (the older person's screens),
+//          "icon" a 48 × 48 px square for an icon-only button.
 // loading: shows a small spinner and blocks a second press.
 // In React 19 `ref` is a normal prop, so a parent can focus the button.
 
@@ -12,7 +13,7 @@ import type { ButtonHTMLAttributes, ComponentProps, Ref } from "react";
 import { cn } from "./cn";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-export type ButtonSize = "sm" | "md" | "lg" | "xl";
+export type ButtonSize = "sm" | "md" | "lg" | "xl" | "icon";
 
 const BASE =
   "pressable inline-flex items-center justify-center gap-2 rounded-md border font-semibold " +
@@ -32,6 +33,8 @@ const SIZES: Record<ButtonSize, string> = {
   md: "min-h-12 px-5 text-base",
   lg: "min-h-14 px-6 text-lg",
   xl: "min-h-16 px-7 py-3 text-xl",
+  // A square 48 × 48 px button with only an icon (give it an aria-label).
+  icon: "size-12 shrink-0 p-0",
 };
 
 export function buttonClass(

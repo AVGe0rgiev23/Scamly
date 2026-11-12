@@ -2,6 +2,7 @@
 // The input is checked in the browser with the SAME Zod schema the API uses
 // (CreatePersonSchema), so the person sees the Bulgarian message at once; the API
 // checks it again (never trust the client). On success we open the new person's page.
+// One column of fields; the submit button is the only primary button of the page.
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -52,8 +53,8 @@ export function CreatePersonForm() {
   }
 
   return (
-    <form noValidate onSubmit={submit} aria-busy={pending} className="family-form">
-      <fieldset disabled={pending}>
+    <form noValidate onSubmit={submit} aria-busy={pending} className="flex flex-col gap-6">
+      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-6">
         <TextField
           id="person-name"
           name="displayName"
@@ -85,9 +86,11 @@ export function CreatePersonForm() {
             </option>
           ))}
         </SelectField>
-        <Button type="submit" disabled={pending}>
-          {pending ? bg.family.saving : bg.family.createButton}
-        </Button>
+        <div>
+          <Button type="submit" loading={pending}>
+            {pending ? bg.family.saving : bg.family.createButton}
+          </Button>
+        </div>
       </fieldset>
       <FormMessage notice={notice} id={errorId} />
     </form>

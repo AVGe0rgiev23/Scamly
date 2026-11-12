@@ -8,10 +8,17 @@
 //
 // Why ↑ / ↓ buttons and not drag and drop: buttons work with a keyboard, a screen
 // reader and a shaky finger, and need no extra library (docs/WHY_WE_CHOSE.md).
+//
+// Look: hairline-separated rows (`.contact-list > li`), each with its place as a big
+// number in the data font, the name, the phone in the data font, ↑ / ↓ icon buttons
+// with a tooltip, and „Премахни“ as a quiet ghost button.
 "use client";
 
+import { ArrowDown, ArrowUp, Phone, UserPlus } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { bg } from "@/i18n/bg";
 import { ContactInputSchema, ContactsSchema, MAX_CONTACTS } from "@/schemas/contacts";
 import { callApi, type ContactDto } from "./api";
@@ -90,28 +97,42 @@ export function ContactsEditor({ personId, contacts, canEdit, onSaved }: Contact
   return <ContactsForm personId={personId} contacts={contacts} onSaved={onSaved} />;
 }
 
+// The place number at the start of a row (the words „Място N“ are for screen readers).
+const PLACE_NUMBER =
+  "tabular w-8 shrink-0 pt-1 font-mono text-xl font-semibold leading-none text-fg-subtle";
+const ROW = "flex gap-3 border-b border-line py-5 sm:gap-4";
+
 function ContactsReadOnly({ contacts }: { contacts: ContactDto[] }) {
   const sorted = [...contacts].sort((a, b) => a.priority - b.priority);
   return (
     <>
-      <p className="muted">{bg.family.contactsIntro}</p>
-      <ol className="contact-list">
+      <p className="max-w-[60ch] text-fg-muted">{bg.family.contactsIntro}</p>
+      <ol className="contact-list mt-4 border-t border-line">
         {sorted.map((contact) => (
-          <li key={contact.id} className="contact-row">
-            <p className="contact-place">{fill(bg.family.contactPlace, { n: contact.priority })}</p>
-            <p className="contact-name">{contact.displayName}</p>
-            <p>
-              {contact.phone ? (
-                <a href={`tel:${contact.phone}`} className="family-link">
-                  {contact.phone}
-                </a>
-              ) : (
-                <span className="muted">{bg.family.noPhone}</span>
-              )}
-            </p>
-            <p className="muted">
-              {contact.hasAccount ? bg.family.hasAccount : bg.family.noAccount}
-            </p>
+          <li key={contact.id} className={ROW}>
+            <span className={PLACE_NUMBER} aria-hidden="true">
+              {contact.priority}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="sr-only">{fill(bg.family.contactPlace, { n: contact.priority })}</p>
+              <p className="font-semibold text-fg">{contact.displayName}</p>
+              <p className="mt-1">
+                {contact.phone ? (
+                  <a
+                    href={`tel:${contact.phone}`}
+                    className="tabular inline-flex min-h-11 items-center gap-2 font-mono text-accent underline underline-offset-4"
+                  >
+                    <Phone className="size-5" aria-hidden="true" />
+                    {contact.phone}
+                  </a>
+                ) : (
+                  <span className="text-fg-muted">{bg.family.noPhone}</span>
+                )}
+              </p>
+              <p className="text-sm text-fg-muted">
+                {contact.hasAccount ? bg.family.hasAccount : bg.family.noAccount}
+              </p>
+            </div>
           </li>
         ))}
       </ol>
@@ -233,65 +254,75 @@ function ContactsForm({
   }
 
   return (
-    <div className="contacts-editor">
-      <p className="muted">{bg.family.contactsIntro}</p>
-      <ol className="contact-list">
+    <div className="flex flex-col items-start gap-4">
+      <p className="max-w-[60ch] text-fg-muted">{bg.family.contactsIntro}</p>
+      <ol className="contact-list w-full border-t border-line">
         {draft.map((row, index) => (
-          <li key={row.key} className="contact-row">
-            <fieldset disabled={pending} className="contact-fields">
-              <legend className="contact-place">
-                {fill(bg.family.contactPlace, { n: index + 1 })}
-              </legend>
-              <TextField
-                id={`${row.key}-displayName`}
-                label={bg.family.contactName}
-                value={row.displayName}
-                onChange={(event) => change(index, "displayName", event.target.value)}
-                maxLength={60}
-                autoComplete="off"
-                invalid={invalidField === `${row.key}-displayName`}
-                errorId={errorId}
-              />
-              <TextField
-                id={`${row.key}-phone`}
-                label={bg.family.contactPhone}
-                value={row.phone}
-                onChange={(event) => change(index, "phone", event.target.value)}
-                type="tel"
-                inputMode="tel"
-                autoComplete="off"
-                maxLength={30}
-                placeholder={bg.family.phoneHint}
-                invalid={invalidField === `${row.key}-phone`}
-                errorId={errorId}
-              />
-              <p className="muted">
+          <li key={row.key} className={ROW}>
+            <span className={PLACE_NUMBER} aria-hidden="true">
+              {index + 1}
+            </span>
+            <fieldset disabled={pending} className="min-w-0 flex-1">
+              <legend className="sr-only">{fill(bg.family.contactPlace, { n: index + 1 })}</legend>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField
+                  id={`${row.key}-displayName`}
+                  label={bg.family.contactName}
+                  value={row.displayName}
+                  onChange={(event) => change(index, "displayName", event.target.value)}
+                  maxLength={60}
+                  autoComplete="off"
+                  invalid={invalidField === `${row.key}-displayName`}
+                  errorId={errorId}
+                />
+                <TextField
+                  id={`${row.key}-phone`}
+                  label={bg.family.contactPhone}
+                  value={row.phone}
+                  onChange={(event) => change(index, "phone", event.target.value)}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="off"
+                  maxLength={30}
+                  placeholder={bg.family.phoneHint}
+                  mono
+                  invalid={invalidField === `${row.key}-phone`}
+                  errorId={errorId}
+                />
+              </div>
+              <p className="mt-2 text-sm text-fg-muted">
                 {row.isOwner ? `${bg.family.you}. ` : ""}
                 {row.hasAccount ? bg.family.hasAccount : bg.family.noAccount}
               </p>
-              <div className="contact-actions">
-                <Button
-                  id={`${row.key}-up`}
-                  variant="secondary"
-                  aria-label={fill(bg.family.moveUp, { name: nameOf(row) })}
-                  disabled={index === 0}
-                  onClick={() => move(index, -1)}
-                >
-                  <span aria-hidden="true">↑</span>
-                </Button>
-                <Button
-                  id={`${row.key}-down`}
-                  variant="secondary"
-                  aria-label={fill(bg.family.moveDown, { name: nameOf(row) })}
-                  disabled={index === draft.length - 1}
-                  onClick={() => move(index, 1)}
-                >
-                  <span aria-hidden="true">↓</span>
-                </Button>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Tooltip text={bg.family.moveUpHint}>
+                  <Button
+                    id={`${row.key}-up`}
+                    variant="secondary"
+                    size="icon"
+                    aria-label={fill(bg.family.moveUp, { name: nameOf(row) })}
+                    disabled={index === 0}
+                    onClick={() => move(index, -1)}
+                  >
+                    <ArrowUp className="size-5" aria-hidden="true" />
+                  </Button>
+                </Tooltip>
+                <Tooltip text={bg.family.moveDownHint}>
+                  <Button
+                    id={`${row.key}-down`}
+                    variant="secondary"
+                    size="icon"
+                    aria-label={fill(bg.family.moveDown, { name: nameOf(row) })}
+                    disabled={index === draft.length - 1}
+                    onClick={() => move(index, 1)}
+                  >
+                    <ArrowDown className="size-5" aria-hidden="true" />
+                  </Button>
+                </Tooltip>
                 {row.isOwner ? null : (
                   <Button
-                    variant="secondary"
-                    className="contact-remove"
+                    variant="ghost"
+                    className="contact-remove ml-auto"
                     aria-label={fill(bg.family.removeContactLabel, { name: nameOf(row) })}
                     onClick={() => remove(index)}
                   >
@@ -311,14 +342,18 @@ function ContactsForm({
       {draft.length < MAX_CONTACTS ? (
         <AddContactForm onAdd={add} nextPlace={draft.length + 1} disabled={pending} />
       ) : (
-        <p className="muted">{bg.family.listFull}</p>
+        <p className="text-fg-muted">{bg.family.listFull}</p>
       )}
 
-      {dirty ? <p className="contacts-dirty">{bg.family.unsavedChanges}</p> : null}
-      <Button onClick={save} disabled={pending || !dirty}>
-        {pending ? bg.family.saving : bg.family.saveContacts}
-      </Button>
-      <FormMessage notice={notice} id={errorId} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={save} disabled={!dirty} loading={pending}>
+          {pending ? bg.family.saving : bg.family.saveContacts}
+        </Button>
+        {dirty ? <Badge status="caution">{bg.family.unsavedChanges}</Badge> : null}
+      </div>
+      <div className="w-full empty:hidden">
+        <FormMessage notice={notice} id={errorId} />
+      </div>
     </div>
   );
 }
@@ -363,9 +398,15 @@ function AddContactForm({
   }
 
   return (
-    <form noValidate onSubmit={submit} className="family-form contact-add">
-      <fieldset disabled={disabled}>
-        <legend>{bg.family.addContactTitle}</legend>
+    <form
+      noValidate
+      onSubmit={submit}
+      className="contact-add flex w-full flex-col gap-4 rounded-lg border border-line bg-surface-1 p-5"
+    >
+      <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-4">
+        <legend className="mb-4 font-display text-lg font-semibold">
+          {bg.family.addContactTitle}
+        </legend>
         <TextField
           id="new-contact-name"
           name="displayName"
@@ -384,12 +425,16 @@ function AddContactForm({
           inputMode="tel"
           autoComplete="off"
           maxLength={30}
+          mono
           invalid={invalidField === "phone"}
           errorId={errorId}
         />
-        <Button type="submit" variant="secondary">
-          {bg.family.addContactButton}
-        </Button>
+        <div>
+          <Button type="submit" variant="secondary">
+            <UserPlus className="size-5" aria-hidden="true" />
+            {bg.family.addContactButton}
+          </Button>
+        </div>
       </fieldset>
       <FormMessage notice={notice} id={errorId} />
     </form>

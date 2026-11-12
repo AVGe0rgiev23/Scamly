@@ -16,10 +16,23 @@
 //
 // The protected person's phone number is not stored (the API has none), so there is
 // no tel: link here; the family member calls the number they know.
+//
+// Look: a live feed of hairline-separated alerts. The connection is a StatusPill
+// (green „на живо“ / amber „на всеки 5 секунди“); each alert shows the person's name
+// large, the verdict badge, the time in the data font and „Обаждам ѝ се сега“ as the
+// one primary action of that alert. A new alert gets an accent left border and the
+// „Нов сигнал“ badge.
 "use client";
 
+import { PhoneCall, Radio, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Button } from "@/components/ui/Button";
+import { ROUTES } from "@/config/routes";
+import { Badge, StatusPill } from "@/components/ui/Badge";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
+import { Notice } from "@/components/ui/Notice";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { VerdictBadge } from "@/components/ui/VerdictBadge";
 import { bg } from "@/i18n/bg";
 import { newestFirst, watchChecksOfPersons } from "@/lib/realtime";
@@ -79,33 +92,39 @@ export function AlertsPage() {
 
   return (
     <>
-      <header className="family-heading">
-        <h1>{bg.alerts.title}</h1>
-        <p className="muted">{bg.alerts.intro}</p>
+      <header className="mb-10 max-w-[60ch]">
+        <h1 className="text-h1">{bg.alerts.title}</h1>
+        <p className="mt-4 text-lg text-fg-muted">{bg.alerts.intro}</p>
       </header>
       {state.kind === "loading" ? (
-        <p role="status" className="muted">
-          {bg.alerts.loading}
-        </p>
-      ) : null}
-      {state.kind === "error" ? (
-        <div className="family-error">
-          <p role="alert" className="form-message form-message-error">
-            {state.message}
+        <div className="max-w-3xl">
+          <p role="status" className="sr-only">
+            {bg.alerts.loading}
           </p>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setState({ kind: "loading" });
-              setAttempt(attempt + 1);
-            }}
-          >
-            {bg.family.retry}
-          </Button>
+          <SkeletonList rows={3} className="border-t border-line" />
         </div>
       ) : null}
+      {state.kind === "error" ? (
+        <ErrorState
+          className="max-w-3xl"
+          text={state.message}
+          retryLabel={bg.family.retry}
+          onRetry={() => {
+            setState({ kind: "loading" });
+            setAttempt(attempt + 1);
+          }}
+        />
+      ) : null}
       {state.kind === "ready" && state.persons.length === 0 ? (
-        <p className="muted">{bg.alerts.noPersons}</p>
+        <EmptyState
+          className="max-w-3xl"
+          text={bg.alerts.noPersons}
+          action={
+            <ButtonLink href={`${ROUTES.family}/new`} variant="secondary">
+              {bg.family.addPerson}
+            </ButtonLink>
+          }
+        />
       ) : null}
       {state.kind === "ready" && state.persons.length > 0 ? (
         <AlertsList persons={state.persons} />
@@ -217,40 +236,59 @@ function AlertsList({ persons }: { persons: PersonDto[] }) {
   }
 
   return (
-    <div className="alerts">
+    <div className="alerts flex max-w-3xl flex-col gap-6">
       {/* A live region: screen readers read new alerts aloud wherever the focus is. */}
       <p role="status" className="sr-only">
         {announcement}
       </p>
-      <div className="alerts-tools">
-        {live === null ? null : (
-          <p className={live ? "alerts-live" : "alerts-live alerts-live-lost"}>
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        {live === null ? (
+          <span />
+        ) : (
+          <StatusPill
+            status={live ? "safe" : "caution"}
+            icon={
+              live ? (
+                <Radio className="size-[1.15em] shrink-0" aria-hidden="true" />
+              ) : (
+                <RefreshCw className="size-[1.15em] shrink-0" aria-hidden="true" />
+              )
+            }
+          >
             {live ? bg.alerts.live : bg.alerts.liveLost}
-          </p>
+          </StatusPill>
         )}
         <Button variant="secondary" aria-pressed={sound} onClick={toggleSound}>
+          {sound ? (
+            <VolumeX className="size-5" aria-hidden="true" />
+          ) : (
+            <Volume2 className="size-5" aria-hidden="true" />
+          )}
           {sound ? bg.alerts.soundOff : bg.alerts.soundOn}
         </Button>
-        {sound ? <p className="muted">{bg.alerts.soundEnabled}</p> : null}
       </div>
+      {sound ? <p className="-mt-3 text-sm text-fg-muted">{bg.alerts.soundEnabled}</p> : null}
       {focusMissing && !inList ? (
-        <p role="alert" className="form-message form-message-error">
+        <Notice status="caution" role="alert">
           {bg.alerts.focusNotFound}
-        </p>
+        </Notice>
       ) : null}
       {loadFailed ? (
-        <p role="alert" className="form-message form-message-error">
+        <Notice status="danger" role="alert">
           {bg.alerts.refreshFailed}
-        </p>
+        </Notice>
       ) : null}
       {shown === null && !loadFailed ? (
-        <p role="status" className="muted">
-          {bg.alerts.loading}
-        </p>
+        <div>
+          <p role="status" className="sr-only">
+            {bg.alerts.loading}
+          </p>
+          <SkeletonList rows={3} className="border-t border-line" />
+        </div>
       ) : null}
-      {shown !== null && shown.length === 0 ? <p className="muted">{bg.alerts.empty}</p> : null}
+      {shown !== null && shown.length === 0 ? <EmptyState text={bg.alerts.empty} /> : null}
       {shown !== null && shown.length > 0 ? (
-        <ol className="check-list" aria-label={bg.alerts.listLabel}>
+        <ol className="check-list border-t border-line" aria-label={bg.alerts.listLabel}>
           {shown.map((check) => (
             <AlertItem
               key={check.id}
@@ -300,52 +338,64 @@ function AlertItem({
     );
   }
 
-  const classes = ["check-item", "alert-item"];
-  if (isNew) classes.push("alert-new");
-  if (isFocused) classes.push("alert-focused");
   const showButton =
     check.acknowledgement === null &&
     (ack.kind === "idle" || ack.kind === "sending" || ack.kind === "error");
 
   return (
     // tabIndex -1: the page can move the focus here (?check=), but Tab skips it.
-    <li id={`alert-${check.id}`} className={classes.join(" ")} tabIndex={-1}>
-      <h2 className="alert-person">{name}</h2>
-      {isNew || isFocused ? (
-        <p className="alert-tags">
-          {isNew ? <span className="alert-tag">{bg.alerts.newBadge}</span> : null}
-          {isFocused ? <span className="alert-tag">{bg.alerts.focusedBadge}</span> : null}
-        </p>
-      ) : null}
-      <p className="check-time">{time}</p>
-      <VerdictBadge level={check.verdict?.level ?? null} />
-      <p>{statusText(check)}</p>
-      <p>{identityText(check)}</p>
+    // `alert-new` and `alert-focused` are test hooks; the Tailwind classes next to them
+    // draw the accent border (new) and the quiet background (from the notification).
+    <li
+      id={`alert-${check.id}`}
+      tabIndex={-1}
+      className={cn(
+        "border-b border-line py-6",
+        (isNew || isFocused) && "pr-4 pl-4",
+        isNew && "alert-new appear border-l-4 border-l-accent",
+        isFocused && "alert-focused bg-surface-1",
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h2 className="text-h3">{name}</h2>
+        {isNew ? <Badge status="info">{bg.alerts.newBadge}</Badge> : null}
+        {isFocused ? <Badge>{bg.alerts.focusedBadge}</Badge> : null}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <VerdictBadge level={check.verdict?.level ?? null} />
+        <p className="tabular font-mono text-sm text-fg-muted">{time}</p>
+      </div>
+      <p className="mt-3 font-medium text-fg">{statusText(check)}</p>
+      <p className="text-fg-muted">{identityText(check)}</p>
       {ack.kind === "done" ? (
-        <p role="status" className="alert-responded">
+        <Notice status="safe" role="status" className="appear mt-4">
           {ack.text}
-        </p>
+        </Notice>
       ) : null}
       {check.acknowledgement !== null ? (
-        <p className="muted">{acknowledgementText(check)}</p>
+        <p className="mt-2 text-sm text-fg-muted">{acknowledgementText(check)}</p>
       ) : null}
       {showButton ? (
-        <div className="alert-actions">
+        <div className="mt-4 flex flex-col items-start gap-2">
           <Button
-            className="alert-call"
+            size="lg"
+            className="w-full sm:w-auto"
             onClick={() => void acknowledge()}
-            disabled={ack.kind === "sending"}
+            loading={ack.kind === "sending"}
             aria-label={
               ack.kind === "sending" ? undefined : fill(bg.alerts.callNowLabel, { name, time })
             }
           >
+            {ack.kind === "sending" ? null : <PhoneCall className="size-5" aria-hidden="true" />}
             {ack.kind === "sending" ? bg.alerts.sending : bg.alerts.callNow}
           </Button>
-          <p className="muted">{fill(bg.alerts.callNowHint, { name })}</p>
+          <p className="max-w-[60ch] text-sm text-fg-muted">
+            {fill(bg.alerts.callNowHint, { name })}
+          </p>
           {ack.kind === "error" ? (
-            <p role="alert" className="form-message form-message-error">
+            <Notice status="danger" role="alert" className="w-full">
               {ack.text}
-            </p>
+            </Notice>
           ) : null}
         </div>
       ) : null}

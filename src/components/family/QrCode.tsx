@@ -14,7 +14,7 @@ export function QrCode({ text, label }: { text: string; label: string }) {
   const full = qr.size + QUIET_ZONE * 2;
   return (
     <svg
-      className="qr-code"
+      className="qr-code block h-auto w-full rounded-sm"
       viewBox={`0 0 ${full} ${full}`}
       role="img"
       aria-label={label}

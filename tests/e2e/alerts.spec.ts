@@ -144,14 +144,14 @@ test("the list shows everybody's checks newest first, with name, time, badge and
   const first = items(page).nth(0);
   await expect(first.getByRole("heading", { level: 2 })).toHaveText("Баба Елена");
   await expect(first).toContainText("5 ноември 2026 г., 11:30 ч."); // Europe/Sofia
-  await expect(first.locator(".verdict-badge")).toHaveText(`!${bg.verdictBadge.red}`);
+  await expect(first.locator(".verdict-badge")).toHaveText(bg.verdictBadge.red);
   await expect(first).toContainText(bg.alerts.statusAnswered);
   await expect(first).toContainText("Кой се обажда: полицай");
   await expect(first.getByRole("button", { name: /^Обаждам ѝ се сега: Баба Елена/ })).toBeVisible();
 
   const second = items(page).nth(1);
   await expect(second.getByRole("heading", { level: 2 })).toHaveText("Дядо Георги");
-  await expect(second.locator(".verdict-badge")).toHaveText(`✓${bg.verdictBadge.green}`);
+  await expect(second.locator(".verdict-badge")).toHaveText(bg.verdictBadge.green);
   await expect(second).toContainText("Иван потвърди, че се обажда");
   await expect(second.getByRole("button", { name: /Обаждам/ })).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText("безопас"); // D9
@@ -172,7 +172,7 @@ test("a new check appears without reloading, highlighted and announced", async (
   await expect(added).toHaveClass(/alert-new/);
   await expect(added).toContainText(bg.alerts.newBadge);
   await expect(added).toContainText("Дядо Георги");
-  await expect(added.locator(".verdict-badge")).toHaveText(`…${bg.verdictBadge.pending}`);
+  await expect(added.locator(".verdict-badge")).toHaveText(bg.verdictBadge.pending);
   await expect(added).toContainText(bg.alerts.statusStarted);
   await expect(page.locator(".alerts > [role=status]")).toHaveText(
     "Нов сигнал: Дядо Георги проверява съмнително обаждане.",

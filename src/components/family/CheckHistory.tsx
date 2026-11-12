@@ -1,13 +1,19 @@
 // „Проверки на обаждания“: the history of one person's call checks, newest first
 // (GET /api/checks?personId=…, 20 per page; „Покажи още“ asks for the next page with
 // the cursor the API gave). Each check shows its time in Bulgarian time, a verdict
-// badge (symbol + word, not only colour), who the caller claimed to be and who
+// badge (icon + word, not only colour), who the caller claimed to be and who
 // answered „Обаждам ѝ се сега“. „Подробности“ loads one check (GET /api/checks/:id)
 // with the reasons and the answers.
+// Look: hairline-separated rows (`.check-list > li`), the time in the data font, the
+// details open inside the row on a quiet panel.
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
+import { SkeletonList, SkeletonText } from "@/components/ui/Skeleton";
+import { EmptyState, ErrorState } from "@/components/ui/States";
 import { VerdictBadge } from "@/components/ui/VerdictBadge";
 import { bg } from "@/i18n/bg";
 import { callApi, type CheckDto } from "./api";
@@ -92,46 +98,45 @@ export function CheckHistory({ personId }: { personId: string }) {
 
   if (state.kind === "loading") {
     return (
-      <p role="status" className="muted">
-        {bg.family.historyLoading}
-      </p>
+      <div>
+        <p role="status" className="sr-only">
+          {bg.family.historyLoading}
+        </p>
+        <SkeletonList rows={3} className="border-t border-line" />
+      </div>
     );
   }
   if (state.kind === "error") {
     return (
-      <div className="family-error">
-        <p role="alert" className="form-message form-message-error">
-          {state.message}
-        </p>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setState({ kind: "loading" });
-            setAttempt(attempt + 1);
-          }}
-        >
-          {bg.family.retry}
-        </Button>
-      </div>
+      <ErrorState
+        text={state.message}
+        retryLabel={bg.family.retry}
+        onRetry={() => {
+          setState({ kind: "loading" });
+          setAttempt(attempt + 1);
+        }}
+      />
     );
   }
   if (state.checks.length === 0) {
-    return <p className="muted">{bg.family.historyEmpty}</p>;
+    return <EmptyState text={bg.family.historyEmpty} />;
   }
 
   return (
-    <div className="history">
-      <ol className="check-list">
+    <div className="flex flex-col items-start gap-4">
+      <ol className="check-list w-full border-t border-line">
         {state.checks.map((check) => (
           <CheckItem key={check.id} check={check} />
         ))}
       </ol>
       {state.nextCursor !== null ? (
-        <Button variant="secondary" onClick={showMore} disabled={loadingMore}>
+        <Button variant="secondary" onClick={showMore} loading={loadingMore}>
           {loadingMore ? bg.common.loading : bg.family.showMore}
         </Button>
       ) : null}
-      <FormMessage notice={moreNotice} />
+      <div className="w-full empty:hidden">
+        <FormMessage notice={moreNotice} />
+      </div>
     </div>
   );
 }
@@ -142,23 +147,29 @@ function CheckItem({ check }: { check: CheckDto }) {
   const detailId = useId();
   const time = formatDateTime(check.startedAt);
   return (
-    <li className="check-item">
-      <p className="check-time">{time}</p>
-      <VerdictBadge level={check.verdict?.level ?? null} />
-      <p>{identityText(check)}</p>
-      <p className="muted">{acknowledgementText(check)}</p>
+    <li className="border-b border-line py-4">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <VerdictBadge level={check.verdict?.level ?? null} />
+        <p className="tabular font-mono text-sm text-fg-muted">{time}</p>
+      </div>
+      <p className="mt-2 text-fg">{identityText(check)}</p>
+      <p className="text-sm text-fg-muted">{acknowledgementText(check)}</p>
       <Button
-        variant="secondary"
+        variant="ghost"
+        className="mt-2 -ml-3"
         aria-expanded={open}
         aria-controls={detailId}
         aria-label={open ? bg.family.hideDetails : fill(bg.family.detailsLabel, { time })}
         onClick={() => setOpen(!open)}
       >
         {open ? bg.family.hideDetails : bg.family.showDetails}
+        {open ? (
+          <ChevronUp className="size-5" aria-hidden="true" />
+        ) : (
+          <ChevronDown className="size-5" aria-hidden="true" />
+        )}
       </Button>
-      <div id={detailId} className="check-detail-slot">
-        {open ? <CheckDetail checkId={check.id} /> : null}
-      </div>
+      <div id={detailId}>{open ? <CheckDetail checkId={check.id} /> : null}</div>
     </li>
   );
 }
@@ -190,16 +201,19 @@ function CheckDetail({ checkId }: { checkId: string }) {
 
   if (state.kind === "loading") {
     return (
-      <p role="status" className="muted">
-        {bg.family.detailsLoading}
-      </p>
+      <div className="mt-3 rounded-md bg-surface-1 p-4">
+        <p role="status" className="sr-only">
+          {bg.family.detailsLoading}
+        </p>
+        <SkeletonText lines={4} />
+      </div>
     );
   }
   if (state.kind === "error") {
     return (
-      <p role="alert" className="form-message form-message-error">
+      <Notice status="danger" role="alert" className="mt-3">
         {state.message}
-      </p>
+      </Notice>
     );
   }
 
@@ -207,44 +221,56 @@ function CheckDetail({ checkId }: { checkId: string }) {
   const answers = check.answers;
   const tri = (value: "yes" | "no" | "unsure" | null) => bg.family.triAnswers[value ?? "none"];
   return (
-    <div className="check-detail">
+    <div className="appear mt-3 flex flex-col gap-4 rounded-md border border-line bg-surface-1 p-4 md:p-5">
       {check.verdict ? (
-        <>
-          <p className="contact-name">{check.verdict.headlineBg}</p>
-          <h3>{bg.family.reasonsTitle}</h3>
+        <div>
+          <p className="font-display text-lg font-semibold text-fg">{check.verdict.headlineBg}</p>
+          <h3 className="mt-3 text-base font-semibold text-fg-muted">{bg.family.reasonsTitle}</h3>
           {check.verdict.reasons.length > 0 ? (
-            <ul>
+            <ul className="mt-1 list-disc pl-5 text-fg">
               {check.verdict.reasons.map((reason) => (
                 <li key={reason.code}>{reason.textBg}</li>
               ))}
             </ul>
           ) : (
-            <p className="muted">{bg.family.noReasons}</p>
+            <p className="mt-1 text-fg-muted">{bg.family.noReasons}</p>
           )}
-        </>
+        </div>
       ) : null}
-      <h3>{bg.family.answersTitle}</h3>
-      <dl className="check-answers">
-        <dt>{bg.family.asksMoney}</dt>
-        <dd>{tri(answers.asksMoney)}</dd>
-        {answers.handover !== null ? (
-          <>
-            <dt>{bg.family.handover}</dt>
-            <dd>{bg.family.handoverMethods[answers.handover]}</dd>
-          </>
-        ) : null}
-        <dt>{bg.family.rushing}</dt>
-        <dd>{tri(answers.rushing)}</dd>
-        <dt>{bg.family.secrecy}</dt>
-        <dd>{tri(answers.secrecy)}</dd>
-      </dl>
+      <div>
+        <h3 className="text-base font-semibold text-fg-muted">{bg.family.answersTitle}</h3>
+        <dl className="mt-1 grid grid-cols-1 gap-x-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <dt className="pt-2 text-fg-muted sm:pb-2">{bg.family.asksMoney}</dt>
+          <dd className="pb-2 font-medium text-fg sm:pt-2">{tri(answers.asksMoney)}</dd>
+          {answers.handover !== null ? (
+            <>
+              <dt className="border-t border-line pt-2 text-fg-muted sm:pb-2">
+                {bg.family.handover}
+              </dt>
+              <dd className="pb-2 font-medium text-fg sm:border-t sm:border-line sm:pt-2">
+                {bg.family.handoverMethods[answers.handover]}
+              </dd>
+            </>
+          ) : null}
+          <dt className="border-t border-line pt-2 text-fg-muted sm:pb-2">{bg.family.rushing}</dt>
+          <dd className="pb-2 font-medium text-fg sm:border-t sm:border-line sm:pt-2">
+            {tri(answers.rushing)}
+          </dd>
+          <dt className="border-t border-line pt-2 text-fg-muted sm:pb-2">{bg.family.secrecy}</dt>
+          <dd className="pb-2 font-medium text-fg sm:border-t sm:border-line sm:pt-2">
+            {tri(answers.secrecy)}
+          </dd>
+        </dl>
+      </div>
       {answers.textRedacted ? (
-        <>
-          <h3>{bg.family.callText}</h3>
-          <p className="check-text">{answers.textRedacted}</p>
-        </>
+        <div>
+          <h3 className="text-base font-semibold text-fg-muted">{bg.family.callText}</h3>
+          <p className="mt-1 rounded-sm bg-surface-2 p-3 break-words whitespace-pre-wrap text-fg">
+            {answers.textRedacted}
+          </p>
+        </div>
       ) : null}
-      <p className="muted">{acknowledgementText(check)}</p>
+      <p className="text-sm text-fg-muted">{acknowledgementText(check)}</p>
     </div>
   );
 }

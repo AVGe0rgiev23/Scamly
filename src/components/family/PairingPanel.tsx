@@ -4,11 +4,14 @@
 //   - a QR code with the link <our site>/svarzhi?kod=482915 (the page fills in the code),
 //   - a 10-minute countdown; after that the code is shown as expired.
 // „Нов код“ asks for a new code; the server cancels the old one.
+// Look: the digits are very large in the data font (`.pairing-code`); the QR code sits
+// on a light tile (always black on white, so cameras read it in both themes).
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
 import { bg } from "@/i18n/bg";
 import { callApi } from "./api";
 import { FormMessage, type FormNotice } from "./fields";
@@ -78,37 +81,56 @@ export function PairingPanel({ personId }: { personId: string }) {
   const expired = pairing !== null && msLeft <= 0;
 
   return (
-    <div className="pairing">
-      <p className="muted">{fill(bg.family.pairingIntro, { address: `${host}${ROUTES.pair}` })}</p>
-      <p className="muted">{bg.family.pairingRules}</p>
+    <div className="flex flex-col items-start gap-4">
+      <p className="text-fg-muted">
+        {fill(bg.family.pairingIntro, { address: `${host}${ROUTES.pair}` })}
+      </p>
+      <p className="text-sm text-fg-muted">{bg.family.pairingRules}</p>
 
       {pairing !== null && !expired ? (
-        <div className="pairing-code-box">
-          <p className="pairing-code-label">{bg.family.codeLabel}</p>
-          <p className="pairing-code">
+        <div className="appear w-full rounded-lg border border-line bg-surface-1 p-5">
+          <p className="text-sm font-semibold text-fg-muted">{bg.family.codeLabel}</p>
+          <p className="pairing-code tabular mt-1 font-mono text-h1 font-semibold whitespace-nowrap text-fg">
             <span aria-hidden="true">{formatCode(pairing.code)}</span>
             <span className="sr-only">{spellDigits(pairing.code)}</span>
           </p>
-          <QrCode text={pairing.link} label={bg.family.qrLabel} />
-          <p className="pairing-timer">
+          {/* The QR picture is its own light tile (white with a quiet zone). */}
+          <div className="mt-4 w-full max-w-60 min-w-[200px]">
+            <QrCode text={pairing.link} label={bg.family.qrLabel} />
+          </div>
+          <p className="tabular mt-4 font-mono text-sm text-fg-muted">
             {fill(bg.family.codeTimeLeft, { time: formatCountdown(msLeft) })}
           </p>
         </div>
       ) : null}
 
       {/* Read aloud once when the code appears and once when it expires (not every second). */}
-      <p role="status" className={expired ? "form-message form-message-error" : "sr-only"}>
+      <p
+        role="status"
+        className={cn(
+          expired
+            ? "w-full rounded-md border border-danger-line bg-danger-bg px-4 py-3 text-fg"
+            : "sr-only",
+        )}
+      >
         {pairing === null ? "" : expired ? bg.family.codeExpired : bg.family.codeReady}
       </p>
 
-      <Button onClick={createCode} disabled={pending}>
+      <Button
+        variant={pairing === null ? "primary" : "secondary"}
+        onClick={createCode}
+        disabled={pending}
+        loading={pending}
+      >
         {pending
           ? bg.family.creatingCode
           : pairing === null
             ? bg.family.pairingButton
             : bg.family.newCode}
       </Button>
-      <FormMessage notice={notice} />
+      <div className="w-full empty:hidden">
+        <FormMessage notice={notice} />
+      </div>
     </div>
   );
 }

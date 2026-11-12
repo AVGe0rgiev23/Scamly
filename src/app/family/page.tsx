@@ -10,7 +10,7 @@ export default function FamilyPage() {
   return (
     <>
       <FamilyHome />
-      <p>
+      <p className="mt-16 border-t border-line pt-6">
         <HelpLink role="family" />
       </p>
     </>

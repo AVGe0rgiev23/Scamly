@@ -10,8 +10,12 @@
 // „Не сега“ hides the card and remembers it in localStorage (src/lib/install.ts).
 // Nothing is shown on the server or in an installed app, so the page never jumps
 // for people who don't need the card.
+//
+// Look: a quiet secondary panel (flat, no fill): „Инсталирай“ is a secondary button
+// and „Не сега“ a ghost one, so it never competes with the page's primary action.
 "use client";
 
+import { Download } from "lucide-react";
 import { useId, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -63,15 +67,22 @@ export function InstallPrompt({ ios = true }: { ios?: boolean }) {
   }
 
   return (
-    <Card className="install-card" role="region" aria-labelledby={titleId} data-variant={variant}>
-      <h2 id={titleId}>{bg.install.title}</h2>
-      <p>{variant === "android" ? bg.install.lead : bg.install.iosLead}</p>
+    <Card as="section" tone="flat" aria-labelledby={titleId} data-variant={variant}>
+      <h2 id={titleId} className="text-h3">
+        {bg.install.title}
+      </h2>
+      <p className="mt-3 text-fg-muted">
+        {variant === "android" ? bg.install.lead : bg.install.iosLead}
+      </p>
       {variant === "ios" ? <IosInstallSteps /> : null}
-      <div className="install-actions">
+      <div className="mt-4 flex flex-wrap gap-3">
         {variant === "android" ? (
-          <Button onClick={() => void install()}>{bg.install.button}</Button>
+          <Button variant="secondary" onClick={() => void install()}>
+            <Download className="size-5" aria-hidden="true" />
+            {bg.install.button}
+          </Button>
         ) : null}
-        <Button variant="secondary" onClick={dismiss}>
+        <Button variant="ghost" onClick={dismiss}>
           {bg.install.dismiss}
         </Button>
       </div>

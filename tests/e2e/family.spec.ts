@@ -362,7 +362,7 @@ test("removing a phone asks first and sends DELETE only after „Да, прем�
   expect(deletes.map((request) => request.method())).toEqual(["DELETE"]);
 });
 
-test("the check history shows badges with symbol and word, more pages and details", async ({
+test("the check history shows badges with icon and word, more pages and details", async ({
   page,
 }) => {
   await mockPerson(page, true);
@@ -370,11 +370,11 @@ test("the check history shows badges with symbol and word, more pages and detail
   const items = page.locator(".check-list > li");
   await expect(items).toHaveCount(3);
 
-  // Newest first, Bulgarian time (09:30 UTC = 11:30 in Sofia), symbol + word.
+  // Newest first, Bulgarian time (09:30 UTC = 11:30 in Sofia), icon + word.
   await expect(items.nth(0)).toContainText("5 ноември 2026 г., 11:30 ч.");
-  await expect(items.nth(0).locator(".verdict-badge")).toHaveText(`!${bg.verdictBadge.red}`);
-  await expect(items.nth(1).locator(".verdict-badge")).toHaveText(`!${bg.verdictBadge.yellow}`);
-  await expect(items.nth(2).locator(".verdict-badge")).toHaveText(`✓${bg.verdictBadge.green}`);
+  await expect(items.nth(0).locator(".verdict-badge")).toHaveText(bg.verdictBadge.red);
+  await expect(items.nth(1).locator(".verdict-badge")).toHaveText(bg.verdictBadge.yellow);
+  await expect(items.nth(2).locator(".verdict-badge")).toHaveText(bg.verdictBadge.green);
   await expect(items.nth(2)).not.toContainText("безопас"); // D9
   await expect(items.nth(0)).toContainText("Кой се обажда: полицай");
   await expect(items.nth(0)).toContainText("Иван потвърди, че се обажда");
@@ -387,7 +387,7 @@ test("the check history shows badges with symbol and word, more pages and detail
     "2026-11-03T12:00:00.000Z",
   );
   await expect(items).toHaveCount(4);
-  await expect(items.nth(3).locator(".verdict-badge")).toHaveText(`…${bg.verdictBadge.pending}`);
+  await expect(items.nth(3).locator(".verdict-badge")).toHaveText(bg.verdictBadge.pending);
   await expect(page.getByRole("button", { name: bg.family.showMore })).toHaveCount(0);
 
   // Details of the red check: reasons and answers in Bulgarian.

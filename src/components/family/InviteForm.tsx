@@ -3,10 +3,14 @@
 // own account, and from then on sees this person and gets the alerts.
 // The token in the link is shown only this once (the server stores only its hash),
 // so the page offers a copy button and says when the link stops working.
+// Look: one column of fields; the new link appears below in a quiet panel, in the
+// data font, with „Копирай връзката“ next to it.
 "use client";
 
+import { Copy, Send } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { Field, Input } from "@/components/ui/Field";
 import { bg } from "@/i18n/bg";
 import { MAX_CONTACTS } from "@/schemas/contacts";
 import { CreateInviteSchema } from "@/schemas/invites";
@@ -76,10 +80,15 @@ export function InviteForm({ personId, contactCount }: { personId: string; conta
   }
 
   return (
-    <div className="invite">
-      <p className="muted">{bg.family.inviteIntro}</p>
-      <form noValidate onSubmit={submit} aria-busy={pending} className="family-form">
-        <fieldset disabled={pending}>
+    <div className="flex flex-col gap-4">
+      <p className="max-w-[60ch] text-fg-muted">{bg.family.inviteIntro}</p>
+      <form
+        noValidate
+        onSubmit={submit}
+        aria-busy={pending}
+        className="flex max-w-lg flex-col gap-4"
+      >
+        <fieldset disabled={pending} className="flex min-w-0 flex-col gap-5">
           <TextField
             id="invite-name"
             name="displayName"
@@ -103,30 +112,38 @@ export function InviteForm({ personId, contactCount }: { personId: string; conta
               </option>
             ))}
           </SelectField>
-          <Button type="submit" disabled={pending}>
-            {pending ? bg.family.saving : bg.family.inviteButton}
-          </Button>
+          <div>
+            <Button type="submit" variant="secondary" loading={pending}>
+              {pending ? null : <Send className="size-5" aria-hidden="true" />}
+              {pending ? bg.family.saving : bg.family.inviteButton}
+            </Button>
+          </div>
         </fieldset>
         <FormMessage notice={notice} id={errorId} />
       </form>
 
       {invite ? (
-        <div className="invite-result">
-          <div className="form-field">
-            <label htmlFor={linkId}>{bg.family.inviteLinkLabel}</label>
-            <input
+        <div className="appear flex flex-col gap-3 rounded-lg border border-line bg-surface-1 p-5">
+          <Field label={bg.family.inviteLinkLabel} htmlFor={linkId}>
+            <Input
               id={linkId}
               type="text"
               readOnly
+              mono
               value={invite.link}
               onFocus={(event) => event.target.select()}
             />
+          </Field>
+          <p className="text-sm text-fg-muted">
+            {fill(bg.family.inviteExpires, { time: formatDateTime(invite.expiresAt) })}
+          </p>
+          <p className="text-sm text-fg-muted">{bg.family.inviteOnce}</p>
+          <div>
+            <Button variant="secondary" onClick={copy}>
+              <Copy className="size-5" aria-hidden="true" />
+              {bg.family.copyLink}
+            </Button>
           </div>
-          <p>{fill(bg.family.inviteExpires, { time: formatDateTime(invite.expiresAt) })}</p>
-          <p className="muted">{bg.family.inviteOnce}</p>
-          <Button variant="secondary" onClick={copy}>
-            {bg.family.copyLink}
-          </Button>
           <FormMessage notice={copyNotice} />
         </div>
       ) : null}

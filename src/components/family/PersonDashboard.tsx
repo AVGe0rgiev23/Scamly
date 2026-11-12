@@ -3,13 +3,20 @@
 // one section per job. Only the owner gets the forms that change something; a
 // trusted contact sees the same data read-only. The API checks this again: a
 // change sent by a non-owner gets 404, whatever the page shows.
+// Look: a 12-column layout on a computer. The main column holds the check history
+// first, then the call order and the invite; the side column holds the pairing code,
+// the paired phones and the settings (with „Изтрий“ at its very bottom). On a phone
+// the two columns stack. Sections are separated by hairlines, not boxes.
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { ROUTES } from "@/config/routes";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { cn } from "@/components/ui/cn";
+import { Notice } from "@/components/ui/Notice";
+import { Skeleton, SkeletonList, SkeletonText } from "@/components/ui/Skeleton";
 import { bg } from "@/i18n/bg";
 import {
   callApi,
@@ -20,6 +27,7 @@ import {
 } from "./api";
 import { CheckHistory } from "./CheckHistory";
 import { ContactsEditor } from "./ContactsEditor";
+import { BACK_LINK } from "./CreatePersonPage";
 import { DevicesList } from "./DevicesList";
 import { districtName } from "./format";
 import { InviteForm } from "./InviteForm";
@@ -33,14 +41,26 @@ type DashboardState =
 
 // One titled part of the page. aria-labelledby names the <section> after its <h2>,
 // so a screen reader can jump between the parts.
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+// The first section of a column has no hairline above it (`first` = true).
+export function Section({
+  title,
+  first = false,
+  children,
+}: {
+  title: string;
+  first?: boolean;
+  children: ReactNode;
+}) {
   const titleId = useId();
   return (
-    <section aria-labelledby={titleId}>
-      <Card className="family-section">
-        <h2 id={titleId}>{title}</h2>
-        {children}
-      </Card>
+    <section
+      aria-labelledby={titleId}
+      className={cn("min-w-0 py-8", first ? "pt-0" : "border-t border-line")}
+    >
+      <h2 id={titleId} className="mb-4 text-h3">
+        {title}
+      </h2>
+      {children}
     </section>
   );
 }
@@ -85,8 +105,9 @@ export function PersonDashboard({ personId }: { personId: string }) {
   }
 
   const backLink = (
-    <Link href={ROUTES.family} className="family-back">
-      ← {bg.family.backToList}
+    <Link href={ROUTES.family} className={BACK_LINK}>
+      <ArrowLeft className="size-5" aria-hidden="true" />
+      {bg.family.backToList}
     </Link>
   );
 
@@ -94,9 +115,16 @@ export function PersonDashboard({ personId }: { personId: string }) {
     return (
       <>
         {backLink}
-        <p role="status" className="muted">
+        <p role="status" className="sr-only">
           {bg.family.personLoading}
         </p>
+        {/* The shape of the page: name, two lines, then the two columns. */}
+        <Skeleton className="h-12 w-3/5 max-w-md" />
+        <SkeletonText lines={2} className="mt-4 max-w-sm" />
+        <div className="mt-10 grid gap-x-6 gap-y-10 md:grid-cols-12">
+          <SkeletonList rows={3} className="md:col-span-7" />
+          <Skeleton className="h-64 w-full md:col-span-4 md:col-start-9" />
+        </div>
       </>
     );
   }
@@ -105,10 +133,10 @@ export function PersonDashboard({ personId }: { personId: string }) {
     return (
       <>
         {backLink}
-        <div className="family-error">
-          <p role="alert" className="form-message form-message-error">
+        <div className="flex max-w-xl flex-col items-start gap-4">
+          <Notice status="danger" role="alert" className="w-full">
             {state.message}
-          </p>
+          </Notice>
           <Button
             variant="secondary"
             onClick={() => {
@@ -127,54 +155,66 @@ export function PersonDashboard({ personId }: { personId: string }) {
   return (
     <>
       {backLink}
-      <header className="family-heading">
-        <h1>{person.displayName}</h1>
-        <p>
+      <header className="mb-10 max-w-[60ch]">
+        <h1 className="text-h1">{person.displayName}</h1>
+        <p className="mt-4 text-lg text-fg-muted">
           {bg.family.district}: {districtName(person.districtCode)}
         </p>
-        <p className="muted">{person.isOwner ? bg.family.roleOwner : bg.family.roleContact}</p>
-        {person.isOwner ? null : <p className="muted">{bg.family.readOnlyNote}</p>}
+        <p className="text-fg-subtle">
+          {person.isOwner ? bg.family.roleOwner : bg.family.roleContact}
+        </p>
+        {person.isOwner ? null : (
+          <Notice status="info" className="mt-6">
+            {bg.family.readOnlyNote}
+          </Notice>
+        )}
       </header>
 
-      <Section title={bg.family.historyTitle}>
-        <CheckHistory personId={person.id} />
-      </Section>
+      <div className="grid gap-x-6 md:grid-cols-12">
+        <div className="min-w-0 md:col-span-7">
+          <Section title={bg.family.historyTitle} first>
+            <CheckHistory personId={person.id} />
+          </Section>
 
-      <Section title={bg.family.devicesTitle}>
-        <DevicesList
-          personId={person.id}
-          devices={devices}
-          canEdit={person.isOwner}
-          onChange={updateDevices}
-        />
-      </Section>
+          <Section title={bg.family.contactsTitle}>
+            <ContactsEditor
+              personId={person.id}
+              contacts={contacts}
+              canEdit={person.isOwner}
+              onSaved={updateContacts}
+            />
+          </Section>
 
-      {person.isOwner ? (
-        <Section title={bg.family.pairingTitle}>
-          <PairingPanel personId={person.id} />
-        </Section>
-      ) : null}
+          {person.isOwner ? (
+            <Section title={bg.family.inviteTitle}>
+              <InviteForm personId={person.id} contactCount={contacts.length} />
+            </Section>
+          ) : null}
+        </div>
 
-      <Section title={bg.family.contactsTitle}>
-        <ContactsEditor
-          personId={person.id}
-          contacts={contacts}
-          canEdit={person.isOwner}
-          onSaved={updateContacts}
-        />
-      </Section>
+        <div className="min-w-0 border-t border-line pt-8 md:col-span-5 md:border-t-0 md:border-l md:pt-0 md:pl-6 lg:col-span-4 lg:col-start-9">
+          {person.isOwner ? (
+            <Section title={bg.family.pairingTitle} first>
+              <PairingPanel personId={person.id} />
+            </Section>
+          ) : null}
 
-      {person.isOwner ? (
-        <Section title={bg.family.inviteTitle}>
-          <InviteForm personId={person.id} contactCount={contacts.length} />
-        </Section>
-      ) : null}
+          <Section title={bg.family.devicesTitle} first={!person.isOwner}>
+            <DevicesList
+              personId={person.id}
+              devices={devices}
+              canEdit={person.isOwner}
+              onChange={updateDevices}
+            />
+          </Section>
 
-      {person.isOwner ? (
-        <Section title={bg.family.settingsTitle}>
-          <PersonSettings person={person} onUpdated={updatePerson} />
-        </Section>
-      ) : null}
+          {person.isOwner ? (
+            <Section title={bg.family.settingsTitle}>
+              <PersonSettings person={person} onUpdated={updatePerson} />
+            </Section>
+          ) : null}
+        </div>
+      </div>
     </>
   );
 }
