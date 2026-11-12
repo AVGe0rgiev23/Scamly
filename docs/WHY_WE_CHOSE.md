@@ -926,7 +926,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ### Our own design system  (status: in use; W1-11 verified)
 
-The homepage uses deep teal, warm ivory and a mint advice panel. Teal identifies service actions while red, amber and green identify verdicts with labels and symbols. A Cyrillic-capable system font stack renders immediately on the phones that need the check. We chose the teal concept over the indigo and yellow notice concept because the advice has its own space and the verdict colours retain their meaning. A brief pointer-press transition confirms a click. Questions and results appear immediately, and reduced-motion users get static controls.
+The homepage uses deep teal, warm ivory and a mint advice panel. Teal identifies service actions while red, amber and green identify verdicts with labels and symbols. A Cyrillic-capable system font stack renders immediately on the phones that need the check. We chose the teal concept over the indigo and yellow notice concept because the advice has its own space and the verdict colours retain their meaning. A brief pointer-press transition confirms a click. Questions and results appear immediately, and reduced-motion users get static controls. The standalone offline document uses the same palette so the advice is recognisable when the network is down.
 
 **Used for:** `Button`, `Card`, `Verdict`, `BigChoice`, `ThemeToggle` and colour/typography tokens in `src/components/ui/`, shown on a `/dev/ui` preview page.
 

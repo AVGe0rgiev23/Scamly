@@ -20,8 +20,8 @@ export function escapeHtml(text: string): string {
 }
 
 const STYLE = `
-:root{color-scheme:light;--bg:#f4f6f8;--surface:#ffffff;--fg:#17212b;--muted:#475569;--primary:#174ea6;--on-primary:#ffffff;--border:#64748b}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#101820;--surface:#1c2733;--fg:#f1f5f9;--muted:#cbd5e1;--primary:#93c5fd;--on-primary:#17212b;--border:#94a3b8}}
+:root{color-scheme:light;--bg:#f7f5ee;--surface:#ffffff;--fg:#172e2c;--muted:#465b56;--primary:#075854;--on-primary:#ffffff;--border:#697e76}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#102321;--surface:#19312e;--fg:#f0f7f3;--muted:#c1d7cf;--primary:#95dfce;--on-primary:#172e2c;--border:#8daea2}}
 *{box-sizing:border-box}
 html{font-size:18px}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
