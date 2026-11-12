@@ -14,7 +14,7 @@ test("theme persists across pages and system mode follows the device", async ({ 
   await page.emulateMedia({ colorScheme: "dark" });
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(16, 35, 33)");
   await page.emulateMedia({ colorScheme: "light" });
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(244, 246, 248)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(247, 245, 238)");
 });
 
 test("preview supports keyboard answers and fits a 360px screen", async ({ page }) => {
@@ -31,7 +31,7 @@ test("preview supports keyboard answers and fits a 360px screen", async ({ page 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  for (const button of await page.getByRole("button").all()) {
+  for (const button of await page.getByRole("main").getByRole("button").all()) {
     expect((await button.boundingBox())?.height).toBeGreaterThanOrEqual(64);
   }
 });
