@@ -351,6 +351,21 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 3. Security design
 
+### Content Security Policy without a nonce (vs a nonce, vs hashes, vs no CSP)  (status: in use since W4-01, D27)
+
+**Used for:** the security headers of every page (`src/config/securityHeaders.ts`, `docs/security.md`).
+
+**Alternatives we considered:** a nonce per request (the plan), SHA-256 hashes of the inline scripts, experimental Subresource Integrity, no CSP at all.
+
+**Why this one:**
+- The Next.js 16 docs say a nonce needs every page rendered on every request and **does not work with Partial Prerendering**, which our pages use (fast, pre-rendered shells).
+- Hashes fail because Next.js writes page-specific inline scripts; we tested it on a production build and every page stopped.
+- Every other rule is still strict: scripts only from our domain, no `eval()`, connections only to us and Supabase, no plugins, no frames, forms only to us. React escapes all text, which is the main protection against injected scripts.
+
+**What we give up:** an injected inline `<script>` would not be blocked by the CSP; we rely on React's escaping and on never using `dangerouslySetInnerHTML` with user text.
+
+**We would reconsider if:** we turned Partial Prerendering off; then a nonce from `src/proxy.ts`.
+
 ### Two locks: Row Level Security in the database + checks in the API  (status: in use (RLS; API checks in `requireRole` and the services since Session E))
 
 **Used for:** making sure user A can never read or change user B's data (IDOR protection).

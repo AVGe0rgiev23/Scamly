@@ -155,4 +155,5 @@ Write each new idea as one row; we decide together which ones to build.
 
 | # | Idea | Who suggested | Date | Decision |
 |---|---|---|---|---|
-| 21 | *(next idea)* | | | |
+| 21 | **AI listens to the call** (with the person's permission) and warns during the call („Затворете, това е измама“) or sums up at the end, instead of answering questions. Findings 12 Nov: a website cannot hear phone calls; a native Android app also cannot record calls since Android 10 (only system apps like Google's Call Screen can), on iPhone it is impossible; a speaker-phone + microphone workaround fails because the phone keeps the microphone during a call. Possible later version: a native app or a second device (old phone/tablet) that listens while the call is on speaker, with streaming Bulgarian speech-to-text + an LLM (paid APIs, D11), and the caller told that the call is checked (GDPR). Too big and risky before the tournament; „Говорете“ after the call is the safe version today. | Alex | 12 Nov | Accepted as future work **F-01 „Scamly Слух“** (`IMPLEMENTATION_PLAN.md` section 5); a "Future work" slide in W5-03 |
+| 22 | *(next idea)* | | | |

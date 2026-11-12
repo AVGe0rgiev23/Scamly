@@ -788,7 +788,7 @@ Totals after D23: **A ≈ 18 h, R ≈ 18 h**. Alex: W4-01 (6), W4-04 (4), half o
 |---|---|---|---|---|---|
 | W5-01 | 5-page documentation (exact regulation structure, TNR 12, 1.5 spacing), file named `Scamly.docx`/`.pdf` | A+R (each writes the sections about their own parts) | 8 (A 4 · R 4) | W4 | ≤ 5 pages, checked by our teacher |
 | W5-02 | Promo leaflet (1 page, printed) | R | 3 | none | Printed copy |
-| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team) | A+R (half each) | 4 (A 2 · R 2) | none | ≤ 12 slides, rehearsed |
+| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team, future work: F-01 „Scamly Слух“ with a mock-up of the live screen) | A+R (half each) | 4 (A 2 · R 2) | none | ≤ 12 slides, rehearsed |
 | W5-04 | Demo video of all flows + local build on a labelled flash drive (with offline instructions) | A | 3 | W4-08 | Video plays from the USB drive on another laptop |
 | W5-05 | Rehearse the defense ×5 (timed), Q&A drill with section 14 questions | A+R | 6 (A 3 · R 3) | all | Last two runs ≤ 8 min demo, every question answered by either of us |
 

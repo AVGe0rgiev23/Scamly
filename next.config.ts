@@ -1,6 +1,7 @@
 // Next.js settings. These are the defaults that `create-next-app` chose for Next.js 16.4.
 
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/config/securityHeaders";
 
 const nextConfig: NextConfig = {
   // Cache Components: pages are pre-rendered where possible and we choose what to cache
@@ -12,6 +13,16 @@ const nextConfig: NextConfig = {
   // every phone at once. Its scope is "/" because the file is at the root of the site.
   async headers() {
     return [
+      // Security headers on every page and API answer (W4-01, docs/security.md).
+      // Listed first: a later rule with the same header name wins, so the special
+      // rules below (no-referrer, the service worker's own CSP) still apply.
+      {
+        source: "/:path*",
+        headers: securityHeaders({
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          development: process.env.NODE_ENV === "development",
+        }),
+      },
       // The invite page has a secret token in its address (/pokana?t=…, W2-14): the
       // browser must never send that address to another page or site as `Referer`.
       // The same for login and registration while they carry it in `next`.

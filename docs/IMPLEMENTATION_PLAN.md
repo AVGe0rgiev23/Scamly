@@ -178,7 +178,27 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W3-09 | Escalation to the next trusted contact after two minutes without acknowledgement, then 112 advice if in immediate danger | ✅ code (Roberta, 11 Nov) · database and browser checks pass locally · production migration, Cron setup and live check pending |
 | W3-10 | Printable A5 fridge card with large Bulgarian instructions and pairing QR | ✅ (Roberta, 11 Nov) · one A5 portrait page verified in Edge |
 | W3-11 | `docs/learning/week-3.md` | Roberta's notes written · Alex's section pending |
-| W4-01 … W4-09 | Security, e2e, Lighthouse, usability test, proofreading, **registration** | ⬜ |
+| W3-07 | ✂ AI second opinion (Gemini + Groq) | ✂ not built (first cut per D12); `FEATURE_AI` stays off · Alex's call idea → `IDEAS.md` #21 |
+| UI-v2 | Frontend redesign „Signal“ (D26): old visual layer deleted, new tokens, fonts, signal-line motif, landing page with a live engine demo, every screen redone, contrast unit test | ✅ (Alex, 12 Nov) · merged into `main` and live; 696 unit tests, 244 browser tests (desktop + phone) · Roberta: `git pull` before working on any screen |
+
+### Week 4 (16–22 Nov): security, quality, release, registration
+
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| W4-01 | Security hardening: CSP + security headers, origin check, `npm audit`, secret scan, `docs/security.md` | Alex | 🔄 12 Nov: headers on every page (`src/config/securityHeaders.ts`, 12 unit tests), CSP without nonce (D27), `npm audit --omit=dev` 0, secret scan 0, 0 CSP violations on a production build · ⬜ securityheaders.com grade + screenshot after the deploy |
+| W4-02 | Security tests, one per attack (rows of `docs/security.md`) | Roberta | ⬜ |
+| W4-03 | E2E per role + axe accessibility checks | Alex + Roberta (own pages) | ⬜ |
+| W4-04 | Lighthouse (mobile, slow 4G): landing, protected home, map | Alex | ⬜ |
+| W4-05 | Usability test with 3–5 older relatives | Alex + Roberta | ⬜ |
+| W4-06 | Proofreading of `bg.ts` (incl. the new `landing` texts and FAQ from the redesign) | Roberta | ⬜ |
+| W4-07 | Privacy notice + account deletion/export | Roberta | ⬜ |
+| W4-08 | Release: freeze `main`, tag `v1.0.0`, production demo accounts | Alex + Roberta | ⬜ |
+| W4-09 | **Register on the tournament site by 27.11** | Alex + Roberta | ⬜ |
+
+Open items from Weeks 1–3 (live checks): W1-13 `HEALTH_URL` secret + Supabase Site URL (Alex) · W2-05 push on a real phone (Alex) · W2-06 real Brevo e-mail (Alex) · W2-09 install + push on a phone (Roberta) · W2-10 Bulgarian voice on a phone (Alex) · W2-11 e2e button → alert → acknowledge (Alex leads) · W2-14 live invite with two accounts (Roberta) · W3-09 production migration + Cron + live check (Roberta) · learning notes W1-14, W2-12, W3-11 (Alex's sections).
+
+| ID range | Theme | Status |
+|---|---|---|
 | W5-01 … W5-05 | Documentation, leaflet, slides, video, rehearsals | ⬜ |
 
 Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; shared tasks count half each):
@@ -187,6 +207,14 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 - **Week 4 (A ≈ 18 h, R ≈ 18 h).** Alex: W4-01 security hardening, W4-04 Lighthouse. Roberta: W4-02 security tests, W4-06 proofreading, W4-07 delete/export API + privacy notice. Both: W4-03 e2e (own pages), W4-05 usability test, W4-08 release, W4-09 registration.
 - **Week 5 (A ≈ 12 h, R ≈ 12 h).** Alex: W5-04 video + USB. Roberta: W5-02 leaflet. Both: W5-01 documentation (own parts), W5-03 slides, W5-05 rehearsals.
 - **Remaining total: Alex ≈ 71 h, Roberta ≈ 76 h.**
+
+### Future work (after the tournament)
+
+Not built before the defense; shown in the slides as the next big step (W5-03: a "Future work" slide with a mock-up of the live screen). Details and the technical findings: `IDEAS.md` #21.
+
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| F-01 | **„Scamly Слух“: live call guard.** A native Android app (plus a "listening station" mode on a second phone or tablet for iPhone users) that, with the person's permission, listens while a suspicious call is on speaker. Streaming Bulgarian speech-to-text feeds our engine and an LLM every few seconds. The screen shows the call live: the signal line reacts to what the caller says, the risk meter climbs, and the scam signs light up one by one as they are heard („Казаха, че са от полицията“, „Искат пари“). At danger level the whole screen turns red with „Затворете телефона!“, the phone vibrates, and the family gets the alert at once; after the call it shows a short summary in plain words. Needs: a legal check (the caller is told the call is checked, GDPR), paid speech/LLM APIs (ask first, D11), a usability test with older people. | Alex + Roberta | ⬜ after the tournament |
 
 ### Ideas accepted from `IDEAS.md`
 

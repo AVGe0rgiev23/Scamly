@@ -4,6 +4,7 @@
 
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { INSTALL_SCRIPT, THEME_SCRIPT } from "@/config/inlineScripts";
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/config/pwa";
 import { bg } from "@/i18n/bg";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -42,14 +43,8 @@ export const viewport: Viewport = {
   ],
 };
 
-// Runs before the first paint: puts the saved theme on <html>, so a person who chose
-// the light theme never sees a dark flash (and the other way round). Plain text,
-// no user data. The same key as in src/components/ui/ThemeToggle.tsx.
-const THEME_SCRIPT = `try{var t=localStorage.getItem("scamly-theme");if(t==="light"||t==="dark"||t==="system")document.documentElement.dataset.theme=t}catch(e){}`;
-
-// Also before any other script: keeps the browser's early "this app can be installed"
-// event (beforeinstallprompt), which can arrive before src/lib/install.ts has loaded.
-const INSTALL_SCRIPT = `addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__scamlyInstallEvent=e})`;
+// The two inline scripts in <head> (theme before the first paint, early install
+// event) are in src/config/inlineScripts.ts.
 
 // `{ children }: { children: ReactNode }` means: this function receives one argument,
 // an object with a `children` field (the page to show), like a Python keyword argument.

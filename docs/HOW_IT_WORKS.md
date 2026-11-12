@@ -1839,6 +1839,27 @@ The service-role-only `claim_alert_escalations` database function locks each due
 
 Apply `20261111000001_alert_escalation.sql` in the Supabase SQL Editor before deploying this code. After the endpoint is live, enable `pg_cron` and `pg_net`, set the Vercel `CRON_SECRET`, and add `scamly_site_url` and `scamly_cron_secret` to Supabase Vault. The second secret must match Vercel. Run `supabase/ops/schedule_alert_escalation.sql` to schedule a POST every minute. Check the job and endpoint before enabling `FEATURE_ESCALATION` in production.
 
+### 3.47 Security headers and the Content Security Policy (W4-01)
+
+#### What it does
+
+Every page and API answer carries security headers that tell the browser what a Scamly page may do: load scripts, fonts and pictures only from our site, connect only to our site and our Supabase project, never be shown inside another site's frame, always use HTTPS, and use the microphone only for voice input. `docs/security.md` lists every attack, its defence and its test.
+
+#### How it works
+
+- `src/config/securityHeaders.ts` builds the headers: `contentSecurityPolicy()` writes the CSP from a list of rules (`supabaseOrigins()` adds the project's `https` and `wss` address from `NEXT_PUBLIC_SUPABASE_URL`), and `securityHeaders()` adds HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` and `Cross-Origin-Opener-Policy`.
+- `next.config.ts` adds them to every path (`/:path*`). That rule comes first, so the later special rules (no referrer on the invite page, the service worker's own CSP) still win for their paths.
+- Under `next dev` the policy also allows `eval()` (React's readable error messages) and does not force HTTPS on localhost.
+- The two inline scripts in `<head>` (theme before the first paint, the early install event) live in `src/config/inlineScripts.ts`, apart from the layout, so a review sees all inline code in one file.
+
+#### Why it works like that
+
+A nonce-based CSP would be stricter, but the Next.js docs say it needs every page rendered on each request and does not work with our pre-rendered pages (Partial Prerendering). A hash-only policy stopped every page in a production test, because Next.js writes page-specific inline scripts. So inline scripts are allowed and every other rule is strict (decision D27).
+
+#### How we know it works
+
+`src/config/securityHeaders.test.ts` (12 tests) checks every directive and header. A production build was opened on 12 pages with a script that collects CSP errors: 0 violations, every page started. `npm audit --omit=dev`: 0 vulnerabilities. Secret scan of every commit: 0 findings.
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
