@@ -33,7 +33,9 @@ export function Verdict({
   const symbol = VERDICT_SYMBOLS[level];
   const title = (
     <>
-      <span aria-hidden="true">{symbol} </span>
+      <span className="verdict-symbol" aria-hidden="true">
+        {symbol}{" "}
+      </span>
       {text.title}
     </>
   );

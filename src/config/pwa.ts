@@ -4,6 +4,6 @@
 
 // --surface: the bar at the top of the installed app (the header colour).
 export const THEME_COLOR_LIGHT = "#ffffff";
-export const THEME_COLOR_DARK = "#1c2733";
+export const THEME_COLOR_DARK = "#19312e";
 // --background (light): the splash screen while the app starts.
-export const BACKGROUND_COLOR = "#f4f6f8";
+export const BACKGROUND_COLOR = "#f7f5ee";

@@ -16,8 +16,7 @@ type CheckHomeProps = {
 export function CheckHome({ contact, onStart }: CheckHomeProps) {
   return (
     <>
-      {/* sr-only: the heading is read aloud; on screen the big button says it all. */}
-      <h1 className="sr-only">{bg.protectedCheck.title}</h1>
+      <h1 className="check-heading">{bg.protectedCheck.title}</h1>
       <button type="button" className="check-big-button" onClick={() => onStart(false)}>
         {bg.protectedCheck.bigButton}
       </button>
