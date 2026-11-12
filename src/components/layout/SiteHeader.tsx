@@ -45,7 +45,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-(--z-index-header) border-b border-line bg-canvas print:hidden">
       {/* On a phone the menu gets its own row under the logo; nothing is hidden behind
           a "hamburger" button, because older people do not look for hidden menus. */}
-      <div className="shell flex flex-wrap items-center gap-x-6 md:min-h-16 md:flex-nowrap">
+      <div className="shell flex flex-wrap items-center gap-x-6 lg:min-h-16 lg:flex-nowrap">
         <Link
           href={ROUTES.home}
           className="flex min-h-14 items-center gap-2.5 font-display text-xl font-bold tracking-tight text-fg no-underline"
@@ -55,7 +55,7 @@ export function SiteHeader() {
           {/* sr-only: hidden on screen, read by screen readers. */}
           <span className="sr-only">, {bg.layout.homeLink}</span>
         </Link>
-        <div className="order-last w-full min-w-0 md:order-none md:w-auto md:flex-1">
+        <div className="order-last w-full min-w-0 lg:order-none lg:w-auto lg:flex-1">
           <Suspense fallback={<SiteNav account={null} />}>
             <AccountNav />
           </Suspense>
@@ -95,9 +95,9 @@ async function readHeaderAccount(): Promise<HeaderAccount | null> {
 
 // One menu link: at least 48 px high, with an underline that marks hover.
 const NAV_LINK =
-  "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg md:text-base";
+  "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg lg:text-base";
 const NAV_LIST =
-  "-mx-2.5 flex flex-wrap items-center md:mx-0 md:flex-nowrap md:justify-end md:gap-1";
+  "-mx-2.5 flex flex-wrap items-center lg:mx-0 lg:flex-nowrap lg:justify-end lg:gap-1";
 
 // The menu itself: guest links, or the logged-in person's area link, name and logout.
 function SiteNav({ account }: { account: HeaderAccount | null }) {

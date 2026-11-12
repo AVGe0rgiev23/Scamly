@@ -50,8 +50,8 @@ const TILE = "rounded-md border border-line-strong bg-surface-1 px-4 py-3 text-b
 
 export function FeatureGrid() {
   return (
-    <div className="grid gap-4 md:grid-cols-12">
-      <Feature title={f.check.title} text={f.check.text} className="md:col-span-7">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
+      <Feature title={f.check.title} text={f.check.text} className="lg:col-span-7">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex min-h-40 flex-col justify-between rounded-md bg-accent p-4 font-display text-xl font-bold text-on-accent">
             <PhoneIncoming className="size-7" />
@@ -68,7 +68,7 @@ export function FeatureGrid() {
         </div>
       </Feature>
 
-      <Feature title={f.verdict.title} text={f.verdict.text} className="md:col-span-5">
+      <Feature title={f.verdict.title} text={f.verdict.text} className="lg:col-span-5">
         <div className="flex flex-col items-start gap-3">
           <div className="flex flex-col items-start gap-2">
             <VerdictBadge level="red" />
@@ -81,7 +81,7 @@ export function FeatureGrid() {
         </div>
       </Feature>
 
-      <Feature title={f.alert.title} text={f.alert.text} className="md:col-span-5">
+      <Feature title={f.alert.title} text={f.alert.text} className="lg:col-span-5">
         <div className="rounded-md border border-line border-l-2 border-l-accent bg-surface-2 p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="font-display text-lg font-bold">{SAMPLE.protectedName}</p>
@@ -97,7 +97,7 @@ export function FeatureGrid() {
         </div>
       </Feature>
 
-      <Feature title={f.pairing.title} text={f.pairing.text} className="md:col-span-4">
+      <Feature title={f.pairing.title} text={f.pairing.text} className="lg:col-span-4">
         <p className="text-sm text-fg-muted">{bg.family.codeLabel}</p>
         <p className="tabular mt-1 font-mono text-h1 font-semibold tracking-tight text-fg">
           {SAMPLE.pairingCode}
@@ -107,7 +107,7 @@ export function FeatureGrid() {
         </p>
       </Feature>
 
-      <Feature title={f.voice.title} text={f.voice.text} className="md:col-span-3">
+      <Feature title={f.voice.title} text={f.voice.text} className="lg:col-span-3">
         <p className={cn(TILE, "inline-flex items-center gap-2 border-accent bg-accent-bg")}>
           <Mic className="size-5" />
           {bg.voice.stop}
@@ -115,7 +115,11 @@ export function FeatureGrid() {
         <p className="mt-3 text-sm text-fg">{fill(bg.voice.heard, { text: SAMPLE.voiceHeard })}</p>
       </Feature>
 
-      <Feature title={f.offline.title} text={f.offline.text} className="md:col-span-12">
+      <Feature
+        title={f.offline.title}
+        text={f.offline.text}
+        className="md:col-span-2 lg:col-span-12"
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <StatusPill status="caution" icon={<WifiOff className="size-[1.15em] shrink-0" />}>
             {bg.offline.title}

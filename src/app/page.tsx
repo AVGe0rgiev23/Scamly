@@ -78,11 +78,11 @@ export default function HomePage() {
 
       {/* 2. The one rule */}
       <aside className="border-y border-line bg-surface-1" aria-labelledby="home-advice-title">
-        <div className="shell grid gap-x-6 gap-y-4 py-10 md:grid-cols-12 md:items-center">
-          <h2 id="home-advice-title" className="text-h2 md:col-span-5">
+        <div className="shell grid gap-x-6 gap-y-4 py-10 lg:grid-cols-12 lg:items-center">
+          <h2 id="home-advice-title" className="text-h2 lg:col-span-5">
             {bg.home.adviceTitle}
           </h2>
-          <p className="max-w-[48ch] text-lg text-fg-muted md:col-span-6 md:col-start-7">
+          <p className="max-w-[48ch] text-lg text-fg-muted lg:col-span-6 lg:col-start-7">
             {bg.home.advice}
           </p>
         </div>
@@ -116,17 +116,17 @@ export default function HomePage() {
 
       {/* 5. The six hard rules (D10): name and explanation, straight from the engine's texts. */}
       <section
-        className={`shell grid gap-x-6 gap-y-8 md:grid-cols-12 ${SECTION}`}
+        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
         aria-labelledby="rules6-title"
       >
-        <div className="md:col-span-4">
+        <div className="lg:col-span-4">
           <h2 id="rules6-title" className="text-h2">
             {t.hardRulesTitle}
           </h2>
           <p className="mt-4 max-w-[36ch] text-fg-muted">{t.hardRulesText}</p>
           <SignalLine state="alert" className="mt-8 h-10 max-w-64" />
         </div>
-        <dl className="md:col-span-7 md:col-start-6">
+        <dl className="lg:col-span-7 lg:col-start-6">
           {HARD_RULE_IDS.map((id) => (
             <div
               key={id}
@@ -143,10 +143,10 @@ export default function HomePage() {
 
       {/* 6. For the family */}
       <section
-        className={`shell grid gap-x-6 gap-y-10 md:grid-cols-12 ${SECTION}`}
+        className={`shell grid gap-x-6 gap-y-10 lg:grid-cols-12 ${SECTION}`}
         aria-labelledby="family-title"
       >
-        <div className="md:col-span-6">
+        <div className="lg:col-span-6">
           <h2 id="family-title" className="text-h2">
             {t.familyTitle}
           </h2>
@@ -160,7 +160,7 @@ export default function HomePage() {
           </ul>
         </div>
         {/* A sample alert as a timeline: it IS a sequence, so it is numbered by time. */}
-        <div className="md:col-span-5 md:col-start-8">
+        <div className="lg:col-span-5 lg:col-start-8">
           <div className="rounded-lg border border-line bg-surface-1 p-5 md:p-6">
             <div className="flex items-baseline justify-between gap-4">
               <h3 className="font-sans text-base font-semibold tracking-normal">
@@ -189,13 +189,13 @@ export default function HomePage() {
 
       {/* 7. Three rules to remember */}
       <section
-        className={`shell grid gap-x-6 gap-y-8 md:grid-cols-12 ${SECTION}`}
+        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
         aria-labelledby="rules-title"
       >
-        <h2 id="rules-title" className="text-h2 md:col-span-5">
+        <h2 id="rules-title" className="text-h2 lg:col-span-5">
           {bg.home.rulesTitle}
         </h2>
-        <ul className="md:col-span-6 md:col-start-7">
+        <ul className="lg:col-span-6 lg:col-start-7">
           {bg.home.rules.map((rule) => (
             <li key={rule} className="border-t border-line py-5 font-display text-h3 font-bold">
               {rule}
@@ -215,11 +215,11 @@ export default function HomePage() {
         {RESOURCES.map((resource) => (
           <article
             key={resource.href}
-            className="grid gap-x-6 gap-y-3 border-t border-line py-6 md:grid-cols-12 md:items-center"
+            className="grid gap-x-6 gap-y-3 border-t border-line py-6 lg:grid-cols-12 lg:items-center"
           >
-            <h3 className="text-h3 md:col-span-4">{resource.title}</h3>
-            <p className="max-w-[52ch] text-fg-muted md:col-span-5">{resource.text}</p>
-            <p className="md:col-span-3 md:justify-self-end">
+            <h3 className="text-h3 lg:col-span-4">{resource.title}</h3>
+            <p className="max-w-[52ch] text-fg-muted lg:col-span-5">{resource.text}</p>
+            <p className="lg:col-span-3 md:justify-self-end">
               <ButtonLink href={resource.href} variant="secondary">
                 {resource.link}
                 <ArrowUpRight className="size-5" aria-hidden="true" />
@@ -231,13 +231,13 @@ export default function HomePage() {
 
       {/* 9. Questions: native <details>, so they work without JavaScript. */}
       <section
-        className={`shell grid gap-x-6 gap-y-8 md:grid-cols-12 ${SECTION}`}
+        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
         aria-labelledby="faq-title"
       >
-        <h2 id="faq-title" className="text-h2 md:col-span-4">
+        <h2 id="faq-title" className="text-h2 lg:col-span-4">
           {t.faqTitle}
         </h2>
-        <div className="md:col-span-7 md:col-start-6">
+        <div className="lg:col-span-7 lg:col-start-6">
           {t.faq.map((item) => (
             <details key={item.question} className="group border-t border-line">
               <summary className="flex min-h-16 list-none items-center justify-between gap-4 py-3 font-display text-lg font-bold [&::-webkit-details-marker]:hidden">
@@ -263,8 +263,8 @@ export default function HomePage() {
 
       {/* 10. Start */}
       <section className="border-y border-line bg-surface-1" aria-labelledby="cta-title">
-        <div className="shell grid gap-x-6 gap-y-8 py-16 md:grid-cols-12 md:items-end md:py-20">
-          <div className="md:col-span-6">
+        <div className="shell grid gap-x-6 gap-y-8 py-16 lg:grid-cols-12 lg:items-end md:py-20">
+          <div className="lg:col-span-6">
             <h2 id="cta-title" className="text-h2">
               {t.ctaTitle}
             </h2>
@@ -272,7 +272,7 @@ export default function HomePage() {
           </div>
           <nav
             aria-label={bg.home.setupLinks}
-            className="flex flex-col gap-3 sm:flex-row md:col-span-6 md:justify-end"
+            className="flex flex-col gap-3 sm:flex-row lg:col-span-6 lg:justify-end"
           >
             <ButtonLink href={ROUTES.register} size="lg">
               {bg.home.register}
