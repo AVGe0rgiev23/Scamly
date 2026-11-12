@@ -1,6 +1,6 @@
 // Input rules (Zod schemas) for pairing the older person's phone (BUILD_PLAN 3, #15).
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 
 export const RedeemCodeSchema = z.object(

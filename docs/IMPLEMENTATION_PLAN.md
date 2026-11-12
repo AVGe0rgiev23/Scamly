@@ -185,10 +185,10 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| W4-01 | Security hardening: CSP + security headers, origin check, `npm audit`, secret scan, `docs/security.md` | Alex | 🔄 12 Nov: headers on every page (`src/config/securityHeaders.ts`, 12 unit tests), CSP without nonce (D27), `npm audit --omit=dev` 0, secret scan 0, 0 CSP violations on a production build · ⬜ securityheaders.com grade + screenshot after the deploy |
+| W4-01 | Security hardening: CSP + security headers, origin check, `npm audit`, secret scan, `docs/security.md` | Alex | ✅ 12 Nov: securityheaders.com **grade A** (`docs/evidence/securityheaders.png`); headers on every page (`src/config/securityHeaders.ts`, 12 unit tests), CSP without nonce (D27), `npm audit --omit=dev` 0, secret scan 0, 0 CSP violations on a production build |
 | W4-02 | Security tests, one per attack (rows of `docs/security.md`) | Roberta | ⬜ |
 | W4-03 | E2E per role + axe accessibility checks | Alex + Roberta (own pages) | ⬜ |
-| W4-04 | Lighthouse (mobile, slow 4G): landing, protected home, map | Alex | ⬜ |
+| W4-04 | Lighthouse (mobile, slow 4G): landing, protected home, map | Alex | ✅ 12 Nov: performance 94–100, accessibility 100, CLS 0 on all three; fixed favicon 404, Zod eval probe (CSP), map link colour-only; SEO 60 live comes from Vercel's `noindex` on `*.vercel.app` (100 locally) · `docs/evidence/lighthouse-2026-11-12.md` |
 | W4-05 | Usability test with 3–5 older relatives | Alex + Roberta | ⬜ |
 | W4-06 | Proofreading of `bg.ts` (incl. the new `landing` texts and FAQ from the redesign) | Roberta | ⬜ |
 | W4-07 | Privacy notice + account deletion/export | Roberta | ⬜ |

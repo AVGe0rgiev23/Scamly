@@ -7,7 +7,7 @@
 // No server-only code here, so the moderator's page (W3-04 UI) can import the same
 // rules and types the server uses. A Zod schema is like a Pydantic model.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
 

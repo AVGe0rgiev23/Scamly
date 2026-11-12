@@ -1,6 +1,6 @@
 // Input rules (Zod schemas) for protected persons and for ids in the URL.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 
 // The two fields, shared by "create" and "update".

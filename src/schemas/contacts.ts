@@ -4,7 +4,7 @@
 // Phone numbers are stored in ONE format, E.164 ("+359888123456"), so the tel:
 // button always works and two spellings of the same number look the same.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 
 // The most contacts one protected person can have (priority 1 … 5).

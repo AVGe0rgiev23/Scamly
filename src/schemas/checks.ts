@@ -9,7 +9,7 @@
 // src/lib/realtime.ts can import the same types the server uses.
 // A Zod schema is like a Pydantic model in Python.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import {
   CLAIMED_IDENTITIES,
   HANDOVER_METHODS,

@@ -1,7 +1,7 @@
 // Input rules (Zod schemas) for invites: another relative becomes a trusted contact
 // (BUILD_PLAN 3, #12 and #13).
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 import { MAX_CONTACTS } from "@/schemas/contacts";
 

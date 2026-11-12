@@ -9,7 +9,7 @@
 // No server-only code here, so the editor in the browser checks a form with exactly the
 // same rules the server uses. A Zod schema is like a Pydantic model.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { SCRIPT_TYPES, type ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
 

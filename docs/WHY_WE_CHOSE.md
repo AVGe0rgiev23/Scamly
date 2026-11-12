@@ -366,6 +366,14 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we turned Partial Prerendering off; then a nonce from `src/proxy.ts`.
 
+### Zod in `jitless` mode (vs allowing `eval()` in the CSP)  (status: in use since W4-04)
+
+**Used for:** all input checks (`src/lib/zod.ts`).
+
+**Why:** Zod's faster checkers are built with `eval()`; allowing `eval()` in our CSP would weaken it for every script. Our forms are small, so the slower plain checker costs nothing noticeable. Zod documents `jitless` exactly for "environments that disallow eval".
+
+**What we give up:** slightly slower validation of big inputs (we have none).
+
 ### Two locks: Row Level Security in the database + checks in the API  (status: in use (RLS; API checks in `requireRole` and the services since Session E))
 
 **Used for:** making sure user A can never read or change user B's data (IDOR protection).

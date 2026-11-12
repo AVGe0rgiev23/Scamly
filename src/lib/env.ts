@@ -7,7 +7,7 @@
 // Only server code may import this file: it returns secret keys.
 // The feature switches (FEATURE_*) are read separately in src/config/features.ts.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 // Used by .catch() below: warns that an optional variable was ignored, then returns
 // the safe value (like a Python "except ValueError: warn(...); return default").

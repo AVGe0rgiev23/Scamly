@@ -4,7 +4,7 @@
 // the first problem directly (src/server/http/errors.ts).
 // A Zod schema is like a Pydantic model in Python.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 
 export const RegisterSchema = z.object(

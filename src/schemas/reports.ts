@@ -8,7 +8,7 @@
 // No server-only code here, so the report form (W3-02) and the map (W3-03) can import
 // the same rules and types the server uses. A Zod schema is like a Pydantic model.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { SCRIPT_TYPES, type ScriptType } from "@/engine";
 import { normalizePhone } from "@/schemas/contacts";
 import { bg } from "@/i18n/bg";

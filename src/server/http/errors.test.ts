@@ -1,7 +1,7 @@
 // Unit tests for errors.ts: every thrown thing becomes a safe { error: { code, messageBg } }.
 
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 import {
   ApiError,

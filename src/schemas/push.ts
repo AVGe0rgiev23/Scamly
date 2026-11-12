@@ -8,7 +8,7 @@
 // No server-only code here, so the browser helper (src/lib/push.ts) can use the same
 // types. A Zod schema is like a Pydantic model in Python.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { bg } from "@/i18n/bg";
 
 // The push services of the browsers we support. A subscription's endpoint is a URL

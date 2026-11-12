@@ -6,7 +6,7 @@
 //
 // This file is used by the browser client, the proxy and the server clients.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 const publicEnvSchema = z.object({
   supabaseUrl: z.url(),

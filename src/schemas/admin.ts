@@ -9,7 +9,7 @@
 // No server-only code here, so the admin pages in the browser can import the types.
 // A Zod schema is like a Pydantic model.
 
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { RiskLevel, ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
 

@@ -1856,9 +1856,11 @@ Every page and API answer carries security headers that tell the browser what a 
 
 A nonce-based CSP would be stricter, but the Next.js docs say it needs every page rendered on each request and does not work with our pre-rendered pages (Partial Prerendering). A hash-only policy stopped every page in a production test, because Next.js writes page-specific inline scripts. So inline scripts are allowed and every other rule is strict (decision D27).
 
+- **Zod without eval (W4-04).** Zod normally tests whether `eval()` is allowed, to build faster checkers; under our policy that test is a CSP violation. `src/lib/zod.ts` switches it off (`jitless`) and every file imports `z` from there; an ESLint rule (`no-restricted-imports` in `eslint.config.mjs`) stops anyone importing `z` from "zod" directly.
+
 #### How we know it works
 
-`src/config/securityHeaders.test.ts` (12 tests) checks every directive and header. A production build was opened on 12 pages with a script that collects CSP errors: 0 violations, every page started. `npm audit --omit=dev`: 0 vulnerabilities. Secret scan of every commit: 0 findings.
+securityheaders.com gives the live site **grade A** (`docs/evidence/securityheaders.png`); Lighthouse finds no CSP issue (`docs/evidence/lighthouse-2026-11-12.md`). `src/config/securityHeaders.test.ts` (12 tests) checks every directive and header. A production build was opened on 12 pages with a script that collects CSP errors: 0 violations, every page started. `npm audit --omit=dev`: 0 vulnerabilities. Secret scan of every commit: 0 findings.
 
 ## 4. Code quality, tests and CI
 

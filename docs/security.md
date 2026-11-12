@@ -51,7 +51,8 @@ We would switch to a nonce if we ever turned off Partial Prerendering.
 | `npm audit --omit=dev` (what runs in production) | **0 vulnerabilities** |
 | `npm audit` (with development tools) | 8 moderate, all in `minimatch` inside the TypeScript ESLint parser (lint only, never shipped); the only fix is a breaking force-upgrade, so we wait for the upstream release |
 | Secret scan of every commit in the checkout (Supabase secret/service keys, JWTs, Brevo, Resend, Google, Groq and GitHub tokens, private keys, `*_PEPPER=` / `*_KEY=` values) | **0 findings**; only `.env.example` (names, no values) is committed |
+| Lighthouse (12 Nov, live) | First run found one CSP violation: Zod's `eval()` test on the call check. Fixed with Zod `jitless` (`src/lib/zod.ts`); see `docs/evidence/lighthouse-2026-11-12.md` |
 | CSP on a production build (`/`, `/vhod`, `/svarzhi`, `/kak-raboti`, `/karta`, `/signal`, `/karta-za-hladilnik`, 404 and the preview pages of every role) | **0 violations** |
-| securityheaders.com on the live site | ⬜ after the deploy: screenshot to `docs/evidence/securityheaders.png` |
+| securityheaders.com on the live site (12 Nov, 20:05 UTC) | **Grade A**: all six checked headers present; capped at A (not A+) only by the expected `'unsafe-inline'` warning (D27). Screenshot: `docs/evidence/securityheaders.png` |
 
 GitHub's own secret scanning (repository Settings → Code security) should stay switched on for new pushes.
