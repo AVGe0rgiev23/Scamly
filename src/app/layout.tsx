@@ -47,6 +47,10 @@ export const viewport: Viewport = {
 // no user data. The same key as in src/components/ui/ThemeToggle.tsx.
 const THEME_SCRIPT = `try{var t=localStorage.getItem("scamly-theme");if(t==="light"||t==="dark"||t==="system")document.documentElement.dataset.theme=t}catch(e){}`;
 
+// Also before any other script: keeps the browser's early "this app can be installed"
+// event (beforeinstallprompt), which can arrive before src/lib/install.ts has loaded.
+const INSTALL_SCRIPT = `addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__scamlyInstallEvent=e})`;
+
 // `{ children }: { children: ReactNode }` means: this function receives one argument,
 // an object with a `children` field (the page to show), like a Python keyword argument.
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -60,6 +64,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
         {/* The first thing a keyboard user reaches: jumps over the menu to the page. */}

@@ -72,7 +72,7 @@ export function CallDemo() {
           {SAMPLE_CALLS.map((item) => (
             <label
               key={item.id}
-              className="pressable flex min-h-11 cursor-pointer items-center rounded-md border border-line-strong bg-surface-1 px-3.5 text-sm font-medium text-fg-muted hover:text-fg has-checked:border-accent has-checked:bg-accent-bg has-checked:text-fg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring"
+              className="pressable relative flex min-h-11 cursor-pointer items-center rounded-md border border-line-strong bg-surface-1 px-3.5 text-sm font-medium text-fg-muted hover:text-fg has-checked:border-accent has-checked:bg-accent-bg has-checked:text-fg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring"
             >
               <input
                 type="radio"
@@ -80,7 +80,7 @@ export function CallDemo() {
                 value={item.id}
                 checked={item.id === call.id}
                 onChange={() => setCallId(item.id)}
-                className="sr-only"
+                className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
               />
               {item.label}
             </label>

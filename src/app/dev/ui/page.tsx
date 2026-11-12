@@ -10,6 +10,7 @@ import { BigChoice } from "@/components/ui/BigChoice";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
+import { Divider } from "@/components/ui/Divider";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { Kbd } from "@/components/ui/Kbd";
 import { Notice } from "@/components/ui/Notice";
@@ -170,6 +171,8 @@ function Samples({ theme }: { theme: "light" | "dark" }) {
         <SignalLine state="caution" />
         <SignalLine state="calm" />
         <SignalLine state="idle" className="text-line-strong" />
+        <Divider />
+        <Divider signal />
         <RiskMeter score={72} level="red" label={bg.landing.demo.riskLabel} />
         <Verdict level="red" lead={bg.protectedCheck.hangUp} reasons={[bg.engine.reasons.money]} />
         <Verdict level="yellow" />

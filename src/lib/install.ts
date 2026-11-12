@@ -33,6 +33,13 @@ function notify() {
 }
 
 if (typeof window !== "undefined") {
+  // The browser may announce "installable" before this file has loaded. A tiny
+  // script in the page <head> (src/app/layout.tsx) keeps that early event for us.
+  const early = (window as unknown as { __scamlyInstallEvent?: BeforeInstallPromptEvent })
+    .__scamlyInstallEvent;
+  if (early !== undefined) {
+    savedEvent = early;
+  }
   window.addEventListener("beforeinstallprompt", (event) => {
     // Stop Chrome's own small banner; our card asks instead.
     event.preventDefault();

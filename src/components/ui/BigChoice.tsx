@@ -101,7 +101,9 @@ export function BigChoice({
               checked={value === option.value}
               onChange={() => onChange(option.value)}
               onClick={() => handleClick(option.value)}
-              className="peer sr-only"
+              // Invisible but covering the whole tile, so a tap anywhere hits the
+              // real radio (and tests and assistive tools can click it).
+              className="peer absolute inset-0 size-full cursor-pointer appearance-none rounded-md opacity-0"
             />
             {/* Our own radio mark: a ring, with a dot when chosen. */}
             <span

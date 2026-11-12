@@ -30,7 +30,8 @@ export function RiskMeter({ score, level, label, className }: RiskMeterProps) {
       aria-valuemax={100}
       aria-valuenow={safeScore}
     >
-      <div className="relative h-3">
+      {/* overflow-x-clip: the moved pointer layer must not widen the page. */}
+      <div className="relative h-3 overflow-x-clip">
         {/* The three zones of the ruler. */}
         <div className="absolute inset-x-0 top-1 flex h-1 gap-0.5">
           <span className="bg-safe-line" style={{ width: `${RISK_THRESHOLDS.yellow}%` }} />
@@ -42,7 +43,7 @@ export function RiskMeter({ score, level, label, className }: RiskMeterProps) {
         </div>
         {/* The pointer: a full-width layer moved sideways, so only transform changes. */}
         <div
-          className="absolute inset-0 transition-transform duration-500 ease-in-out motion-reduce:transition-none"
+          className="absolute inset-y-0 right-0.5 left-0.5 transition-transform duration-500 ease-in-out motion-reduce:transition-none"
           style={{ transform: `translateX(${safeScore}%)` }}
         >
           <span className={cn("absolute top-0 -ml-0.5 block h-3 w-1 rounded-sm", POINTER[level])} />
