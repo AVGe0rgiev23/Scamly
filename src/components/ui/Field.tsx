@@ -84,7 +84,10 @@ type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
 
 export function Textarea({ size = "md", className, ...props }: TextareaProps) {
   return (
-    <textarea className={cn(CONTROL, CONTROL_SIZE[size], "py-3 leading-normal", className)} {...props} />
+    <textarea
+      className={cn(CONTROL, CONTROL_SIZE[size], "py-3 leading-normal", className)}
+      {...props}
+    />
   );
 }
 
@@ -98,7 +101,12 @@ export function Select({ size = "md", className, children, ...props }: SelectPro
   return (
     <span className="relative block">
       <select
-        className={cn(CONTROL, CONTROL_SIZE[size], "cursor-pointer appearance-none pr-10", className)}
+        className={cn(
+          CONTROL,
+          CONTROL_SIZE[size],
+          "cursor-pointer appearance-none pr-10",
+          className,
+        )}
         {...props}
       >
         {children}

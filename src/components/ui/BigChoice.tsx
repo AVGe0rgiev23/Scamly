@@ -73,8 +73,15 @@ export function BigChoice({
         pressedByPointer.current = false;
       }}
     >
-      <legend className={hideQuestion ? "sr-only" : "mb-3 font-semibold text-fg"}>{question}</legend>
-      <div className={cn("grid gap-3", large ? "grid-cols-1" : "grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]")}>
+      <legend className={hideQuestion ? "sr-only" : "mb-3 font-semibold text-fg"}>
+        {question}
+      </legend>
+      <div
+        className={cn(
+          "grid gap-3",
+          large ? "grid-cols-1" : "grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]",
+        )}
+      >
         {options.map((option) => (
           <label
             key={option.value}

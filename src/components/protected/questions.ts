@@ -77,41 +77,23 @@ export function withAnswer(answers: CheckAnswers, id: QuestionId, value: string)
 // The question text of each question.
 export const QUESTION_TEXT: Record<QuestionId, string> = bg.protectedCheck.questions;
 
-// The answers with their pictures. The emoji are only decoration (aria-hidden):
-// the words are always there, so nobody has to guess what a picture means.
-const IDENTITY_ICONS: Record<ClaimedIdentity, string> = {
-  police: "👮",
-  relative: "👪",
-  official: "🏦",
-  courier: "📦",
-  other: "❓",
-};
-const TRI_ICONS: Record<TriAnswer, string> = { yes: "✓", no: "✗", unsure: "?" };
-const HANDOVER_ICONS: Record<HandoverMethod, string> = {
-  courier_or_stranger: "🧍",
-  throw: "⬇️",
-  bank_transfer: "💳",
-  other: "❓",
-};
-
+// The answers of each question. Their small drawings are added on screen
+// (answerIcons.tsx); the words are always there, so nobody has to guess a picture.
 export function optionsFor(id: QuestionId): ChoiceOption[] {
   if (id === "claimedIdentity") {
     return CLAIMED_IDENTITIES.map((value) => ({
       value,
       label: bg.protectedCheck.identities[value],
-      icon: IDENTITY_ICONS[value],
     }));
   }
   if (id === "handover") {
     return HANDOVER_METHODS.map((value) => ({
       value,
       label: bg.protectedCheck.handoverMethods[value],
-      icon: HANDOVER_ICONS[value],
     }));
   }
   return TRI_ANSWERS.map((value) => ({
     value,
     label: bg.protectedCheck.tri[value],
-    icon: TRI_ICONS[value],
   }));
 }

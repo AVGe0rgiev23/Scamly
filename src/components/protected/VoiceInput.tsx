@@ -12,9 +12,11 @@
 //     uses Google's speech service for that); we only get the text.
 "use client";
 
+import { Mic, Square } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { fill } from "@/components/family/format";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
 import { bg } from "@/i18n/bg";
 import {
   findSpeechRecognition,
@@ -120,45 +122,32 @@ export function VoiceInput({ enabled, disabled, onSpoken }: VoiceInputProps) {
     status = notice.text;
   }
 
+  const isError = notice?.kind === "error" && !listening;
   return (
-    <div className="voice-input">
+    <div className="voice-input flex flex-col gap-2">
       <Button
         variant="secondary"
-        className={listening ? "voice-button voice-listening" : "voice-button"}
+        size="xl"
+        className={cn("self-start", listening && "border-accent bg-accent-bg")}
         onClick={listening ? stop : start}
         disabled={disabled}
       >
-        {listening ? <StopIcon /> : <MicIcon />}
+        {listening ? (
+          <Square className="size-6 shrink-0" aria-hidden="true" />
+        ) : (
+          <Mic className="size-6 shrink-0" aria-hidden="true" />
+        )}
         <span>{listening ? bg.voice.stop : bg.voice.start}</span>
       </Button>
+      {/* A live region: read aloud when it changes. Its height is reserved, so the
+          buttons below do not jump when the text appears. */}
       <p
         role="status"
-        className={
-          notice?.kind === "error" && !listening ? "voice-status voice-error" : "voice-status"
-        }
+        className={cn("min-h-[1.6em] text-lg", isError ? "font-medium text-danger-fg" : "text-fg")}
       >
         {status}
       </p>
-      <p className="voice-note">{bg.voice.privacyNote}</p>
+      <p className="text-sm text-fg-subtle">{bg.voice.privacyNote}</p>
     </div>
-  );
-}
-
-// A microphone.
-function MicIcon() {
-  return (
-    <svg className="voice-icon" viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" />
-    </svg>
-  );
-}
-
-// A square "stop" sign.
-function StopIcon() {
-  return (
-    <svg className="voice-icon" viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-      <rect x="6" y="6" width="12" height="12" rx="2" />
-    </svg>
   );
 }

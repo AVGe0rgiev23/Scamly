@@ -38,7 +38,8 @@ function buildTrace(): string {
     const x = (index / steps) * WIDTH;
     // Two bursts, around 30 % and 70 % of the width.
     const burst =
-      Math.exp(-(((index - steps * 0.3) / 7) ** 2)) + Math.exp(-(((index - steps * 0.72) / 9) ** 2));
+      Math.exp(-(((index - steps * 0.3) / 7) ** 2)) +
+      Math.exp(-(((index - steps * 0.72) / 9) ** 2));
     const noise = (random() - 0.5) * 2;
     const y = MID + noise * (2 + burst * 16);
     path += ` L${x.toFixed(1)} ${y.toFixed(1)}`;

@@ -173,7 +173,7 @@
   --text-h2--line-height: 1.05;
   --text-h1: clamp(2.25rem, 1.5rem + 3.4vw, 4rem);
   --text-h1--line-height: 1;
-  --text-display: clamp(2.75rem, 1.4rem + 6.2vw, 6rem);
+  --text-display: clamp(2.75rem, 1.6rem + 3.6vw, 5rem);
   --text-display--line-height: 0.94;
 
   --radius-sm: 6px;

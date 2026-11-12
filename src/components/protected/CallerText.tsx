@@ -4,9 +4,11 @@
 // text (word stems, шльокавица, typos), so a few words can make the verdict sharper.
 // Under the field: the optional „Говорете“ button (VoiceInput, W2-10) adds spoken text.
 
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { fill } from "@/components/family/format";
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Field";
 import { MAX_TEXT_LENGTH } from "@/engine";
 import { bg } from "@/i18n/bg";
 import { appendSpoken } from "./voice";
@@ -40,45 +42,48 @@ export function CallerText({
   }, []);
 
   return (
-    <section className="check-step">
-      <h1 className="check-heading">
+    <section className="flex flex-col gap-5">
+      <h1 className="text-h1">
         <label htmlFor={fieldId}>{bg.protectedCheck.textLabel}</label>
       </h1>
-      <p id={hintId} className="muted">
+      <p id={hintId} className="text-fg-muted">
         {bg.protectedCheck.textHint}
       </p>
-      <textarea
-        id={fieldId}
-        ref={field}
-        className="check-text"
-        rows={5}
-        maxLength={MAX_TEXT_LENGTH}
-        value={text}
-        onChange={(event) => onTextChange(event.target.value)}
-        aria-describedby={`${hintId} ${counterId}`}
-        disabled={sending}
-      />
-      <p id={counterId} className="check-counter">
-        {fill(bg.protectedCheck.textCounter, { count: text.length, max: MAX_TEXT_LENGTH })}
-      </p>
+      <div>
+        <Textarea
+          id={fieldId}
+          ref={field}
+          size="lg"
+          rows={5}
+          maxLength={MAX_TEXT_LENGTH}
+          value={text}
+          onChange={(event) => onTextChange(event.target.value)}
+          aria-describedby={`${hintId} ${counterId}`}
+          disabled={sending}
+        />
+        <p id={counterId} className="tabular mt-1.5 text-right font-mono text-sm text-fg-subtle">
+          {fill(bg.protectedCheck.textCounter, { count: text.length, max: MAX_TEXT_LENGTH })}
+        </p>
+      </div>
       <VoiceInput
         enabled={voiceEnabled}
         disabled={sending}
         onSpoken={(spoken) => onTextChange(appendSpoken(text, spoken, MAX_TEXT_LENGTH))}
       />
+      {/* Read aloud while the answers are sent. */}
       <p role="status" className="sr-only">
         {sending ? bg.protectedCheck.checking : null}
       </p>
-      <div className="check-nav">
-        <Button variant="secondary" onClick={() => onSubmit("")} disabled={sending}>
-          {bg.protectedCheck.skip}
-        </Button>
-        <Button onClick={() => onSubmit(text)} disabled={sending}>
+      <div className="flex flex-col gap-3 sm:flex-row-reverse">
+        <Button size="xl" className="flex-1" onClick={() => onSubmit(text)} loading={sending}>
           {sending ? bg.protectedCheck.checking : bg.protectedCheck.check}
         </Button>
+        <Button variant="secondary" size="xl" onClick={() => onSubmit("")} disabled={sending}>
+          {bg.protectedCheck.skip}
+        </Button>
       </div>
-      <Button variant="secondary" onClick={onBack} disabled={sending}>
-        <span aria-hidden="true">← </span>
+      <Button variant="ghost" size="xl" className="self-start" onClick={onBack} disabled={sending}>
+        <ArrowLeft className="size-6" aria-hidden="true" />
         {bg.protectedCheck.back}
       </Button>
     </section>

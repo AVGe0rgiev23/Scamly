@@ -204,7 +204,7 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
   const announcement = stage === "result" && result !== null ? bg.verdict[result.level].title : "";
 
   return (
-    <main className="call-check">
+    <main className="call-check shell flex max-w-2xl flex-col gap-5 py-6 text-xl md:py-12">
       <p className="sr-only" role="status">
         {announcement}
       </p>

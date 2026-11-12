@@ -96,7 +96,8 @@ async function readHeaderAccount(): Promise<HeaderAccount | null> {
 // One menu link: at least 48 px high, with an underline that marks hover.
 const NAV_LINK =
   "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg md:text-base";
-const NAV_LIST = "-mx-2.5 flex items-center overflow-x-auto md:mx-0 md:justify-end md:gap-1";
+const NAV_LIST =
+  "-mx-2.5 flex flex-wrap items-center md:mx-0 md:flex-nowrap md:justify-end md:gap-1";
 
 // The menu itself: guest links, or the logged-in person's area link, name and logout.
 function SiteNav({ account }: { account: HeaderAccount | null }) {

@@ -48,9 +48,14 @@ export function RiskMeter({ score, level, label, className }: RiskMeterProps) {
           <span className={cn("absolute top-0 -ml-0.5 block h-3 w-1 rounded-sm", POINTER[level])} />
         </div>
       </div>
-      <div className="tabular mt-1.5 flex justify-between font-mono text-xs text-fg-subtle" aria-hidden="true">
+      <div
+        className="tabular mt-1.5 flex justify-between font-mono text-xs text-fg-subtle"
+        aria-hidden="true"
+      >
         <span>0</span>
-        <span style={{ marginLeft: `${RISK_THRESHOLDS.yellow - 50}%` }}>{RISK_THRESHOLDS.yellow}</span>
+        <span style={{ marginLeft: `${RISK_THRESHOLDS.yellow - 50}%` }}>
+          {RISK_THRESHOLDS.yellow}
+        </span>
         <span>{RISK_THRESHOLDS.red}</span>
         <span>100</span>
       </div>

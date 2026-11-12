@@ -3,11 +3,14 @@
 // One tap on an answer goes on to the next question; with the keyboard the arrow
 // keys only choose, and „Напред“ goes on (so the choice can't jump by accident).
 
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { fill } from "@/components/family/format";
 import { BigChoice } from "@/components/ui/BigChoice";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
 import { bg } from "@/i18n/bg";
+import { withIcons } from "./answerIcons";
 import {
   QUESTION_TEXT,
   answerOf,
@@ -47,12 +50,27 @@ export function QuestionWizard({
     heading.current?.focus();
   }, [id]);
 
+  const total = order.length;
   return (
-    <section className="check-step" aria-labelledby="check-question">
-      <p className="check-progress">
-        {fill(bg.protectedCheck.progress, { current: index + 1, total: order.length })}
-      </p>
-      <h1 id="check-question" className="check-heading" ref={heading} tabIndex={-1}>
+    <section className="flex flex-col gap-6" aria-labelledby="check-question">
+      <div>
+        <p className="tabular font-mono text-sm text-fg-muted">
+          {fill(bg.protectedCheck.progress, { current: index + 1, total })}
+        </p>
+        {/* The step ruler: one segment per question, the answered ones filled. */}
+        <div className="mt-2 flex gap-1.5" aria-hidden="true">
+          {order.map((step, position) => (
+            <span
+              key={step}
+              className={cn(
+                "h-1.5 flex-1 rounded-full",
+                position <= index ? "bg-accent" : "bg-surface-3",
+              )}
+            />
+          ))}
+        </div>
+      </div>
+      <h1 id="check-question" className="text-h1" ref={heading} tabIndex={-1}>
         {QUESTION_TEXT[id]}
       </h1>
       <BigChoice
@@ -61,21 +79,21 @@ export function QuestionWizard({
         question={QUESTION_TEXT[id]}
         hideQuestion
         size="large"
-        options={optionsFor(id)}
+        options={withIcons(optionsFor(id))}
         value={value}
         onChange={(answer) => onAnswer(id, answer)}
         onPick={(answer) => onPick(id, answer)}
       />
-      <div className="check-nav">
+      <div className="flex gap-3">
         {index > 0 ? (
-          <Button variant="secondary" onClick={onBack}>
-            <span aria-hidden="true">← </span>
+          <Button variant="secondary" size="xl" onClick={onBack}>
+            <ArrowLeft className="size-6" aria-hidden="true" />
             {bg.protectedCheck.back}
           </Button>
         ) : null}
-        <Button onClick={onNext} disabled={value === null}>
+        <Button size="xl" className="flex-1" onClick={onNext} disabled={value === null}>
           {bg.protectedCheck.next}
-          <span aria-hidden="true"> →</span>
+          <ArrowRight className="size-6" aria-hidden="true" />
         </Button>
       </div>
     </section>

@@ -7,6 +7,7 @@
 
 import type { ReactNode } from "react";
 import { ROUTES } from "@/config/routes";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { bg } from "@/i18n/bg";
 import { requirePageRole } from "@/server/auth/requireRole";
 
@@ -19,14 +20,13 @@ export async function ProtectedGate({ children }: { children: ReactNode }) {
 // Components it must sit inside <Suspense>; this is its fallback).
 export function ProtectedLoading() {
   return (
-    <main className="call-check">
+    <main className="call-check shell flex max-w-2xl flex-col gap-5 py-6 md:py-12">
       <p role="status" className="sr-only">
         {bg.common.loading}
       </p>
-      <div className="check-skeleton" aria-hidden="true">
-        <span />
-        <span />
-      </div>
+      {/* The shapes of the big button and the second button. */}
+      <Skeleton className="min-h-[38svh] w-full rounded-lg" />
+      <Skeleton className="mt-4 h-16 w-full rounded-md" />
     </main>
   );
 }

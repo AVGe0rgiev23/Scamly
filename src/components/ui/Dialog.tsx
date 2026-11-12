@@ -19,7 +19,14 @@ type DialogProps = {
   className?: string;
 };
 
-export function Dialog({ open, title, onClose, variant = "modal", children, className }: DialogProps) {
+export function Dialog({
+  open,
+  title,
+  onClose,
+  variant = "modal",
+  children,
+  className,
+}: DialogProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 

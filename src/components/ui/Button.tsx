@@ -78,14 +78,24 @@ type ButtonLinkProps = ComponentProps<typeof Link> & {
   size?: ButtonSize;
 };
 
-export function ButtonLink({ variant = "primary", size = "md", className, ...props }: ButtonLinkProps) {
+export function ButtonLink({
+  variant = "primary",
+  size = "md",
+  className,
+  ...props
+}: ButtonLinkProps) {
   return <Link className={buttonClass(variant, size, className)} {...props} />;
 }
 
 // The only spinner in the app: inside a button that is waiting.
 function Spinner() {
   return (
-    <svg className="spinner size-[1.1em] shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      className="spinner size-[1.1em] shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity="0.3" />
       <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>

@@ -8,8 +8,10 @@
 // Red leads with the risk and the instruction „Затворете телефона.“ The call
 // action comes before the explanation and reassurance. Green shows exactly the D9 wording and never says "safe".
 
+import { MessageCircle, PhoneCall } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
+import { Notice } from "@/components/ui/Notice";
 import { Verdict } from "@/components/ui/Verdict";
 import type { RiskLevel } from "@/engine";
 import { bg } from "@/i18n/bg";
@@ -49,7 +51,7 @@ export function CheckResult({
   }, []);
 
   return (
-    <section className={`check-result check-result-${level}`}>
+    <section className="appear flex flex-col gap-5" data-level={level}>
       <Verdict
         level={level}
         headingLevel={1}
@@ -57,34 +59,45 @@ export function CheckResult({
         lead={level === "red" && !afterCall ? bg.protectedCheck.hangUp : undefined}
       />
       {callContact === null ? null : <CallContactButton contact={callContact} />}
-      {local ? <p className="check-local-note">{bg.protectedCheck.localNote}</p> : null}
+      {local ? (
+        <Notice status="caution" className="text-base">
+          {bg.protectedCheck.localNote}
+        </Notice>
+      ) : null}
       {/* role="status": a live region, there from the start, so a screen reader reads
           the family message aloud the moment it appears. */}
-      <div role="status" className={familyMessage === null ? undefined : "check-family"}>
+      <div role="status">
         {familyMessage === null ? null : (
-          <p>
-            <span aria-hidden="true">💬 </span>
+          <p className="appear flex items-start gap-3 rounded-lg border border-info-line bg-info-bg p-5 font-display text-h3 font-bold text-fg">
+            <MessageCircle className="mt-[0.1em] size-7 shrink-0 text-info-fg" aria-hidden="true" />
             {familyMessage}
           </p>
         )}
       </div>
       <div role="status">
         {suggestEmergencyCall ? (
-          <p className="check-family">{bg.protectedCheck.emergencyCallAdvice}</p>
+          <p className="appear flex items-start gap-3 rounded-lg border border-caution-line bg-caution-bg p-5 font-display text-h3 font-bold text-fg">
+            <PhoneCall className="mt-[0.1em] size-7 shrink-0 text-caution-fg" aria-hidden="true" />
+            {bg.protectedCheck.emergencyCallAdvice}
+          </p>
         ) : null}
       </div>
       {reasons.length ? (
-        <div className="card">
-          <h2>{bg.protectedCheck.reasonsTitle}</h2>
-          <ul className="verdict-reasons">
+        <div className="border-t border-line pt-5">
+          <h2 className="font-sans text-base font-semibold tracking-normal text-fg-muted">
+            {bg.protectedCheck.reasonsTitle}
+          </h2>
+          <ul className="verdict-reasons mt-3 flex flex-col gap-3">
             {reasons.slice(0, MAX_REASONS).map((reason) => (
-              <li key={reason}>{reason}</li>
+              <li key={reason} className="border-l-2 border-line-strong pl-4">
+                {reason}
+              </li>
             ))}
           </ul>
         </div>
       ) : null}
-      {level === "red" ? <p className="check-praise">{bg.protectedCheck.praise}</p> : null}
-      <Button variant="secondary" onClick={onNewCheck}>
+      {level === "red" ? <p className="text-fg-muted">{bg.protectedCheck.praise}</p> : null}
+      <Button variant="secondary" size="xl" onClick={onNewCheck}>
         {bg.protectedCheck.newCheck}
       </Button>
     </section>
