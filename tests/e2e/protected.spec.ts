@@ -315,7 +315,7 @@ test("big targets, big text and no sideways scrolling at 360 px", async ({ page 
   // Every tap target of every screen: at least 64 px high.
   async function checkScreen() {
     expect(await noSideScroll(page)).toBe(true);
-    for (const target of await page.locator("main .button, main label.choice").all()) {
+    for (const target of await page.locator("main button, main a, main fieldset label").all()) {
       expect((await target.boundingBox())?.height).toBeGreaterThanOrEqual(64);
     }
   }

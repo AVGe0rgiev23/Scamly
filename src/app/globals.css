@@ -5,11 +5,13 @@
 @import "tailwindcss";
 
 /* ── 1. Colour tokens ───────────────────────────────────────────────────────────
-   Dark is the default ("dark-first"). The light values are written twice: once for
+   Dark is the default ("dark-first"). A data-theme attribute on any element (not
+   only <html>) switches the colours inside it, which the /dev/ui gallery uses. The light values are written twice: once for
    "the device asks for light" and once for "the person chose light". A unit test
    (src/app/tokens.test.ts) checks that the two copies are equal and that every text
    colour passes WCAG AA on every surface. */
-:root {
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
   --bg: #080b0f;
   --surface-1: #0d1218;
@@ -97,7 +99,8 @@
   }
 }
 
-:root[data-theme="light"] {
+:root[data-theme="light"],
+[data-theme="light"] {
   color-scheme: light;
   --bg: #f6f7f4;
   --surface-1: #ffffff;

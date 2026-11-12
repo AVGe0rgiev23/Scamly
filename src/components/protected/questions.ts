@@ -9,15 +9,7 @@
 //   5. secrecy          „Казват ли ви да не казвате на никого?“
 
 import type { ChoiceOption } from "@/components/ui/BigChoice";
-import {
-  CLAIMED_IDENTITIES,
-  HANDOVER_METHODS,
-  TRI_ANSWERS,
-  type CallInput,
-  type ClaimedIdentity,
-  type HandoverMethod,
-  type TriAnswer,
-} from "@/engine";
+import { CLAIMED_IDENTITIES, HANDOVER_METHODS, TRI_ANSWERS, type CallInput } from "@/engine";
 import { bg } from "@/i18n/bg";
 
 // The answers of one check, in the engine's own input shape (so the phone can run

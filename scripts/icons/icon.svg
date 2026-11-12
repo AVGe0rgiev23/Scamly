@@ -1,11 +1,10 @@
-<!-- Scamly app icon (W2-09): the header logo (src/components/layout/Logo.tsx), white
-     shield with a blue phone, on our primary blue (--primary #174ea6). Full square:
-     the phone or the browser rounds the corners itself. Our own work, GPL-3.0. -->
+<!-- Scamly app icon (redesign v2): the header mark (src/components/layout/Logo.tsx),
+     a signal trace that is jagged on the left and steady on the right, in the dark
+     page colour on Signal Cyan (--accent #3de6f0). Full square: the phone or the
+     browser rounds the corners itself. Our own work, GPL-3.0. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#174ea6"/>
-  <g transform="translate(16 16) scale(0.78) translate(-16 -16)">
-    <path d="M16 2 L28 6.5 V15 C28 22.4 23 27.8 16 30 C9 27.8 4 22.4 4 15 V6.5 Z" fill="#ffffff"/>
-    <rect x="11.5" y="8.5" width="9" height="15" rx="2" fill="none" stroke="#174ea6" stroke-width="2"/>
-    <circle cx="16" cy="20" r="1.2" fill="#174ea6"/>
+  <rect width="32" height="32" fill="#3de6f0"/>
+  <g transform="translate(16 16) scale(0.8) translate(-16 -16)">
+    <path d="M5 16h3l2-7 3 13 2.5-9 1.5 3H27" fill="none" stroke="#03181b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

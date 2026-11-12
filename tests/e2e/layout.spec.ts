@@ -73,12 +73,12 @@ test("the theme switch changes the colours and is remembered", async ({ page }) 
 
   await dark.check();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 16, 32)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(8, 11, 15)");
 
   // Remembered after a reload and on another page.
   await page.reload();
   await expect(dark).toBeChecked();
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(11, 16, 32)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(8, 11, 15)");
   await page.getByRole("banner").getByRole("link", { name: bg.layout.register }).click();
   await expect(page).toHaveURL(/\/registratsia$/);
   await expect(dark).toBeChecked();
@@ -88,7 +88,7 @@ test("the theme switch changes the colours and is remembered", async ({ page }) 
   await dark.focus();
   await page.keyboard.press("ArrowRight");
   await expect(theme.getByRole("radio", { name: bg.theme.system, exact: true })).toBeChecked();
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 246, 250)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(246, 247, 244)");
 });
 
 test("the menu and the logo lead to the right pages", async ({ page }) => {
