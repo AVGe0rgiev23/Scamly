@@ -1,5 +1,6 @@
-// The top bar of every page: the Scamly logo (a link to the home page), the main menu
-// and the compact theme switch.
+// Phase 2 rebuilds this.
+// The top bar of every page: a floating glass pill with the Scamly logo (a link to
+// the home page), the main menu and the compact theme switch.
 //
 // The menu depends on who is looking:
 //   - a guest sees „Вход“, „Регистрация“, „Свържи телефон“ and „Как работи измамата“
@@ -42,13 +43,13 @@ type HeaderAccount = { role: AppRole; displayName: string };
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-(--z-index-header) border-b border-line bg-canvas print:hidden">
+    <header className="sticky top-0 z-(--z-index-header) px-3 pt-3 md:px-4 print:hidden">
       {/* On a phone the menu gets its own row under the logo; nothing is hidden behind
           a "hamburger" button, because older people do not look for hidden menus. */}
-      <div className="shell flex flex-wrap items-center gap-x-6 lg:min-h-16 lg:flex-nowrap">
+      <div className="glass mx-auto flex max-w-[77.5rem] flex-wrap items-center gap-x-4 rounded-[28px] px-3 py-1.5 lg:min-h-16 lg:flex-nowrap lg:rounded-full lg:pl-4">
         <Link
           href={ROUTES.home}
-          className="flex min-h-14 items-center gap-2.5 font-display text-xl font-bold tracking-tight text-fg no-underline"
+          className="flex min-h-12 items-center gap-2.5 rounded-full pr-2 font-display text-xl font-semibold tracking-tight text-fg no-underline"
         >
           <LogoMark />
           <span>{bg.app.name}</span>
@@ -93,11 +94,11 @@ async function readHeaderAccount(): Promise<HeaderAccount | null> {
   }
 }
 
-// One menu link: at least 48 px high, with an underline that marks hover.
+// One menu link: a pill at least 48 px high; a soft glass appears on hover.
 const NAV_LINK =
-  "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg lg:text-base";
+  "flex min-h-12 items-center whitespace-nowrap rounded-full px-3 text-sm font-medium text-fg-muted no-underline transition-colors duration-150 hover:bg-glass-2 hover:text-fg lg:text-base";
 const NAV_LIST =
-  "-mx-2.5 flex flex-wrap items-center lg:mx-0 lg:flex-nowrap lg:justify-end lg:gap-1";
+  "-mx-1 flex flex-wrap items-center lg:mx-0 lg:flex-nowrap lg:justify-end lg:gap-0.5";
 
 // The menu itself: guest links, or the logged-in person's area link, name and logout.
 function SiteNav({ account }: { account: HeaderAccount | null }) {
@@ -132,7 +133,7 @@ function SiteNav({ account }: { account: HeaderAccount | null }) {
             </Link>
           </li>
         ))}
-        <li className="ml-auto flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm text-fg-muted md:ml-4">
+        <li className="ml-auto flex min-h-12 items-center px-3 text-sm whitespace-nowrap text-fg-muted md:ml-4">
           {/* On a phone „Влезли сте като“ is only read aloud, to save space. */}
           <span className="max-md:sr-only">{bg.layout.signedInAs}&nbsp;</span>
           <strong className="font-semibold text-fg">{account.displayName}</strong>

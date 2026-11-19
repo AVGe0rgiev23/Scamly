@@ -1,6 +1,11 @@
-// Badge: a small neutral label. StatusPill: a label with a meaning (safe, caution,
-// danger, info). A status is never shown by colour alone: StatusPill always has an
-// icon and words.
+// Badge: a small neutral label. StatusPill: a label with a meaning (no typical
+// signs, caution, danger, info). A status is never shown by colour alone:
+// StatusPill always has an icon and words.
+//
+// Both are pills. The tinted look is a soft glass of the status colour with a thin
+// border of the same hue; the solid look is for the one place on a screen where the
+// status is the message. "safe" is only the internal name of the green status: its
+// words never say „безопасно“ (D9).
 
 import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react";
 import type { HTMLAttributes, ReactNode } from "react";
@@ -14,7 +19,7 @@ export const STATUS_TINT: Record<Status, string> = {
   caution: "bg-caution-bg border-caution-line text-caution-fg",
   danger: "bg-danger-bg border-danger-line text-danger-fg",
   info: "bg-info-bg border-info-line text-info-fg",
-  neutral: "bg-surface-2 border-line text-fg-muted",
+  neutral: "bg-glass-2 border-glass-line text-fg-muted",
 };
 
 // The solid look: for the one place on a screen where the status is the message.
@@ -45,7 +50,7 @@ export function Badge({ status = "neutral", className, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-highlight",
         STATUS_TINT[status],
         className,
       )}
@@ -72,7 +77,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-sm font-semibold leading-tight",
+        "inline-flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-2 text-sm leading-tight font-semibold shadow-highlight",
         solid ? STATUS_SOLID[status] : STATUS_TINT[status],
         className,
       )}

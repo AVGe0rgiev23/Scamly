@@ -7,7 +7,7 @@
 //     (history.replaceState), then the result is shown;
 //   - any other role: „Тази покана е за профил на близък.“
 //
-// Look: the AuthPage frame; buttons from the Signal primitives, results in a Notice.
+// Look: the AuthPage frame; buttons from the UI primitives, results in a Notice.
 //
 // We don't know whose invite it is before it is used: the API reveals the person's
 // name only to the family member who redeems it, so a leaked link shows nothing.

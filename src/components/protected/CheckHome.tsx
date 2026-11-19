@@ -5,7 +5,6 @@
 
 import { PhoneIncoming } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { SignalLine } from "@/components/ui/SignalLine";
 import { bg } from "@/i18n/bg";
 import type { CallContactDto } from "@/schemas/checks";
 import { CallContactButton } from "./CallContactButton";
@@ -28,7 +27,7 @@ export function CheckHome({ contact, onStart }: CheckHomeProps) {
         <PhoneIncoming className="size-12" aria-hidden="true" />
         <span>{bg.protectedCheck.bigButton}</span>
       </button>
-      <SignalLine state="idle" className="h-4 text-line-strong" />
+      <hr aria-hidden="true" className="halo-line" />
       <Button variant="secondary" size="xl" onClick={() => onStart(true)}>
         {bg.protectedCheck.afterCall}
       </Button>

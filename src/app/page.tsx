@@ -21,7 +21,6 @@ import { CallDemo } from "@/components/landing/CallDemo";
 import { FeatureGrid } from "@/components/landing/FeatureGrid";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ButtonLink } from "@/components/ui/Button";
-import { SignalLine } from "@/components/ui/SignalLine";
 import { ROUTES } from "@/config/routes";
 import { SAMPLE } from "@/content/placeholders";
 import { HARD_RULE_IDS } from "@/engine";
@@ -57,7 +56,10 @@ export default function HomePage() {
         aria-labelledby="home-title"
       >
         <div className="lg:col-span-5 lg:pt-8">
-          <h1 id="home-title" className="text-display">
+          <h1
+            id="home-title"
+            className="text-display lg:text-[length:clamp(3rem,0.5rem+4.6vw,5.75rem)]"
+          >
             {bg.app.tagline}
           </h1>
           <p className="mt-6 max-w-[40ch] text-lg text-fg-muted">{bg.home.problem}</p>
@@ -124,7 +126,7 @@ export default function HomePage() {
             {t.hardRulesTitle}
           </h2>
           <p className="mt-4 max-w-[36ch] text-fg-muted">{t.hardRulesText}</p>
-          <SignalLine state="alert" className="mt-8 h-10 max-w-64" />
+          <hr aria-hidden="true" className="halo-line mt-8 max-w-64" />
         </div>
         <dl className="lg:col-span-7 lg:col-start-6">
           {HARD_RULE_IDS.map((id) => (
@@ -182,7 +184,7 @@ export default function HomePage() {
                 </li>
               ))}
             </ol>
-            <SignalLine state="calm" className="mt-4 h-6" />
+            <hr aria-hidden="true" className="halo-line mt-4" />
           </div>
         </div>
       </section>

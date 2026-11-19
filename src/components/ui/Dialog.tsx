@@ -1,6 +1,9 @@
 // Dialog: a window over the page, built on the browser's own <dialog> (it traps the
-// keyboard focus, closes with Esc and blocks the page behind it).
-// variant "sheet": on a phone it slides up from the bottom edge instead.
+// keyboard focus, closes with Esc and blocks the page behind it). The page behind
+// is dimmed and blurred; the window is a raised panel lit from above, entering with
+// a short rise and settle (globals.css .dialog).
+// Sheet (or variant "sheet"): on a phone it slides up from the bottom edge instead,
+// with a small grab bar; on a larger screen it is a normal dialog.
 // ConfirmDialog: the ready-made "are you sure?" window before a destructive action.
 "use client";
 
@@ -41,14 +44,15 @@ export function Dialog({
     }
   }, [open]);
 
+  const sheet = variant === "sheet";
   return (
     <dialog
       ref={dialog}
       aria-labelledby={titleId}
       className={cn(
-        "dialog m-auto w-[min(34rem,calc(100vw-2rem))] rounded-lg border border-line-strong bg-surface-1 p-6 text-fg shadow-overlay md:p-8",
-        variant === "sheet" &&
-          "dialog-sheet max-md:mx-0 max-md:mt-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none",
+        "dialog surface-raised m-auto w-[min(36rem,calc(100vw-2rem))] rounded-xl bg-elevated p-6 text-fg shadow-overlay md:p-8",
+        sheet &&
+          "dialog-sheet max-md:mx-0 max-md:mt-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:pt-4",
         className,
       )}
       onCancel={(event) => {
@@ -56,12 +60,23 @@ export function Dialog({
         onClose();
       }}
     >
+      {sheet ? (
+        <span
+          aria-hidden="true"
+          className="mx-auto mb-4 block h-1.5 w-12 rounded-full bg-line-strong md:hidden"
+        />
+      ) : null}
       <h2 id={titleId} className="mb-3 text-h3">
         {title}
       </h2>
       {children}
     </dialog>
   );
+}
+
+// The same window as a bottom sheet on phones.
+export function Sheet(props: Omit<DialogProps, "variant">) {
+  return <Dialog {...props} variant="sheet" />;
 }
 
 type ConfirmDialogProps = {
@@ -102,7 +117,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
           {props.error}
         </Notice>
       ) : null}
-      <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button
           ref={cancelButton}
           variant="secondary"
@@ -114,6 +129,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
         <Button
           variant={props.tone === "primary" ? "primary" : "danger"}
           disabled={props.pending}
+          disc={false}
           onClick={props.onConfirm}
         >
           {props.pending ? props.pendingLabel : props.confirmLabel}

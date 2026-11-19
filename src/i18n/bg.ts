@@ -295,6 +295,43 @@ export const bg = {
     toastText: "Промените са запазени.",
     tooltip: "Подсказка",
     signalStates: "Измама, съмнително, без признаци, покой",
+    // Samples of the v3 „Ореол“ gallery (/dev/ui).
+    sectionSurfaces: "Повърхности и светлина",
+    surfaceRaised: "Повдигната повърхност",
+    surfaceGlass: "Стъкло със светлина",
+    surfaceText: "Светлината идва отгоре: по-светъл горен ръб и мека дълга сянка.",
+    displayLead: "Проверете",
+    displayWord: "спокойно.",
+    sectionVerdict: "Резултат и риск",
+    sectionNew: "Нови елементи",
+    segmentedLabel: "Размер на текста",
+    segmentedNormal: "Обикновен",
+    segmentedLarge: "Едър",
+    segmentedHuge: "Много едър",
+    islandLabel: "Проверка в момента",
+    islandText: "Баба Мария отговаря на въпросите. Ще ви известим веднага, ако има опасност.",
+    avatarLabel: "Получават сигнала",
+    avatarMore: "и още {count}",
+    openPalette: "Бързо търсене",
+    // The halo („Ореол“) samples of the gallery: the live WebGL field and the still rings.
+    sectionHalo: "Ореол",
+    haloStateLabel: "Състояние на ореола",
+    haloIdle: "Покой",
+    haloCalm: "Спокойно",
+    haloCaution: "Внимание",
+    haloDanger: "Опасност",
+    haloHint:
+      "Изберете състояние: пръстените преминават плавно от едното в другото за около секунда.",
+    haloLive: "Жив ореол",
+    haloStill: "Неподвижни пръстени",
+  },
+  // The ⌘K / Ctrl K window for quick jumps (src/components/ui/CommandPalette.tsx).
+  commandPalette: {
+    title: "Бързо търсене",
+    placeholder: "Търсете страница или действие…",
+    empty: "Няма намерени резултати.",
+    moveHint: "избор",
+    openHint: "отваряне",
   },
   // Error messages of our API ({ error: { code, messageBg } }), shown by the forms.
   errors: {

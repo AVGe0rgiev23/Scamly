@@ -1,25 +1,15 @@
 // Shared Bulgarian help guide and dashboard link for the signed-in areas.
 // Look: the title, the steps as an ordered list with mono numbers, the screenshot in
 // a bordered rounded frame and a quiet „back“ link with an arrow.
-import Image from "next/image";
+// For now there is no screenshot: the old pictures were removed with the v2 design
+// and Phase 7 makes new ones. The frame keeps their place and their description.
 import Link from "next/link";
 import { ArrowLeft, CircleHelp } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
-import adminScreenshot from "../../../public/help/admin.jpg";
-import familyScreenshot from "../../../public/help/family.jpg";
-import moderatorScreenshot from "../../../public/help/moderator.jpg";
-import protectedScreenshot from "../../../public/help/protected.jpg";
 
 // Like a Python Literal type derived from the keys of the help dictionary.
 type HelpRole = keyof typeof bg.help.guides;
-
-const screenshots = {
-  admin: adminScreenshot,
-  family: familyScreenshot,
-  moderator: moderatorScreenshot,
-  protected: protectedScreenshot,
-};
 
 export function HelpLink({ role }: { role: HelpRole }) {
   return (
@@ -56,12 +46,9 @@ export function RoleHelp({ role }: { role: HelpRole }) {
           ))}
         </ol>
         <div className="md:col-span-7">
-          <Image
-            src={screenshots[role]}
-            alt={guide.screenshotAlt}
-            sizes="(max-width: 768px) 100vw, 700px"
-            className="h-auto w-full max-w-full rounded-lg border border-line"
-          />
+          {/* Phase 7: the new screenshot goes here (next/image, alt = guide.screenshotAlt).
+              Until then an empty glass frame keeps its place; it is decoration only. */}
+          <div aria-hidden="true" className="glass aspect-[16/10] w-full rounded-lg" />
         </div>
       </div>
       <ButtonLink href={`/${role}`} variant="ghost" size={large ? "lg" : "md"} className="mt-8">

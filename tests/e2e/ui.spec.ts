@@ -12,9 +12,9 @@ test("theme persists across pages and system mode follows the device", async ({ 
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await theme.getByRole("radio", { name: bg.theme.system, exact: true }).check();
   await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(8, 11, 15)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(5, 6, 10)");
   await page.emulateMedia({ colorScheme: "light" });
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(246, 247, 244)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(246, 245, 241)");
 });
 
 test("preview supports keyboard answers and fits a 360px screen", async ({ page }) => {

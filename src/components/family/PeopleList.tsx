@@ -12,7 +12,6 @@ import { ROUTES } from "@/config/routes";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
 import { SkeletonList } from "@/components/ui/Skeleton";
-import { SignalLine } from "@/components/ui/SignalLine";
 import { bg } from "@/i18n/bg";
 import { callApi, type PersonDto } from "./api";
 import { districtName } from "./format";
@@ -79,7 +78,7 @@ export function PeopleList() {
   if (state.persons.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-line-strong px-5 py-8 md:px-8 md:py-10">
-        <SignalLine state="idle" className="mb-5 h-5 max-w-40 text-fg-subtle" />
+        <hr aria-hidden="true" className="halo-line mb-5 max-w-40" />
         <h2 className="text-h3">{bg.family.emptyTitle}</h2>
         <p className="mt-2 max-w-[60ch] text-fg-muted">{bg.family.emptyText}</p>
         <ButtonLink href={`${ROUTES.family}/new`} variant="secondary" className="mt-5">
