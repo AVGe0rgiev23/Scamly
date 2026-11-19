@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-10
+> Last updated: 2026-11-19
 
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
@@ -947,7 +947,75 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we needed a large set of complex widgets (date pickers, data grids) fast; then a component kit would save time.
 
-### Our own design system "Signal"  (status: in use; rebuilt in the v2 redesign)
+### Our own design system v3 „Ореол“: glass lit from one light source (vs the flat v2 „Signal“)  (status: in use on the branch `redesign/scamly-v3` since 19 Nov, D28; replaces the „Signal“ entry below)
+
+**Used for:** every screen: the tokens in `src/app/globals.css`, the primitives in `src/components/ui/`, the living style guide `/dev/ui`. Details: `docs/redesign-v3/03-design-system.md`.
+
+**Alternatives we considered:** keep the flat v2 „Signal“ look (one cyan accent, hairlines); a ready kit (shadcn/ui, Material UI); a heavier "glassmorphism" look with strong blur everywhere.
+
+**Why this one:**
+- The jury scores "original components and design". v2 still read as a template. v3 starts from one motif with a meaning, the **halo**: a call is a sound wave, and Scamly turns it into soft rings that protect a person and close into one red ring when a call looks dangerous.
+- Depth comes from **light**, not from lines: every raised surface has a top highlight, a fill that is lighter at the top and a long soft shadow, all from the same imagined light above the screen. It looks physical and calm, and it works the same in both themes.
+- Blur is used only where glass sits over something (header, dialogs, panels); content panels stay nearly opaque, so text contrast is measurable. `tokens.test.ts` checks AA for every text/surface pair, including glass laid over the page.
+- Tailwind's palette stays switched off, so only our tokens compile.
+
+**What we give up:**
+- More CSS (layered shadows and gradients) than a flat design; backdrop blur costs a little on weak phones (we keep it to small areas).
+- We had to delete and rebuild the visual layer a second time, a week before registration.
+
+**We would reconsider if:** the usability test (W4-05) showed that older people miss the edges of buttons on glass; then we would raise the border contrast.
+
+### `motion` 14.14.0 for springs (vs GSAP, vs CSS only)  (status: in use since redesign v3, D28)
+
+**Used for:** the three animations that need a spring or a shared layout: the sliding Tabs pill (`layoutId`), the DynamicIsland that grows from a pill into a card, and NumberTicker. Everything else (press, dialogs, toasts, skeleton, verdict reveal) is plain CSS.
+
+**Alternatives we considered:** GSAP; CSS only; React Spring.
+
+**Why this one:**
+- A "shared layout" animation (an element moves smoothly to a new place in the layout) is hard to write by hand and is the library's core feature; springs feel physical and stop smoothly when interrupted.
+- MIT licence, made for React, and it respects `prefers-reduced-motion` through our `REDUCED` setting. It runs only in small `"use client"` islands, so Server Components stay JavaScript-free.
+- GSAP is strong for timelines, but its React integration is extra code and its licence is its own "no charge" licence, not an open-source one; we have no timelines to build. CSS alone cannot do shared layout or interruptible springs.
+
+**What we give up:** one more runtime dependency (with `framer-motion`, `motion-dom`, `motion-utils`, all MIT) and some extra JavaScript (a few tens of kB) on the pages that use it.
+
+**We would reconsider if:** the Lighthouse score of a page with motion dropped below 90; then those three effects would become CSS transitions.
+
+### Raw WebGL2 for the HaloField (vs ogl, vs Three.js, vs a canvas 2D / CSS-only halo)  (status: in use since redesign v3, D28)
+
+**Used for:** the live halo background (`HaloField.tsx`, `src/components/ui/halo/`): one full-screen rectangle and one fragment shader.
+
+**Alternatives we considered:** Three.js; ogl (a tiny WebGL library); drawing rings with the canvas 2D API; only the CSS/SVG `HaloRings`.
+
+**Why this one:**
+- We draw **one rectangle with one shader**. Raw WebGL2 for that is about 110 lines of setup plus a commented shader, which we can read and explain; Three.js (≈ 150 kB+) brings a scene graph, cameras and materials we would not use, and ogl would still be a dependency for a few lines of setup.
+- A shader computes every pixel on the graphics card, so soft, wobbling, colour-blended rings stay smooth at 60 frames per second; canvas 2D would redraw the rings on the main thread.
+- The pure maths is separate (`haloMath.ts`) and unit-tested; the shader text is checked by a test for the uniforms it declares.
+- Safety first: no WebGL2 or a weak device → the still SVG rings; reduced motion → one still frame; paused off-screen and in hidden tabs; at most one real pixel per CSS pixel; lazy-loaded (`HaloFieldLazy`) so other pages never download it.
+
+**What we give up:** we write the WebGL setup and cleanup ourselves (context loss, resizing, freeing memory), and shader bugs are harder to debug than CSS.
+
+**We would reconsider if:** we needed real 3D (models, lights); then Three.js would be the right tool.
+
+### Keeping Sofia Sans (vs switching fonts for v3)  (status: in use, confirmed for redesign v3)
+
+**Why:** the v3 brief kept the typography. Sofia Sans is by the Bulgarian studio Lettersoup, draws Bulgarian Cyrillic shapes and has „ѝ“ (Onest and Golos do not), is under the SIL Open Font License, and is self-hosted from `src/fonts/`, so our strict CSP (`font-src 'self'`) needs no font server and visitors are not tracked by one. Details: the Sofia Sans entry below.
+
+### Studying paid component libraries visually, but writing our own components (vs buying or copying them)  (status: in use since redesign v3, D28)
+
+**Used for:** the look of the new primitives and, in Phase 2, the landing page. References: `docs/redesign-v3/01-references.md`.
+
+**Alternatives we considered:** buying a paid kit (e.g. the animated sections of skiper-ui.com or similar); copying free animated components (Magic UI, React Bits) into the project.
+
+**Why this one:**
+- The jury criterion is **original components**; copied components would not be ours to defend.
+- Licences: paid kits forbid redistribution in an open repository, and our code is GPL-3.0 and public. Copying even free code means tracking each licence.
+- So we only **look** at references for ideas (spacing, materials, how motion feels) and write every component ourselves with our tokens. No code, colours or assets are copied.
+
+**What we give up:** more time per component, and some polish a mature kit would have.
+
+**We would reconsider if:** never for the tournament; after it, a free MIT kit could be used for internal admin pages.
+
+### Our own design system "Signal"  (status: replaced by D28 „Ореол“ on 19 Nov; kept here as history)
 
 **Used for:** every screen: the tokens in `src/app/globals.css`, the components in `src/components/ui/`, the gallery `/dev/ui`. Details: `docs/redesign/03-design-system.md`.
 
@@ -1109,7 +1177,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the library were abandoned with a security problem; then another MIT QR library with the same `create()` idea.
 
-### Sofia Sans + JetBrains Mono, self-hosted (vs system fonts, vs Inter, Onest or Golos)  (status: in use since the v2 redesign; replaced "system fonts")
+### Sofia Sans + JetBrains Mono, self-hosted (vs system fonts, vs Inter, Onest or Golos)  (status: in use since the v2 redesign, kept in v3; replaced "system fonts")
 
 **Used for:** text (Sofia Sans), headings (Sofia Sans Semi Condensed) and numbers, codes and times (JetBrains Mono). Files in `src/fonts/`, loaded with `next/font/local`.
 
@@ -1130,7 +1198,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Used for:** every icon (`lucide-react`, ISC licence): answer tiles, status labels, the call button, arrows, theme switch.
 
-**Why this one:** emoji look different on every phone and read as unprofessional; a consistent stroke icon set matches the thin signal line. Each icon is imported by name, so only the used icons are in the bundle. Icons are always next to words and hidden from screen readers.
+**Why this one:** emoji look different on every phone and read as unprofessional; a consistent stroke icon set matches the thin lines of the design (the v2 signal line, now the v3 halo rings). Each icon is imported by name, so only the used icons are in the bundle. Icons are always next to words and hidden from screen readers.
 
 **What we give up:** one new runtime dependency.
 
@@ -1244,7 +1312,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 **Alternatives we considered:** a free icon set; an online "PWA icon generator"; drawing PNGs in an image editor; a script with `sharp` (comes with Next.js).
 
 **Why this one:**
-- **Our own drawing** of the header logo (shield + phone): no licence or credit questions (GPL-3.0, `THIRD_PARTY_LICENSES.md`), and it looks like the site.
+- **Our own drawing**: no licence or credit questions (GPL-3.0, `THIRD_PARTY_LICENSES.md`), and it looks like the site. Since redesign v3 (D28) it is the interim **halo mark** (three rings closing around a dot, in the halo gradient on the „Night“ colour); Phase 2 refines it together with the logo and the OG image.
 - **Reproducible:** the SVG sources are in the repo; one command makes all five PNGs at the exact sizes. Playwright's Chromium is already installed for our browser tests, so no new package.
 - An online generator would need uploading and gives files we can't re-make; `sharp` is only an indirect dependency of Next.js and not ours to rely on.
 
@@ -2742,3 +2810,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 The ink and periwinkle theme gives Scamly a recognizable call checker identity. Its porcelain and cobalt light counterpart follows the existing theme preference. CSS draws the waveform without a download or animation. The primary action has its own colors, while the result also uses words and a symbol so the risk is clear without relying on color. Focus uses a separate ring, and static placeholders reserve space during real waits.
 - 2026-11-19 · Next.js and `eslint-config-next` 16.4.4 → 16.4.6: 16.4.4 has a known security vulnerability, and the build now stops on affected versions. Patch release in the same line, so no code changes.
+- 2026-11-19 · redesign v3 „Ореол“ (D28): new entries in section 4: design system v3 (glass lit from one light source vs the flat v2), `motion` vs GSAP vs CSS only, raw WebGL2 vs ogl vs Three.js for the HaloField, keeping Sofia Sans, studying paid libraries visually but writing our own components; the v2 „Signal“ entry is marked as replaced; the app-icon entry now describes the interim halo mark
