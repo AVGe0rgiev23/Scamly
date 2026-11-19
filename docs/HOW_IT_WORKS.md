@@ -1879,7 +1879,7 @@ Finds bugs, type errors and messy formatting before code reaches `main`.
 | Prettier | `.prettierrc`, `.prettierignore` | Formatting: semicolons, double quotes, trailing commas, 100 characters per line. `docs/` is formatted by hand. |
 | EditorConfig | `.editorconfig` | UTF-8, LF line endings, 2 spaces. |
 | Node version | `.nvmrc` (22), `package.json` `engines` | Everyone and CI use Node 22. |
-| Exact versions | `.npmrc` (`save-exact=true`), `package-lock.json` | `npm install x` saves `16.4.4`, not `^16.4.4`, so a library can't change under us. |
+| Exact versions | `.npmrc` (`save-exact=true`), `package-lock.json` | `npm install x` saves `16.4.6`, not `^16.4.6`, so a library can't change under us. |
 
 npm scripts (`package.json`):
 
@@ -2884,3 +2884,4 @@ One line per update of this file, newest last. Format: `date · what changed`.
 ### Midnight Signal core screens
 
 The homepage leads to the protected check route. An unpaired phone is redirected to pairing by the existing guard. A static decorative call trace sits beside the hero on desktop and is hidden on mobile. The check entry uses the brand action color. During the role check, a static skeleton reserves space and exposes a single loading status. During answer submission the controls stay in place, and the verdict shows the next action before supporting reasons.
+- 2026-11-19 · Next.js upgraded to 16.4.6 (security patch; 16.4.4's build refused to finish).

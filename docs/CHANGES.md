@@ -3,6 +3,7 @@
 One line per change, newest first. The AI agent adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-19 · Alex · Next.js + eslint-config-next 16.4.4 → 16.4.6 (security patch; builds on 16.4.4 now stop) · `package.json`, `THIRD_PARTY_LICENSES.md`, `WHY_WE_CHOSE.md`, `HOW_IT_WORKS.md`
 - 2026-11-12 · Alex · W4-04 Lighthouse done; W4-01 done (securityheaders.com grade A); Zod runs in `jitless` mode through `src/lib/zod.ts` (no eval test, so no CSP violation), enforced by an ESLint rule; `favicon.ico` added to `npm run icons` · `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md` 3.47, `WHY_WE_CHOSE.md`, `docs/security.md`, `docs/evidence/`
 - 2026-11-12 · Alex · Future work F-01 „Scamly Слух“ (live call guard: native app / listening station, live signal line and risk meter, full-screen red warning, family alert) added to the plan for after the tournament; shown as a "Future work" slide in W5-03 · `IMPLEMENTATION_PLAN.md` section 5, `IDEAS.md` #21
 - 2026-11-12 · Alex · W4-01 started: security headers on every page; CSP without a nonce because nonces do not work with our pre-rendered pages (D27); `docs/security.md` with one row per attack; status board gets Week 4 rows, the redesign row and the open live checks; AI call-listening idea recorded as `IDEAS.md` #21 (not for the tournament) · `PROJECT_BRIEF.md` section 0, `IMPLEMENTATION_PLAN.md` section 5, `HOW_IT_WORKS.md` 3.47, `WHY_WE_CHOSE.md` section 3, `IDEAS.md`

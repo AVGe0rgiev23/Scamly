@@ -17,7 +17,7 @@ These are part of the app that runs on the server and in the browser.
 | @supabase/supabase-js | 2.118.0 | MIT          | Talks to our Supabase database, Auth and Realtime                                |
 | leaflet               | 1.9.4   | BSD-2-Clause | Draws the district map on /karta (loaded only in the browser, only on that page) |
 | lucide-react          | 1.72.0  | ISC          | Line icons (imported one by one, only the used icons are bundled)                |
-| next                  | 16.4.4  | MIT          | Web framework (pages, API routes, build)                                         |
+| next                  | 16.4.6  | MIT          | Web framework (pages, API routes, build)                                         |
 | qrcode                | 1.5.4   | MIT          | Makes the QR code for pairing a phone, in the browser                            |
 | react                 | 19.3.1  | MIT          | User-interface library                                                           |
 | react-dom             | 19.3.1  | MIT          | Draws React components in the browser                                            |
@@ -41,7 +41,7 @@ These are only used while writing, checking, testing and building the code.
 | @types/web-push        | 3.6.4   | MIT        | TypeScript types for web-push                             |
 | @vitest/coverage-v8    | 5.1.0   | MIT        | Test coverage reports                                     |
 | eslint                 | 9.39.5  | MIT        | Finds bugs and bad patterns in the code                   |
-| eslint-config-next     | 16.4.4  | MIT        | Next.js, React and TypeScript lint rules                  |
+| eslint-config-next     | 16.4.6  | MIT        | Next.js, React and TypeScript lint rules                  |
 | eslint-config-prettier | 10.1.8  | MIT        | Stops ESLint and Prettier from fighting                   |
 | prettier               | 3.9.10  | MIT        | Formats the code the same way for everyone                |
 | tailwindcss            | 4.3.4   | MIT        | Utility CSS classes for styling                           |

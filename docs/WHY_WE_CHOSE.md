@@ -61,7 +61,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the app had no browser UI (e.g. a pure data-analysis backend), where Python would be the obvious choice.
 
-### Next.js 16 (16.4.4), App Router  (status: in use)
+### Next.js 16 (16.4.6), App Router  (status: in use)
 
 **Used for:** the web framework: pages, the REST API (`src/app/api/**/route.ts`), building and serving the app.
 
@@ -2144,7 +2144,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ### ESLint 9 + Prettier 3  (status: in use)
 
-**Used for:** ESLint (9.39.5, with `eslint-config-next` 16.4.4) finds bugs and bad patterns; Prettier (3.9.10) formats code the same way for both of us; `eslint-config-prettier` stops them fighting.
+**Used for:** ESLint (9.39.5, with `eslint-config-next` 16.4.6) finds bugs and bad patterns; Prettier (3.9.10) formats code the same way for both of us; `eslint-config-prettier` stops them fighting.
 
 **Alternatives we considered:** Biome (one tool for both), no linting.
 
@@ -2324,7 +2324,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 ### Pinned exact dependency versions (`.npmrc save-exact=true` + `package-lock.json`)  (status: in use)
 
-**Used for:** every package in `package.json` has an exact version (e.g. `"next": "16.4.4"`, not `"^16.4.4"`), and `npm ci` installs exactly the lock file.
+**Used for:** every package in `package.json` has an exact version (e.g. `"next": "16.4.6"`, not `"^16.4.6"`), and `npm ci` installs exactly the lock file.
 
 **Alternatives we considered:** version ranges with `^` (npm's default).
 
@@ -2741,3 +2741,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 ### Midnight Signal
 
 The ink and periwinkle theme gives Scamly a recognizable call checker identity. Its porcelain and cobalt light counterpart follows the existing theme preference. CSS draws the waveform without a download or animation. The primary action has its own colors, while the result also uses words and a symbol so the risk is clear without relying on color. Focus uses a separate ring, and static placeholders reserve space during real waits.
+- 2026-11-19 · Next.js and `eslint-config-next` 16.4.4 → 16.4.6: 16.4.4 has a known security vulnerability, and the build now stops on affected versions. Patch release in the same line, so no code changes.
