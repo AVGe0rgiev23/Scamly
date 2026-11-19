@@ -1,15 +1,15 @@
+// Phase 2 rebuilds this.
 // The feature grid of the home page: six panels of different sizes. Each panel shows
-// a small, static copy of the real screen of that feature (built from the same
+// a small, static sample of the real screen of that feature (built from the same
 // primitives and the same texts as the app), not an icon. The names, the code and
 // the times in them are examples (src/content/placeholders.ts) and every small
-// screen is labelled „Примерен екран“ for screen readers and on screen.
+// screen is labelled „Примерен екран“ for screen readers.
 
 import { Mic, PhoneIncoming, WifiOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { fill } from "@/components/family/format";
 import { Badge, StatusPill } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
-import { SignalLine } from "@/components/ui/SignalLine";
 import { VerdictBadge } from "@/components/ui/VerdictBadge";
 import { SAMPLE } from "@/content/placeholders";
 import { bg } from "@/i18n/bg";
@@ -29,15 +29,15 @@ function Feature({
   children: ReactNode;
 }) {
   return (
-    <article className={cn("flex flex-col rounded-lg border border-line bg-surface-1", className)}>
+    <article className={cn("surface-raised flex flex-col rounded-xl p-2", className)}>
       <div
-        className="dot-lines relative flex flex-1 flex-col justify-center border-b border-line p-5 md:p-6"
+        className="glass relative flex flex-1 flex-col justify-center rounded-lg p-5 md:p-6"
         role="img"
         aria-label={`${bg.landing.sampleScreen}: ${title}`}
       >
         <div aria-hidden="true">{children}</div>
       </div>
-      <div className="p-5 md:p-6">
+      <div className="p-4 md:p-5">
         <h3 className="text-h3">{title}</h3>
         <p className="mt-2 max-w-[52ch] text-fg-muted">{text}</p>
       </div>
@@ -45,23 +45,23 @@ function Feature({
   );
 }
 
-// A fake button or tile: looks like the real control, but cannot be pressed.
-const TILE = "rounded-md border border-line-strong bg-surface-1 px-4 py-3 text-base font-semibold";
+// A sample tile: looks like the real control, but cannot be pressed.
+const TILE = "rounded-full border border-glass-line bg-glass-2 px-4 py-2.5 text-base font-semibold";
 
 export function FeatureGrid() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
       <Feature title={f.check.title} text={f.check.text} className="lg:col-span-7">
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex min-h-40 flex-col justify-between rounded-md bg-accent p-4 font-display text-xl font-bold text-on-accent">
+          <div className="flex min-h-40 flex-col justify-between rounded-lg bg-primary p-5 font-display text-xl font-semibold text-on-primary">
             <PhoneIncoming className="size-7" />
             {bg.protectedCheck.bigButton}
           </div>
           <div className="flex flex-col gap-2">
-            <p className="font-display text-lg font-bold">
+            <p className="font-display text-lg font-semibold">
               {bg.protectedCheck.questions.asksMoney}
             </p>
-            <p className={cn(TILE, "border-accent bg-accent-bg")}>{bg.protectedCheck.tri.yes}</p>
+            <p className={cn(TILE, "halo-ring")}>{bg.protectedCheck.tri.yes}</p>
             <p className={TILE}>{bg.protectedCheck.tri.no}</p>
             <p className={TILE}>{bg.protectedCheck.tri.unsure}</p>
           </div>
@@ -70,28 +70,24 @@ export function FeatureGrid() {
 
       <Feature title={f.verdict.title} text={f.verdict.text} className="lg:col-span-5">
         <div className="flex flex-col items-start gap-3">
-          <div className="flex flex-col items-start gap-2">
-            <VerdictBadge level="red" />
-            <p className="border-l-2 border-danger-solid pl-3 text-sm text-fg">
-              {bg.engine.hardRules.HR1_POLICE_ASKS_MONEY.explanation}
-            </p>
-          </div>
+          <VerdictBadge level="red" />
+          <p className="text-sm text-fg">{bg.engine.hardRules.HR1_POLICE_ASKS_MONEY.explanation}</p>
           <VerdictBadge level="yellow" />
           <VerdictBadge level="green" />
         </div>
       </Feature>
 
       <Feature title={f.alert.title} text={f.alert.text} className="lg:col-span-5">
-        <div className="rounded-md border border-line border-l-2 border-l-accent bg-surface-2 p-4">
+        <div className="surface-raised rounded-lg p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-display text-lg font-bold">{SAMPLE.protectedName}</p>
+            <p className="font-display text-lg font-semibold">{SAMPLE.protectedName}</p>
             <p className="tabular font-mono text-sm text-fg-muted">{SAMPLE.alertTime}</p>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge status="info">{bg.alerts.newBadge}</Badge>
             <VerdictBadge level="red" />
           </div>
-          <p className="mt-3 rounded-md bg-accent px-4 py-2.5 text-center font-semibold text-on-accent">
+          <p className="mt-3 rounded-full bg-primary px-4 py-2.5 text-center font-semibold text-on-primary">
             {bg.alerts.callNow}
           </p>
         </div>
@@ -108,7 +104,7 @@ export function FeatureGrid() {
       </Feature>
 
       <Feature title={f.voice.title} text={f.voice.text} className="lg:col-span-3">
-        <p className={cn(TILE, "inline-flex items-center gap-2 border-accent bg-accent-bg")}>
+        <p className={cn(TILE, "inline-flex items-center gap-2")}>
           <Mic className="size-5" />
           {bg.voice.stop}
         </p>
@@ -124,7 +120,7 @@ export function FeatureGrid() {
           <StatusPill status="caution" icon={<WifiOff className="size-[1.15em] shrink-0" />}>
             {bg.offline.title}
           </StatusPill>
-          <SignalLine state="alert" className="h-8 flex-1" />
+          <hr aria-hidden="true" className="halo-line flex-1" />
           <VerdictBadge level="red" />
         </div>
         <p className="mt-3 text-sm text-fg-muted">{bg.protectedCheck.localNote}</p>

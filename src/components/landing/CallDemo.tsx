@@ -1,26 +1,35 @@
+// Phase 2 rebuilds this.
 // The live demo in the hero of the home page: three sample calls and an editable
 // text of what the caller says. The REAL detection engine (src/engine, the same code
 // the app and the server use) computes the score, the level and the reasons in the
-// browser, and the signal line and the risk meter follow it.
+// browser, and the risk gauge follows it.
 //
 // The sample calls are examples (src/content/placeholders.ts). Nothing is sent
 // anywhere: the engine is a pure function.
 "use client";
 
 import { useId, useState } from "react";
-import { fill } from "@/components/family/format";
 import { StatusPill } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
 import { Textarea } from "@/components/ui/Field";
 import { RiskMeter } from "@/components/ui/RiskMeter";
-import { SignalLine, signalForLevel } from "@/components/ui/SignalLine";
 import { LEVEL_STATUS } from "@/components/ui/Verdict";
+import { fill } from "@/components/family/format";
 import { SAMPLE_CALLS } from "@/content/placeholders";
 import { analyseCall, MAX_TEXT_LENGTH } from "@/engine";
 import { bg } from "@/i18n/bg";
 
 const t = bg.landing.demo;
 const MAX_SHOWN_REASONS = 3;
+
+// The small dot in front of each reason, in the verdict's colour.
+const DOT = {
+  danger: "bg-danger-solid",
+  caution: "bg-caution-solid",
+  safe: "bg-safe-solid",
+  info: "bg-info-solid",
+  neutral: "bg-line-strong",
+};
 
 export function CallDemo() {
   const groupName = useId();
@@ -59,11 +68,8 @@ export function CallDemo() {
   ];
 
   return (
-    <section
-      aria-labelledby={`${textId}-title`}
-      className="grid-lines overflow-hidden rounded-lg border border-line bg-surface-1"
-    >
-      <div className="border-b border-line p-5 md:p-6">
+    <section aria-labelledby={`${textId}-title`} className="glass overflow-hidden rounded-xl">
+      <div className="p-5 md:p-6">
         <h2 id={`${textId}-title`} className="font-sans text-base font-semibold tracking-normal">
           {t.title}
         </h2>
@@ -72,7 +78,7 @@ export function CallDemo() {
           {SAMPLE_CALLS.map((item) => (
             <label
               key={item.id}
-              className="pressable relative flex min-h-11 cursor-pointer items-center rounded-md border border-line-strong bg-surface-1 px-3.5 text-sm font-medium text-fg-muted hover:text-fg has-checked:border-accent has-checked:bg-accent-bg has-checked:text-fg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring"
+              className="pressable relative flex min-h-11 cursor-pointer items-center rounded-full border border-glass-line px-4 text-sm font-medium text-fg-muted hover:text-fg has-checked:border-transparent has-checked:bg-primary has-checked:text-on-primary has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring"
             >
               <input
                 type="radio"
@@ -80,7 +86,7 @@ export function CallDemo() {
                 value={item.id}
                 checked={item.id === call.id}
                 onChange={() => setCallId(item.id)}
-                className="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
+                className="absolute inset-0 size-full cursor-pointer appearance-none rounded-full opacity-0"
               />
               {item.label}
             </label>
@@ -88,8 +94,8 @@ export function CallDemo() {
         </div>
       </div>
 
-      <div className="grid gap-px bg-line md:grid-cols-2">
-        <div className="bg-surface-1 p-5 md:p-6">
+      <div className="grid gap-4 px-5 pb-5 md:grid-cols-2 md:px-6 md:pb-6">
+        <div>
           <label htmlFor={textId} className="text-sm font-semibold text-fg">
             {t.textLabel}
           </label>
@@ -100,13 +106,13 @@ export function CallDemo() {
             value={text}
             onChange={(event) => setTexts({ ...texts, [call.id]: event.target.value })}
             aria-describedby={hintId}
-            className="mt-2 bg-canvas text-base"
+            className="mt-2 text-base"
           />
-          <p id={hintId} className="mt-2 text-sm text-fg-subtle">
+          <p id={hintId} className="mt-2 text-sm text-fg-muted">
             {t.textHint}
           </p>
         </div>
-        <div className="bg-surface-1 p-5 md:p-6">
+        <div>
           <p className="text-sm font-semibold text-fg">{t.answersLabel}</p>
           <div className="mt-2">
             {answers.map((row) => (
@@ -123,51 +129,36 @@ export function CallDemo() {
       </div>
 
       {/* The readout. aria-live: a screen reader hears the new result after a change. */}
-      <div className="border-t border-line bg-canvas p-5 md:p-6" aria-live="polite">
-        <SignalLine state={signalForLevel(verdict.level)} className="h-14" weight={1.75} />
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-          <p className="flex items-baseline gap-3">
-            <span className="text-sm text-fg-muted">{t.riskLabel}</span>
-            <span className="tabular font-mono text-h2 font-semibold leading-none text-fg">
-              {verdict.score}
-            </span>
-            <span className="sr-only">{fill(t.scoreOf, { score: verdict.score })}</span>
-          </p>
-          <StatusPill status={status} className="text-base">
-            {bg.verdictBadge[verdict.level]}
-          </StatusPill>
+      <div className="border-t border-line bg-glass-1 p-5 md:p-6" aria-live="polite">
+        <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,15rem)_1fr]">
+          <RiskMeter score={verdict.score} level={verdict.level} label={t.riskLabel} />
+          <div>
+            <p className="flex items-baseline gap-3">
+              <span className="text-sm text-fg-muted">{t.riskLabel}</span>
+              <span className="sr-only">{fill(t.scoreOf, { score: verdict.score })}</span>
+            </p>
+            <StatusPill status={status} className="mt-1 text-base">
+              {bg.verdictBadge[verdict.level]}
+            </StatusPill>
+            <div className="mt-5 min-h-[7.5rem]">
+              <p className="text-sm font-semibold text-fg-muted">{t.reasonsTitle}</p>
+              {reasons.length === 0 ? (
+                <p className="mt-1.5 text-sm text-fg-muted">{t.noReasons}</p>
+              ) : (
+                reasons.map((reason) => (
+                  <p key={reason.code} className="mt-2 flex items-start gap-2.5 text-sm text-fg">
+                    <span
+                      aria-hidden="true"
+                      className={cn("mt-[0.55em] size-1.5 shrink-0 rounded-full", DOT[status])}
+                    />
+                    {reason.textBg}
+                  </p>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-        <RiskMeter
-          score={verdict.score}
-          level={verdict.level}
-          label={t.riskLabel}
-          className="mt-4"
-        />
-        <div className="mt-5 min-h-[7.5rem]">
-          <p className="text-sm font-semibold text-fg-muted">{t.reasonsTitle}</p>
-          {reasons.length === 0 ? (
-            <p className="mt-1.5 text-sm text-fg-muted">{t.noReasons}</p>
-          ) : (
-            reasons.map((reason) => (
-              <p
-                key={reason.code}
-                className={cn(
-                  "mt-1.5 border-l-2 pl-3 text-sm text-fg",
-                  {
-                    danger: "border-danger-solid",
-                    caution: "border-caution-solid",
-                    safe: "border-safe-solid",
-                    info: "border-info-solid",
-                    neutral: "border-line-strong",
-                  }[status],
-                )}
-              >
-                {reason.textBg}
-              </p>
-            ))
-          )}
-        </div>
-        <p className="mt-4 text-xs text-fg-subtle">{t.engineNote}</p>
+        <p className="mt-4 text-xs text-fg-muted">{t.engineNote}</p>
       </div>
     </section>
   );
