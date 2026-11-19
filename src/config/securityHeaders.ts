@@ -42,7 +42,7 @@ export function contentSecurityPolicy({ supabaseUrl, development }: PolicyOption
   const directives = [
     "default-src 'self'",
     `script-src ${scripts.join(" ")}`,
-    // Inline style attributes are needed (the map, the charts, the signal line).
+    // Inline style attributes are needed (the map, the charts).
     // Styles cannot run code, so this is a much smaller risk than inline scripts.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
