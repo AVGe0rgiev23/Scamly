@@ -1,6 +1,11 @@
 <!-- Scamly notification badge: Android shows only the shape (it uses the
-     transparency, not the colours) in the status bar. The white signal trace on a
-     transparent background. Our own work, GPL-3.0. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path d="M2 16h4l3-10 4 20 3.5-13 2 4H30" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+     transparency, not the colours) in the status bar. The halo mark in white on a
+     transparent background, with thicker lines so it reads at 24 px. Our own work,
+     GPL-3.0. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round">
+    <circle cx="256" cy="256" r="200" stroke-width="44" pathLength="100" stroke-dasharray="70 30" transform="rotate(-30 256 256)"/>
+    <circle cx="256" cy="256" r="122" stroke-width="44" pathLength="100" stroke-dasharray="84 16" transform="rotate(-50 256 256)"/>
+  </g>
+  <circle cx="256" cy="256" r="50" fill="#FFFFFF"/>
 </svg>

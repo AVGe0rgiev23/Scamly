@@ -1,9 +1,27 @@
-<!-- Scamly maskable icon: the same mark, smaller, so it stays inside the "safe zone"
-     (the middle 80 % circle) when Android cuts the icon into a circle, a squircle or
-     a drop. Our own work, GPL-3.0. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#3de6f0"/>
-  <g transform="translate(16 16) scale(0.6) translate(-16 -16)">
-    <path d="M5 16h3l2-7 3 13 2.5-9 1.5 3H27" fill="none" stroke="#03181b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Scamly maskable app icon (Android cuts it into a circle, squircle or other shape):
+     the same halo mark as icon.svg, scaled to 78 % so every part stays inside the
+     safe zone (a circle of 40 % of the width around the centre). The „Night“
+     background fills the whole square. Our own work, GPL-3.0. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="halo" gradientUnits="userSpaceOnUse" x1="72" y1="440" x2="440" y2="72">
+      <stop offset="0" stop-color="#8B7BFF"/>
+      <stop offset="0.52" stop-color="#4CC9FF"/>
+      <stop offset="1" stop-color="#6EF3C5"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="256" cy="256" r="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B7BFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8B7BFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="#05060A"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+    <g fill="none" stroke="url(#halo)" stroke-linecap="round">
+      <circle cx="256" cy="256" r="180" stroke-width="24" pathLength="100" stroke-dasharray="70 30" transform="rotate(-30 256 256)" opacity="0.7"/>
+      <circle cx="256" cy="256" r="128" stroke-width="26" pathLength="100" stroke-dasharray="84 16" transform="rotate(-50 256 256)" opacity="0.88"/>
+      <circle cx="256" cy="256" r="76" stroke-width="28"/>
+    </g>
+    <circle cx="256" cy="256" r="30" fill="#F3F4F8"/>
   </g>
 </svg>

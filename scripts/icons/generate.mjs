@@ -1,5 +1,7 @@
 // Makes the PNG app icons in public/icons/ from the SVG sources next to this file
 // (task W2-09), and src/app/favicon.ico from src/app/icon.svg (W4-04). Run it after changing an SVG: `npm run icons`.
+// Sources (redesign v3 „Ореол“, interim halo mark until Phase 2): icon.svg,
+// icon-maskable.svg, badge.svg here and src/app/icon.svg.
 //
 // How: Playwright's Chromium (already installed for our browser tests) opens each SVG
 // at the exact pixel size and takes a screenshot with a transparent background. So
