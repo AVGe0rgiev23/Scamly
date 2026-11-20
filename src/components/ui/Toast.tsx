@@ -61,10 +61,11 @@ export function Toaster() {
     () => EMPTY,
   );
   return (
+    // Below 1024 px the toasts rise above the glass dock at the bottom (SiteDock).
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-5 z-(--z-index-toast) flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none fixed inset-x-0 bottom-5 z-(--z-index-toast) flex flex-col items-center gap-2 px-4 max-lg:bottom-[calc(6rem+env(safe-area-inset-bottom))]"
     >
       {current.map((item) => (
         <p

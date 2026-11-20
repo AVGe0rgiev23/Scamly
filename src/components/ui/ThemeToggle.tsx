@@ -25,6 +25,10 @@ function isTheme(value: string | null): value is Theme {
   return value === "light" || value === "dark" || value === "system";
 }
 
+// The name of the browser event that tells every switch on the page about a new
+// choice (the header has one on a large screen, the footer one on a phone).
+const THEME_EVENT = "scamly-theme-change";
+
 function saveTheme(value: Theme) {
   document.documentElement.dataset.theme = value;
   try {
@@ -32,6 +36,7 @@ function saveTheme(value: Theme) {
   } catch {
     // Private browsing may block storage: the theme still changes for this page.
   }
+  window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: value }));
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
@@ -53,6 +58,13 @@ export function ThemeToggle({ className }: { className?: string }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(saved);
     }
+    // Another switch on the same page changed the theme: show the same choice here.
+    function follow(event: Event) {
+      const value = (event as CustomEvent<string>).detail;
+      if (isTheme(value)) setTheme(value);
+    }
+    window.addEventListener(THEME_EVENT, follow);
+    return () => window.removeEventListener(THEME_EVENT, follow);
   }, []);
 
   return (

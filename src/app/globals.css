@@ -1112,3 +1112,284 @@
     display: none !important;
   }
 }
+
+/* ── 8. Site frame (Phase 2): header pill, spotlight, dock, footer, logo ───────
+   src/components/layout/. Everything here is namespaced .site-* / .brand-*.
+   Motion: only transform, opacity and clip-path move (docs/redesign-v3/02-motion.md). */
+@layer base {
+  /* viewport-fit=cover (layout.tsx) lets the page reach under a notch; keep the
+     content clear of it in landscape. The dock adds the bottom inset itself. */
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@layer components {
+  /* The header pill: two glass layers under the content. The "frost" layer (more
+     blur, a denser tint) is invisible at the top of the page. */
+  .site-header-pill {
+    transform-origin: 50% 0;
+  }
+  .site-header-glass,
+  .site-header-frost {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  /* Navigation glass: the glass of the design system with a denser tint of the page
+     colour under it, so text that scrolls behind the header or the dock never fights
+     with the menu words (plain glass at 4 % let the map show through on a phone). */
+  .site-glass {
+    border: 1px solid var(--glass-border);
+    background-color: color-mix(in oklab, var(--bg) 66%, transparent);
+    background-image:
+      radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+      linear-gradient(180deg, var(--glass-2), var(--glass-1));
+    box-shadow: var(--highlight), var(--shadow-long);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+  }
+  .site-header-frost {
+    border: 1px solid var(--glass-border);
+    background-color: color-mix(in oklab, var(--bg) 80%, transparent);
+    box-shadow: var(--highlight), var(--shadow-long);
+    -webkit-backdrop-filter: blur(36px) saturate(180%);
+    backdrop-filter: blur(36px) saturate(180%);
+    opacity: 0;
+  }
+  /* After 40 px of scrolling: the pill rises 4 px and shrinks to 97.5 %, and the
+     frost fades in. Driven by the scroll position itself (a scroll timeline), so no
+     script runs while scrolling. Browsers without scroll timelines and people who
+     asked for less motion simply keep the normal glass. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .site-header-pill {
+        animation: site-header-shrink linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 40px;
+      }
+      .site-header-frost {
+        animation: site-header-frost linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 40px;
+      }
+    }
+  }
+
+  /* The logo: on hover the halo turns a little, as if it closed around the dot. */
+  .brand-logo-mark {
+    transition: transform 700ms var(--ease-out);
+  }
+  .brand-logo:hover .brand-logo-mark {
+    transform: rotate(-28deg);
+  }
+
+  /* The spotlight under the header links (SpotlightNav): one lit pill as wide as the
+     row, cut down to one link by clip-path; --spot-l/--spot-r say how much to cut. */
+  .site-spot {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.06), rgb(255 255 255 / 0.1)),
+      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
+    );
+    box-shadow: var(--highlight);
+    clip-path: inset(0 var(--spot-r, 50%) 0 var(--spot-l, 50%) round 999px);
+    opacity: 0;
+    transition: opacity 150ms linear;
+  }
+  /* The halo hairline at the foot of the light, with a faint glow above it. Its
+     gradient spans the whole row, so each link gets its own part of the spectrum. */
+  .site-spot::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 5px;
+    height: 2px;
+    background: var(--halo);
+    box-shadow: 0 -2px 10px color-mix(in oklab, var(--halo-2) 45%, transparent);
+  }
+  .site-spot-track[data-spot="on"] > .site-spot {
+    opacity: 1;
+  }
+  .site-spot-track[data-ready] > .site-spot {
+    transition:
+      clip-path 420ms var(--ease-out),
+      opacity 150ms linear;
+  }
+
+  /* The phone dock (SiteDock): fixed to the bottom, clear of the home indicator. */
+  .site-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--z-index-header);
+    display: flex;
+    justify-content: center;
+    padding: 0 max(12px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+  .site-dock-bar {
+    width: 100%;
+    max-width: 30rem;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 30px;
+    pointer-events: auto;
+  }
+  .site-dock-link {
+    position: relative;
+    display: flex;
+    min-height: 56px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 7px 2px 6px;
+    border-radius: 24px;
+    text-decoration: none;
+    transition:
+      color 150ms linear,
+      background-color 150ms linear;
+  }
+  .site-dock-link:hover {
+    background-color: light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04));
+  }
+  .site-dock-link[aria-current="page"] {
+    background: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.07), rgb(255 255 255 / 0.11)),
+      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
+    );
+    box-shadow: var(--highlight);
+  }
+  /* The current place: a short halo bar at the top edge, like light falling on it. */
+  .site-dock-link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--halo);
+    box-shadow: 0 2px 10px color-mix(in oklab, var(--halo-2) 55%, transparent);
+    transform: translateX(-50%);
+  }
+  .site-dock-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.8;
+  }
+  .site-dock-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The footer: an aurora rising from the bottom edge and a giant faint wordmark that
+     runs off it. */
+  .site-footer-glow {
+    background-image:
+      radial-gradient(
+        60% 70% at 50% 120%,
+        color-mix(in oklab, var(--halo-1) var(--aurora-strength), transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        36% 50% at 88% 112%,
+        color-mix(in oklab, var(--halo-2) var(--aurora-strength), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        32% 45% at 10% 110%,
+        color-mix(in oklab, var(--halo-3) calc(var(--aurora-strength) * 0.6), transparent),
+        transparent 70%
+      );
+  }
+  .site-footer-word {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    z-index: -1;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(7.5rem, 29vw, 23rem);
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: -0.055em;
+    white-space: nowrap;
+    /* Lit from below by the aurora: the ink fades upward into a faint halo tint. */
+    background-image: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.11), rgb(255 255 255 / 0.11)) 8%,
+      color-mix(in oklab, var(--halo-1) 14%, transparent) 62%,
+      color-mix(in oklab, var(--halo-2) 8%, transparent) 80%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transform: translate(-50%, 30%);
+  }
+  .site-footer-word-space {
+    height: clamp(4.5rem, 17vw, 13.5rem);
+  }
+  .site-footer-link {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    padding-inline: 12px;
+    border-radius: 999px;
+    color: var(--text);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 150ms linear;
+  }
+  .site-footer-link:hover {
+    background-color: var(--glass-2);
+  }
+}
+
+@keyframes site-header-shrink {
+  to {
+    transform: translateY(-4px) scale(0.975);
+  }
+}
+@keyframes site-header-frost {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-spot-track[data-ready] > .site-spot {
+    transition: opacity 150ms linear;
+  }
+  .brand-logo-mark,
+  .brand-logo:hover .brand-logo-mark {
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .site-spot::after,
+  .site-dock-link[aria-current="page"]::before {
+    background: Highlight;
+  }
+  .site-footer-word {
+    display: none;
+  }
+}

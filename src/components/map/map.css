@@ -1,2 +1,8 @@
 /* The scam map's look (/karta, DistrictMap.tsx). Leaflet draws real DOM and SVG, so
    it needs real CSS. Emptied in Ореол v3 Phase 0; the new rules come in a later phase. */
+
+/* Keep Leaflet's own layers (z-index 400–1000) inside the map, so the floating site
+   header and the phone dock (z-index 40) always stay on top of it (Phase 2). */
+.leaflet-container {
+  isolation: isolate;
+}
