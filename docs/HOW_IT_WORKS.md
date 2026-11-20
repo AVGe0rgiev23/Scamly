@@ -480,6 +480,51 @@ The home page tells the story "a phone call is a sound wave; Scamly turns it int
 
 `tests/e2e/home.spec.ts` (heading, language, title), `layout.spec.ts` (the 3 steps are still the first list in `main`, the 3 rules, the start buttons ≥ 64 px and their targets, no sideways scrolling at 360 px), `map.spec.ts` (the map link), `pwa.spec.ts` (the install card on `/`, also at 360 px on an iPhone). `layout.spec.ts` and `scripts.spec.ts` now wait until the page is quiet before measuring the menu links, because the streamed header replaces its first copy while the heavier page starts. Screenshots (desktop 1440 × 900 and Pixel 5, both themes, plus the hero in the danger state): `docs/evidence/redesign-v3/phase-2/landing*`.
 
+### 3.7.3 The protected flow `/protected` and the verdict moment (redesign v3 „Ореол“, Phase 3)
+
+#### What it does
+
+The older person's phone (the call check, 3.33) gets the Ореол look. Who it is for: a 75-year-old on a cheap Android phone, mid-call and scared. So "premium" here means **calm, tactile and unmistakable**: big materials and one strong moment, the verdict.
+
+| Screen | What you see |
+|---|---|
+| Home | One giant **round** button „Обаждат ми се за пари!“ (at least 72 % of a phone's width, up to 26 rem; text 32–42 px) in the primary colour (near-white in Night, ink in Porcelain, AAA contrast), with a thin halo ring and a slow, faint halo **breathing** behind it (a glow that swells and two rings that drift outward). Under it the quiet line „Можете да проверите и след като затворите.“, the button for a call that has ended, „Обади се на Иван“ if known, and **„Помощ“ as a big labelled button** (never a small icon). |
+| Questions | Progress as **halo dots** (answered = filled with the halo, current = bigger with a halo ring, still to come = empty rings) with „Въпрос 3 от 5“ written under them; the question 32–52 px; `BigChoice` tiles at least 96 px with **our own line icons** (`answerIcons.tsx`, no emoji); „Назад“ and „Напред“ always at the bottom (on the first question „Назад“ goes back to the big button). A new question slides in 24 px from the side it comes from, with a fade. |
+| Text / voice | The heading is the field's label; a tall field (22 px text); the voice button is a wide glass pill with the microphone in a halo disc. While it listens, **halo rings flow out of the disc** and one extra ring pulses every time new words arrive. |
+| Verdict | **Red:** the screen floods from the centre with deep red, the halo ring closes into a **shield** with one shockwave, „ТОВА Е ИЗМАМА.“ lands with weight, „Затворете телефона.“, then the white pill „Обади се на Иван“ (≥ 72 px, phone in a red disc), the advice, „Добре направихте, че проверихте.“, the reasons one by one. The phone vibrates once (200-100-200 ms) where it can. **Amber:** a softer amber flood, broken wavering rings around a warning triangle, „Внимание!“. **Green:** no flood, a calm mint light from the top, two breathing rings around a tick and exactly the D9 words. |
+| Family answer | „Иван ще ви се обади веднага.“ arrives as a **Dynamic Island** at the top: a small pill „Семейството отговори“ that grows into a card with the message in big letters and „Дръжте телефона до себе си.“; it stays in view under the header while scrolling. |
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/components/protected/protected.css` | All styles of the flow; every class starts with `.check-`. Imported only by `src/app/protected/layout.tsx` and `src/app/dev/protected/layout.tsx`. |
+| `CheckHome.tsx` | The round button and its CSS halo. A weak phone (`isLowEndDevice()` from `haloMath.ts`: ≤ 4 cores or ≤ 4 GB) gets a still glow (`data-still`), read with `useSyncExternalStore`. |
+| `QuestionWizard.tsx` | Halo dots (`HaloDots`) and the slide direction: the previous index is kept in state and updated while rendering (React's "adjust state when a prop changes" pattern), so the first frame already slides the right way. |
+| `answerIcons.tsx` | Eleven 24 × 24 line drawings with one stroke width (badge, two people, columns, parcel, question mark, tick, cross, person with „?“, balcony with arrow, bank card). |
+| `VoiceInput.tsx` | Unchanged logic; the rings are spans with CSS animations, and the "new words" ring gets `key={interim}`, so React makes a new element (and the animation starts again) whenever the guess changes. The Web Speech API gives no volume, so the rings follow the words. |
+| `CheckResult.tsx` + `VerdictEmblem.tsx` | The verdict: a fixed `.check-flood` layer, the SVG emblem, the title (`h1`, still focused), the call button (`CallContactButton hero`), advice, note, reasons (`.verdict-reasons li` with `--i` for the delay). |
+| `FamilyIsland.tsx` | `DynamicIsland` (size lg) that opens 450 ms after it arrives (at once with reduced motion). The `role="status"` live region around it stays in `CheckResult`. |
+| `src/app/protected/page.tsx`, `src/app/dev/protected/page.tsx` | The big „Помощ“ button (`ButtonLink`, secondary, xl) under the check. |
+
+- **The flood.** `.check-flood` is `position: fixed; inset: 0` behind the check (`z-index: -1` inside `main`, which is `relative z-1`). Its colour is mixed from tokens (`color-mix(in oklab, var(--danger-solid) 34 %, var(--bg))` and a lighter radial spot). It grows with `clip-path: circle(0 → 150 % at 50 % 25 %)` in 900 ms (amber 1.3 s), from about where the shield is. `clip-path` is drawn by the graphics card and needs no new layout, so it is smooth on a cheap phone. The footer card is lifted above it (`body:has(.check-flood) .site-footer`).
+- **Red is always dark.** The red result sets `data-theme="dark"` on its section, so every token inside switches to Night values (any element can switch theme, 3.7): white words on deep red in both themes (≈ 12 : 1). Amber and green follow the person's theme (pale amber / mint in Porcelain).
+- **The shield.** One SVG: a ring that scales from 2.4 to 1 (700 ms), a second ring that leaves it once (scale 1 → 2.6 and fades, 900 ms, starts at 780 ms), then the shield with „!“ pops in (520 ms, a small overshoot). Nothing loops afterwards: a scared person needs a still picture.
+- **The title lands.** From 16 px above, 7 % bigger and blurred to its place with a tiny settle (760 ms, starts at 300 ms); everything after it rises in three short waves (620–900 ms); the reasons follow 140 ms apart.
+- **Vibration once.** A `useEffect` calls `navigator.vibrate([200, 100, 200])` for red, guarded by a ref, so the later server verdict (which replaces the phone's own) does not buzz again. Skipped with reduced motion and on phones without the API (iPhone).
+- **The page starts at the top.** The result scrolls to the top and focuses the heading with `preventScroll`, so the flood and the shield are seen first and a screen reader still reads the heading.
+- **Reduced motion.** No flood animation (the colour is there at once), no shockwave, no breathing or voice rings, no vibration; steps, title and reasons only fade (150 ms).
+- **Why no shader here.** The WebGL `HaloField` is for the landing page. On grandma's phone the halo is CSS and SVG: no WebGL chunk to download, no graphics context to lose, nothing that can drain a cheap battery during a call. The route's own JavaScript is about 15 kB (gzip) on top of the shared chunks and the Realtime client (measured in the browser; Next.js 16 no longer prints sizes in `next build`).
+
+#### Why it works like that
+
+- Comparisons in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md): "A clip-path flood for the verdict (vs a full-screen video, vs a shader)", "Vibrate once on red (vs a vibration loop, vs none)", "Halo dots for the progress (vs only „Въпрос 2 от 4“, vs a bar)".
+- Motion lines: `docs/redesign-v3/02-motion.md`, "Protected flow".
+
+#### How we know it works
+
+`tests/e2e/protected.spec.ts` (now 10 tests × 2 screens): the whole flow, Q3 only after „Да“, red with HR1, exact D9 green and no „безопас“, offline fallback, slow server, the family message, 360 px with every target ≥ 64 px and the verdict call button ≥ 72 px, plus three new tests: „Назад“ on the first question goes home; red floods (`animation-name: check-flood`) and vibrates **once** `[200, 100, 200]` even when the server verdict replaces the local one; with reduced motion the flood has no animation and nothing vibrates. `voice.spec.ts` (4 × 2) is unchanged. Screenshots: `docs/evidence/redesign-v3/phase-3/` (Pixel 5, 360 × 740, 1440 × 900; Night and Porcelain).
+
 ### 3.8 Generated database types: `src/types/database.ts`
 
 #### What it does
@@ -1375,7 +1420,7 @@ The logged-in family member's area. **`/family`** lists the people they protect 
 
 #### What it does
 
-The home of the paired phone. One giant red button **„Обаждат ми се за пари!“** (full width, at least 30 % of the screen height, text at least 31 px), a smaller button **„Обаждането вече приключи — искам да проверя“** (a check can start after the call too) and, if the phone already knows who to call, a big **„Обади се на Иван“** button (`tel:` link). Pressing the big button alerts the family at once and opens the questions:
+The home of the paired phone. One giant round button **„Обаждат ми се за пари!“** (at least 72 % of the phone's width, text at least 32 px; look and motion since redesign v3 Phase 3: 3.7.3), a smaller button **„Обаждането вече приключи — искам да проверя“** (a check can start after the call too) and, if the phone already knows who to call, a big **„Обади се на Иван“** button (`tel:` link). Pressing the big button alerts the family at once and opens the questions:
 
 | # | Question | Answers | When |
 |---|---|---|---|
@@ -1409,7 +1454,7 @@ One question per screen, with „Въпрос 2 от 4“ (or „… от 5“ o
 - **Sending and the verdict.** „Прескочи“ sends `text: ""`, „Провери“ the typed text. `uploadAnswers()` sends exactly the `AnswersSchema` fields; the **server** runs the engine, stores the verdict and tells the family. The answer `{ verdict, callContact }` is shown, and `callContact` is remembered for the home screen.
 - **Offline fallback (BUILD_PLAN 4.9).** A 4 s timer starts with the first request. If the first try fails (no network, 5xx, 429, no check id) or the timer fires first, the phone runs **`analyseCall()` itself** on the same answers and shows that verdict at once with the note; the call button uses the remembered contact. In the background `uploadAnswers()` tries again after 2, 4, 8, 15 and 30 s (each try at most 15 s); if the big button's `POST` had failed, it starts the check first. A late server verdict replaces the local one (the note disappears); `409 already answered` means an earlier try did arrive, so the note disappears too; 400/401/403/404 stop the tries (they won't change). The engine is pure TypeScript with no network or database (3.21), so the phone and the server compute the same verdict.
 - **The family's answer.** On the result screen `watchCheck(checkId)` (3.25) listens through Supabase Realtime and polls `GET /api/checks/:id` every 5 s while Realtime is not connected. When `acknowledgement` is set, `familyMessage()` builds the text. It works for a local verdict too, as long as the big button's `POST` reached the server (the family was alerted then). „Нова проверка“ stops the watch (React cleanup), and a counter makes sure an old background upload can't change the new check's screen.
-- **Design for an 80-year-old.** Base font 22.5 px on these screens; questions 28–36 px; answers 25 px in boxes at least 72 px high; every button at least 64 px; one column that fits 360 px. The big button uses the red verdict colour with a new `--on-red` token (contrast 8.24 light and 11.59 dark). Pictures (emoji) are `aria-hidden`: the words are always there.
+- **Design for an 80-year-old.** Base font 22.5 px on these screens; questions 28–36 px; answers 25 px in boxes at least 72 px high; every button at least 64 px; one column that fits 360 px. Since redesign v3 Phase 3 the big button uses the primary colour (AAA) with a halo, and the pictures are our own line icons (3.7.3). Pictures are `aria-hidden`: the words are always there.
 - **Screen readers.** The home heading „Проверка на обаждане“ is read aloud only; each question is an `h1` that gets the focus, and the radios sit in a `fieldset` whose `legend` is the question. The result headline gets the focus and is also put in a hidden `role="status"` live region; the family message box is a `role="status"` region that is on the page from the start, so it is read the moment it is filled.
 
 #### Why it works like that
@@ -2971,3 +3016,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-19 · Next.js upgraded to 16.4.6 (security patch; 16.4.4's build refused to finish).
 - 2026-11-19 · section 3.7 rewritten for the design system v3 „Ореол“ (D28; the v2 „Signal“ text is replaced): tokens and themes, theme script, light and glass, primitives, HaloField with `HaloFieldLazy`, fallbacks and performance guard, motion and reduced motion; status row updated
 - 2026-11-19 · new section 3.7.1 (redesign v3 Phase 2): floating glass header with the spotlight menu and the „Провери обаждане“ pill, scroll state with a CSS scroll timeline, phone dock with labelled icons (hidden on the protected flow), new footer, skip link, the final halo logo (`HaloLogo`), brand assets from `scripts/icons/` and the v3 Open Graph picture; 3.38 icon lines updated
+- 2026-11-20 · new section 3.7.3 (redesign v3 Phase 3): the protected flow `/protected` and the verdict moment (round button with a CSS halo, halo dots, our own answer icons, voice rings, clip-path flood, shield emblem, vibration once, family Dynamic Island, „Помощ“ button, reduced motion, why no shader); 3.33 updated (round button, icons)

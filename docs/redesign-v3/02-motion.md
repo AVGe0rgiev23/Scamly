@@ -61,6 +61,32 @@ Tokens: `--ease-out cubic-bezier(.16,1,.3,1)`, `--ease-in-out cubic-bezier(.65,0
 
 Reduced motion on the landing: no entrance (150 ms fade), no tilt, no blinking dot, no map pulse, still voice rings, screens/words/rule morph as 150 ms fades, gauge and accordion jump; the HaloField draws one still frame.
 
+### Protected flow `/protected` (Phase 3, `src/components/protected/protected.css`)
+
+| Animation | Where | How | Why it exists |
+| --- | --- | --- | --- |
+| Breathing halo | big round button (`.check-cta-halo`) | conic glow scale .94 → 1.06 + opacity .22 → .42, 6 s alternate; two rings scale 1.04 → 1.32 and fade, 7 s, half a cycle apart; still on weak phones | invites the press without alarming |
+| Button press | `.check-cta.pressable` | scale .97, 150 ms | the finger feels the press |
+| Halo dot | progress dots (`.check-dot`) | a new dot scales 0 → 1 (`@starting-style`), current dot scale 1.3, 300 ms | "you are here" and "one more question" are seen, not only read |
+| Step slide | each question and the text step (`.check-step`) | translateX 24 px → 0 + fade, 380 ms ease-out; from the left when going back | shows the direction of travel |
+| Voice rings | voice disc while listening (`.check-voice-rings`) | three rings scale 1 → 1.9 and fade, 1.5 s, staggered 0.5 s | the phone is listening |
+| Voice blip | same (`.check-voice-blip`, new `key` per guess) | one ring scale 1 → 2.1, 700 ms, once per new words | the words were heard |
+| Flood (red) | `.check-flood[data-level=red]` | `clip-path: circle(0 → 150 % at 50 % 25 %)`, 900 ms `cubic-bezier(.7,0,.2,1)` | the room turns red: unmistakable |
+| Flood (amber) | `.check-flood[data-level=yellow]` | same circle, paler mix, 1.3 s in-out | a softer warning |
+| Mint glow (green) | `.check-flood[data-level=green]` | opacity 0 → 1, 1.4 s | calm, no event |
+| Shield closes | `.check-emblem-ring` | scale 2.4 → 1 + fade in, 700 ms, starts 120 ms | the halo becomes a shield |
+| Shockwave | `.check-emblem-wave` | scale 1 → 2.6, opacity .85 → 0, 900 ms, once, starts 780 ms | the shield "locks" with one pulse |
+| Glyph pop | shield / triangle / tick (`.check-emblem-glyph`) | scale .4 → 1 with small overshoot, 520 ms | the sign arrives after the ring |
+| Uneven rings (amber) | `.check-emblem-arc` | rings arrive from scale 1.35, then waver rotate −6° ↔ 8°, 2.6 s, alternating | something is not right, but no alarm |
+| Calm rings (green) | `.check-emblem-arc` | scale .97 ↔ 1.03, 7 s alternate | slow breathing = calm |
+| Title lands | `.check-verdict-title` | from −16 px, scale 1.07, blur 8 px → place with 3 px settle, 760 ms, starts 300 ms | the verdict lands with weight |
+| Rise waves | `.check-rise`, `-2`, `-3` | 14 px rise + fade, 520 ms, at 620 / 760 / 900 ms | the call button and advice follow the title, in order of importance |
+| Reasons one by one | `.check-reason` | 14 px rise + fade, 460 ms, 1000 ms + 140 ms × position | each reason can be read as it arrives |
+| Family island | `FamilyIsland` (`DynamicIsland`) | arrives as a pill, opens into a card after 450 ms (motion layout, SPRING_UI) | the family's answer arrives like a live notification |
+| Vibration (not visual) | `CheckResult` | `navigator.vibrate([200, 100, 200])`, once per result, red only | felt even with the phone at the ear |
+
+Reduced motion on the protected flow: the flood colour is there at once, no shockwave, no breathing or voice rings, no vibration; steps, title, rise waves and reasons are 150 ms fades; the island opens at once.
+
 ## Reduced motion (`prefers-reduced-motion: reduce`)
 
 Not a switch-off: movement goes, short fades stay, so every change is still visible.

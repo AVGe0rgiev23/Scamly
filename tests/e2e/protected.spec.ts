@@ -336,4 +336,67 @@ test("big targets, big text and no sideways scrolling at 360 px", async ({ page 
   await page.getByRole("button", { name: bg.protectedCheck.check, exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: bg.verdict.red.title })).toBeVisible();
   await checkScreen();
+  // The verdict's call button is the biggest action: at least 72 px high.
+  const call = await page.getByRole("link", { name: "Обади се на Иван" }).boundingBox();
+  expect(call?.height).toBeGreaterThanOrEqual(72);
+});
+
+test("„Назад“ on the first question goes back to the big button", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/dev/protected");
+  await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
+  await page.getByRole("button", { name: bg.protectedCheck.back }).click();
+  await expect(page.getByRole("button", { name: bg.protectedCheck.bigButton })).toBeVisible();
+});
+
+// Records navigator.vibrate calls (the page's real API is replaced before it loads).
+async function spyOnVibrate(page: Page) {
+  await page.addInitScript(() => {
+    const calls: unknown[] = [];
+    (window as unknown as { __vibrations: unknown[] }).__vibrations = calls;
+    Object.defineProperty(navigator, "vibrate", {
+      configurable: true,
+      value: (pattern: unknown) => {
+        calls.push(pattern);
+        return true;
+      },
+    });
+  });
+}
+
+function vibrations(page: Page) {
+  return page.evaluate(() => (window as unknown as { __vibrations: unknown[] }).__vibrations);
+}
+
+test("red verdict: the screen floods and the phone vibrates once", async ({ page }) => {
+  await spyOnVibrate(page);
+  await mockApi(page, { answers: "slow" });
+  await page.goto("/dev/protected");
+  await answerPoliceMoney(page);
+  await page.getByRole("button", { name: bg.protectedCheck.skip }).click();
+  await expect(page.getByRole("heading", { level: 1, name: bg.verdict.red.title })).toBeVisible();
+  const flood = page.locator(".check-flood");
+  expect(await flood.evaluate((element) => getComputedStyle(element).animationName)).toBe(
+    "check-flood",
+  );
+  // The server's verdict replaces the phone's own later: still only ONE vibration.
+  await expect(page.getByText(bg.protectedCheck.localNote)).toHaveCount(0, { timeout: 8_000 });
+  expect(await vibrations(page)).toEqual([[200, 100, 200]]);
+});
+
+test("reduced motion: the colour is there at once and nothing vibrates", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await spyOnVibrate(page);
+  await mockApi(page);
+  await page.goto("/dev/protected");
+  await answerPoliceMoney(page);
+  await page.getByRole("button", { name: bg.protectedCheck.skip }).click();
+  await expect(page.getByRole("heading", { level: 1, name: bg.verdict.red.title })).toBeVisible();
+  expect(
+    await page
+      .locator(".check-flood")
+      .evaluate((element) => getComputedStyle(element).animationName),
+  ).toBe("none");
+  expect(await vibrations(page)).toEqual([]);
 });

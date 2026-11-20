@@ -1094,6 +1094,38 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why:** the engine is a pure function, so it runs anywhere and needs no server. The halo's state is taken from the same verdict, so the most dramatic moment on the page is also a true one.
 
+### A clip-path flood for the verdict (vs a full-screen video, vs a shader)  (status: in use since redesign v3 Phase 3, `src/components/protected/protected.css`)
+
+**What it is:** on a red verdict the screen fills with deep red from the centre: a fixed layer whose `clip-path: circle()` grows from 0 to 150 % in 900 ms (amber: softer, 1.3 s; green: only a mint glow fades in).
+
+| Option | For | Against |
+|---|---|---|
+| **CSS `clip-path` circle on one layer (chosen)** | No download, no JavaScript; drawn by the graphics card without new layout, so smooth on a cheap Android; colours come from the tokens (both themes); with reduced motion the colour is simply there | Only simple shapes (a circle is all we need) |
+| A full-screen video of a red wave | Any look | Hundreds of kB to download mid-call, autoplay rules, can't follow the theme or the text; a video fails exactly when the network is bad |
+| The WebGL `HaloField` shader | The same halo as the landing page | A WebGL chunk and a graphics context on grandma's phone; may be lost or drain the battery during a call; the landing's fallback logic would show a still picture on weak phones anyway |
+
+**Why:** the moment must work on the weakest phone with no network. One CSS property gives the "the room turns red" feeling, and the words „ТОВА Е ИЗМАМА.“ never wait for anything to load.
+
+### Vibrate once on red (vs a vibration loop, vs no vibration)  (status: in use since redesign v3 Phase 3, `CheckResult.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **One pattern `[200, 100, 200]` once (chosen)** | A physical "pay attention" even when the phone is at the ear or the eyes are weak; short enough not to frighten | Not on iPhone (Safari has no Vibration API), so it is only an extra |
+| Vibrating until the person taps | Hard to miss | Panic for a scared person; the phone buzzes against the ear while they try to hang up |
+| No vibration | Simplest | Loses a cheap, real signal on Android |
+
+**Why:** one clear buzz confirms the screen, then the phone is calm. A ref makes sure the later server verdict (which replaces the phone's own) does not buzz again; with reduced motion we skip it, because people who ask for less motion often also want fewer surprises.
+
+### Halo dots for the progress (vs only „Въпрос 2 от 4“, vs a progress bar)  (status: in use since redesign v3 Phase 3, `QuestionWizard.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **Halo dots + the words under them (chosen)** | "How many are left" is seen at a glance; a new dot appears when question 3 is added; the halo is the brand; the words stay for reading aloud and the tests | Dots alone would be too abstract, so the words are kept |
+| Only the words „Въпрос 2 от 4“ | Exact | Must be read; small on a phone |
+| A progress bar | Familiar | A bar that jumps backwards when the count changes from 4 to 5 looks like an error |
+
+**Why:** one dot per question is how people count; the current dot is bigger with a halo ring, so "you are here" is never only a colour.
+
 ### Our own design system "Signal"  (status: replaced by D28 „Ореол“ on 19 Nov; kept here as history)
 
 **Used for:** every screen: the tokens in `src/app/globals.css`, the components in `src/components/ui/`, the gallery `/dev/ui`. Details: `docs/redesign/03-design-system.md`.
@@ -2846,6 +2878,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-20 · redesign v3 Phase 3 (the protected flow and the verdict moment): new entries "A clip-path flood for the verdict", "Vibrate once on red", "Halo dots for the progress".
 - 2026-11-20 · redesign v3 Phase 2A (landing page): new entries "Scroll-driven sticky storytelling", "Our own SVG line illustrations", "The landing demo runs the real engine".
 - 2026-11-03 · created
 - 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)

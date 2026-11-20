@@ -70,6 +70,15 @@ Short notes for the defense. Details: `docs/redesign-v3/` and `docs/HOW_IT_WORKS
 - **Scrolling stays the visitor's.** „Как работи“ uses CSS `position: sticky` and one scroll listener that only measures; it never moves the page (no scroll-jacking).
 - **No text depends on JavaScript.** Words are in the server HTML; animations only soften words that are still off-screen.
 
+## 7. The protected flow and the verdict moment (Phase 3)
+
+- **Who it is for decides the design.** A scared 75-year-old on a cheap phone: one round button, one question per screen, huge tiles, no shader. "Premium" = calm materials + one strong moment.
+- **The flood is one CSS property.** A fixed red layer with `clip-path: circle(0%)` grows to `circle(150%)` in 0.9 s. "The graphics card only changes which part of an already painted layer is visible, so even a cheap phone does it smoothly."
+- **Red is always dark.** `data-theme="dark"` on the red result switches every token inside it, so white words sit on deep red in both themes.
+- **The shield** is three SVG shapes with CSS animations: a ring that closes, one shockwave, the shield with „!“. Nothing loops afterwards.
+- **Vibration once:** `navigator.vibrate([200, 100, 200])`, guarded by a `useRef` (like a Python attribute that survives between calls), skipped with reduced motion.
+- **Logic untouched.** Only markup, CSS and motion changed; `questions.ts`, `upload.ts`, `sendAnswers.ts`, `voice.ts`, `callContact.ts`, `acknowledgement.ts` and their tests are the same. One small change: „Назад“ on the first question goes back home.
+
 ## For the defense
 
 Both of you should be able to explain sections 1, 4 and 5 for your own screens; the
