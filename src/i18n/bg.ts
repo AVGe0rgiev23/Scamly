@@ -1086,6 +1086,8 @@ export const bg = {
     bigButton: "Обаждат ми се за пари!",
     // A check can also start after the call has ended (brief 5.2 A).
     afterCall: "Обаждането вече приключи — искам да проверя",
+    // The quiet line under the big button, above „Обаждането вече приключи…“.
+    afterCallHint: "Можете да проверите и след като затворите.",
     // {name} = the first trusted contact with a phone, e.g. „Иван“ (a tel: link).
     callContact: "Обади се на {name}",
     // The questions (BUILD_PLAN 4.1), one per screen. {current} and {total} are numbers.
@@ -1135,6 +1137,10 @@ export const bg = {
     // phone computed the verdict itself and keeps sending the answers in the background.
     localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
     emergencyCallAdvice: "Ако сте в непосредствена опасност, обадете се на 112.",
+    // The small pill at the top of the result screen when a family member answers;
+    // it opens into a card with „Иван ще ви се обади веднага.“ and this hint.
+    familyIslandLabel: "Семейството отговори",
+    familyIslandHint: "Дръжте телефона до себе си.",
   },
   // The „Известия на телефона“ card on /family (W2-05, src/components/family/PushOptIn.tsx).
   pushOptIn: {

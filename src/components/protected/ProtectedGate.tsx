@@ -24,9 +24,9 @@ export function ProtectedLoading() {
       <p role="status" className="sr-only">
         {bg.common.loading}
       </p>
-      {/* The shapes of the big button and the second button. */}
-      <Skeleton className="min-h-[38svh] w-full rounded-lg" />
-      <Skeleton className="mt-4 h-16 w-full rounded-md" />
+      {/* The shapes of the big round button and the second button. */}
+      <Skeleton className="mx-auto mt-6 aspect-square w-[min(100%,26rem)] rounded-full" />
+      <Skeleton className="mt-6 h-16 w-full rounded-full" />
     </main>
   );
 }

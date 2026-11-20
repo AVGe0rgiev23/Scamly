@@ -10,6 +10,12 @@
 //     browser asks for the microphone at that moment.
 //   - We store and send no audio. The browser does the speech-to-text itself (Chrome
 //     uses Google's speech service for that); we only get the text.
+//
+// Look: a wide glass pill with the microphone in a disc. While listening, halo rings
+// flow out of the disc (a "waveform" made of rings), and every time new words arrive
+// one extra ring pulses, so the person sees that they are being heard. The browser's
+// API gives no sound level, so the rings follow the words, not the volume. CSS only
+// (protected.css .check-voice-*); still with reduced motion.
 "use client";
 
 import { Mic, Square } from "lucide-react";
@@ -128,26 +134,38 @@ export function VoiceInput({ enabled, disabled, onSpoken }: VoiceInputProps) {
       <Button
         variant="secondary"
         size="xl"
-        className={cn("self-start", listening && "border-accent bg-accent-bg")}
+        className={cn("check-voice w-full justify-start", listening && "border-ring")}
+        data-listening={listening || undefined}
         onClick={listening ? stop : start}
         disabled={disabled}
       >
-        {listening ? (
-          <Square className="size-6 shrink-0" aria-hidden="true" />
-        ) : (
-          <Mic className="size-6 shrink-0" aria-hidden="true" />
-        )}
+        <span className="check-voice-disc" aria-hidden="true">
+          {listening ? (
+            <span className="check-voice-rings">
+              <span />
+              <span />
+              <span />
+              {/* A new key for each new guess: this ring pulses once per new words. */}
+              <span key={interim} className="check-voice-blip" />
+            </span>
+          ) : null}
+          {listening ? (
+            <Square className="relative size-6 shrink-0" aria-hidden="true" />
+          ) : (
+            <Mic className="relative size-7 shrink-0" aria-hidden="true" />
+          )}
+        </span>
         <span>{listening ? bg.voice.stop : bg.voice.start}</span>
       </Button>
       {/* A live region: read aloud when it changes. Its height is reserved, so the
           buttons below do not jump when the text appears. */}
       <p
         role="status"
-        className={cn("min-h-[1.6em] text-lg", isError ? "font-medium text-danger-fg" : "text-fg")}
+        className={cn("min-h-[1.6em] text-xl", isError ? "font-medium text-danger-fg" : "text-fg")}
       >
         {status}
       </p>
-      <p className="text-sm text-fg-subtle">{bg.voice.privacyNote}</p>
+      <p className="text-base text-fg-muted">{bg.voice.privacyNote}</p>
     </div>
   );
 }
