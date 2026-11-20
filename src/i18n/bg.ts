@@ -872,6 +872,33 @@ export const bg = {
     listIntro:
       "Изберете човек, за да видите проверките му, свързания телефон и списъка с близки за обаждане.",
     addPerson: "Добави човек",
+    // Redesign v3 Phase 4: the small label above the title of /family, the link to
+    // the alert page and the facts on each person's card (from the API only).
+    homeEyebrow: "Семейно табло",
+    toAlerts: "Към сигналите",
+    lastCheck: "Последна проверка",
+    noChecksYet: "Още няма проверки",
+    // {n} = the number of paired phones that are still active.
+    devicesNone: "Няма свързан телефон",
+    devicesOne: "1 свързан телефон",
+    devicesMany: "{n} свързани телефона",
+    // The tabs of one person's page.
+    tabsLabel: "Раздели на профила",
+    tabChecks: "Проверки",
+    tabPhones: "Телефони",
+    tabContacts: "Близки",
+    tabSettings: "Настройки",
+    // The create form (/family/new): the two steps, the progress and the live preview
+    // of the fridge card. {n} = filled steps, {total} = all steps.
+    stepName: "Как го наричате",
+    stepDistrict: "Къде живее",
+    createProgress: "Попълнени стъпки: {n} от {total}",
+    previewTitle: "Картата за хладилника",
+    previewHint:
+      "Така ще изглежда картата, която можете да отпечатате и да залепите на хладилника.",
+    // {name} = the name typed in the form.
+    previewFor: "За {name}",
+    previewNobody: "За вашия близък",
     listLoading: "Зареждаме списъка…",
     emptyTitle: "Още нямате добавен човек",
     emptyText:
@@ -1051,6 +1078,10 @@ export const bg = {
     liveLost: "Връзката на живо прекъсна. Показваме новостите на всеки 5 секунди.",
     refreshFailed: "Не успяхме да обновим сигналите. Опитваме отново след малко.",
     listLabel: "Сигнали, най-новите първи",
+    // Redesign v3 Phase 4: the alert island at the top of the page and the list under it.
+    heroLabel: "Сигнали, които искат внимание",
+    historyTitle: "Всички сигнали",
+    riskLabel: "Риск",
     newBadge: "Нов сигнал",
     focusedBadge: "Сигналът от известието",
     focusNotFound:

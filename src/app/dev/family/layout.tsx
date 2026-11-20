@@ -10,6 +10,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { FamilyFrame } from "@/components/family/FamilyFrame";
+import "@/components/family/family.css";
 
 // Search engines should not list test pages.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
