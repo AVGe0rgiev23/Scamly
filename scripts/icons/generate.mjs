@@ -1,7 +1,11 @@
 // Makes the PNG app icons in public/icons/ from the SVG sources next to this file
-// (task W2-09), and src/app/favicon.ico from src/app/icon.svg (W4-04). Run it after changing an SVG: `npm run icons`.
-// Sources (redesign v3 „Ореол“, interim halo mark until Phase 2): icon.svg,
-// icon-maskable.svg, badge.svg here and src/app/icon.svg.
+// (task W2-09), and src/app/favicon.ico from favicon.svg (W4-04). Run it after
+// changing an SVG: `npm run icons`.
+// Sources (redesign v3 „Ореол“, final brand, Phase 2): the logo mark is drawn once in
+// logo.svg (and logo-small.svg for 20 px and below); icon.svg, icon-maskable.svg,
+// badge.svg and favicon.svg place that drawing on the app icon, the maskable icon,
+// the notification badge and the old-style favicon. src/app/icon.svg (the browser
+// tab) is served as it is and needs no PNG.
 //
 // How: Playwright's Chromium (already installed for our browser tests) opens each SVG
 // at the exact pixel size and takes a screenshot with a transparent background. So
@@ -42,7 +46,7 @@ try {
   // src/app/favicon.ico (W4-04): browsers ask for /favicon.ico by themselves, and a
   // 404 there shows up as an error in Lighthouse. An .ico file may simply contain a
   // PNG: a 6-byte header, one 16-byte directory entry, then the PNG bytes.
-  const svg = await readFile(join(here, "..", "..", "src", "app", "icon.svg"), "utf8");
+  const svg = await readFile(join(here, "favicon.svg"), "utf8");
   const page = await browser.newPage({ viewport: { width: 48, height: 48 } });
   await page.setContent(
     `<html><body style="margin:0;background:transparent">` +

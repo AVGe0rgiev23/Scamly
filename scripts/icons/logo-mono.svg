@@ -1,0 +1,11 @@
+<!-- Scamly logo mark, monochrome: the same drawing as logo.svg in one colour
+     (currentColor, black when the file is opened on its own). For print, a stamp, an
+     embossed surface or anywhere the gradient cannot be shown. Our own work, GPL-3.0. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" color="#000000">
+  <g fill="none" stroke="currentColor" stroke-linecap="round">
+    <circle cx="16" cy="16" r="13.6" stroke-width="2.4" pathLength="100" stroke-dasharray="54 46" transform="rotate(52.8 16 16)"/>
+    <circle cx="16" cy="16" r="9.6" stroke-width="2.4" pathLength="100" stroke-dasharray="77 23" transform="rotate(56.4 16 16)"/>
+    <circle cx="16" cy="16" r="5.6" stroke-width="2.6"/>
+  </g>
+  <circle cx="16" cy="16" r="2.4" fill="currentColor"/>
+</svg>
