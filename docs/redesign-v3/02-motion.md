@@ -4,7 +4,8 @@ Rules: motion only in small `"use client"` islands; only `transform`, `opacity`,
 `filter` and `clip-path` are animated (colours change with short CSS transitions);
 every effect can be explained in two sentences. Library: `motion` 14.14.0 (MIT,
 motion.dev), used only where a spring or a shared layout is needed (Tabs,
-DynamicIsland, NumberTicker). Everything else is CSS in `src/app/globals.css`.
+DynamicIsland, NumberTicker, the family's alert island). Everything else is CSS in
+`src/app/globals.css` and the screens' own CSS files.
 
 Tokens: `--ease-out cubic-bezier(.16,1,.3,1)`, `--ease-in-out cubic-bezier(.65,0,.35,1)`;
 `--dur-micro` 150 ms, `--dur-ui` 300 ms, `--dur-hero` 900 ms; springs
@@ -86,6 +87,30 @@ Reduced motion on the landing: no entrance (150 ms fade), no tilt, no blinking d
 | Vibration (not visual) | `CheckResult` | `navigator.vibrate([200, 100, 200])`, once per result, red only | felt even with the phone at the ear |
 
 Reduced motion on the protected flow: the flood colour is there at once, no shockwave, no breathing or voice rings, no vibration; steps, title, rise waves and reasons are 150 ms fades; the island opens at once.
+
+### Family area `/family/*` (Phase 4, `src/components/family/family.css`)
+
+| Animation | Where | How | Why it exists |
+| --- | --- | --- | --- |
+| Alert island grows | `AlertsPage` (`.family-island`) | motion `layout` (SPRING_UI): pill → full card 450 ms after it arrives; body fades in 300 ms after 100 ms | a new alert arrives like a live notification and then demands attention |
+| Island settles | same | the same layout spring shrinks the card to one calm line after „Обаждам ѝ се сега“; mint tick fades in | the emergency is visibly over, the page calms down |
+| Live dot ping | `.family-island-dot::after` | scale 1 → 3.2 + fade, 1.4 s, loops while shown | "this is happening now", in the verdict's colour |
+| Red halo pulse | `.family-island-pulse` (red only) | two rings scale .7 → 1.4 and fade, 2.4 s, half a cycle apart; plus `HaloRings` danger (closes once, then breathes) | the danger halo of the brand, around the risk arc |
+| Risk arc | `RiskMeter` in the island | needle + arc 1100 ms ease-out, number ticks up (existing primitive) | the score is measured, not printed |
+| Live icon blink | `.family-live-pill[data-live=on] svg` | opacity 1 ↔ .45, 2.4 s | the connection is alive |
+| Card lift | `.family-person:hover` | translateY −3 px, halo hairline on the top edge fades in, arrow moves 3 px up-right, 300 ms | the whole card is the link |
+| Push waves | `.family-push-wave` (off / on) | three circles scale .82 → 1.12 and fade, 3.6 s, 1.2 s apart | the phone "sends" an alert; mint when push is on |
+| Bell swing | `.family-push-bell` (off) | rotate 12° / −10° / 5° in the last 30 % of a 4 s loop | a quiet nudge to switch push on |
+| Tab pill | `Tabs` on the person page | existing shared-layout spring | shows which tab the content came from |
+| Digit flip | `.family-digit` | rotateX −95° → 0 + fade, 640 ms ease-out, 70 ms apart; again for every new code | the code arrives like a split-flap display, a new code is noticed |
+| Countdown bar | `.family-countdown > span` | scaleX(time left), 1 s linear per tick | the 10 minutes are seen, not only read |
+| QR scan line | `.family-qr::after` | a soft halo band translateY −100 % → 600 %, 3.2 s in-out loop | "point a camera here" |
+| Details chevron | `.family-chevron` | rotate 180°, 300 ms | open / closed at a glance |
+| Progress halo | `.family-progress-value` | stroke-dasharray 0 → share, 600 ms ease-out | each valid step fills the ring |
+| Step rail | `.family-step::before`, `.family-step-mark` | colour to the halo, 300 ms | a finished step is visibly done |
+| Fridge card | `.family-fridge` | rotate −1.5° → 0 on hover, 900 ms | a paper card held by a magnet |
+
+Reduced motion in the family area: the island opens and settles with a 150 ms fade (`REDUCED`); no pulse rings, ping, waves, bell, blink or scan line; digits fade in (150 ms) instead of flipping; no card lift; countdown bar, progress ring, chevron and fridge card jump.
 
 ## Reduced motion (`prefers-reduced-motion: reduce`)
 

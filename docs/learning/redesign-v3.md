@@ -35,7 +35,8 @@ Short notes for the defense. Details: `docs/redesign-v3/` and `docs/HOW_IT_WORKS
 ## 3. How `motion` works
 
 - `motion` is a React animation library (MIT). We use it only for three things: the
-  sliding Tabs pill, the DynamicIsland (pill grows into a card) and NumberTicker.
+  sliding Tabs pill, the DynamicIsland (pill grows into a card) and NumberTicker. The
+  family's alert island (Phase 4) is built the same way as DynamicIsland.
 - **Springs** instead of fixed durations: the movement behaves like a weight on a spring
   (stiffness, damping in `src/components/ui/motion.ts`), so it stops naturally and can be
   interrupted.
@@ -78,6 +79,15 @@ Short notes for the defense. Details: `docs/redesign-v3/` and `docs/HOW_IT_WORKS
 - **The shield** is three SVG shapes with CSS animations: a ring that closes, one shockwave, the shield with „!“. Nothing loops afterwards.
 - **Vibration once:** `navigator.vibrate([200, 100, 200])`, guarded by a `useRef` (like a Python attribute that survives between calls), skipped with reduced motion.
 - **Logic untouched.** Only markup, CSS and motion changed; `questions.ts`, `upload.ts`, `sendAnswers.ts`, `voice.ts`, `callContact.ts`, `acknowledgement.ts` and their tests are the same. One small change: „Назад“ on the first question goes back home.
+
+## 8. The family area and the alert island (Phase 4)
+
+- **Who it is for.** An adult child, often abroad, glancing at a phone between meetings: a calm dashboard where the one urgent thing is impossible to miss.
+- **The island is one box.** Pill, big card and calm line are the same `motion.div` with `layout`: motion measures the old and the new size and animates between them with a spring (transform only). "The alert grows when it needs you and shrinks when someone has answered."
+- **Two lists, one hook.** Alerts that need attention go into the island list, the rest into the timeline; both are `ol.check-list`, so the tests and screen readers count them the same way.
+- **Tabs keep their panels.** Hidden, not removed: the contact draft and the pairing countdown survive a tab switch (like keeping a Python object alive instead of creating it again).
+- **Facts only from the API.** The person cards ask the existing endpoints (`/api/checks?personId=…`, `/api/persons/:id`) in parallel with `Promise.all` (like `asyncio.gather`); nothing is invented.
+- **Logic untouched.** `api.ts`, `alerts.ts`, `alertSound.ts`, `format.ts`, `pushState.ts`, `qr.ts`, `preview.ts` and their tests are the same; only markup, CSS and motion changed.
 
 ## For the defense
 

@@ -9,9 +9,12 @@
 // Why ↑ / ↓ buttons and not drag and drop: buttons work with a keyboard, a screen
 // reader and a shaky finger, and need no extra library (docs/WHY_WE_CHOSE.md).
 //
-// Look: hairline-separated rows (`.contact-list > li`), each with its place as a big
-// number in the data font, the name, the phone in the data font, ↑ / ↓ icon buttons
-// with a tooltip, and „Премахни“ as a quiet ghost button.
+// Look (Redesign v3 Phase 4, family.css): an editable list of glass cards
+// (`.contact-list > li`), joined by a thin halo line on the left, each with its place
+// as a number in a small halo disc, the name, the phone in the data font, ↑ / ↓ icon
+// buttons with a tooltip and „Премахни“ as a quiet ghost button. The add form is a
+// dashed "empty slot" card under the list. (The AvatarStack of the same order is in
+// the page head, PersonDashboard.)
 "use client";
 
 import { ArrowDown, ArrowUp, Phone, UserPlus } from "lucide-react";
@@ -98,16 +101,15 @@ export function ContactsEditor({ personId, contacts, canEdit, onSaved }: Contact
 }
 
 // The place number at the start of a row (the words „Място N“ are for screen readers).
-const PLACE_NUMBER =
-  "tabular w-8 shrink-0 pt-1 font-mono text-xl font-semibold leading-none text-fg-subtle";
-const ROW = "flex gap-3 border-b border-line py-5 sm:gap-4";
+const PLACE_NUMBER = "family-place tabular font-mono";
+const ROW = "family-contact";
 
 function ContactsReadOnly({ contacts }: { contacts: ContactDto[] }) {
   const sorted = [...contacts].sort((a, b) => a.priority - b.priority);
   return (
     <>
       <p className="max-w-[60ch] text-fg-muted">{bg.family.contactsIntro}</p>
-      <ol className="contact-list mt-4 border-t border-line">
+      <ol className="contact-list family-contacts mt-5">
         {sorted.map((contact) => (
           <li key={contact.id} className={ROW}>
             <span className={PLACE_NUMBER} aria-hidden="true">
@@ -118,10 +120,7 @@ function ContactsReadOnly({ contacts }: { contacts: ContactDto[] }) {
               <p className="font-semibold text-fg">{contact.displayName}</p>
               <p className="mt-1">
                 {contact.phone ? (
-                  <a
-                    href={`tel:${contact.phone}`}
-                    className="tabular inline-flex min-h-11 items-center gap-2 font-mono text-accent underline underline-offset-4"
-                  >
+                  <a href={`tel:${contact.phone}`} className="family-tel tabular font-mono">
                     <Phone className="size-5" aria-hidden="true" />
                     {contact.phone}
                   </a>
@@ -256,7 +255,7 @@ function ContactsForm({
   return (
     <div className="flex flex-col items-start gap-4">
       <p className="max-w-[60ch] text-fg-muted">{bg.family.contactsIntro}</p>
-      <ol className="contact-list w-full border-t border-line">
+      <ol className="contact-list family-contacts w-full">
         {draft.map((row, index) => (
           <li key={row.key} className={ROW}>
             <span className={PLACE_NUMBER} aria-hidden="true">
@@ -401,10 +400,13 @@ function AddContactForm({
     <form
       noValidate
       onSubmit={submit}
-      className="contact-add flex w-full flex-col gap-4 rounded-lg border border-line bg-surface-1 p-5"
+      className="contact-add family-add flex w-full flex-col gap-4"
     >
       <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-4">
-        <legend className="mb-4 font-display text-lg font-semibold">
+        <legend className="mb-4 inline-flex items-center gap-3 font-display text-lg font-semibold">
+          <span className="family-place family-place-new tabular font-mono" aria-hidden="true">
+            {nextPlace}
+          </span>
           {bg.family.addContactTitle}
         </legend>
         <TextField

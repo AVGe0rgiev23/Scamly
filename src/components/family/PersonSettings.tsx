@@ -1,14 +1,15 @@
 // „Име и област“ (owner only): rename the person or change the district
 // (PATCH /api/persons/:id), and delete the person with all their data
 // (DELETE /api/persons/:id) after a clear „Да изтрием ли…?“ window.
-// Look: one column of fields; the delete part sits at the bottom behind a hairline,
-// its trigger is a secondary button and only the button inside the window is red.
+// Look (Redesign v3 Phase 4, family.css): the fields on a glass panel; the delete part
+// comes last as the "danger zone", a red-tinted glass panel with a red light in its
+// corner. Its trigger is a secondary button; only the button inside the window is red.
 "use client";
 
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { ROUTES } from "@/config/routes";
-import { Trash2 } from "lucide-react";
+import { Trash2, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { bg } from "@/i18n/bg";
@@ -75,7 +76,12 @@ export function PersonSettings({ person, onUpdated }: PersonSettingsProps) {
 
   return (
     <>
-      <form noValidate onSubmit={save} aria-busy={pending} className="flex flex-col gap-4">
+      <form
+        noValidate
+        onSubmit={save}
+        aria-busy={pending}
+        className="family-glass flex flex-col gap-4"
+      >
         <fieldset disabled={pending} className="flex min-w-0 flex-col gap-5">
           <TextField
             id="settings-name"
@@ -110,8 +116,11 @@ export function PersonSettings({ person, onUpdated }: PersonSettingsProps) {
         <FormMessage notice={notice} id={errorId} />
       </form>
 
-      <div className="mt-10 border-t border-line pt-6">
-        <h3 className="text-lg font-semibold">{bg.family.deleteTitle}</h3>
+      <div className="family-danger mt-8">
+        <h3 className="flex items-center gap-2.5 text-lg font-semibold">
+          <TriangleAlert className="size-5 text-danger-fg" aria-hidden="true" />
+          {bg.family.deleteTitle}
+        </h3>
         <p className="mt-2 max-w-[60ch] text-fg-muted">{bg.family.deleteText}</p>
         <Button
           variant="secondary"

@@ -127,6 +127,14 @@ async function mockPerson(page: Page, isOwner: boolean, checks = CHECKS_PAGE_1) 
   );
 }
 
+// The person page has tabs (Проверки / Телефони / Близки / Настройки); the other
+// panels stay in the page but hidden, so a test opens the tab it needs first.
+async function openTab(page: Page, label: string) {
+  const tab = page.getByRole("tab", { name: new RegExp(`^${label}`) });
+  await tab.click();
+  await expect(tab).toHaveAttribute("aria-selected", "true");
+}
+
 async function fitsScreen(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 }
@@ -240,6 +248,7 @@ test("the owner reorders the contacts with ↑ and saves the whole list", async 
     },
   );
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabContacts);
   const save = page.getByRole("button", { name: bg.family.saveContacts });
   await expect(save).toBeDisabled(); // nothing changed yet
 
@@ -265,6 +274,7 @@ test("the owner reorders the contacts with ↑ and saves the whole list", async 
 test("a new contact needs a phone number before it is added", async ({ page }) => {
   await mockPerson(page, true);
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabContacts);
   const form = page.locator("form.contact-add");
   await form.getByLabel(bg.family.contactName).fill("Петя");
   await form.getByRole("button", { name: bg.family.addContactButton }).click();
@@ -283,6 +293,9 @@ test("a trusted contact sees everything read-only", async ({ page }) => {
   await page.goto("/dev/family/person");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Баба Елена");
   await expect(page.getByText(bg.family.readOnlyNote)).toBeVisible();
+  // A trusted contact has no „Настройки“ tab.
+  await expect(page.getByRole("tab", { name: bg.family.tabSettings })).toHaveCount(0);
+  await openTab(page, bg.family.tabContacts);
   await expect(page.getByRole("link", { name: "+359888123456" })).toHaveAttribute(
     "href",
     "tel:+359888123456",
@@ -312,6 +325,7 @@ test("the pairing code is shown big, with a QR code and a 10-minute countdown", 
     },
   );
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabPhones);
   await page.getByRole("button", { name: bg.family.pairingButton, exact: true }).click();
 
   await expect(page.locator(".pairing-code")).toContainText("482 915");
@@ -343,6 +357,7 @@ test("removing a phone asks first and sends DELETE only after „Да, прем�
     },
   );
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabPhones);
   await expect(page.getByText(DEVICE.label)).toBeVisible();
   const remove = page.getByRole("button", { name: `Премахни ${DEVICE.label}`, exact: true });
 
@@ -424,8 +439,12 @@ test("no sideways scrolling at 360 px on every family page", async ({ page }) =>
     expect(await fitsScreen(page)).toBe(true);
   }
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabPhones);
   await page.getByRole("button", { name: bg.family.pairingButton, exact: true }).click();
   await expect(page.locator(".pairing-code")).toContainText("482 915");
+  expect(await fitsScreen(page)).toBe(true);
+  // The pairing code survives a tab switch (the panels stay mounted, only hidden).
+  await openTab(page, bg.family.tabChecks);
   await page
     .locator(".check-list > li")
     .first()
@@ -433,8 +452,14 @@ test("no sideways scrolling at 360 px on every family page", async ({ page }) =>
     .click();
   await expect(page.getByText(bg.engine.reasons.money)).toBeVisible();
   expect(await fitsScreen(page)).toBe(true);
-  // Large tap targets: every button on the page is at least 48 px high.
-  for (const button of await page.getByRole("main").getByRole("button").all()) {
+  // Large tap targets: every button and tab on the page is at least 48 px high.
+  const targets = [
+    ...(await page.getByRole("main").getByRole("button").all()),
+    ...(await page.getByRole("main").getByRole("tab").all()),
+  ];
+  for (const button of targets) {
     expect((await button.boundingBox())?.height).toBeGreaterThanOrEqual(48);
   }
+  await openTab(page, bg.family.tabPhones);
+  await expect(page.locator(".pairing-code")).toContainText("482 915");
 });

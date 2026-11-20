@@ -1126,6 +1126,46 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why:** one dot per question is how people count; the current dot is bigger with a halo ring, so "you are here" is never only a colour.
 
+### A Dynamic Island for a new alert (vs a toast, vs a modal)  (status: in use since redesign v3 Phase 4, `src/components/family/AlertsPage.tsx`)
+
+**What it is:** on `/family/alerts` an alert that needs attention arrives as a small pill at the top of the list and grows (one `motion` layout box, spring) into a big card with the halo, the risk arc, the caller's claim and „Обаждам ѝ се сега“; once somebody answers it settles into one calm line.
+
+| Option | For | Against |
+|---|---|---|
+| **Dynamic Island in the page (chosen)** | Arrives like a phone's live notification (people know the gesture); the card is part of the page, so `?check=` focus, Tab order, the list counts and the live region work as before; it can stay big as long as nobody has answered and shrink when someone has | Needs `motion` (already loaded for the header and Tabs) |
+| A toast | Familiar, small | Disappears by itself: an alert about a scam must not vanish while the person looks away; too small for the risk arc and a 72 px button |
+| A modal dialog | Impossible to miss | Steals focus and blocks the page; two alerts at once would stack windows; a screen reader user loses their place; feels like an error, not news |
+
+**Why:** the moment must be loud and still respectful: big while it needs a person, calm once it doesn't. The pill → card → line change is one box changing size, so the eye follows it.
+
+### A timeline with halo nodes (vs a table)  (status: in use since redesign v3 Phase 4, `CheckHistory.tsx`, `AlertsPage.tsx`, `family.css`)
+
+| Option | For | Against |
+|---|---|---|
+| **Vertical timeline, one coloured halo node per check (chosen)** | Reads top to bottom like a story ("what happened, then what"); the node colour plus the badge word shows the verdict at a glance; each card can open its details in place; works the same at 360 px | Less dense than a table on a wide screen |
+| A table (time / verdict / caller / answered) | Dense, sortable | At 360 px it scrolls sideways or squeezes words; details have nowhere to open; looks like an admin report, not a family's view |
+
+**Why:** a family member checks "what happened to mum today", not statistics. The colour is never alone: the badge always has an icon and a word, and green never says „безопасно“ (D9).
+
+### A flip-reveal pairing code (vs plain big digits)  (status: in use since redesign v3 Phase 4, `PairingPanel.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **Six digit tiles that turn over one by one (chosen)** | The code "arrives" like a split-flap display, so a new code („Нов код“) is noticed; one tile per digit makes 6 digits easy to read aloud and type; only `transform` and `opacity` (cheap) | A little more markup; the test reads the text, so a hidden space keeps „482 915“ |
+| Plain big digits in two groups | Simplest | A new code looks the same as the old one, so a person may type the expired one |
+
+**Why:** the code is the one thing the family member must copy to grandma's phone. With reduced motion the tiles only fade in; screen readers always get „4 8 2 9 1 5“.
+
+### Tabs that keep every panel mounted (vs one long page, vs separate routes)  (status: in use since redesign v3 Phase 4, `PersonDashboard.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **Tabs, every panel mounted and only `hidden` (chosen)** | Short page; a half-edited contact list and a running pairing countdown survive a tab switch; one load of the person's data; the tab is kept in the address (`#telefoni`) | All panels' DOM exists (small here) |
+| One long page (before) | Everything visible | Pairing, contacts, invite and delete all on one scroll; the danger zone sat next to everyday tasks |
+| One route per tab | Real URLs | A new load per tab and lost unsaved edits |
+
+**Why:** each tab is one job; the danger zone lives last, inside „Настройки“, in red-tinted glass.
+
 ### Our own design system "Signal"  (status: replaced by D28 „Ореол“ on 19 Nov; kept here as history)
 
 **Used for:** every screen: the tokens in `src/app/globals.css`, the components in `src/components/ui/`, the gallery `/dev/ui`. Details: `docs/redesign/03-design-system.md`.
@@ -2878,6 +2918,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-20 · redesign v3 Phase 4 (the family area and the live alert island): new entries "A Dynamic Island for a new alert", "A timeline with halo nodes", "A flip-reveal pairing code", "Tabs that keep every panel mounted".
 - 2026-11-20 · redesign v3 Phase 3 (the protected flow and the verdict moment): new entries "A clip-path flood for the verdict", "Vibrate once on red", "Halo dots for the progress".
 - 2026-11-20 · redesign v3 Phase 2A (landing page): new entries "Scroll-driven sticky storytelling", "Our own SVG line illustrations", "The landing demo runs the real engine".
 - 2026-11-03 · created

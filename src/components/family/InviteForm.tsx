@@ -3,8 +3,9 @@
 // own account, and from then on sees this person and gets the alerts.
 // The token in the link is shown only this once (the server stores only its hash),
 // so the page offers a copy button and says when the link stops working.
-// Look: one column of fields; the new link appears below in a quiet panel, in the
-// data font, with „Копирай връзката“ next to it.
+// Look (Redesign v3 Phase 4, family.css): the fields on a glass panel; the new link
+// appears under it as a "ticket" — a glass card with a halo edge, the link in the
+// data font, a dashed tear line, then when it expires and „Копирай връзката“.
 "use client";
 
 import { Copy, Send } from "lucide-react";
@@ -86,7 +87,7 @@ export function InviteForm({ personId, contactCount }: { personId: string; conta
         noValidate
         onSubmit={submit}
         aria-busy={pending}
-        className="flex max-w-lg flex-col gap-4"
+        className="family-glass flex flex-col gap-4"
       >
         <fieldset disabled={pending} className="flex min-w-0 flex-col gap-5">
           <TextField
@@ -123,7 +124,7 @@ export function InviteForm({ personId, contactCount }: { personId: string; conta
       </form>
 
       {invite ? (
-        <div className="appear flex flex-col gap-3 rounded-lg border border-line bg-surface-1 p-5">
+        <div className="family-ticket appear flex flex-col gap-3">
           <Field label={bg.family.inviteLinkLabel} htmlFor={linkId}>
             <Input
               id={linkId}
@@ -134,6 +135,7 @@ export function InviteForm({ personId, contactCount }: { personId: string; conta
               onFocus={(event) => event.target.select()}
             />
           </Field>
+          <hr className="family-ticket-tear" aria-hidden="true" />
           <p className="text-sm text-fg-muted">
             {fill(bg.family.inviteExpires, { time: formatDateTime(invite.expiresAt) })}
           </p>

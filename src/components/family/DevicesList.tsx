@@ -2,8 +2,10 @@
 // The owner can remove („Премахни“) a phone, e.g. a lost one, after a clear
 // confirmation window: DELETE /api/devices/:id deletes the phone's account, so its
 // very next request is refused. Trusted contacts see the list without the button.
-// Look: hairline-separated rows; the state is a StatusPill (icon + word); the remove
-// trigger is a ghost button, the red button exists only inside the confirmation.
+// Look (Redesign v3 Phase 4, family.css): each phone is a small glass card with a
+// drawn phone in a halo disc (mint glow while active, grey when removed), its name,
+// when it was paired, the state as a StatusPill (icon + word) and the remove trigger
+// as a ghost button; the red button exists only inside the confirmation.
 "use client";
 
 import { RefreshCw, Smartphone } from "lucide-react";
@@ -69,34 +71,36 @@ export function DevicesList({ personId, devices, canEdit, onChange }: DevicesLis
       {devices.length === 0 ? (
         <EmptyState text={bg.family.devicesEmpty} className="w-full" />
       ) : (
-        <ul className="w-full border-t border-line">
+        <ul className="family-devices w-full">
           {devices.map((device) => (
-            <li
-              key={device.id}
-              className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-4"
-            >
-              <Smartphone className="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
-              <div className="min-w-0 flex-1 basis-40">
+            <li key={device.id} className="family-device" data-revoked={device.revoked}>
+              <span className="family-device-icon" aria-hidden="true">
+                <Smartphone className="size-6" />
+              </span>
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold text-fg">{nameOf(device)}</p>
-                <p className="tabular text-sm text-fg-muted">
+                <p className="tabular mt-0.5 text-sm text-fg-muted">
                   {fill(bg.family.devicePairedAt, { time: formatDateTime(device.pairedAt) })}
                 </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <StatusPill status={device.revoked ? "neutral" : "safe"}>
+                    {device.revoked ? bg.family.deviceRevoked : bg.family.deviceActive}
+                  </StatusPill>
+                  {canEdit && !device.revoked ? (
+                    <Button
+                      variant="ghost"
+                      className="ml-auto"
+                      aria-label={fill(bg.family.revokeLabel, { name: nameOf(device) })}
+                      onClick={() => {
+                        setDialogError(null);
+                        setToRevoke(device);
+                      }}
+                    >
+                      {bg.family.revokeButton}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-              <StatusPill status={device.revoked ? "neutral" : "safe"}>
-                {device.revoked ? bg.family.deviceRevoked : bg.family.deviceActive}
-              </StatusPill>
-              {canEdit && !device.revoked ? (
-                <Button
-                  variant="ghost"
-                  aria-label={fill(bg.family.revokeLabel, { name: nameOf(device) })}
-                  onClick={() => {
-                    setDialogError(null);
-                    setToRevoke(device);
-                  }}
-                >
-                  {bg.family.revokeButton}
-                </Button>
-              ) : null}
             </li>
           ))}
         </ul>

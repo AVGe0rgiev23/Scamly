@@ -525,6 +525,43 @@ The older person's phone (the call check, 3.33) gets the Ореол look. Who it
 
 `tests/e2e/protected.spec.ts` (now 10 tests × 2 screens): the whole flow, Q3 only after „Да“, red with HR1, exact D9 green and no „безопас“, offline fallback, slow server, the family message, 360 px with every target ≥ 64 px and the verdict call button ≥ 72 px, plus three new tests: „Назад“ on the first question goes home; red floods (`animation-name: check-flood`) and vibrates **once** `[200, 100, 200]` even when the server verdict replaces the local one; with reduced motion the flood has no animation and nothing vibrates. `voice.spec.ts` (4 × 2) is unchanged. Screenshots: `docs/evidence/redesign-v3/phase-3/` (Pixel 5, 360 × 740, 1440 × 900; Night and Porcelain).
 
+### 3.7.4 The family area `/family/*` and the live alert island (redesign v3 „Ореол“, Phase 4)
+
+#### What it does
+
+The family member's pages (an adult son or daughter, often abroad) get the Ореол look of a calm, dense dashboard. The **live alert is the hero moment**. Only markup, CSS and motion changed: every request, the Realtime watch with its safety poll, the focus handling, the live regions, the validation and the sound opt-in are the same code as before (3.28–3.32).
+
+| Screen | What you see |
+|---|---|
+| Home `/family` | An eyebrow „Семейно табло“, the title, „Добави човек“ (primary) and „Към сигналите“. Each person is a **glass card**: the initials in a halo ring (the ring takes the colour of the last verdict), the name (the link covers the card), district and role, then two facts from our API only: the **last check** (verdict badge + time) and **how many phones** are paired. Under the cards the **push banner** (`PushOptIn`): our own drawing of a phone with a bell and halo waves (mint when on, amber when blocked, still when unavailable), the state pill, one sentence and the button or the iPhone steps. |
+| Alerts `/family/alerts` | A glass toolbar (live / every 5 s pill, „Включи звук и вибрация“). Then the **alert island**: an alert that needs attention arrives as a small pill („Нов сигнал: Дядо Петър проверява съмнително обаждане.“) and after 450 ms grows into a big card: „ТОВА Е ИЗМАМА.“ and the time, a **pulsing red halo** (`HaloRings` danger + two rings going out) around the **risk arc** (`RiskMeter`), the name, the verdict badge, who the caller claimed to be as a quote, and a huge „Обаждам ѝ се сега“ (72 px). Red is always dark (like the older person's red verdict). After somebody answers, the card **settles into one calm line** with a mint tick („Вие поехте обаждането.“). Under it „Всички сигнали“: a **timeline** with a coloured halo node per alert. |
+| Person `/family/[personId]` | A head with the initials in a big halo ring, the name, district, role, the call order as an `AvatarStack` and the number of paired phones. **Tabs** with the sliding pill: **Проверки** (the history as a timeline with halo nodes; details open on a sunken panel), **Телефони** (the pairing code on a glass slab: six digit tiles that **flip** in one by one, a halo countdown bar, the QR in a frame with corner marks and a **scan line**; the phones as small device cards with „Премахни“ behind the confirm dialog), **Близки** (the call order as an editable list of glass cards with ↑ / ↓, the first place in the primary colour, the add form as a dashed "empty slot"; the invite form and the link as a "ticket"), **Настройки** (owner only: name and district, then the **danger zone** in red-tinted glass). On a narrow phone the four tabs form a 2 × 2 grid. |
+| New person `/family/new` | Two numbered **steps** on a rail (1 „Как го наричате“, 2 „Къде живее“), a **progress halo** that fills as each step becomes valid, „Добави“ as the last stop, and a live **preview of the fridge card** (paper, always light) with the typed name and district on top. |
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/components/family/family.css` | All styles of the area; every class starts with `.family-`. Imported only by `src/app/family/layout.tsx` and `src/app/dev/family/layout.tsx`. |
+| `FamilyFrame.tsx` | The `<main>` with a soft aurora behind the top, and `FamilyHeader` (eyebrow, title, intro, actions) shared by the pages. |
+| `PeopleList.tsx` | One `PersonCard` per person; each card asks `GET /api/checks?personId=…` (the newest item) and `GET /api/persons/:id` (its `devices`) at the same time (`Promise.all`, like `asyncio.gather`). If they fail, the card leaves the facts out; the name and link always work. |
+| `AlertsPage.tsx` | The same watch as before. New: the alerts that need attention (a new one, the one from `?check=`, or the newest unanswered one of the first load) are drawn in the island list, the rest in the timeline. Both are `ol.check-list`, so `.check-list > li`, `#alert-<id>`, `.alert-new`, `.alert-focused` and `.alerts > [role=status]` stay. The island is a `motion.div` with `layout`: pill → card → calm line are three sizes of one box, animated with a spring (`SPRING_UI`). |
+| `PersonDashboard.tsx` | `Tabs` + one panel per tab. Every panel stays mounted and is only `hidden`, so a half-edited contact list or a running pairing countdown survives a tab switch. The tab is kept in the address (`#proverki`, `#telefoni`, `#blizki`, `#nastroyki`). |
+| `CheckHistory.tsx`, `ContactsEditor.tsx`, `DevicesList.tsx`, `PairingPanel.tsx`, `PersonSettings.tsx`, `InviteForm.tsx`, `PushOptIn.tsx` | New markup and classes only. The pairing digits are one `<span>` each with `--i` for the flip delay; the `key` is the code, so a new code flips again; screen readers still get „4 8 2 9 1 5“. The pairing slab uses a CSS **container query**: code and QR sit side by side only when the panel itself is wide enough. |
+| `CreatePersonForm.tsx` | The same Zod check on submit. Two small states (`name`, `district`) only feed the progress halo and the preview; a step is "done" when its field passes the same schema field the API uses. |
+
+- **Reduced motion.** The island opens at once (150 ms fade instead of the spring); no red pulse rings, no ping on the dot, no scan line, no push waves or bell; the digits fade in instead of flipping; cards do not lift; the countdown bar and the progress ring jump.
+- **Themes.** Everything uses the tokens; the red island and the fridge preview set their own `data-theme` (dark / light), the same trick as the red verdict (3.7.3).
+
+#### Why it works like that
+
+- Comparisons in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md): "A Dynamic Island for a new alert (vs a toast, vs a modal)", "A timeline with halo nodes (vs a table)", "A flip-reveal pairing code (vs plain big digits)", "Tabs that keep every panel mounted (vs one long page, vs separate routes)".
+- Motion lines: `docs/redesign-v3/02-motion.md`, "Family area".
+
+#### How we know it works
+
+`tests/e2e/family.spec.ts`, `alerts.spec.ts`, `push-optin.spec.ts`, `invite.spec.ts`, `pwa.spec.ts` keep every hook and role. `family.spec.ts` now opens the tab it needs first (`openTab`), checks that a trusted contact has no „Настройки“ tab, that every button **and tab** at 360 px is at least 48 px, and that the pairing code survives a tab switch. Screenshots: `docs/evidence/redesign-v3/phase-4/` (1440 × 900 and Pixel 5, Night and Porcelain).
+
 ### 3.8 Generated database types: `src/types/database.ts`
 
 #### What it does
@@ -3017,3 +3054,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-19 · section 3.7 rewritten for the design system v3 „Ореол“ (D28; the v2 „Signal“ text is replaced): tokens and themes, theme script, light and glass, primitives, HaloField with `HaloFieldLazy`, fallbacks and performance guard, motion and reduced motion; status row updated
 - 2026-11-19 · new section 3.7.1 (redesign v3 Phase 2): floating glass header with the spotlight menu and the „Провери обаждане“ pill, scroll state with a CSS scroll timeline, phone dock with labelled icons (hidden on the protected flow), new footer, skip link, the final halo logo (`HaloLogo`), brand assets from `scripts/icons/` and the v3 Open Graph picture; 3.38 icon lines updated
 - 2026-11-20 · new section 3.7.3 (redesign v3 Phase 3): the protected flow `/protected` and the verdict moment (round button with a CSS halo, halo dots, our own answer icons, voice rings, clip-path flood, shield emblem, vibration once, family Dynamic Island, „Помощ“ button, reduced motion, why no shader); 3.33 updated (round button, icons)
+- 2026-11-20 · new section 3.7.4 (redesign v3 Phase 4): the family area `/family/*` (person cards with facts from the API, push banner with our own drawing, alert island pill → card → calm line with the pulsing halo and risk arc, timeline with halo nodes, tabs that keep panels mounted, flip-reveal pairing code and scanning QR frame, device cards, danger zone, stepped create form with a progress halo and the fridge-card preview, reduced motion).
