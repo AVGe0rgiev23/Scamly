@@ -1,6 +1,7 @@
 // A small verdict label for lists (e.g. the family's check history): the same
-// colours as <Verdict />, with an icon and a short word, so the level is never shown
-// by colour alone. `null` = the check was started but not answered yet.
+// colours as <Verdict />, as a pill with an icon and a short word, so the level is
+// never shown by colour alone. `null` = the check was started but not answered yet.
+// The class "verdict-badge" is a hook for the browser tests.
 
 import { Clock } from "lucide-react";
 import { bg } from "@/i18n/bg";

@@ -1,6 +1,7 @@
-// Skeletons: grey shapes with the size of the content that is still loading, so the
-// page does not jump when the content arrives. Hidden from screen readers; the
-// component that shows them also has a role="status" text („Зареждане…“).
+// Skeletons: soft shapes with the size of the content that is still loading, so the
+// page does not jump when the content arrives. A slow, wide band of light shimmers
+// across them (globals.css .skeleton). Hidden from screen readers; the component
+// that shows them also has a role="status" text („Зареждане…“).
 
 import { cn } from "./cn";
 
@@ -12,38 +13,41 @@ export function Skeleton({ className }: { className?: string }) {
 // Lines of text; the last one is shorter, like a real paragraph.
 export function SkeletonText({ lines = 3, className }: { lines?: number; className?: string }) {
   return (
-    <span className={cn("flex flex-col gap-2.5", className)} aria-hidden="true">
+    <span className={cn("flex flex-col gap-3", className)} aria-hidden="true">
       {Array.from({ length: lines }, (_, index) => (
         <span
           key={index}
-          className={cn("skeleton block h-4", index === lines - 1 ? "w-3/5" : "w-full")}
+          className={cn(
+            "skeleton block h-4 rounded-full",
+            index === lines - 1 ? "w-3/5" : "w-full",
+          )}
         />
       ))}
     </span>
   );
 }
 
-// A list row: a round mark, two lines and a small label on the right.
+// A list row: a round mark, two lines and a small pill on the right.
 export function SkeletonRow({ className }: { className?: string }) {
   return (
-    <span
-      className={cn("flex items-center gap-4 border-b border-line py-4", className)}
-      aria-hidden="true"
-    >
-      <span className="skeleton block size-10 shrink-0 rounded-full" />
-      <span className="flex flex-1 flex-col gap-2">
-        <span className="skeleton block h-4 w-2/5" />
-        <span className="skeleton block h-3.5 w-3/5" />
+    <span className={cn("flex items-center gap-4 py-4", className)} aria-hidden="true">
+      <span className="skeleton block size-11 shrink-0 rounded-full" />
+      <span className="flex flex-1 flex-col gap-2.5">
+        <span className="skeleton block h-4 w-2/5 rounded-full" />
+        <span className="skeleton block h-3.5 w-3/5 rounded-full" />
       </span>
-      <span className="skeleton block h-6 w-20" />
+      <span className="skeleton block h-7 w-20 rounded-full" />
     </span>
   );
 }
 
-// Several rows under each other (people, alerts, reports, users).
+// Several rows under each other (people, alerts, reports, users), on one panel.
 export function SkeletonList({ rows = 3, className }: { rows?: number; className?: string }) {
   return (
-    <span className={cn("block", className)} aria-hidden="true">
+    <span
+      className={cn("surface-raised block divide-y divide-line rounded-lg px-5", className)}
+      aria-hidden="true"
+    >
       {Array.from({ length: rows }, (_, index) => (
         <SkeletonRow key={index} />
       ))}
@@ -55,36 +59,33 @@ export function SkeletonList({ rows = 3, className }: { rows?: number; className
 export function SkeletonCard({ className }: { className?: string }) {
   return (
     <span
-      className={cn("block rounded-lg border border-line bg-surface-1 p-6", className)}
+      className={cn("surface-raised block rounded-lg p-6 md:p-8", className)}
       aria-hidden="true"
     >
-      <span className="skeleton mb-4 block h-6 w-1/3" />
+      <span className="skeleton mb-5 block h-6 w-1/3 rounded-full" />
       <SkeletonText lines={3} />
     </span>
   );
 }
 
-// A bar chart: bars of different heights on a base line.
+// A bar chart: rounded bars of different heights.
 export function SkeletonChart({ className }: { className?: string }) {
   const heights = ["h-10", "h-20", "h-14", "h-28", "h-16", "h-24", "h-12", "h-20", "h-8", "h-16"];
   return (
-    <span
-      className={cn("flex h-32 items-end gap-2 border-b border-line", className)}
-      aria-hidden="true"
-    >
+    <span className={cn("flex h-32 items-end gap-2", className)} aria-hidden="true">
       {heights.map((height, index) => (
-        <span key={index} className={cn("skeleton block flex-1 rounded-b-none", height)} />
+        <span key={index} className={cn("skeleton block flex-1", height)} />
       ))}
     </span>
   );
 }
 
-// The risk meter and the signal line while a verdict is being computed.
+// The risk gauge while a verdict is being computed: a half ring and a number.
 export function SkeletonMeter({ className }: { className?: string }) {
   return (
-    <span className={cn("flex flex-col gap-3", className)} aria-hidden="true">
-      <span className="skeleton block h-8 w-28" />
-      <span className="skeleton block h-3 w-full" />
+    <span className={cn("flex flex-col items-center gap-3", className)} aria-hidden="true">
+      <span className="skeleton block h-24 w-48 rounded-t-full rounded-b-none" />
+      <span className="skeleton block h-4 w-28 rounded-full" />
     </span>
   );
 }

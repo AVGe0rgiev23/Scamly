@@ -4,7 +4,6 @@
 
 import { ArrowLeft } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
-import { SignalLine } from "@/components/ui/SignalLine";
 import { bg } from "@/i18n/bg";
 
 export default function NotFoundPage() {
@@ -14,7 +13,7 @@ export default function NotFoundPage() {
         <p aria-hidden="true" className="tabular font-mono text-display text-fg-subtle">
           404
         </p>
-        <SignalLine state="idle" className="mt-4 mb-10 h-8 max-w-sm text-line-strong" />
+        <hr aria-hidden="true" className="halo-line mt-4 mb-10 max-w-sm" />
         <h1 className="text-h1">{bg.common.notFoundTitle}</h1>
         <p className="mt-4 text-lg text-fg-muted">{bg.common.notFoundText}</p>
         <ButtonLink href="/" size="lg" className="mt-8">

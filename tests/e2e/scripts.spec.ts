@@ -121,10 +121,12 @@ test("one card: how it starts, what they say, what to do, big text and print", a
   await expect(page).toHaveURL(/\/dev\/kak-raboti$/);
 });
 
-test("the header and the home page link to „Как работи измамата“", async ({ page }) => {
+test("the header and the home page link to „Как работи измамата“", async ({ page, isMobile }) => {
   await page.goto("/");
+  // On a phone the menu is the dock at the bottom, with the short word „Измами“.
   const menu = page.getByRole("banner").getByRole("navigation", { name: bg.layout.navLabel });
-  await menu.getByRole("link", { name: bg.layout.education, exact: true }).click();
+  const label = isMobile ? bg.layout.dockEducation : bg.layout.education;
+  await menu.getByRole("link", { name: label, exact: true }).click();
   await expect(page).toHaveURL(/\/kak-raboti$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.education.title);
   await expect(page.getByText(bg.education.lead)).toBeVisible();
@@ -292,6 +294,9 @@ test("no sideways scrolling at 360 px on the education and editor pages", async 
   }
   // Menu links still at least 48 px high with the fourth link.
   await page.goto("/");
+  // The menu streams in and replaces its first copy while the page starts; wait until
+  // the page is quiet, so no link is measured in the moment it is swapped.
+  await page.waitForLoadState("networkidle");
   for (const link of await page.getByRole("navigation").getByRole("link").all()) {
     expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(48);
   }

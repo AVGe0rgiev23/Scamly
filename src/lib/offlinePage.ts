@@ -6,7 +6,8 @@
 // can't load our CSS and JavaScript files from /_next/static, and a normal page
 // would also carry the header with the logged-in person's name. So this page is
 // self-contained: inline styles (dark by default, light when the device asks for
-// it; the colours of the Signal tokens in globals.css), our
+// it; the colours are the v3 „Ореол“ tokens of globals.css, borders as solid
+// colours because the card has no glass here), our
 // logo as inline SVG, no scripts, no personal data. Unit-tested in offlinePage.test.ts.
 
 import { bg } from "@/i18n/bg";
@@ -20,9 +21,10 @@ export function escapeHtml(text: string): string {
     .replaceAll('"', "&quot;");
 }
 
+// The „Night“ (dark) and „Porcelain“ (light) colours of src/app/globals.css.
 const STYLE = `
-:root{color-scheme:dark;--bg:#080b0f;--surface:#0d1218;--fg:#eaf1f5;--muted:#a8b5c0;--primary:#3de6f0;--on-primary:#03181b;--border:#1f2a35}
-@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#f6f7f4;--surface:#ffffff;--fg:#0e161c;--muted:#44515b;--primary:#006d78;--on-primary:#ffffff;--border:#d5d9d1}}
+:root{color-scheme:dark;--bg:#05060a;--surface:#0b0d14;--fg:#f3f4f8;--muted:#a3a8b8;--primary:#f4f5f8;--on-primary:#05060a;--border:#23252c}
+@media (prefers-color-scheme:light){:root{color-scheme:light;--bg:#f6f5f1;--surface:#ffffff;--fg:#0b0d12;--muted:#474c59;--primary:#0b0d12;--on-primary:#ffffff;--border:#e8e8e9}}
 *{box-sizing:border-box}
 html{font-size:18px}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}

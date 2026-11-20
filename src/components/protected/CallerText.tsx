@@ -3,6 +3,8 @@
 // without text) and „Провери“ (check with the text). The engine also reads this
 // text (word stems, шльокавица, typos), so a few words can make the verdict sharper.
 // Under the field: the optional „Говорете“ button (VoiceInput, W2-10) adds spoken text.
+// Look: the heading is the label (28 px+), the field is a tall glass well; the two
+// actions sit at the bottom, „Провери“ on top for the thumb, „Назад“ under them.
 
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
@@ -42,11 +44,11 @@ export function CallerText({
   }, []);
 
   return (
-    <section className="flex flex-col gap-5">
-      <h1 className="text-h1">
+    <section className="check-step check-text flex flex-col gap-5">
+      <h1 className="check-question">
         <label htmlFor={fieldId}>{bg.protectedCheck.textLabel}</label>
       </h1>
-      <p id={hintId} className="text-fg-muted">
+      <p id={hintId} className="text-xl text-fg-muted">
         {bg.protectedCheck.textHint}
       </p>
       <div>
@@ -60,8 +62,9 @@ export function CallerText({
           onChange={(event) => onTextChange(event.target.value)}
           aria-describedby={`${hintId} ${counterId}`}
           disabled={sending}
+          className="check-textarea"
         />
-        <p id={counterId} className="tabular mt-1.5 text-right font-mono text-sm text-fg-subtle">
+        <p id={counterId} className="tabular mt-2 text-right font-mono text-base text-fg-muted">
           {fill(bg.protectedCheck.textCounter, { count: text.length, max: MAX_TEXT_LENGTH })}
         </p>
       </div>
@@ -82,8 +85,14 @@ export function CallerText({
           {bg.protectedCheck.skip}
         </Button>
       </div>
-      <Button variant="ghost" size="xl" className="self-start" onClick={onBack} disabled={sending}>
-        <ArrowLeft className="size-6" aria-hidden="true" />
+      <Button
+        variant="secondary"
+        size="xl"
+        className="self-start"
+        onClick={onBack}
+        disabled={sending}
+      >
+        <ArrowLeft className="size-6 shrink-0" aria-hidden="true" />
         {bg.protectedCheck.back}
       </Button>
     </section>

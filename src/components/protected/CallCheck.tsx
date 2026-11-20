@@ -204,7 +204,8 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
   const announcement = stage === "result" && result !== null ? bg.verdict[result.level].title : "";
 
   return (
-    <main className="call-check shell flex max-w-2xl flex-col gap-5 py-6 text-xl md:py-12">
+    // relative z-1: the screen sits above the verdict's flood (protected.css).
+    <main className="call-check shell relative z-1 flex max-w-2xl flex-col gap-5 py-6 text-xl md:py-12">
       <p className="sr-only" role="status">
         {announcement}
       </p>
@@ -216,7 +217,8 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
           onAnswer={answer}
           onPick={pick}
           onNext={() => goForward()}
-          onBack={() => setQuestionIndex(Math.max(0, questionIndex - 1))}
+          // On the first question „Назад“ goes back to the big button.
+          onBack={() => (questionIndex === 0 ? goHome() : setQuestionIndex(questionIndex - 1))}
         />
       ) : null}
       {stage === "text" ? (

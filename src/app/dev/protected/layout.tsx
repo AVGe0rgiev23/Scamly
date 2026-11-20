@@ -8,6 +8,8 @@
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+// The call check's own styles, as on the real /protected.
+import "@/components/protected/protected.css";
 
 // Search engines should not list test pages.
 export const metadata: Metadata = { robots: { index: false, follow: false } };

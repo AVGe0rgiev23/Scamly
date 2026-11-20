@@ -1,6 +1,6 @@
 // Accessible sign-in, registration and pairing forms (and the header's „Изход“) on the
-// Signal design: labelled fields, a large submit button, errors in a Notice that gets
-// focus. They call the existing JSON API; session cookies stay on the server.
+// shared UI primitives: labelled fields, a large submit button, errors in a Notice that
+// gets focus. They call the existing JSON API; session cookies stay on the server.
 "use client";
 
 import {

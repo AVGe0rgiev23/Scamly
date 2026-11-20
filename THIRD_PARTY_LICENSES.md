@@ -11,19 +11,20 @@ The versions and licences are read from each package's own `package.json` in
 
 These are part of the app that runs on the server and in the browser.
 
-| Package               | Version | Licence      | What we use it for                                                               |
-| --------------------- | ------- | ------------ | -------------------------------------------------------------------------------- |
-| @supabase/ssr         | 0.12.7  | MIT          | Keeps the Supabase login session in cookies (server and proxy)                   |
-| @supabase/supabase-js | 2.118.0 | MIT          | Talks to our Supabase database, Auth and Realtime                                |
-| leaflet               | 1.9.4   | BSD-2-Clause | Draws the district map on /karta (loaded only in the browser, only on that page) |
-| lucide-react          | 1.72.0  | ISC          | Line icons (imported one by one, only the used icons are bundled)                |
-| next                  | 16.4.6  | MIT          | Web framework (pages, API routes, build)                                         |
-| qrcode                | 1.5.4   | MIT          | Makes the QR code for pairing a phone, in the browser                            |
-| react                 | 19.3.1  | MIT          | User-interface library                                                           |
-| react-dom             | 19.3.1  | MIT          | Draws React components in the browser                                            |
-| server-only           | 0.0.1   | MIT          | Makes the build fail if browser code imports a server-only file                  |
-| web-push              | 3.6.7   | MPL-2.0      | Encrypts, signs (VAPID) and sends web push notifications                         |
-| zod                   | 4.6.7   | MIT          | Checks input data and environment variables                                      |
+| Package               | Version | Licence      | What we use it for                                                                                     |
+| --------------------- | ------- | ------------ | ------------------------------------------------------------------------------------------------------ |
+| @supabase/ssr         | 0.12.7  | MIT          | Keeps the Supabase login session in cookies (server and proxy)                                         |
+| @supabase/supabase-js | 2.118.0 | MIT          | Talks to our Supabase database, Auth and Realtime                                                      |
+| leaflet               | 1.9.4   | BSD-2-Clause | Draws the district map on /karta (loaded only in the browser, only on that page)                       |
+| lucide-react          | 1.72.0  | ISC          | Line icons (imported one by one, only the used icons are bundled)                                      |
+| motion                | 14.14.0 | MIT          | Springs and gestures in small client islands (brings framer-motion, motion-dom, motion-utils, all MIT) |
+| next                  | 16.4.6  | MIT          | Web framework (pages, API routes, build)                                                               |
+| qrcode                | 1.5.4   | MIT          | Makes the QR code for pairing a phone, in the browser                                                  |
+| react                 | 19.3.1  | MIT          | User-interface library                                                                                 |
+| react-dom             | 19.3.1  | MIT          | Draws React components in the browser                                                                  |
+| server-only           | 0.0.1   | MIT          | Makes the build fail if browser code imports a server-only file                                        |
+| web-push              | 3.6.7   | MPL-2.0      | Encrypts, signs (VAPID) and sends web push notifications                                               |
+| zod                   | 4.6.7   | MIT          | Checks input data and environment variables                                                            |
 
 ## Development dependencies
 
@@ -86,8 +87,9 @@ Fonts (self-hosted in `src/fonts/`, subset to Latin + Cyrillic, licence texts ne
 
 The grain texture is our own generated SVG noise (no third-party asset).
 
-| Item                  | Licence       | Status                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| --------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fonts                 | none          | We use the device's built-in system fonts, so no font files are shipped                                                                                                                                                                                                                                                                                                                                                            |
-| App icons             | GPL-3.0       | Our own work (W2-09): `public/icons/*.png`, made from our SVG sources in `scripts/icons/` by `npm run icons`                                                                                                                                                                                                                                                                                                                       |
-| District shapes (map) | Public domain | [Natural Earth](https://www.naturalearthdata.com/) 1:10m "Admin 1 – States, Provinces" v5.1.2 (`ne_10m_admin_1_states_provinces.geojson`, tag `v5.1.2` of github.com/nvkelso/natural-earth-vector). Simplified by `scripts/geo/build-districts.mjs` into `public/geo/bg-districts.json` (28 districts, about 56 KB). No credit is required; the map credits "Natural Earth" anyway. Not OpenStreetMap data, so no ODbL terms apply |
+| Item                  | Licence       | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fonts                 | none          | We use the device's built-in system fonts, so no font files are shipped                                                                                                                                                                                                                                                                                                                                                                                   |
+| App icons, logo       | GPL-3.0       | Our own work. Redesign v3 „Ореол“ Phase 2 (final): the halo logo (three arcs closing into a ring around a dot, in our halo gradient) drawn by us as SVG in `scripts/icons/` (`logo.svg`, `logo-small.svg`, `logo-mono.svg`, `icon.svg`, `icon-maskable.svg`, `badge.svg`, `favicon.svg`), `src/app/icon.svg` and `src/components/ui/HaloLogo.tsx`; `npm run icons` makes `public/icons/*.png` and `src/app/favicon.ico` from them. No third-party artwork |
+| Open Graph picture    | GPL-3.0       | Our own work. `scripts/og/og.html` (halo field drawn by our own script, our logo, fonts from `src/fonts/` under the OFL above); `npm run og` makes `src/app/opengraph-image.png`                                                                                                                                                                                                                                                                          |
+| District shapes (map) | Public domain | [Natural Earth](https://www.naturalearthdata.com/) 1:10m "Admin 1 – States, Provinces" v5.1.2 (`ne_10m_admin_1_states_provinces.geojson`, tag `v5.1.2` of github.com/nvkelso/natural-earth-vector). Simplified by `scripts/geo/build-districts.mjs` into `public/geo/bg-districts.json` (28 districts, about 56 KB). No credit is required; the map credits "Natural Earth" anyway. Not OpenStreetMap data, so no ODbL terms apply                        |

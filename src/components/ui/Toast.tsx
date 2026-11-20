@@ -1,16 +1,17 @@
-// Toasts: short confirmations that appear at the bottom of the screen and leave by
+// Toasts: short confirmations that rise from the bottom of the screen and leave by
 // themselves („Връзката е копирана.“). Usage, from any Client Component:
 //
 //   import { toast } from "@/components/ui/Toast";
 //   toast("Връзката е копирана.");            // or toast(text, "danger")
 //
 // <Toaster /> is placed once in the root layout. The list is a live region, so a
-// screen reader reads each new toast. Errors that need an action are NOT toasts:
-// they stay next to the thing that failed (Notice, ErrorState).
+// screen reader reads each new toast. Each toast is a glass pill with its status
+// icon in a small disc. Errors that need an action are NOT toasts: they stay next
+// to the thing that failed (Notice, ErrorState).
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { STATUS_TINT, StatusIcon, type Status } from "./Badge";
+import { StatusIcon, type Status } from "./Badge";
 import { cn } from "./cn";
 
 type ToastItem = { id: number; text: string; status: Status };
@@ -21,6 +22,15 @@ let nextId = 1;
 const listeners = new Set<() => void>();
 const EMPTY: ToastItem[] = [];
 const LIFETIME_MS = 4500;
+
+// The colour of the icon disc for each status.
+const DISC: Record<Status, string> = {
+  safe: "bg-safe-bg text-safe-fg",
+  caution: "bg-caution-bg text-caution-fg",
+  danger: "bg-danger-bg text-danger-fg",
+  info: "bg-info-bg text-info-fg",
+  neutral: "bg-glass-2 text-fg-muted",
+};
 
 function emit() {
   for (const listener of listeners) listener();
@@ -51,21 +61,26 @@ export function Toaster() {
     () => EMPTY,
   );
   return (
+    // Below 1024 px the toasts rise above the glass dock at the bottom (SiteDock).
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-(--z-index-toast) flex flex-col items-center gap-2 px-4"
+      className="pointer-events-none fixed inset-x-0 bottom-5 z-(--z-index-toast) flex flex-col items-center gap-2 px-4 max-lg:bottom-[calc(6rem+env(safe-area-inset-bottom))]"
     >
       {current.map((item) => (
         <p
           key={item.id}
-          className={cn(
-            "toast pointer-events-auto flex max-w-md items-start gap-2.5 rounded-md border px-4 py-3 text-base shadow-overlay",
-            STATUS_TINT[item.status],
-          )}
+          className="toast glass pointer-events-auto flex max-w-md items-center gap-3 rounded-full py-2 pr-5 pl-2 text-base text-fg shadow-overlay"
         >
-          <StatusIcon status={item.status} className="mt-[0.2em]" />
-          <span className="text-fg">{item.text}</span>
+          <span
+            className={cn(
+              "inline-grid size-8 shrink-0 place-items-center rounded-full",
+              DISC[item.status],
+            )}
+          >
+            <StatusIcon status={item.status} />
+          </span>
+          <span>{item.text}</span>
         </p>
       ))}
     </div>

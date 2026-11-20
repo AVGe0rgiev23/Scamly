@@ -46,6 +46,24 @@ export const bg = {
     signedInAs: "Влезли сте като",
     footerProject: `${APP_NAME} е училищен проект за ИТ турнира „Джон Атанасов“.`,
     footerPrinciples: "Свободен софтуер с лиценз GPL-3.0. Без реклами и без проследяване.",
+    // Redesign v3, Phase 2: the floating header, the phone dock and the footer.
+    // The one bright pill in the header: it opens the check (an unpaired phone is
+    // sent to the pairing page first).
+    checkCta: "Провери обаждане",
+    // Short words under the icons of the bottom bar on a phone (about 70 px each).
+    dockHome: "Начало",
+    dockEducation: "Измами",
+    dockMap: "Карта",
+    dockReport: "Сигнал",
+    dockLogin: "Вход",
+    dockProtected: "Проверка",
+    // The footer: two columns of links, the tournament and the authors.
+    footerNavLabel: "Връзки в долната част на страницата",
+    footerColumnApp: "Приложението",
+    footerColumnTools: "Обществени инструменти",
+    footerTournament: "ИТ турнир „Джон Атанасов“ 2026",
+    footerAuthors: "Автори: Алекс Георгиев и Роберта Христова",
+    footerLicence: "Лиценз GPL-3.0",
   },
   // The home page „/“ (W2-13, src/app/page.tsx). Its main heading is app.tagline.
   home: {
@@ -178,9 +196,41 @@ export const bg = {
         answer:
           "Телефонът изчислява резултата сам и го показва веднага. Близките получават сигнала, когато връзката се върне.",
       },
+      {
+        question: "Трябва ли да се инсталира приложение?",
+        answer:
+          "Не е задължително. Scamly работи в браузъра на телефона. Ако го добавите на началния екран, се отваря с едно докосване и известията пристигат сигурно.",
+      },
     ],
     ctaTitle: "Свържете телефона на близкия си",
     ctaText: "Създайте семеен профил, добавете човека и въведете кода на неговия телефон.",
+    // Redesign v3 „Ореол“, Phase 2A: the extra words of the new landing page. The small
+    // eyebrows are written in normal case here; CSS shows them in capitals (`eyebrow`).
+    heroEyebrow: "Срещу телефонните измами в България",
+    demoHint: "Изберете примерно обаждане. Ореолът около телефона показва риска.",
+    phoneIncoming: "Входящо обаждане",
+    oneRuleEyebrow: "Едно правило",
+    oneRule: "Затворете телефона.",
+    howEyebrow: "Три стъпки",
+    howIntro: "Близкият настройва всичко веднъж. Възрастният човек натиска само един бутон.",
+    featuresEyebrow: "Възможности",
+    hardRulesEyebrow: "Твърди правила",
+    rulesDeck: {
+      // {n} = the number of the sign, {total} = 6. Read aloud before each card.
+      card: "Признак {n} от {total}",
+      prev: "Предишен признак",
+      next: "Следващ признак",
+      swipe: "Плъзнете настрани, за да видите всички.",
+    },
+    familyEyebrow: "За семейството",
+    // {name} = the sample older person, e.g. „Баба Мария“.
+    familyIsland: "{name} провери обаждане",
+    callOrderLabel: "Редът, в който Scamly търси близките",
+    callOrderHint: "Посочете кръгче, за да видите името.",
+    duringEyebrow: "По време на обаждане",
+    resourcesEyebrow: "Публични инструменти",
+    faqEyebrow: "Въпроси",
+    ctaEyebrow: "Начало",
   },
   theme: {
     label: "Изглед",
@@ -295,6 +345,43 @@ export const bg = {
     toastText: "Промените са запазени.",
     tooltip: "Подсказка",
     signalStates: "Измама, съмнително, без признаци, покой",
+    // Samples of the v3 „Ореол“ gallery (/dev/ui).
+    sectionSurfaces: "Повърхности и светлина",
+    surfaceRaised: "Повдигната повърхност",
+    surfaceGlass: "Стъкло със светлина",
+    surfaceText: "Светлината идва отгоре: по-светъл горен ръб и мека дълга сянка.",
+    displayLead: "Проверете",
+    displayWord: "спокойно.",
+    sectionVerdict: "Резултат и риск",
+    sectionNew: "Нови елементи",
+    segmentedLabel: "Размер на текста",
+    segmentedNormal: "Обикновен",
+    segmentedLarge: "Едър",
+    segmentedHuge: "Много едър",
+    islandLabel: "Проверка в момента",
+    islandText: "Баба Мария отговаря на въпросите. Ще ви известим веднага, ако има опасност.",
+    avatarLabel: "Получават сигнала",
+    avatarMore: "и още {count}",
+    openPalette: "Бързо търсене",
+    // The halo („Ореол“) samples of the gallery: the live WebGL field and the still rings.
+    sectionHalo: "Ореол",
+    haloStateLabel: "Състояние на ореола",
+    haloIdle: "Покой",
+    haloCalm: "Спокойно",
+    haloCaution: "Внимание",
+    haloDanger: "Опасност",
+    haloHint:
+      "Изберете състояние: пръстените преминават плавно от едното в другото за около секунда.",
+    haloLive: "Жив ореол",
+    haloStill: "Неподвижни пръстени",
+  },
+  // The ⌘K / Ctrl K window for quick jumps (src/components/ui/CommandPalette.tsx).
+  commandPalette: {
+    title: "Бързо търсене",
+    placeholder: "Търсете страница или действие…",
+    empty: "Няма намерени резултати.",
+    moveHint: "избор",
+    openHint: "отваряне",
   },
   // Error messages of our API ({ error: { code, messageBg } }), shown by the forms.
   errors: {
@@ -999,6 +1086,8 @@ export const bg = {
     bigButton: "Обаждат ми се за пари!",
     // A check can also start after the call has ended (brief 5.2 A).
     afterCall: "Обаждането вече приключи — искам да проверя",
+    // The quiet line under the big button, above „Обаждането вече приключи…“.
+    afterCallHint: "Можете да проверите и след като затворите.",
     // {name} = the first trusted contact with a phone, e.g. „Иван“ (a tel: link).
     callContact: "Обади се на {name}",
     // The questions (BUILD_PLAN 4.1), one per screen. {current} and {total} are numbers.
@@ -1048,6 +1137,10 @@ export const bg = {
     // phone computed the verdict itself and keeps sending the answers in the background.
     localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
     emergencyCallAdvice: "Ако сте в непосредствена опасност, обадете се на 112.",
+    // The small pill at the top of the result screen when a family member answers;
+    // it opens into a card with „Иван ще ви се обади веднага.“ and this hint.
+    familyIslandLabel: "Семейството отговори",
+    familyIslandHint: "Дръжте телефона до себе си.",
   },
   // The „Известия на телефона“ card on /family (W2-05, src/components/family/PushOptIn.tsx).
   pushOptIn: {

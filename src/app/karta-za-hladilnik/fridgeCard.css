@@ -1,9 +1,2 @@
-/* Print rules of the A5 fridge card (/karta-za-hladilnik). Only the paper size and
-   margins live here; the look is in Tailwind classes (print: variants) on the page,
-   and the black-on-white print colours come from globals.css (@media print). */
-@media print {
-  @page {
-    size: A5 portrait;
-    margin: 10mm;
-  }
-}
+/* Print rules of the A5 fridge card (/karta-za-hladilnik). Emptied in Ореол v3
+   Phase 0; the paper size and print rules come back with the new design. */

@@ -36,7 +36,11 @@ export const metadata: Metadata = {
 
 // The colour of the browser bar (and of the installed app's top bar): the header
 // colour of the light or the dark theme, whichever the phone uses.
+// viewportFit "cover": the page may reach under a notch and the home indicator, so the
+// phone dock can sit just above the indicator (env(safe-area-inset-bottom) in
+// globals.css .site-dock); the body keeps its sides clear of a notch.
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: THEME_COLOR_LIGHT },
     { media: "(prefers-color-scheme: dark)", color: THEME_COLOR_DARK },
@@ -62,10 +66,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
-        {/* The first thing a keyboard user reaches: jumps over the menu to the page. */}
+        {/* The first thing a keyboard user reaches: jumps over the menu to the page.
+            Hidden until focused; then a bright pill (like the header's main button)
+            floats over the top-left corner of the header. */}
         <a
           href="#content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-(--z-index-toast) focus:rounded-md focus:bg-accent focus:px-4 focus:py-3 focus:font-semibold focus:text-on-accent"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-(--z-index-toast) focus:inline-flex focus:min-h-12 focus:items-center focus:rounded-full focus:bg-primary focus:px-5 focus:font-semibold focus:text-on-primary focus:no-underline focus:shadow-overlay"
         >
           {bg.layout.skipToContent}
         </a>

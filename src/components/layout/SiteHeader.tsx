@@ -1,82 +1,88 @@
-// The top bar of every page: the Scamly logo (a link to the home page), the main menu
-// and the compact theme switch.
+// The top of every page (redesign v3 „Ореол“, Phase 2): a floating glass pill 12 px
+// below the top edge, at most 1100 px wide and centred. In it: the logo (a link to
+// the home page), the menu with a sliding spotlight (desktop), the theme switch and
+// the one bright pill „Провери обаждане“. After 40 px of scrolling the pill shrinks a
+// little and its glass gets more frosted (CSS only, globals.css .site-header-pill).
+//
+// On a phone the pill keeps only the logo and the bright pill; the menu moves to a
+// glass dock at the bottom of the screen with labelled icons (SiteDock), and the
+// theme switch moves to the footer (also between 1024 and 1280 px, where the menu
+// needs its room). Nothing is hidden behind a "hamburger" button,
+// because older people do not look for hidden menus.
 //
 // The menu depends on who is looking:
-//   - a guest sees „Вход“, „Регистрация“, „Свържи телефон“ and „Как работи измамата“
-//     (the public education cards, W3-05);
+//   - a guest sees „Как работи измамата“, „Свържи телефон“, „Регистрация“, „Вход“
+//     and the bright pill;
 //   - a logged-in person sees the link to their own area (e.g. „Моите близки“; a
 //     family member also „Сигнали“), their name and „Изход“ (the older person's
-//     phone: area link and name, never „Изход“).
+//     phone: area link, name and the bright pill, never „Изход“).
 //
 // A Server Component: plain HTML with links. Who is logged in is read on the server
 // (getActor), so the login cookie never has to be read by browser code. Reading the
 // cookie is request data, so with Cache Components it must sit inside <Suspense>:
-// the guest menu is the fallback and is pre-rendered into every page's static shell;
-// the real menu streams in at request time. Only the theme switch and the logout
-// button are Client Components.
+// the guest version is the fallback and is pre-rendered into every page's static
+// shell; the real one streams in at request time. Three small parts depend on the
+// person (menu, right-hand actions, dock); React's cache() makes them share one
+// getActor call per request. Only the menu, the dock, the theme switch, the bright
+// pill and the logout button are Client Components.
 
-import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { LogoutButton } from "@/components/auth/forms";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { ROUTES, type AppRole } from "@/config/routes";
+import type { AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { readPublicEnv } from "@/lib/publicEnv";
 import { getActor } from "@/server/auth/actor";
-import { accountLinkFor, extraLinksFor, showsLogout, type NavLink } from "./accountLinks";
-import { LogoMark } from "./Logo";
-
-// The menu for a guest, in the order it is shown. A list of objects, like a Python
-// list of dicts.
-const GUEST_LINKS: NavLink[] = [
-  { href: ROUTES.login, label: bg.layout.login },
-  { href: ROUTES.register, label: bg.layout.register },
-  { href: ROUTES.pair, label: bg.layout.pair },
-  { href: ROUTES.education, label: bg.layout.education },
-];
+import { accountLinkFor, extraLinksFor, showsLogout } from "./accountLinks";
+import { HeaderCta } from "./HeaderCta";
+import { Logo } from "./Logo";
+import { SiteDock } from "./SiteDock";
+import { dockLinksFor, GUEST_LINKS, showsCheckCta } from "./siteNav";
+import { SpotlightNav } from "./SpotlightNav";
 
 // The little the header needs to know about a logged-in person.
 type HeaderAccount = { role: AppRole; displayName: string };
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-(--z-index-header) border-b border-line bg-canvas print:hidden">
-      {/* On a phone the menu gets its own row under the logo; nothing is hidden behind
-          a "hamburger" button, because older people do not look for hidden menus. */}
-      <div className="shell flex flex-wrap items-center gap-x-6 lg:min-h-16 lg:flex-nowrap">
-        <Link
-          href={ROUTES.home}
-          className="flex min-h-14 items-center gap-2.5 font-display text-xl font-bold tracking-tight text-fg no-underline"
-        >
-          <LogoMark />
-          <span>{bg.app.name}</span>
-          {/* sr-only: hidden on screen, read by screen readers. */}
-          <span className="sr-only">, {bg.layout.homeLink}</span>
-        </Link>
-        <div className="order-last w-full min-w-0 lg:order-none lg:w-auto lg:flex-1">
-          <Suspense fallback={<SiteNav account={null} />}>
-            <AccountNav />
-          </Suspense>
-        </div>
-        <div className="ml-auto">
-          <ThemeToggle />
+    <header className="site-header sticky top-0 z-(--z-index-header) px-3 pt-3 print:hidden">
+      <div className="site-header-pill relative mx-auto max-w-[68.75rem] rounded-full">
+        {/* Two glass layers: the normal glass, and a more frosted one on top that
+            fades in while the page scrolls (its opacity is the only thing animated). */}
+        <span aria-hidden="true" className="site-header-glass site-glass" />
+        <span aria-hidden="true" className="site-header-frost" />
+        <div className="relative flex min-h-15 items-center gap-2 py-1.5 pr-1.5 pl-2 lg:min-h-16 lg:gap-3">
+          <Logo />
+          <div className="flex min-w-0 flex-1 justify-center max-lg:hidden">
+            <Suspense fallback={<HeaderNav account={null} />}>
+              <AccountHeaderNav />
+            </Suspense>
+          </div>
+          {/* Between 1024 and 1280 px the menu needs the room, so the switch is in the
+              footer there (and on a phone). */}
+          <ThemeToggle className="ml-auto max-md:hidden lg:ml-0 lg:max-xl:hidden" />
+          <div className="flex min-w-0 items-center gap-2 max-md:ml-auto">
+            <Suspense fallback={<HeaderActions account={null} />}>
+              <AccountHeaderActions />
+            </Suspense>
+          </div>
         </div>
       </div>
+      <Suspense fallback={<SiteDock label={bg.layout.navLabel} links={dockLinksFor(null)} />}>
+        <AccountDock />
+      </Suspense>
     </header>
   );
-}
-
-// Reads who is logged in (at request time), then draws the menu for them.
-async function AccountNav() {
-  return <SiteNav account={await readHeaderAccount()} />;
 }
 
 // Who is logged in, or null for a guest. The header must never break a page, so any
 // error counts as "guest": the private areas still check the login and the role
 // themselves (requirePageRole), and the API checks every request.
-async function readHeaderAccount(): Promise<HeaderAccount | null> {
+// cache(): the three parts below ask in the same request, and get one answer (like
+// Python's functools.cache, but only for the duration of one request).
+const readHeaderAccount = cache(async (): Promise<HeaderAccount | null> => {
   // "Only at request time": never render this in advance at `next build`.
   await connection();
   // Without Supabase settings (e.g. in CI) nobody can be logged in.
@@ -91,58 +97,49 @@ async function readHeaderAccount(): Promise<HeaderAccount | null> {
     unstable_rethrow(error);
     return null;
   }
+});
+
+async function AccountHeaderNav() {
+  return <HeaderNav account={await readHeaderAccount()} />;
 }
 
-// One menu link: at least 48 px high, with an underline that marks hover.
-const NAV_LINK =
-  "flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm font-medium text-fg-muted no-underline hover:text-fg lg:text-base";
-const NAV_LIST =
-  "-mx-2.5 flex flex-wrap items-center lg:mx-0 lg:flex-nowrap lg:justify-end lg:gap-1";
+async function AccountHeaderActions() {
+  return <HeaderActions account={await readHeaderAccount()} />;
+}
 
-// The menu itself: guest links, or the logged-in person's area link, name and logout.
-function SiteNav({ account }: { account: HeaderAccount | null }) {
-  if (account === null) {
-    return (
-      <nav aria-label={bg.layout.navLabel}>
-        <ul className={NAV_LIST}>
-          {GUEST_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} className={NAV_LINK}>
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    );
-  }
-  const area = accountLinkFor(account.role);
+async function AccountDock() {
+  const account = await readHeaderAccount();
+  return <SiteDock label={bg.layout.navLabel} links={dockLinksFor(account?.role ?? null)} />;
+}
+
+// The menu in the pill: the guest links, or the person's area link (+ extra link).
+function HeaderNav({ account }: { account: HeaderAccount | null }) {
+  const links =
+    account === null ? GUEST_LINKS : [accountLinkFor(account.role), ...extraLinksFor(account.role)];
+  return <SpotlightNav label={bg.layout.navLabel} links={links} />;
+}
+
+// The right-hand end of the pill: the person's name and „Изход“ when logged in, and
+// the bright „Провери обаждане“ pill for a guest and the older person's phone.
+function HeaderActions({ account }: { account: HeaderAccount | null }) {
   return (
-    <nav aria-label={bg.layout.navLabel}>
-      <ul className={NAV_LIST}>
-        <li>
-          <Link href={area.href} className={NAV_LINK}>
-            {area.label}
-          </Link>
-        </li>
-        {extraLinksFor(account.role).map((link) => (
-          <li key={link.href}>
-            <Link href={link.href} className={NAV_LINK}>
-              {link.label}
-            </Link>
-          </li>
-        ))}
-        <li className="ml-auto flex min-h-12 items-center whitespace-nowrap px-2.5 text-sm text-fg-muted md:ml-4">
-          {/* On a phone „Влезли сте като“ is only read aloud, to save space. */}
-          <span className="max-md:sr-only">{bg.layout.signedInAs}&nbsp;</span>
-          <strong className="font-semibold text-fg">{account.displayName}</strong>
-        </li>
-        {showsLogout(account.role) ? (
-          <li>
-            <LogoutButton />
-          </li>
-        ) : null}
-      </ul>
-    </nav>
+    <>
+      {account === null ? null : (
+        <p
+          className={
+            "flex min-h-12 min-w-0 items-center px-2 text-sm whitespace-nowrap text-fg-muted " +
+            (showsCheckCta(account.role) ? "max-lg:hidden" : "")
+          }
+        >
+          {/* „Влезли сте като“ is only read aloud on smaller screens, to save space. */}
+          <span className="max-xl:sr-only">{bg.layout.signedInAs}&nbsp;</span>
+          <strong className="max-w-[9rem] truncate font-semibold text-fg">
+            {account.displayName}
+          </strong>
+        </p>
+      )}
+      {account !== null && showsLogout(account.role) ? <LogoutButton /> : null}
+      {showsCheckCta(account?.role ?? null) ? <HeaderCta /> : null}
+    </>
   );
 }

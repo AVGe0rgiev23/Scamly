@@ -1,89 +1,82 @@
-// The theme switch in the header: three small picture buttons (device, light, dark).
-// Native radio buttons, so the arrow keys move between them. The choice is saved in
-// the browser (localStorage) and put on <html data-theme="…">; globals.css picks the
-// colours from that attribute. A tiny script in the root layout applies the saved
-// choice before the first paint, so the page never flashes in the wrong theme.
+// The theme switch in the header: a small segmented pill with three picture choices
+// (device, light, dark) and a thumb that slides under the chosen one.
+// The choice is saved in the browser (localStorage) and put on <html data-theme="…">;
+// globals.css picks the colours from that attribute. A tiny script in the root layout
+// (src/config/inlineScripts.ts) applies the saved choice before the first paint, so
+// the page never flashes in the wrong theme.
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useState } from "react";
 import { bg } from "@/i18n/bg";
+import { Segmented, type SegmentOption } from "./Segmented";
 
 type Theme = "system" | "light" | "dark";
 
 export const THEME_STORAGE_KEY = "scamly-theme";
 
-const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
-  { value: "system", label: bg.theme.system, Icon: Monitor },
-  { value: "light", label: bg.theme.light, Icon: Sun },
-  { value: "dark", label: bg.theme.dark, Icon: Moon },
+const OPTIONS: SegmentOption<Theme>[] = [
+  { value: "system", label: bg.theme.system, icon: <Monitor />, hideLabel: true },
+  { value: "light", label: bg.theme.light, icon: <Sun />, hideLabel: true },
+  { value: "dark", label: bg.theme.dark, icon: <Moon />, hideLabel: true },
 ];
 
-function changeTheme(value: Theme) {
+function isTheme(value: string | null): value is Theme {
+  return value === "light" || value === "dark" || value === "system";
+}
+
+// The name of the browser event that tells every switch on the page about a new
+// choice (the header has one on a large screen, the footer one on a phone).
+const THEME_EVENT = "scamly-theme-change";
+
+function saveTheme(value: Theme) {
   document.documentElement.dataset.theme = value;
   try {
     localStorage.setItem(THEME_STORAGE_KEY, value);
   } catch {
     // Private browsing may block storage: the theme still changes for this page.
   }
+  window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: value }));
 }
 
-export function ThemeToggle() {
-  const name = useId();
-  const labelId = useId();
-  const group = useRef<HTMLDivElement>(null);
+export function ThemeToggle({ className }: { className?: string }) {
+  // The server cannot know the saved choice, so the first render says "system";
+  // right after the page loads we read the real one (the colours are already right,
+  // the head script set them).
+  const [theme, setTheme] = useState<Theme>("system");
 
-  // After the page loads: tick the radio of the saved theme, and listen for changes.
   useEffect(() => {
-    const radios = group.current;
-    if (!radios) return;
+    let saved: string | null = null;
     try {
-      const saved = localStorage.getItem(THEME_STORAGE_KEY);
-      if (saved === "light" || saved === "dark" || saved === "system") {
-        document.documentElement.dataset.theme = saved;
-        const input = radios.querySelector<HTMLInputElement>(`input[value="${saved}"]`);
-        if (input) input.checked = true;
-      }
+      saved = localStorage.getItem(THEME_STORAGE_KEY);
     } catch {
       // No storage: stay on "system".
     }
-    function onChange(event: Event) {
-      const input = event.target as HTMLInputElement;
-      changeTheme(input.value as Theme);
+    if (isTheme(saved) && saved !== "system") {
+      // Reading browser storage is a sync with the outside world, so it belongs in
+      // an effect; it runs once after the first paint.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme(saved);
     }
-    radios.addEventListener("change", onChange);
-    return () => radios.removeEventListener("change", onChange);
+    // Another switch on the same page changed the theme: show the same choice here.
+    function follow(event: Event) {
+      const value = (event as CustomEvent<string>).detail;
+      if (isTheme(value)) setTheme(value);
+    }
+    window.addEventListener(THEME_EVENT, follow);
+    return () => window.removeEventListener(THEME_EVENT, follow);
   }, []);
 
   return (
-    <div className="flex shrink-0 items-center">
-      <span id={labelId} className="sr-only">
-        {bg.theme.label}
-      </span>
-      <div
-        role="radiogroup"
-        aria-labelledby={labelId}
-        ref={group}
-        className="flex rounded-md border border-line bg-surface-1 p-0.5"
-      >
-        {OPTIONS.map(({ value, label, Icon }) => (
-          <label
-            key={value}
-            title={label}
-            className="relative flex size-11 cursor-pointer items-center justify-center rounded-sm text-fg-subtle hover:text-fg has-checked:bg-surface-3 has-checked:text-fg has-focus-visible:outline-2 has-focus-visible:outline-ring"
-          >
-            <input
-              type="radio"
-              name={name}
-              value={value}
-              defaultChecked={value === "system"}
-              className="absolute inset-0 size-full cursor-pointer opacity-0"
-            />
-            <Icon className="size-5" aria-hidden="true" />
-            <span className="sr-only">{label}</span>
-          </label>
-        ))}
-      </div>
-    </div>
+    <Segmented
+      label={bg.theme.label}
+      options={OPTIONS}
+      value={theme}
+      onChange={(value) => {
+        setTheme(value);
+        saveTheme(value);
+      }}
+      className={className}
+    />
   );
 }

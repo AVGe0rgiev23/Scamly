@@ -1,11 +1,16 @@
 // Tabs: a row of buttons that switch the panel below (role="tablist"). The arrow
-// keys move between the tabs, as screen-reader users expect. The active tab has an
-// accent line under it and bold text; the switch is instant (it is often done from
-// the keyboard, so it is not animated).
+// keys move between the tabs, as screen-reader users expect.
+//
+// The row is a glass pill; the active tab sits on a raised pill that slides from
+// the old tab to the new one with a quick spring (motion's shared layout: the same
+// `layoutId` on the pill in every tab, so motion animates it from one place to the
+// other with a transform). With reduced motion the pill simply jumps.
 "use client";
 
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useId, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "./cn";
+import { SPRING_UI } from "./motion";
 
 export type TabItem<Id extends string> = {
   id: Id;
@@ -35,6 +40,9 @@ export function Tabs<Id extends string>({
   className,
 }: TabsProps<Id>) {
   const list = useRef<HTMLDivElement>(null);
+  // One id per Tabs on the page, so two tab rows never share their sliding pill.
+  const pillId = useId();
+  const reduce = useReducedMotion() ?? false;
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const index = tabs.findIndex((tab) => tab.id === value);
@@ -57,7 +65,10 @@ export function Tabs<Id extends string>({
       role="tablist"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cn("flex gap-1 overflow-x-auto border-b border-line", className)}
+      className={cn(
+        "glass flex max-w-full gap-1 self-start overflow-x-auto rounded-full p-1 [scrollbar-width:none]",
+        className,
+      )}
     >
       {tabs.map((tab) => {
         const selected = tab.id === value;
@@ -72,15 +83,24 @@ export function Tabs<Id extends string>({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "-mb-px inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 border-b-2 px-4 text-base",
-              selected
-                ? "border-accent font-semibold text-fg"
-                : "border-transparent text-fg-muted hover:text-fg",
+              "relative inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full px-4 text-base whitespace-nowrap",
+              "transition-colors duration-150",
+              selected ? "font-semibold text-fg" : "text-fg-muted hover:text-fg",
             )}
           >
-            {tab.label}
+            {selected ? (
+              <motion.span
+                layoutId={pillId}
+                aria-hidden="true"
+                className="segmented-thumb absolute inset-0 rounded-full"
+                // The CSS transition of .segmented-thumb is for Segmented; here motion moves it.
+                style={{ transition: "none" }}
+                transition={reduce ? { duration: 0 } : SPRING_UI}
+              />
+            ) : null}
+            <span className="relative">{tab.label}</span>
             {tab.count === undefined || tab.count === null ? null : (
-              <span className="tabular rounded-sm bg-surface-3 px-1.5 font-mono text-xs text-fg-muted">
+              <span className="tabular relative rounded-full bg-glass-2 px-2 font-mono text-xs leading-5 text-fg-muted">
                 {tab.count}
               </span>
             )}

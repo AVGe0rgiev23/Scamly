@@ -1,146 +1,230 @@
-/* Scamly design system "Signal": every colour, size and motion value of the app.
-   Components never use raw colours: they use the semantic tokens below through
-   Tailwind classes (bg-canvas, text-fg-muted, border-line, bg-danger-solid, …).
-   The full description is in docs/redesign/03-design-system.md. */
+/* Scamly design system v3 „Ореол“ (Halo): every colour, size, depth and motion value
+   of the app. Components never use raw colours: they use the semantic tokens below
+   through Tailwind classes (bg-canvas, text-fg-muted, bg-primary, text-danger-fg …).
+   Depth comes from light: a thin highlight on the top edge of every raised surface,
+   a soft long shadow under it and a fill that is a little lighter at the top.
+   The halo gradient (iris → azure → mint) is the brand and is used sparingly.
+   Full description: docs/redesign-v3/03-design-system.md; motion: 02-motion.md. */
 @import "tailwindcss";
 
 /* ── 1. Colour tokens ───────────────────────────────────────────────────────────
-   Dark is the default ("dark-first"). A data-theme attribute on any element (not
-   only <html>) switches the colours inside it, which the /dev/ui gallery uses. The light values are written twice: once for
-   "the device asks for light" and once for "the person chose light". A unit test
-   (src/app/tokens.test.ts) checks that the two copies are equal and that every text
-   colour passes WCAG AA on every surface. */
+   „Night aurora“ (dark) is the default. A data-theme attribute on any element (not
+   only <html>) switches the colours inside it, which the /dev/ui gallery uses. The
+   light „Porcelain“ values are written twice: once for "the device asks for light"
+   and once for "the person chose light". A unit test (src/app/tokens.test.ts) checks
+   that the two copies are equal and that every text/surface pair passes WCAG AA. */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: #080b0f;
-  --surface-1: #0d1218;
-  --surface-2: #121a22;
-  --surface-3: #19232d;
-  --border: #1f2a35;
-  --border-strong: #5b6b7a;
-  --text: #eaf1f5;
-  --text-muted: #a8b5c0;
-  --text-subtle: #8a98a5;
-  --accent: #3de6f0;
-  --accent-hover: #7af0f7;
-  --accent-bg: #0b2a31;
-  --accent-border: #1b6871;
-  --accent-fg: #03181b;
-  --ring: #3de6f0;
-  --overlay: rgb(3 6 9 / 0.76);
-  --safe-solid: #34d399;
-  --safe-fg: #5ee2b0;
-  --safe-bg: #0a211c;
-  --safe-border: #17614a;
-  --safe-on: #03170f;
-  --caution-solid: #f5b93b;
-  --caution-fg: #f7c75f;
-  --caution-bg: #261d0b;
-  --caution-border: #6f551b;
-  --caution-on: #1c1300;
-  --danger-solid: #ff5468;
-  --danger-fg: #ff8493;
-  --danger-bg: #2b1016;
-  --danger-border: #7a2733;
-  --danger-on: #1f0206;
-  --info-solid: #7c9cbf;
-  --info-fg: #a3bcd8;
-  --info-bg: #111c29;
-  --info-border: #3a4f69;
-  --info-on: #06101b;
-  --shadow-color: rgb(0 0 0 / 0.5);
-  --grain-opacity: 0.05;
-  --grid-line: rgb(255 255 255 / 0.045);
+  --bg: #05060a;
+  --bg-elevated: #0b0d14;
+  --surface-1: #0b0d14;
+  --surface-2: #11131b;
+  --surface-3: #181b25;
+  --glass-1: rgb(255 255 255 / 0.04);
+  --glass-2: rgb(255 255 255 / 0.07);
+  --glass-border: rgb(255 255 255 / 0.1);
+  --border: rgb(255 255 255 / 0.1);
+  --border-strong: #5d6376;
+  --text: #f3f4f8;
+  --text-muted: #a3a8b8;
+  --text-subtle: #868ca0;
+  --primary: #f4f5f8;
+  --primary-hover: #ffffff;
+  --on-primary: #05060a;
+  --halo-1: #8b7bff;
+  --halo-2: #4cc9ff;
+  --halo-3: #6ef3c5;
+  --halo-ink-1: #8b7bff;
+  --halo-ink-2: #4cc9ff;
+  --halo-ink-3: #6ef3c5;
+  --ring: #4cc9ff;
+  --on-toggle: #05060a;
+  --accent-bg: #15142c;
+  --overlay: rgb(3 4 8 / 0.62);
+  --danger-solid: #ff4d5e;
+  --danger-on: #05060a;
+  --danger-fg: #ff7884;
+  --danger-bg: #200a0f;
+  --danger-border: #6e2531;
+  --caution-solid: #ffb547;
+  --caution-on: #05060a;
+  --caution-fg: #ffc56f;
+  --caution-bg: #1f1708;
+  --caution-border: #6a4c19;
+  --safe-solid: #3ddc97;
+  --safe-on: #05060a;
+  --safe-fg: #5fe3aa;
+  --safe-bg: #081d17;
+  --safe-border: #1b5e45;
+  --info-solid: #8ea2ff;
+  --info-on: #05060a;
+  --info-fg: #a8b7ff;
+  --info-bg: #0d1129;
+  --info-border: #3a4683;
+  /* Light and depth. */
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --shadow-long: 0 30px 60px -30px rgb(0 0 0 / 0.7);
+  --shadow-near: 0 1px 2px rgb(0 0 0 / 0.5);
+  --surface-top: rgb(255 255 255 / 0.055);
+  --surface-bottom: rgb(255 255 255 / 0.025);
+  --field-bg: rgb(255 255 255 / 0.035);
+  --light-source: rgb(255 255 255 / 0.09);
+  --aurora-strength: 26%;
+  --grain-opacity: 0.04;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --bg: #f6f7f4;
+    --bg: #f6f5f1;
+    --bg-elevated: #ffffff;
     --surface-1: #ffffff;
-    --surface-2: #eef0eb;
-    --surface-3: #e4e7e0;
-    --border: #d5d9d1;
-    --border-strong: #7b8580;
-    --text: #0e161c;
-    --text-muted: #44515b;
-    --text-subtle: #56636d;
-    --accent: #006d78;
-    --accent-hover: #00565f;
-    --accent-bg: #dcf1f2;
-    --accent-border: #8cc7cc;
-    --accent-fg: #ffffff;
-    --ring: #006d78;
-    --overlay: rgb(14 22 28 / 0.55);
-    --safe-solid: #0b7a55;
-    --safe-fg: #0a5f43;
-    --safe-bg: #e1f3ea;
-    --safe-border: #93cdb4;
-    --safe-on: #ffffff;
-    --caution-solid: #f2b132;
-    --caution-fg: #7a4b00;
-    --caution-bg: #fbefd2;
-    --caution-border: #dfbc6c;
-    --caution-on: #231700;
-    --danger-solid: #c8102e;
-    --danger-fg: #a50d25;
-    --danger-bg: #fce6e9;
-    --danger-border: #eba4ae;
+    --surface-2: #fbfaf7;
+    --surface-3: #eeede7;
+    --glass-1: rgb(255 255 255 / 0.62);
+    --glass-2: rgb(255 255 255 / 0.82);
+    --glass-border: rgb(10 12 20 / 0.06);
+    --border: rgb(10 12 20 / 0.08);
+    --border-strong: #828795;
+    --text: #0b0d12;
+    --text-muted: #474c59;
+    --text-subtle: #5b606d;
+    --primary: #0b0d12;
+    --primary-hover: #262a35;
+    --on-primary: #ffffff;
+    --halo-1: #5b4bff;
+    --halo-2: #0ea5e9;
+    --halo-3: #10b981;
+    --halo-ink-1: #5b4bff;
+    --halo-ink-2: #0277b6;
+    --halo-ink-3: #047857;
+    --ring: #5b4bff;
+    --on-toggle: #ffffff;
+    --accent-bg: #eeecff;
+    --overlay: rgb(20 24 40 / 0.32);
+    --danger-solid: #d42a3d;
     --danger-on: #ffffff;
-    --info-solid: #3f648f;
-    --info-fg: #2f5078;
-    --info-bg: #e6edf5;
-    --info-border: #a9bfd8;
+    --danger-fg: #b01828;
+    --danger-bg: #fcecee;
+    --danger-border: #efb3ba;
+    --caution-solid: #ffb547;
+    --caution-on: #1e1300;
+    --caution-fg: #8a5300;
+    --caution-bg: #fff3dc;
+    --caution-border: #e8c47c;
+    --safe-solid: #0b7a55;
+    --safe-on: #ffffff;
+    --safe-fg: #0a6347;
+    --safe-bg: #e4f4ec;
+    --safe-border: #98d3b8;
+    --info-solid: #4453d4;
     --info-on: #ffffff;
-    --shadow-color: rgb(14 22 28 / 0.12);
-    --grain-opacity: 0.035;
-    --grid-line: rgb(14 22 28 / 0.055);
+    --info-fg: #3342b4;
+    --info-bg: #eceeff;
+    --info-border: #b3bcf2;
+    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
+    --shadow-long: 0 30px 60px -30px rgb(20 24 40 / 0.18);
+    --shadow-near: 0 1px 2px rgb(20 24 40 / 0.06);
+    --surface-top: rgb(255 255 255 / 1);
+    --surface-bottom: rgb(252 251 248 / 1);
+    --field-bg: rgb(255 255 255 / 0.9);
+    --light-source: rgb(255 255 255 / 0.7);
+    --aurora-strength: 16%;
+    --grain-opacity: 0.03;
   }
 }
 
 :root[data-theme="light"],
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #f6f7f4;
+  --bg: #f6f5f1;
+  --bg-elevated: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #eef0eb;
-  --surface-3: #e4e7e0;
-  --border: #d5d9d1;
-  --border-strong: #7b8580;
-  --text: #0e161c;
-  --text-muted: #44515b;
-  --text-subtle: #56636d;
-  --accent: #006d78;
-  --accent-hover: #00565f;
-  --accent-bg: #dcf1f2;
-  --accent-border: #8cc7cc;
-  --accent-fg: #ffffff;
-  --ring: #006d78;
-  --overlay: rgb(14 22 28 / 0.55);
-  --safe-solid: #0b7a55;
-  --safe-fg: #0a5f43;
-  --safe-bg: #e1f3ea;
-  --safe-border: #93cdb4;
-  --safe-on: #ffffff;
-  --caution-solid: #f2b132;
-  --caution-fg: #7a4b00;
-  --caution-bg: #fbefd2;
-  --caution-border: #dfbc6c;
-  --caution-on: #231700;
-  --danger-solid: #c8102e;
-  --danger-fg: #a50d25;
-  --danger-bg: #fce6e9;
-  --danger-border: #eba4ae;
+  --surface-2: #fbfaf7;
+  --surface-3: #eeede7;
+  --glass-1: rgb(255 255 255 / 0.62);
+  --glass-2: rgb(255 255 255 / 0.82);
+  --glass-border: rgb(10 12 20 / 0.06);
+  --border: rgb(10 12 20 / 0.08);
+  --border-strong: #828795;
+  --text: #0b0d12;
+  --text-muted: #474c59;
+  --text-subtle: #5b606d;
+  --primary: #0b0d12;
+  --primary-hover: #262a35;
+  --on-primary: #ffffff;
+  --halo-1: #5b4bff;
+  --halo-2: #0ea5e9;
+  --halo-3: #10b981;
+  --halo-ink-1: #5b4bff;
+  --halo-ink-2: #0277b6;
+  --halo-ink-3: #047857;
+  --ring: #5b4bff;
+  --on-toggle: #ffffff;
+  --accent-bg: #eeecff;
+  --overlay: rgb(20 24 40 / 0.32);
+  --danger-solid: #d42a3d;
   --danger-on: #ffffff;
-  --info-solid: #3f648f;
-  --info-fg: #2f5078;
-  --info-bg: #e6edf5;
-  --info-border: #a9bfd8;
+  --danger-fg: #b01828;
+  --danger-bg: #fcecee;
+  --danger-border: #efb3ba;
+  --caution-solid: #ffb547;
+  --caution-on: #1e1300;
+  --caution-fg: #8a5300;
+  --caution-bg: #fff3dc;
+  --caution-border: #e8c47c;
+  --safe-solid: #0b7a55;
+  --safe-on: #ffffff;
+  --safe-fg: #0a6347;
+  --safe-bg: #e4f4ec;
+  --safe-border: #98d3b8;
+  --info-solid: #4453d4;
   --info-on: #ffffff;
-  --shadow-color: rgb(14 22 28 / 0.12);
-  --grain-opacity: 0.035;
-  --grid-line: rgb(14 22 28 / 0.055);
+  --info-fg: #3342b4;
+  --info-bg: #eceeff;
+  --info-border: #b3bcf2;
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --shadow-long: 0 30px 60px -30px rgb(20 24 40 / 0.18);
+  --shadow-near: 0 1px 2px rgb(20 24 40 / 0.06);
+  --surface-top: rgb(255 255 255 / 1);
+  --surface-bottom: rgb(252 251 248 / 1);
+  --field-bg: rgb(255 255 255 / 0.9);
+  --light-source: rgb(255 255 255 / 0.7);
+  --aurora-strength: 16%;
+  --grain-opacity: 0.03;
+}
+
+/* Values that do not change with the theme: the halo as a gradient, motion and
+   the film grain (our own SVG noise as a data: URL; the CSP's img-src allows data:).
+   --danger and --caution are short aliases of the solid status colours, read by
+   HaloRings (src/components/ui/halo/ringLayout.ts). They are set again on every
+   [data-theme] element, so a nested theme gets its own colour. */
+:root,
+[data-theme] {
+  --danger: var(--danger-solid);
+  --caution: var(--caution-solid);
+  --halo: linear-gradient(115deg, var(--halo-1) 0%, var(--halo-2) 52%, var(--halo-3) 100%);
+  --halo-ink: linear-gradient(
+    100deg,
+    var(--halo-ink-1) 0%,
+    var(--halo-ink-2) 55%,
+    var(--halo-ink-3) 100%
+  );
+  --halo-conic: conic-gradient(
+    from 200deg,
+    var(--halo-1),
+    var(--halo-2),
+    var(--halo-3),
+    var(--halo-1)
+  );
+}
+
+:root {
+  --dur-micro: 150ms;
+  --dur-ui: 300ms;
+  --dur-hero: 900ms;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ── 2. Tailwind theme ──────────────────────────────────────────────────────────
@@ -159,37 +243,41 @@
   --font-display: var(--font-sofia-condensed), var(--font-sofia), "Segoe UI", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Mono", Menlo, monospace;
 
-  /* Type scale (size, then its line height). Fluid sizes grow with the screen. */
-  --text-xs: 0.875rem;
+  /* Type scale (size, then its line height). Body text is 17 px; the older
+     person's screens use xl (22 px) and 2xl (28 px). */
+  --text-xs: 0.8125rem;
   --text-xs--line-height: 1.45;
   --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.5;
+  --text-sm--line-height: 1.55;
   --text-base: 1.0625rem;
   --text-base--line-height: 1.6;
-  --text-lg: 1.25rem;
-  --text-lg--line-height: 1.5;
-  --text-xl: 1.5rem;
-  --text-xl--line-height: 1.3;
-  --text-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.6;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.45;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.3;
+  --text-h3: clamp(1.25rem, 1.12rem + 0.55vw, 1.625rem);
   --text-h3--line-height: 1.2;
-  --text-h2: clamp(1.75rem, 1.35rem + 1.8vw, 2.75rem);
-  --text-h2--line-height: 1.05;
-  --text-h1: clamp(2.25rem, 1.5rem + 3.4vw, 4rem);
+  --text-h2: clamp(1.875rem, 1.35rem + 2.1vw, 3.25rem);
+  --text-h2--line-height: 1.04;
+  --text-h1: clamp(2.375rem, 1.5rem + 3.6vw, 4.5rem);
   --text-h1--line-height: 1;
-  --text-display: clamp(2.75rem, 1.6rem + 3.6vw, 5rem);
-  --text-display--line-height: 0.94;
+  --text-display: clamp(3rem, 2rem + 5vw, 7.5rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 300;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* Shape: 12 / 18 / 24 / 32 / full. Buttons are pills. */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-full: 999px;
 
-  --shadow-raised: 0 1px 2px var(--shadow-color), 0 8px 24px -12px var(--shadow-color);
-  --shadow-overlay: 0 2px 6px var(--shadow-color), 0 24px 64px -16px var(--shadow-color);
-
-  /* Emil Kowalski's stronger curves: the built-in CSS easings are too weak. */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* Motion curves: a long, soft landing (out) and a calm turn (in-out). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   --breakpoint-2xl: 90rem;
 
@@ -198,43 +286,63 @@
   --z-index-toast: 70;
 }
 
+/* `inline`: the classes use var(--…) directly, so a data-theme on any element
+   switches them (the gallery shows both themes side by side). */
 @theme inline {
   --color-canvas: var(--bg);
+  --color-elevated: var(--bg-elevated);
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
+  --color-glass-1: var(--glass-1);
+  --color-glass-2: var(--glass-2);
+  --color-glass-line: var(--glass-border);
   --color-line: var(--border);
   --color-line-strong: var(--border-strong);
   --color-fg: var(--text);
   --color-fg-muted: var(--text-muted);
   --color-fg-subtle: var(--text-subtle);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-bg: var(--accent-bg);
-  --color-accent-line: var(--accent-border);
-  --color-on-accent: var(--accent-fg);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-halo-1: var(--halo-1);
+  --color-halo-2: var(--halo-2);
+  --color-halo-3: var(--halo-3);
   --color-ring: var(--ring);
   --color-overlay: var(--overlay);
-  --color-safe-solid: var(--safe-solid);
-  --color-safe-fg: var(--safe-fg);
-  --color-safe-bg: var(--safe-bg);
-  --color-safe-line: var(--safe-border);
-  --color-safe-on: var(--safe-on);
-  --color-caution-solid: var(--caution-solid);
-  --color-caution-fg: var(--caution-fg);
-  --color-caution-bg: var(--caution-bg);
-  --color-caution-line: var(--caution-border);
-  --color-caution-on: var(--caution-on);
+  /* v2 names, kept so the screens still render until Phases 2–6 rebuild them:
+     "accent" is now the primary pill colour, "accent-bg" the selected tint. */
+  --color-accent: var(--primary);
+  --color-accent-hover: var(--primary-hover);
+  --color-on-accent: var(--on-primary);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-line: var(--halo-1);
   --color-danger-solid: var(--danger-solid);
+  --color-danger-on: var(--danger-on);
   --color-danger-fg: var(--danger-fg);
   --color-danger-bg: var(--danger-bg);
   --color-danger-line: var(--danger-border);
-  --color-danger-on: var(--danger-on);
+  --color-caution-solid: var(--caution-solid);
+  --color-caution-on: var(--caution-on);
+  --color-caution-fg: var(--caution-fg);
+  --color-caution-bg: var(--caution-bg);
+  --color-caution-line: var(--caution-border);
+  --color-safe-solid: var(--safe-solid);
+  --color-safe-on: var(--safe-on);
+  --color-safe-fg: var(--safe-fg);
+  --color-safe-bg: var(--safe-bg);
+  --color-safe-line: var(--safe-border);
   --color-info-solid: var(--info-solid);
+  --color-info-on: var(--info-on);
   --color-info-fg: var(--info-fg);
   --color-info-bg: var(--info-bg);
   --color-info-line: var(--info-border);
-  --color-info-on: var(--info-on);
+
+  /* Depth: the top highlight is part of every raised shadow. */
+  --shadow-raised: var(--highlight), var(--shadow-near), var(--shadow-long);
+  --shadow-overlay:
+    var(--highlight), 0 2px 8px rgb(0 0 0 / 0.18), 0 40px 80px -24px rgb(0 0 0 / 0.45);
+  --shadow-highlight: var(--highlight);
 }
 
 /* ── 3. Base ────────────────────────────────────────────────────────────────── */
@@ -242,27 +350,40 @@
   html {
     font-size: 100%;
     -webkit-text-size-adjust: 100%;
-    scroll-padding-top: 5rem;
+    scroll-padding-top: 6rem;
   }
   body {
     background-color: var(--bg);
-    /* A very fine film grain: our own generated SVG noise, tiled. */
-    background-image: var(--grain);
     color: var(--text);
     font-family: var(--font-sans);
     font-size: var(--text-base);
+    font-weight: 400;
     line-height: 1.6;
     font-feature-settings:
       "kern" 1,
       "locl" 1;
     text-rendering: optimizeLegibility;
   }
+  /* The film grain: one fixed layer over the whole page at 3–4 %, so large dark
+     areas feel like a material instead of a flat colour. It never takes a click. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background-image: var(--grain);
+    background-size: 200px 200px;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: overlay;
+  }
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.022em;
     text-wrap: balance;
   }
   p,
@@ -271,18 +392,19 @@
     overflow-wrap: anywhere;
     text-wrap: pretty;
   }
+  /* Focus: a crisp ring in the halo colour, with a gap so it reads on any surface. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 3px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
   /* Programmatic focus on a heading (after a step change) shows no ring. */
   [tabindex="-1"]:focus {
     outline: none;
   }
   ::selection {
-    background: var(--accent);
-    color: var(--accent-fg);
+    background: color-mix(in oklab, var(--halo-1) 35%, transparent);
+    color: var(--text);
   }
   dialog {
     color: inherit;
@@ -292,15 +414,11 @@
   }
 }
 
-:root {
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 /* ── 4. Utilities that Tailwind does not have ───────────────────────────────── */
-/* The page column: 1200 px wide at most, with a gutter that grows with the screen. */
+/* The page column: 1240 px wide at most, on the 8-point grid. */
 @utility shell {
   width: 100%;
-  max-width: 77rem;
+  max-width: 77.5rem;
   margin-inline: auto;
   padding-inline: 1rem;
   @media (min-width: 48rem) {
@@ -311,57 +429,359 @@
 @utility tabular {
   font-variant-numeric: tabular-nums;
 }
-/* Fine measuring-paper lines behind a panel. Decoration only. */
-@utility grid-lines {
+/* A tiny eyebrow label: the only place where Cyrillic is written in capitals. */
+@utility eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* One emphasised word in a display headline: bold, filled with the halo. */
+@utility halo-word {
+  font-weight: 700;
+  background-image: var(--halo-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Keeps descenders inside the painted box. */
+  padding-bottom: 0.06em;
+  @media (forced-colors: active) {
+    color: CanvasText;
+    background: none;
+  }
+}
+/* A raised surface: lit from above (lighter top), a highlight on the top edge and
+   a soft long shadow under it. */
+@utility surface-raised {
+  background-color: var(--surface-1);
+  background-image: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-near), var(--shadow-long);
+}
+/* Glass with a light source: a blurred, see-through panel with a soft spot of light
+   in its top-left corner (where the light comes from) and the top highlight. */
+@utility glass {
+  background-color: var(--glass-1);
   background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
+    radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-long);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
 }
-@utility dot-lines {
-  background-image: radial-gradient(var(--grid-line) 1px, transparent 1.5px);
-  background-size: 16px 16px;
+/* The aurora horizon: a soft halo-coloured glow rising behind a hero or section head. */
+@utility aurora {
+  background-image:
+    radial-gradient(
+      60% 55% at 50% 0%,
+      color-mix(in oklab, var(--halo-1) var(--aurora-strength), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      38% 42% at 82% 8%,
+      color-mix(in oklab, var(--halo-2) var(--aurora-strength), transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      34% 40% at 16% 12%,
+      color-mix(in oklab, var(--halo-3) calc(var(--aurora-strength) * 0.6), transparent),
+      transparent 70%
+    );
 }
-/* Press feedback for anything that can be pressed (Emil: scale 0.97, 150 ms). */
+/* A 1 px line drawn with the halo (dividers that carry the brand). */
+@utility halo-line {
+  height: 1px;
+  border: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--halo-1) 20%,
+    var(--halo-2) 50%,
+    var(--halo-3) 80%,
+    transparent
+  );
+  opacity: 0.7;
+}
+/* Press feedback for anything that can be pressed: scale 0.97, 150 ms. */
 @utility pressable {
-  transition: transform 150ms var(--ease-out);
-  &:active:not(:disabled) {
+  transition: transform var(--dur-micro) var(--ease-out);
+  &:active:not(:disabled):not([aria-disabled="true"]) {
     transform: scale(0.97);
   }
 }
 
 /* ── 5. Component styles that need real CSS ─────────────────────────────────── */
 @layer components {
-  /* Dialog and sheet: native <dialog>. Enters from 0.96 scale (never from 0),
-     200 ms ease-out; leaves at once. The backdrop only fades. */
+  /* Buttons. The pill moves with --mag-x/--mag-y (magnetic hover, desktop only,
+     set by Button.tsx) and shrinks a little while pressed. */
+  .btn {
+    --mag-x: 0px;
+    --mag-y: 0px;
+    --press: 1;
+    transform: translate3d(var(--mag-x), var(--mag-y), 0) scale(var(--press));
+    transition:
+      transform var(--dur-ui) var(--ease-out),
+      background-color var(--dur-micro) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out),
+      color var(--dur-micro) var(--ease-out);
+  }
+  .btn:active:not(:disabled):not([aria-disabled="true"]) {
+    --press: 0.97;
+    transition-duration: var(--dur-micro);
+  }
+  .btn-primary {
+    /* Lit from above: a touch of white at the top, a touch of shade at the bottom. */
+    background-image: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.12),
+      transparent 45%,
+      rgb(0 0 0 / 0.07)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 1px 2px rgb(0 0 0 / 0.25),
+      0 18px 40px -18px color-mix(in oklab, var(--halo-2) 55%, transparent);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 1px 2px rgb(0 0 0 / 0.25),
+      0 22px 48px -16px color-mix(in oklab, var(--halo-1) 65%, transparent);
+  }
+  /* The icon disc: a small round plate at the end of a primary pill. On hover the
+     arrow leaves to the right and a copy slides in from the left. */
+  .btn-disc {
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+  .btn-disc > span {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+  .btn-disc > span + span {
+    transform: translateX(-130%);
+  }
+  .btn:hover .btn-disc {
+    transform: translateX(3px);
+  }
+  .btn:hover .btn-disc > span:first-child {
+    transform: translateX(130%);
+  }
+  .btn:hover .btn-disc > span + span {
+    transform: translateX(0);
+  }
+
+  /* Halo spinner: two concentric rings turning at different speeds. */
+  .halo-spinner {
+    position: relative;
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    flex-shrink: 0;
+  }
+  .halo-spinner::before,
+  .halo-spinner::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    animation: spin 0.9s linear infinite;
+  }
+  .halo-spinner::before {
+    inset: 0;
+    border-top-color: var(--halo-1);
+    border-right-color: var(--halo-2);
+  }
+  .halo-spinner::after {
+    inset: 22%;
+    border-bottom-color: var(--halo-3);
+    border-left-color: var(--halo-2);
+    animation-duration: 1.4s;
+    animation-direction: reverse;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* The still halo mark (logo, empty states): concentric rings of the halo. */
+  .halo-mark {
+    position: relative;
+    display: inline-block;
+    border-radius: 999px;
+    background: var(--halo-conic);
+    /* --halo-hole: how much of the middle is empty (a thinner ring when larger). */
+    -webkit-mask: radial-gradient(
+      farthest-side,
+      transparent var(--halo-hole, 62%),
+      #000 calc(var(--halo-hole, 62%) + 2%)
+    );
+    mask: radial-gradient(
+      farthest-side,
+      transparent var(--halo-hole, 62%),
+      #000 calc(var(--halo-hole, 62%) + 2%)
+    );
+  }
+
+  /* A choice tile (BigChoice, Segmented …) that is selected: a halo ring, drawn as
+     a gradient border (padding-box fill + border-box halo). */
+  .halo-ring {
+    border-color: transparent !important;
+    background:
+      linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+      var(--halo) border-box;
+  }
+  .choice-tile {
+    border: 2px solid var(--glass-border);
+    background:
+      linear-gradient(180deg, var(--surface-top), var(--surface-bottom)) padding-box,
+      linear-gradient(var(--surface-1), var(--surface-1)) padding-box;
+    box-shadow: var(--highlight), var(--shadow-near), var(--shadow-long);
+    transition:
+      transform var(--dur-micro) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out),
+      border-color var(--dur-micro) var(--ease-out);
+  }
+  .choice-tile:hover {
+    border-color: var(--border-strong);
+  }
+  .choice-tile:active:not(:has(:disabled)) {
+    transform: scale(0.97);
+  }
+  .choice-tile:has(:checked) {
+    border-color: transparent;
+    background:
+      linear-gradient(180deg, var(--surface-top), var(--surface-bottom)) padding-box,
+      linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+      var(--halo) border-box;
+    box-shadow:
+      var(--highlight),
+      0 0 0 4px color-mix(in oklab, var(--halo-2) 16%, transparent),
+      0 24px 48px -24px color-mix(in oklab, var(--halo-1) 60%, transparent);
+  }
+
+  /* Form controls: a slightly sunken well; on focus the border takes the ring
+     colour and a soft glow of it spreads around the field. */
+  .field-control {
+    background-color: var(--field-bg);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18);
+    transition:
+      border-color var(--dur-micro) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out);
+  }
+  .field-control:focus-visible {
+    border-color: var(--ring);
+    outline-offset: 2px;
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.18),
+      0 0 0 6px color-mix(in oklab, var(--ring) 16%, transparent);
+  }
+
+  /* Checkbox and switch. Checked = the halo (its deeper "ink" stops, so the white
+     or dark tick and thumb keep 3 : 1). The thumb slides with a small overshoot. */
+  .toggle-box,
+  .toggle-track {
+    background: var(--field-bg);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.22);
+    transition:
+      border-color var(--dur-micro) var(--ease-out),
+      box-shadow var(--dur-ui) var(--ease-out);
+  }
+  .toggle-box:checked,
+  .toggle-track:checked {
+    border-color: transparent;
+    background: var(--halo-ink);
+    box-shadow:
+      var(--highlight),
+      0 0 0 4px color-mix(in oklab, var(--halo-2) 16%, transparent);
+  }
+  .toggle-box ~ svg {
+    color: var(--on-toggle);
+  }
+  .toggle-thumb {
+    background: var(--text);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+    transition:
+      transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      background-color var(--dur-micro) var(--ease-out);
+  }
+  .toggle-track:checked + .toggle-thumb {
+    transform: translateX(1.5rem);
+    background: var(--on-toggle);
+  }
+
+  /* Segmented control thumb: a small raised plate that slides (transform only). */
+  .segmented-thumb {
+    background:
+      linear-gradient(180deg, var(--surface-top), var(--surface-bottom)), var(--surface-3);
+    box-shadow:
+      var(--highlight),
+      0 1px 2px rgb(0 0 0 / 0.2),
+      0 8px 18px -8px rgb(0 0 0 / 0.45);
+    transition: transform 380ms var(--ease-out);
+  }
+
+  /* Cursor spotlight on glass (desktop): GlassPanel sets --spot-x/--spot-y. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      420px circle at var(--spot-x, 50%) var(--spot-y, -40%),
+      color-mix(in oklab, var(--halo-2) 14%, transparent),
+      transparent 60%
+    );
+    opacity: var(--spot-on, 0);
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  /* Dialog and sheet: native <dialog>. Enters from 0.96 scale and 8 px below,
+     350 ms ease-out; the backdrop blurs the page. */
   .dialog {
     opacity: 1;
     transform: none;
     transition:
-      opacity 200ms var(--ease-out),
-      transform 200ms var(--ease-out);
+      opacity var(--dur-ui) var(--ease-out),
+      transform 350ms var(--ease-out);
     @starting-style {
       opacity: 0;
-      transform: scale(0.96);
+      transform: translateY(8px) scale(0.96);
     }
   }
   .dialog::backdrop {
     background: var(--overlay);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     opacity: 1;
-    transition: opacity 200ms var(--ease-out);
+    transition: opacity var(--dur-ui) var(--ease-out);
     @starting-style {
       opacity: 0;
     }
   }
-  .dialog-sheet {
-    @starting-style {
-      opacity: 1;
-      transform: translateY(100%);
+  @media (max-width: 47.99rem) {
+    .dialog-sheet {
+      @starting-style {
+        opacity: 1;
+        transform: translateY(100%);
+      }
     }
   }
 
-  /* Skeleton: the shape of the content that is loading. One soft band of light
-     crosses it (transform only). */
+  /* Skeleton: a soft surface with a slow, wide shimmer (transform only). */
   .skeleton {
     position: relative;
     overflow: hidden;
@@ -372,46 +792,31 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, var(--grid-line) 45%, transparent 90%);
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      color-mix(in oklab, var(--text) 7%, transparent) 50%,
+      transparent 80%
+    );
     transform: translateX(-100%);
-    animation: skeleton-sweep 1.6s linear infinite;
+    animation: skeleton-shimmer 1.8s var(--ease-in-out) infinite;
   }
-  @keyframes skeleton-sweep {
+  @keyframes skeleton-shimmer {
     to {
       transform: translateX(100%);
     }
   }
 
-  /* Signal line (the brand motif). The jagged trace is flattened with scaleY and
-     the three coloured copies cross-fade: only transform and opacity change. */
-  .signal-trace {
-    transform-box: fill-box;
-    transform-origin: center;
-    transition: transform 700ms var(--ease-in-out);
-  }
-  .signal-layer {
-    transition: opacity 400ms var(--ease-out);
-  }
-  /* A spinner is allowed only inside a button. */
-  .spinner {
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Toast: slides up from the bottom edge it lives on, 250 ms. */
+  /* Toast: rises from the bottom edge it lives on. */
   .toast {
     opacity: 1;
     transform: none;
     transition:
-      opacity 250ms var(--ease-out),
-      transform 250ms var(--ease-out);
+      opacity var(--dur-ui) var(--ease-out),
+      transform 350ms var(--ease-out);
     @starting-style {
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateY(16px) scale(0.98);
     }
   }
 
@@ -420,33 +825,60 @@
     opacity: 1;
     transform: none;
     transition:
-      opacity 240ms var(--ease-out),
-      transform 240ms var(--ease-out);
+      opacity var(--dur-ui) var(--ease-out),
+      transform var(--dur-ui) var(--ease-out);
     @starting-style {
       opacity: 0;
       transform: translateY(8px);
     }
   }
 
-  /* Tooltip: CSS only. Waits 400 ms, grows from the edge next to its trigger. */
+  /* The verdict: its coloured light rises and the card settles (hero timing). */
+  .verdict-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition:
+      opacity 600ms var(--ease-out),
+      transform 900ms var(--ease-out),
+      filter 900ms var(--ease-out);
+    @starting-style {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+      filter: blur(6px);
+    }
+  }
+
+  /* Risk gauge needle: turns from the start of the arc to the score. */
+  .risk-needle {
+    transform-box: view-box;
+    /* The centre of the gauge in its drawing (RiskMeter.tsx: CX, CY). */
+    transform-origin: 100px 100px;
+    transform: rotate(var(--risk-angle, -90deg));
+    transition: transform 1100ms var(--ease-out);
+    @starting-style {
+      transform: rotate(-90deg);
+    }
+  }
+
+  /* Tooltip: CSS only. Waits 400 ms on hover, appears at once on keyboard focus. */
   .tooltip-bubble {
     opacity: 0;
-    transform: scale(0.97);
+    transform: translate(-50%, 4px) scale(0.97);
     transform-origin: bottom center;
     transition:
-      opacity 125ms var(--ease-out),
-      transform 125ms var(--ease-out);
+      opacity var(--dur-micro) var(--ease-out),
+      transform var(--dur-micro) var(--ease-out);
     pointer-events: none;
   }
   .tooltip:hover .tooltip-bubble,
   .tooltip:focus-within .tooltip-bubble {
     opacity: 1;
-    transform: none;
+    transform: translate(-50%, 0) scale(1);
     transition-delay: 400ms;
   }
   .tooltip:focus-within .tooltip-bubble {
     transition-delay: 0ms;
-    transition-duration: 0ms;
   }
 
   /* Long text written by moderators (education cards). */
@@ -455,42 +887,199 @@
   }
 }
 
+/* ── HaloRings: the still CSS/SVG halo (src/components/ui/HaloRings.tsx) ─────────
+   Plain classes here and not a CSS module: our Turbopack rule hands every *.css file
+   to Tailwind as global CSS, so a module's class names would not be made unique.
+   The state is read from data-halo-state. Only transform and opacity are animated:
+   cheap for any phone. Colours: --halo-1/2/3, --caution, --danger, --halo-core. */
+@layer components {
+  .halo-rings {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  /* Soft light in the middle; its colour comes from --halo-core (set per state). */
+  .halo-rings::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--halo-core) 38%, transparent) 0%,
+      transparent 55%
+    );
+  }
+
+  .halo-rings-svg {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .halo-rings-ring {
+    fill: none;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Danger: the one closed ring glows. */
+  .halo-rings[data-halo-state="danger"] .halo-rings-ring {
+    filter: drop-shadow(0 0 4px var(--danger, #ff4d5e));
+  }
+
+  .halo-rings-animated[data-halo-state="idle"] .halo-rings-ring {
+    animation: halo-breathe 6s ease-in-out infinite alternate;
+  }
+
+  .halo-rings-animated[data-halo-state="calm"] .halo-rings-ring {
+    animation: halo-breathe 8s ease-in-out infinite alternate;
+  }
+
+  .halo-rings-animated[data-halo-state="caution"] .halo-rings-ring {
+    animation: halo-jitter 1.7s ease-in-out infinite;
+  }
+
+  /* The shield closes once (from wide to its place), then breathes slowly. */
+  .halo-rings-animated[data-halo-state="danger"] .halo-rings-ring {
+    animation:
+      halo-close 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) both,
+      halo-pulse 2.4s ease-in-out 0.7s infinite;
+  }
+
+  .halo-rings-animated::before {
+    animation: halo-glow 4s ease-in-out infinite alternate;
+  }
+
+  /* People who asked their phone for less motion get the still picture. */
+  @media (prefers-reduced-motion: reduce) {
+    .halo-rings-animated .halo-rings-ring,
+    .halo-rings-animated::before {
+      animation: none;
+    }
+  }
+}
+
+@keyframes halo-breathe {
+  from {
+    transform: scale(0.96);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes halo-jitter {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.97);
+  }
+  55% {
+    transform: scale(1.025);
+  }
+  80% {
+    transform: scale(0.99);
+  }
+}
+
+@keyframes halo-close {
+  from {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes halo-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes halo-glow {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* ── 6. Reduced motion ──────────────────────────────────────────────────────────
-   Not a switch-off: movement is removed, short fades stay, so a change of state is
-   still visible. The skeleton keeps a static tone instead of the moving band. */
+   Not a switch-off: movement is removed, short 150 ms fades stay, so a change of
+   state is still visible. Magnetic, tilt and parallax are off; the skeleton keeps
+   a still tone; spinners turn slowly. */
 @media (prefers-reduced-motion: reduce) {
   .pressable,
-  .pressable:active:not(:disabled) {
+  .pressable:active:not(:disabled),
+  .choice-tile:active:not(:has(:disabled)) {
+    transform: none;
+  }
+  .pressable {
+    transition: none;
+  }
+  .btn,
+  .btn:active:not(:disabled) {
+    --mag-x: 0px;
+    --mag-y: 0px;
+    --press: 1;
+    transition: background-color 150ms linear;
+  }
+  .btn-disc,
+  .btn-disc > span,
+  .btn:hover .btn-disc,
+  .btn:hover .btn-disc > span:first-child {
     transform: none;
     transition: none;
+  }
+  .btn-disc > span + span {
+    display: none;
   }
   .dialog,
   .dialog-sheet,
   .toast,
-  .appear {
+  .appear,
+  .verdict-reveal {
     transition: opacity 150ms linear;
     @starting-style {
       opacity: 0;
       transform: none;
+      filter: none;
     }
   }
-  .signal-trace {
+  .risk-needle,
+  .toggle-thumb,
+  .segmented-thumb {
     transition: none;
   }
-  .signal-layer {
-    transition: opacity 150ms linear;
+  .spotlight::before {
+    display: none;
   }
   .skeleton::after {
     animation: none;
     transform: none;
-    opacity: 0.6;
+    opacity: 0.5;
   }
   .tooltip-bubble {
-    transform: none;
     transition: opacity 100ms linear;
   }
-  .spinner {
-    animation-duration: 1.6s;
+  .halo-spinner::before,
+  .halo-spinner::after {
+    animation-duration: 2.4s;
   }
   html {
     scroll-behavior: auto;
@@ -503,6 +1092,7 @@
   :root[data-theme] {
     color-scheme: light;
     --bg: #ffffff;
+    --bg-elevated: #ffffff;
     --surface-1: #ffffff;
     --surface-2: #ffffff;
     --surface-3: #ffffff;
@@ -511,10 +1101,295 @@
     --text-subtle: #000000;
     --border: #000000;
     --border-strong: #000000;
-    --accent: #000000;
-    --grain: none;
+    --primary: #000000;
+    --on-primary: #ffffff;
+    --shadow-long: 0 0 0 transparent;
+  }
+  body::after {
+    display: none;
   }
   .no-print {
     display: none !important;
+  }
+}
+
+/* ── 8. Site frame (Phase 2): header pill, spotlight, dock, footer, logo ───────
+   src/components/layout/. Everything here is namespaced .site-* / .brand-*.
+   Motion: only transform, opacity and clip-path move (docs/redesign-v3/02-motion.md). */
+@layer base {
+  /* viewport-fit=cover (layout.tsx) lets the page reach under a notch; keep the
+     content clear of it in landscape. The dock adds the bottom inset itself. */
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@layer components {
+  /* The header pill: two glass layers under the content. The "frost" layer (more
+     blur, a denser tint) is invisible at the top of the page. */
+  .site-header-pill {
+    transform-origin: 50% 0;
+  }
+  .site-header-glass,
+  .site-header-frost {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  /* Navigation glass: the glass of the design system with a denser tint of the page
+     colour under it, so text that scrolls behind the header or the dock never fights
+     with the menu words (plain glass at 4 % let the map show through on a phone). */
+  .site-glass {
+    border: 1px solid var(--glass-border);
+    background-color: color-mix(in oklab, var(--bg) 66%, transparent);
+    background-image:
+      radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+      linear-gradient(180deg, var(--glass-2), var(--glass-1));
+    box-shadow: var(--highlight), var(--shadow-long);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+  }
+  .site-header-frost {
+    border: 1px solid var(--glass-border);
+    background-color: color-mix(in oklab, var(--bg) 80%, transparent);
+    box-shadow: var(--highlight), var(--shadow-long);
+    -webkit-backdrop-filter: blur(36px) saturate(180%);
+    backdrop-filter: blur(36px) saturate(180%);
+    opacity: 0;
+  }
+  /* After 40 px of scrolling: the pill rises 4 px and shrinks to 97.5 %, and the
+     frost fades in. Driven by the scroll position itself (a scroll timeline), so no
+     script runs while scrolling. Browsers without scroll timelines and people who
+     asked for less motion simply keep the normal glass. */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .site-header-pill {
+        animation: site-header-shrink linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 40px;
+      }
+      .site-header-frost {
+        animation: site-header-frost linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 40px;
+      }
+    }
+  }
+
+  /* The logo: on hover the halo turns a little, as if it closed around the dot. */
+  .brand-logo-mark {
+    transition: transform 700ms var(--ease-out);
+  }
+  .brand-logo:hover .brand-logo-mark {
+    transform: rotate(-28deg);
+  }
+
+  /* The spotlight under the header links (SpotlightNav): one lit pill as wide as the
+     row, cut down to one link by clip-path; --spot-l/--spot-r say how much to cut. */
+  .site-spot {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.06), rgb(255 255 255 / 0.1)),
+      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
+    );
+    box-shadow: var(--highlight);
+    clip-path: inset(0 var(--spot-r, 50%) 0 var(--spot-l, 50%) round 999px);
+    opacity: 0;
+    transition: opacity 150ms linear;
+  }
+  /* The halo hairline at the foot of the light, with a faint glow above it. Its
+     gradient spans the whole row, so each link gets its own part of the spectrum. */
+  .site-spot::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 5px;
+    height: 2px;
+    background: var(--halo);
+    box-shadow: 0 -2px 10px color-mix(in oklab, var(--halo-2) 45%, transparent);
+  }
+  .site-spot-track[data-spot="on"] > .site-spot {
+    opacity: 1;
+  }
+  .site-spot-track[data-ready] > .site-spot {
+    transition:
+      clip-path 420ms var(--ease-out),
+      opacity 150ms linear;
+  }
+
+  /* The phone dock (SiteDock): fixed to the bottom, clear of the home indicator. */
+  .site-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--z-index-header);
+    display: flex;
+    justify-content: center;
+    padding: 0 max(12px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+  .site-dock-bar {
+    width: 100%;
+    max-width: 30rem;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 30px;
+    pointer-events: auto;
+  }
+  .site-dock-link {
+    position: relative;
+    display: flex;
+    min-height: 56px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 7px 2px 6px;
+    border-radius: 24px;
+    text-decoration: none;
+    transition:
+      color 150ms linear,
+      background-color 150ms linear;
+  }
+  .site-dock-link:hover {
+    background-color: light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04));
+  }
+  .site-dock-link[aria-current="page"] {
+    background: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.07), rgb(255 255 255 / 0.11)),
+      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
+    );
+    box-shadow: var(--highlight);
+  }
+  /* The current place: a short halo bar at the top edge, like light falling on it. */
+  .site-dock-link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--halo);
+    box-shadow: 0 2px 10px color-mix(in oklab, var(--halo-2) 55%, transparent);
+    transform: translateX(-50%);
+  }
+  .site-dock-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.8;
+  }
+  .site-dock-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The footer: an aurora rising from the bottom edge and a giant faint wordmark that
+     runs off it. */
+  .site-footer-glow {
+    background-image:
+      radial-gradient(
+        60% 70% at 50% 120%,
+        color-mix(in oklab, var(--halo-1) var(--aurora-strength), transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        36% 50% at 88% 112%,
+        color-mix(in oklab, var(--halo-2) var(--aurora-strength), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        32% 45% at 10% 110%,
+        color-mix(in oklab, var(--halo-3) calc(var(--aurora-strength) * 0.6), transparent),
+        transparent 70%
+      );
+  }
+  .site-footer-word {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    z-index: -1;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(7.5rem, 29vw, 23rem);
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: -0.055em;
+    white-space: nowrap;
+    /* Lit from below by the aurora: the ink fades upward into a faint halo tint. */
+    background-image: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.11), rgb(255 255 255 / 0.11)) 8%,
+      color-mix(in oklab, var(--halo-1) 14%, transparent) 62%,
+      color-mix(in oklab, var(--halo-2) 8%, transparent) 80%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transform: translate(-50%, 30%);
+  }
+  .site-footer-word-space {
+    height: clamp(4.5rem, 17vw, 13.5rem);
+  }
+  .site-footer-link {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    padding-inline: 12px;
+    border-radius: 999px;
+    color: var(--text);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 150ms linear;
+  }
+  .site-footer-link:hover {
+    background-color: var(--glass-2);
+  }
+}
+
+@keyframes site-header-shrink {
+  to {
+    transform: translateY(-4px) scale(0.975);
+  }
+}
+@keyframes site-header-frost {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-spot-track[data-ready] > .site-spot {
+    transition: opacity 150ms linear;
+  }
+  .brand-logo-mark,
+  .brand-logo:hover .brand-logo-mark {
+    transform: none;
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .site-spot::after,
+  .site-dock-link[aria-current="page"]::before {
+    background: Highlight;
+  }
+  .site-footer-word {
+    display: none;
   }
 }

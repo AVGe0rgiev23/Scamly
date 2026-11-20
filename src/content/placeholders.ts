@@ -64,4 +64,10 @@ export const SAMPLE = {
   // The times of the four steps of the sample alert (hours:minutes:seconds).
   timelineTimes: ["14:32:05", "14:32:06", "14:32:41", "14:33:10"],
   voiceHeard: "казаха, че са от полицията",
+  // The sample family on the home page, in the order Scamly calls them (AvatarStack).
+  familyOrder: [
+    { id: "f1", name: "Иван Петров" },
+    { id: "f2", name: "Елена Петрова" },
+    { id: "f3", name: "Георги Петров" },
+  ],
 } as const;

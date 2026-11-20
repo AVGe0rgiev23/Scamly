@@ -4,6 +4,8 @@
 
 import { Suspense, type ReactNode } from "react";
 import { ProtectedGate, ProtectedLoading } from "@/components/protected/ProtectedGate";
+// The call check's own styles (the big button, halo dots, the verdict moment).
+import "@/components/protected/protected.css";
 
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   return (
