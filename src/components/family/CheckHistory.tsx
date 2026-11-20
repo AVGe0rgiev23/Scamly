@@ -4,13 +4,18 @@
 // badge (icon + word, not only colour), who the caller claimed to be and who
 // answered „Обаждам ѝ се сега“. „Подробности“ loads one check (GET /api/checks/:id)
 // with the reasons and the answers.
-// Look: hairline-separated rows (`.check-list > li`), the time in the data font, the
-// details open inside the row on a quiet panel.
+// Look (Redesign v3 Phase 4, family.css): a vertical timeline (`.check-list > li`).
+// Each check hangs on the line by a halo node in its verdict's colour (red, amber,
+// mint; a quiet halo while it still runs), next to a glass card with the badge, the
+// time in the data font, who called and who answered. The details open inside the
+// card on a sunken panel. Green never says „безопасно“ (D9): the badge words come
+// from bg.verdictBadge.
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
 import { Notice } from "@/components/ui/Notice";
 import { SkeletonList, SkeletonText } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/States";
@@ -102,7 +107,7 @@ export function CheckHistory({ personId }: { personId: string }) {
         <p role="status" className="sr-only">
           {bg.family.historyLoading}
         </p>
-        <SkeletonList rows={3} className="border-t border-line" />
+        <SkeletonList rows={3} />
       </div>
     );
   }
@@ -124,7 +129,7 @@ export function CheckHistory({ personId }: { personId: string }) {
 
   return (
     <div className="flex flex-col items-start gap-4">
-      <ol className="check-list w-full border-t border-line">
+      <ol className="check-list family-timeline w-full">
         {state.checks.map((check) => (
           <CheckItem key={check.id} check={check} />
         ))}
@@ -146,30 +151,33 @@ function CheckItem({ check }: { check: CheckDto }) {
   const [open, setOpen] = useState(false);
   const detailId = useId();
   const time = formatDateTime(check.startedAt);
+  const level = check.verdict?.level ?? "pending";
   return (
-    <li className="border-b border-line py-4">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <VerdictBadge level={check.verdict?.level ?? null} />
-        <p className="tabular font-mono text-sm text-fg-muted">{time}</p>
+    <li className="family-tl-item" data-level={level}>
+      <span className="family-node" data-level={level} aria-hidden="true" />
+      <div className="family-tl-card">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <VerdictBadge level={check.verdict?.level ?? null} />
+          <p className="tabular font-mono text-sm text-fg-muted">{time}</p>
+        </div>
+        <p className="mt-2 text-fg">{identityText(check)}</p>
+        <p className="text-sm text-fg-muted">{acknowledgementText(check)}</p>
+        <Button
+          variant="ghost"
+          className="mt-2 -ml-3"
+          aria-expanded={open}
+          aria-controls={detailId}
+          aria-label={open ? bg.family.hideDetails : fill(bg.family.detailsLabel, { time })}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? bg.family.hideDetails : bg.family.showDetails}
+          <ChevronDown
+            className={cn("family-chevron size-5", open && "rotate-180")}
+            aria-hidden="true"
+          />
+        </Button>
+        <div id={detailId}>{open ? <CheckDetail checkId={check.id} /> : null}</div>
       </div>
-      <p className="mt-2 text-fg">{identityText(check)}</p>
-      <p className="text-sm text-fg-muted">{acknowledgementText(check)}</p>
-      <Button
-        variant="ghost"
-        className="mt-2 -ml-3"
-        aria-expanded={open}
-        aria-controls={detailId}
-        aria-label={open ? bg.family.hideDetails : fill(bg.family.detailsLabel, { time })}
-        onClick={() => setOpen(!open)}
-      >
-        {open ? bg.family.hideDetails : bg.family.showDetails}
-        {open ? (
-          <ChevronUp className="size-5" aria-hidden="true" />
-        ) : (
-          <ChevronDown className="size-5" aria-hidden="true" />
-        )}
-      </Button>
-      <div id={detailId}>{open ? <CheckDetail checkId={check.id} /> : null}</div>
     </li>
   );
 }
@@ -201,7 +209,7 @@ function CheckDetail({ checkId }: { checkId: string }) {
 
   if (state.kind === "loading") {
     return (
-      <div className="mt-3 rounded-md bg-surface-1 p-4">
+      <div className="family-details">
         <p role="status" className="sr-only">
           {bg.family.detailsLoading}
         </p>
@@ -221,7 +229,7 @@ function CheckDetail({ checkId }: { checkId: string }) {
   const answers = check.answers;
   const tri = (value: "yes" | "no" | "unsure" | null) => bg.family.triAnswers[value ?? "none"];
   return (
-    <div className="appear mt-3 flex flex-col gap-4 rounded-md border border-line bg-surface-1 p-4 md:p-5">
+    <div className="family-details appear flex flex-col gap-4">
       {check.verdict ? (
         <div>
           <p className="font-display text-lg font-semibold text-fg">{check.verdict.headlineBg}</p>
@@ -265,7 +273,7 @@ function CheckDetail({ checkId }: { checkId: string }) {
       {answers.textRedacted ? (
         <div>
           <h3 className="text-base font-semibold text-fg-muted">{bg.family.callText}</h3>
-          <p className="mt-1 rounded-sm bg-surface-2 p-3 break-words whitespace-pre-wrap text-fg">
+          <p className="family-quote mt-2 break-words whitespace-pre-wrap">
             {answers.textRedacted}
           </p>
         </div>
