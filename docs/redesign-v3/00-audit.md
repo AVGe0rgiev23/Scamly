@@ -227,3 +227,19 @@ Grep over `src/`, `scripts/`, `tests/`, `public/` (and docs for `docs/redesign/`
   `3de6f0` and is redone with the new OG image in Phase 2.
 - The `docs/redesign/` references in `WHY_WE_CHOSE.md`, `PROJECT_BRIEF.md` (D26),
   `CHANGES.md` and `HOW_IT_WORKS.md` were updated in Phase 1 (D28 replaces D26).
+
+## 8. Phase 2 follow-up: brand assets are final (19 Nov)
+
+- **Logo:** the final halo mark, three arcs closing into a ring around a dot, drawn once
+  in `scripts/icons/logo.svg` (theme-aware), `logo-small.svg` (≤ 20 px) and
+  `logo-mono.svg`; in the page by `src/components/ui/HaloLogo.tsx` (`layout/Logo.tsx`).
+  `HaloMark` stays only as a quiet empty-state picture.
+- **App icons** regenerated from the new sources with `npm run icons`:
+  `public/icons/{icon-192,icon-512,icon-maskable-512,apple-touch-icon,badge-72}.png`,
+  `src/app/favicon.ico` (from `scripts/icons/favicon.svg`); `src/app/icon.svg` is the small
+  mark, dark or light by the device setting. Sizes unchanged, so `pwa.spec.ts` still checks them.
+- **OG image:** `scripts/og/og.html` rebuilt in the v3 style (no `3de6f0`, no v2 grid or
+  trace); `npm run og` → `src/app/opengraph-image.png` + `opengraph-image.alt.txt` (Bulgarian).
+- `src/config/pwa.ts` colours were already the v3 page colours; unchanged.
+- Logged in `THIRD_PARTY_LICENSES.md` as our own work (GPL-3.0). Evidence:
+  `docs/evidence/redesign-v3/phase-2/` (`icons-sheet.png`, `og-image.png`, `nav-footer__*`).

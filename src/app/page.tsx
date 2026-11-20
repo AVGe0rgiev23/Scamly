@@ -1,300 +1,366 @@
-// The home page ("/"): what Scamly is for, shown with the product itself.
+// The home page ("/"), Redesign v3 „Ореол“ (Phase 2A). A phone call is a sound wave;
+// Scamly turns it into a halo that closes around the person. Ten sections between the
+// header and the footer (those two live in the root layout):
 //
-//   1. Hero: the question „Съмнително обаждане?“, the start button and a live demo
-//      that runs the real detection engine on sample calls.
-//   2. The one rule to remember („Затворете телефона“).
-//   3. How it works: the 3 steps.
-//   4. What Scamly does: a grid of small example screens.
-//   5. The six hard rules that always mean "scam".
-//   6. For the family: what a relative sets up and what an alert looks like.
-//   7. What to do during a suspicious call (three rules).
-//   8. The public tools: education cards, report form, scam map.
-//   9. Questions and answers.
-//  10. Start: register, pair a phone, log in. Plus the „Инсталирай Scamly“ card.
+//   1. Hero stage: the live halo, the headline, the start button and a tilted glass
+//      phone that runs the REAL engine on sample calls. A red sample makes the halo
+//      snap shut (HeroStage.tsx).
+//   2. The one rule: „Затворете телефона.“, revealed word by word.
+//   3. How it works: a sticky phone that changes screen as the 3 steps scroll past.
+//   4. What Scamly does: an asymmetric bento of small real screens.
+//   5. The six hard rules: a sideways deck of tall cards.
+//   6. For the family: what a relative sets up; the alert island and the call order.
+//   7. During a call: three quiet rules on an inverted (porcelain/ink) panel.
+//   8. Public tools: education, report, map, each with our own line illustration.
+//   9. Questions: an accordion (native <details>, works without JavaScript).
+//  10. Start: register, pair a phone, log in, and the „Инсталирай Scamly“ card.
 //
-// A Server Component; all text comes from src/i18n/bg.ts and the example content
-// from src/content/placeholders.ts. Nothing here is a statistic or a quote.
+// A Server Component; motion lives in small client islands. All text comes from
+// src/i18n/bg.ts, the examples from src/content/placeholders.ts. Nothing here is a
+// statistic or a quote.
 
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { CallDemo } from "@/components/landing/CallDemo";
+import type { ReactNode } from "react";
+import { FamilyAlert } from "@/components/landing/FamilyAlert";
 import { FeatureGrid } from "@/components/landing/FeatureGrid";
+import { HeroStage } from "@/components/landing/HeroStage";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { EducationArt, MapArt, ReportArt } from "@/components/landing/Illustrations";
+import {
+  ScreenAlert,
+  ScreenButton,
+  ScreenPairing,
+  ScreenQuestion,
+  ScreenVerdict,
+} from "@/components/landing/MockScreens";
+import { RevealWords } from "@/components/landing/RevealWords";
+import { RulesDeck } from "@/components/landing/RulesDeck";
+import "@/components/landing/landing.css";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { AvatarStack } from "@/components/ui/AvatarStack";
 import { ButtonLink } from "@/components/ui/Button";
+import { cn } from "@/components/ui/cn";
+import { HaloFieldLazy } from "@/components/ui/HaloFieldLazy";
+import { Stage } from "@/components/ui/Stage";
 import { ROUTES } from "@/config/routes";
 import { SAMPLE } from "@/content/placeholders";
-import { HARD_RULE_IDS } from "@/engine";
 import { bg } from "@/i18n/bg";
 
 const t = bg.landing;
 
-// The three public tools, each with its title, one sentence and where it leads.
+// The three public tools: title, one sentence, the link and its picture.
 const RESOURCES = [
   {
     title: bg.education.homeTitle,
     text: bg.education.homeText,
     link: bg.education.homeLink,
     href: ROUTES.education,
+    art: <EducationArt id="art-education" />,
   },
   {
     title: bg.reportForm.homeTitle,
     text: bg.reportForm.homeText,
     link: bg.reportForm.homeLink,
     href: ROUTES.report,
+    art: <ReportArt id="art-report" />,
   },
-  { title: bg.map.homeTitle, text: bg.map.homeText, link: bg.map.homeLink, href: ROUTES.map },
+  {
+    title: bg.map.homeTitle,
+    text: bg.map.homeText,
+    link: bg.map.homeLink,
+    href: ROUTES.map,
+    art: <MapArt id="art-map" />,
+  },
 ];
 
-const SECTION = "border-t border-line py-16 md:py-24";
+// "Съмнително обаждане?" → ["Съмнително", "обаждане?"]: the last word gets the halo.
+function splitLastWord(text: string): [string, string] {
+  const at = text.lastIndexOf(" ");
+  return at < 0 ? ["", text] : [text.slice(0, at), text.slice(at + 1)];
+}
+
+// A small eyebrow above a section heading (the only all-caps text).
+function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+  return <p className={cn("eyebrow flex items-center gap-3", className)}>{children}</p>;
+}
+
+const [titleLead, titleWord] = splitLastWord(bg.app.tagline);
 
 export default function HomePage() {
   return (
-    <main>
-      {/* 1. Hero */}
-      <section
-        className="shell grid gap-x-6 gap-y-12 pt-10 pb-16 md:pt-16 lg:grid-cols-12 lg:pb-24"
-        aria-labelledby="home-title"
-      >
-        <div className="lg:col-span-5 lg:pt-8">
-          <h1
-            id="home-title"
-            className="text-display lg:text-[length:clamp(3rem,0.5rem+4.6vw,5.75rem)]"
-          >
-            {bg.app.tagline}
+    <main className="landing">
+      {/* 1. Hero stage */}
+      <div className="pt-3 md:pt-4">
+        <HeroStage>
+          <p className="glass inline-flex min-h-9 items-center gap-2.5 rounded-full py-1 pr-4 pl-1.5 text-[0.8125rem] text-fg-muted sm:text-sm">
+            <span aria-hidden="true" className="halo-mark size-6 [--halo-hole:58%]" />
+            {t.heroEyebrow}
+          </p>
+          <h1 id="home-title" className="mt-7 text-display">
+            {titleLead} <span className="halo-word">{titleWord}</span>
           </h1>
-          <p className="mt-6 max-w-[40ch] text-lg text-fg-muted">{bg.home.problem}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap [&>a]:whitespace-nowrap">
+          <p className="mt-7 max-w-[34ch] text-lg text-fg-muted md:text-xl">{bg.home.problem}</p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center [&>a]:whitespace-nowrap">
             <ButtonLink href={ROUTES.protected} size="xl">
               {bg.home.startCheck}
             </ButtonLink>
-            <ButtonLink href="#how" variant="ghost" size="xl">
+            <ButtonLink href="#how" variant="secondary" size="xl">
               {t.howLink}
             </ButtonLink>
           </div>
-          <p className="mt-4 max-w-[40ch] text-sm text-fg-subtle">{bg.home.pairNote}</p>
-        </div>
-        <div className="lg:col-span-7">
-          <CallDemo />
-        </div>
+          <p className="mt-5 max-w-[40ch] text-sm text-fg-subtle">{bg.home.pairNote}</p>
+        </HeroStage>
+      </div>
+
+      {/* 2. The one rule: a single statement, nothing else on screen. */}
+      <section
+        className="shell flex min-h-[80svh] flex-col justify-center py-24 md:py-32"
+        aria-labelledby="home-advice-title"
+      >
+        <Eyebrow>
+          <span aria-hidden="true" className="halo-line w-10" />
+          {t.oneRuleEyebrow}
+        </Eyebrow>
+        <RevealWords
+          as="h2"
+          id="home-advice-title"
+          text={t.oneRule}
+          className="mt-6 text-display lg:text-[length:clamp(3rem,1rem+8vw,10rem)]"
+        />
+        <p className="mt-8 max-w-[44ch] text-xl text-fg-muted md:ml-[min(30%,22rem)]">
+          {bg.home.advice}
+        </p>
       </section>
 
-      {/* 2. The one rule */}
-      <aside className="border-y border-line bg-surface-1" aria-labelledby="home-advice-title">
-        <div className="shell grid gap-x-6 gap-y-4 py-10 lg:grid-cols-12 lg:items-center">
-          <h2 id="home-advice-title" className="text-h2 lg:col-span-5">
-            {bg.home.adviceTitle}
-          </h2>
-          <p className="max-w-[48ch] text-lg text-fg-muted lg:col-span-6 lg:col-start-7">
-            {bg.home.advice}
-          </p>
+      {/* 3. How it works: sticky phone + steps (no scroll-jacking). */}
+      <section id="how" className="shell pb-24 md:pb-32" aria-labelledby="steps-title">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">
+          <div className="lg:col-span-6 lg:col-start-7">
+            <Eyebrow>{t.howEyebrow}</Eyebrow>
+            <h2 id="steps-title" className="mt-4 text-h1">
+              {bg.home.stepsTitle}
+            </h2>
+            <p className="mt-5 max-w-[42ch] text-lg text-fg-muted">{t.howIntro}</p>
+          </div>
         </div>
-      </aside>
-
-      {/* 3. How it works. An ordered list: screen readers announce "1 of 3". */}
-      <section id="how" className="shell py-16 md:py-24" aria-labelledby="steps-title">
-        <h2 id="steps-title" className="text-h2">
-          {bg.home.stepsTitle}
-        </h2>
-        <ol className="mt-10 grid gap-x-6 md:grid-cols-3">
-          {bg.home.steps.map((step, index) => (
-            <li key={step.title} className="border-t border-line-strong py-6">
-              <span className="tabular font-mono text-sm text-accent" aria-hidden="true">
-                0{index + 1}
-              </span>
-              <h3 className="mt-3 text-h3">{step.title}</h3>
-              <p className="mt-2 max-w-[40ch] text-fg-muted">{step.text}</p>
-            </li>
-          ))}
-        </ol>
+        <HowItWorks
+          screens={[
+            <ScreenPairing key="pairing" />,
+            <ScreenButton key="button" />,
+            <ScreenQuestion key="question" />,
+            <ScreenVerdict key="verdict" />,
+            <ScreenAlert key="alert" />,
+          ]}
+        />
       </section>
 
-      {/* 4. Features */}
-      <section className={`shell ${SECTION}`} aria-labelledby="features-title">
-        <h2 id="features-title" className="mb-10 text-h2">
-          {t.featuresTitle}
-        </h2>
+      {/* 4. What Scamly does: the bento. */}
+      <section className="shell py-24 md:py-32" aria-labelledby="features-title">
+        <div className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <Eyebrow>{t.featuresEyebrow}</Eyebrow>
+            <h2 id="features-title" className="mt-4 text-h1">
+              {t.featuresTitle}
+            </h2>
+          </div>
+        </div>
         <FeatureGrid />
       </section>
 
-      {/* 5. The six hard rules (D10): name and explanation, straight from the engine's texts. */}
-      <section
-        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
-        aria-labelledby="rules6-title"
-      >
-        <div className="lg:col-span-4">
-          <h2 id="rules6-title" className="text-h2">
-            {t.hardRulesTitle}
-          </h2>
-          <p className="mt-4 max-w-[36ch] text-fg-muted">{t.hardRulesText}</p>
-          <hr aria-hidden="true" className="halo-line mt-8 max-w-64" />
+      {/* 5. The six hard rules (D10), straight from the engine's texts. */}
+      <section className="py-24 md:py-32" aria-labelledby="rules6-title">
+        <div className="shell grid gap-6 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-7">
+            <Eyebrow>{t.hardRulesEyebrow}</Eyebrow>
+            <h2 id="rules6-title" className="mt-4 text-h1">
+              {t.hardRulesTitle}
+            </h2>
+          </div>
+          <p className="max-w-[36ch] text-lg text-fg-muted lg:col-span-4 lg:col-start-9">
+            {t.hardRulesText}
+          </p>
         </div>
-        <dl className="lg:col-span-7 lg:col-start-6">
-          {HARD_RULE_IDS.map((id) => (
-            <div
-              key={id}
-              className="grid gap-x-6 gap-y-1 border-t border-line py-5 sm:grid-cols-[14rem_1fr]"
-            >
-              <dt className="font-display text-lg font-bold text-fg">
-                {bg.engine.hardRules[id].name}
-              </dt>
-              <dd className="text-fg-muted">{bg.engine.hardRules[id].explanation}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="mt-12">
+          <RulesDeck labelledBy="rules6-title" />
+        </div>
       </section>
 
-      {/* 6. For the family */}
+      {/* 6. For the family: what they set up, the alert, the call order. */}
       <section
-        className={`shell grid gap-x-6 gap-y-10 lg:grid-cols-12 ${SECTION}`}
+        className="shell grid gap-x-8 gap-y-14 py-24 md:py-32 lg:grid-cols-12"
         aria-labelledby="family-title"
       >
         <div className="lg:col-span-6">
-          <h2 id="family-title" className="text-h2">
+          <Eyebrow>{t.familyEyebrow}</Eyebrow>
+          <h2 id="family-title" className="mt-4 text-h1">
             {t.familyTitle}
           </h2>
-          <p className="mt-4 max-w-[44ch] text-lg text-fg-muted">{t.familyText}</p>
-          <ul className="mt-8">
-            {t.familyPoints.map((point) => (
-              <li key={point} className="max-w-[52ch] border-t border-line py-4 text-fg">
+          <p className="mt-5 max-w-[40ch] text-lg text-fg-muted">{t.familyText}</p>
+          <ul className="mt-10">
+            {t.familyPoints.map((point, index) => (
+              <li
+                key={point}
+                className="grid max-w-[54ch] grid-cols-[2.5rem_1fr] border-t border-line py-4 text-fg"
+              >
+                <span aria-hidden="true" className="tabular font-mono text-sm text-fg-subtle">
+                  0{index + 1}
+                </span>
                 {point}
               </li>
             ))}
           </ul>
         </div>
-        {/* A sample alert as a timeline: it IS a sequence, so it is numbered by time. */}
-        <div className="lg:col-span-5 lg:col-start-8">
-          <div className="rounded-lg border border-line bg-surface-1 p-5 md:p-6">
-            <div className="flex items-baseline justify-between gap-4">
-              <h3 className="font-sans text-base font-semibold tracking-normal">
-                {t.timelineTitle}
-              </h3>
-              <p className="text-xs text-fg-subtle">{t.sampleScreen}</p>
+        <div className="landing-family-stage lg:col-span-5 lg:col-start-8">
+          <FamilyAlert />
+          <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6">
+            <AvatarStack people={[...SAMPLE.familyOrder]} label={t.callOrderLabel} />
+            <div>
+              <p className="text-sm font-semibold text-fg">{t.callOrderLabel}</p>
+              <p className="text-sm text-fg-muted">{t.callOrderHint}</p>
             </div>
-            <p className="mt-4 font-display text-xl font-bold">{SAMPLE.protectedName}</p>
-            <ol className="mt-4">
-              {t.timeline.map((event, index) => (
-                <li
-                  key={event}
-                  className="grid grid-cols-[5.5rem_1fr] gap-3 border-t border-line py-3 text-sm"
-                >
-                  <span className="tabular font-mono text-fg-subtle">
-                    {SAMPLE.timelineTimes[index]}
-                  </span>
-                  <span className="text-fg">{event}</span>
-                </li>
-              ))}
-            </ol>
-            <hr aria-hidden="true" className="halo-line mt-4" />
           </div>
         </div>
       </section>
 
-      {/* 7. Three rules to remember */}
-      <section
-        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
-        aria-labelledby="rules-title"
-      >
-        <h2 id="rules-title" className="text-h2 lg:col-span-5">
-          {bg.home.rulesTitle}
-        </h2>
-        <ul className="lg:col-span-6 lg:col-start-7">
-          {bg.home.rules.map((rule) => (
-            <li key={rule} className="border-t border-line py-5 font-display text-h3 font-bold">
-              {rule}
-            </li>
-          ))}
-        </ul>
+      {/* 7. During a call: the quiet section, porcelain on ink (inverted colours). */}
+      <section className="px-3 md:px-4" aria-labelledby="rules-title">
+        <div className="landing-ink rounded-xl py-20 md:py-28">
+          <div className="shell grid gap-x-8 gap-y-12 lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <p className="landing-ink-eyebrow">{t.duringEyebrow}</p>
+              <h2 id="rules-title" className="mt-4 text-h2">
+                {bg.home.rulesTitle}
+              </h2>
+            </div>
+            <ol className="lg:col-span-7 lg:col-start-6">
+              {bg.home.rules.map((rule, index) => (
+                <li key={rule} className="landing-ink-rule">
+                  <span aria-hidden="true" className="tabular font-mono text-sm">
+                    {index + 1}
+                  </span>
+                  <p className="font-display text-h2 font-light tracking-[-0.025em]">{rule}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </section>
 
-      {/* 8. Public tools: big link rows, not cards. */}
-      <section className={`shell ${SECTION}`} aria-labelledby="resources-title">
-        <div className="mb-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <h2 id="resources-title" className="text-h2">
-            {t.resourcesTitle}
-          </h2>
-          <p className="text-fg-muted">{t.resourcesText}</p>
+      {/* 8. Public tools: image-led cards with our own illustrations. */}
+      <section className="shell py-24 md:py-32" aria-labelledby="resources-title">
+        <div className="mb-12 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+          <div>
+            <Eyebrow>{t.resourcesEyebrow}</Eyebrow>
+            <h2 id="resources-title" className="mt-4 text-h1">
+              {t.resourcesTitle}
+            </h2>
+          </div>
+          <p className="text-lg text-fg-muted">{t.resourcesText}</p>
         </div>
-        {RESOURCES.map((resource) => (
-          <article
-            key={resource.href}
-            className="grid gap-x-6 gap-y-3 border-t border-line py-6 lg:grid-cols-12 lg:items-center"
-          >
-            <h3 className="text-h3 lg:col-span-4">{resource.title}</h3>
-            <p className="max-w-[52ch] text-fg-muted lg:col-span-5">{resource.text}</p>
-            <p className="lg:col-span-3 md:justify-self-end">
-              <ButtonLink href={resource.href} variant="secondary">
-                {resource.link}
-                <ArrowUpRight className="size-5" aria-hidden="true" />
-              </ButtonLink>
-            </p>
-          </article>
-        ))}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
+          {RESOURCES.map((resource, index) => (
+            <article
+              key={resource.href}
+              className={cn(
+                "landing-tool surface-raised group relative flex flex-col overflow-hidden rounded-xl",
+                index === 0 ? "md:col-span-2 lg:col-span-7 lg:row-span-2" : "lg:col-span-5",
+              )}
+            >
+              <div
+                className={cn(
+                  "landing-tool-art m-2 grid flex-1 place-items-center rounded-lg",
+                  index === 0
+                    ? "min-h-64 lg:min-h-96 [&_.landing-art]:w-[min(100%,40rem)]"
+                    : "min-h-52",
+                )}
+              >
+                {resource.art}
+              </div>
+              <div className="flex flex-wrap items-end justify-between gap-4 p-6 md:p-7">
+                <div className="max-w-[44ch]">
+                  <h3 className="text-h3">{resource.title}</h3>
+                  <p className="mt-2 text-fg-muted">{resource.text}</p>
+                </div>
+                {/* The link covers the whole card (::after), so the card is one target. */}
+                <Link
+                  href={resource.href}
+                  className="landing-tool-link inline-flex min-h-12 items-center gap-2 rounded-full border border-glass-line bg-glass-2 px-5 font-semibold text-fg no-underline shadow-highlight after:absolute after:inset-0 after:rounded-xl"
+                >
+                  {resource.link}
+                  <ArrowUpRight className="size-5" aria-hidden="true" />
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
 
       {/* 9. Questions: native <details>, so they work without JavaScript. */}
       <section
-        className={`shell grid gap-x-6 gap-y-8 lg:grid-cols-12 ${SECTION}`}
+        className="shell grid gap-x-8 gap-y-10 py-24 md:py-32 lg:grid-cols-12"
         aria-labelledby="faq-title"
       >
-        <h2 id="faq-title" className="text-h2 lg:col-span-4">
-          {t.faqTitle}
-        </h2>
-        <div className="lg:col-span-7 lg:col-start-6">
+        <div className="lg:col-span-4">
+          <div>
+            <Eyebrow>{t.faqEyebrow}</Eyebrow>
+            <h2 id="faq-title" className="mt-4 text-h1">
+              {t.faqTitle}
+            </h2>
+          </div>
+        </div>
+        <div className="landing-faq lg:col-span-7 lg:col-start-6">
           {t.faq.map((item) => (
-            <details key={item.question} className="group border-t border-line">
-              <summary className="flex min-h-16 list-none items-center justify-between gap-4 py-3 font-display text-lg font-bold [&::-webkit-details-marker]:hidden">
+            <details key={item.question} className="border-t border-line last:border-b">
+              <summary className="flex min-h-18 list-none items-center justify-between gap-6 py-4 font-display text-xl font-semibold [&::-webkit-details-marker]:hidden">
                 {item.question}
-                <span
-                  className="font-mono text-xl font-normal text-fg-subtle group-open:hidden"
-                  aria-hidden="true"
-                >
-                  +
-                </span>
-                <span
-                  className="hidden font-mono text-xl font-normal text-fg-subtle group-open:inline"
-                  aria-hidden="true"
-                >
-                  −
-                </span>
+                <span aria-hidden="true" className="landing-faq-icon" />
               </summary>
-              <p className="max-w-[60ch] pb-6 text-fg-muted">{item.answer}</p>
+              <p className="max-w-[60ch] pb-7 text-lg text-fg-muted">{item.answer}</p>
             </details>
           ))}
         </div>
       </section>
 
-      {/* 10. Start */}
-      <section className="border-y border-line bg-surface-1" aria-labelledby="cta-title">
-        <div className="shell grid gap-x-6 gap-y-8 py-16 lg:grid-cols-12 lg:items-end md:py-20">
-          <div className="lg:col-span-6">
-            <h2 id="cta-title" className="text-h2">
-              {t.ctaTitle}
-            </h2>
-            <p className="mt-4 max-w-[44ch] text-lg text-fg-muted">{t.ctaText}</p>
-          </div>
-          <nav
-            aria-label={bg.home.setupLinks}
-            className="flex flex-col gap-3 sm:flex-row lg:col-span-6 lg:justify-end"
-          >
-            <ButtonLink href={ROUTES.register} size="lg">
-              {bg.home.register}
-            </ButtonLink>
-            <ButtonLink href={ROUTES.pair} variant="secondary" size="lg">
-              {bg.home.pair}
-            </ButtonLink>
-            <Link
-              href={ROUTES.login}
-              className="flex min-h-14 items-center justify-center px-4 text-lg font-semibold text-fg underline decoration-line-strong underline-offset-4 hover:decoration-accent"
+      {/* 10. Start: a smaller stage with the calm halo. */}
+      <div className="pb-16 md:pb-24">
+        <Stage
+          aria-labelledby="cta-title"
+          className="landing-cta"
+          field={<HaloFieldLazy state="calm" focus={{ x: 0.88, y: 0.62 }} intensity={0.65} />}
+        >
+          <div aria-hidden="true" className="landing-hero-scrim" />
+          <div className="grid gap-x-8 gap-y-10 px-5 py-16 sm:px-8 md:px-12 md:py-24 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-7">
+              <Eyebrow>{t.ctaEyebrow}</Eyebrow>
+              <h2 id="cta-title" className="mt-4 text-h1">
+                {t.ctaTitle}
+              </h2>
+              <p className="mt-5 max-w-[44ch] text-lg text-fg-muted">{t.ctaText}</p>
+            </div>
+            <nav
+              aria-label={bg.home.setupLinks}
+              className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:col-span-5 lg:flex-col lg:items-stretch"
             >
-              {bg.home.login}
-            </Link>
-          </nav>
-        </div>
-      </section>
-
-      {/* „Инсталирай Scamly“: only appears when this phone can install the app (W2-09). */}
-      <div className="shell pt-12">
-        <InstallPrompt />
+              <ButtonLink href={ROUTES.register} size="lg">
+                {bg.home.register}
+              </ButtonLink>
+              <ButtonLink href={ROUTES.pair} variant="secondary" size="lg">
+                {bg.home.pair}
+              </ButtonLink>
+              <Link
+                href={ROUTES.login}
+                className="flex min-h-14 items-center justify-center px-4 text-lg font-semibold text-fg underline decoration-line-strong underline-offset-4 hover:decoration-fg"
+              >
+                {bg.home.login}
+              </Link>
+            </nav>
+          </div>
+          {/* „Инсталирай Scamly“: only appears when this phone can install the app (W2-09). */}
+          <div className="px-5 pb-8 empty:hidden sm:px-8 md:px-12 md:pb-12">
+            <InstallPrompt />
+          </div>
+        </Stage>
       </div>
     </main>
   );

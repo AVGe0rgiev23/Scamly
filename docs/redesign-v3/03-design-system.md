@@ -131,7 +131,8 @@ timestamps, numbers).
 | `Notice` | statuses, `title` | tinted, icon |
 | `Skeleton`, `SkeletonText/Row/List/Card/Chart/Meter` | | soft shimmer |
 | `EmptyState`, `ErrorState` | `visual` slot | default picture: small still `HaloRings` (`idle` 56 px / `danger` 48 px) |
-| `HaloMark` | calm / alert | still concentric halo rings (the header logo) |
+| `HaloMark` | calm / alert | still concentric halo rings (quiet empty-state picture) |
+| `HaloLogo` | `size`, `tone` halo / mono | the logo mark (Phase 2): three arcs closing into a ring around a dot; small drawing at ≤ 20 px; source `scripts/icons/logo.svg` |
 | `Verdict`, `VerdictBadge`, `LEVEL_STATUS` | red / yellow / green; heading 1 or 3 | verdict light from the top; `.verdict-badge`, `.verdict-reasons li` kept |
 | `RiskMeter` | `showValue` | arc gauge, faint halo track, level-coloured value, needle, limits 30/60 |
 | `NumberTicker` | `from`, `duration` | real numbers only, tabular, final value for screen readers |
@@ -140,8 +141,9 @@ timestamps, numbers).
 | `AvatarStack` | `max` | initials with halo ring + tooltips, „+N“ |
 | `Kbd`, `Divider` (`halo`/`signal`) | | |
 
-Temporary frame (marked „Phase 2 rebuilds this“): `layout/Logo`, `layout/SiteHeader`
-(floating glass pill), `layout/SiteFooter`, `landing/CallDemo` (same engine logic),
-`landing/FeatureGrid`. `SignalLine` is gone; the screens that used it show a
+Site frame (Phase 2, final): `layout/Logo` (HaloLogo + wordmark), `layout/SiteHeader`
+(floating glass pill, `SpotlightNav`, `HeaderCta`), `layout/SiteDock` (phone dock),
+`layout/SiteFooter`; nav model in `layout/siteNav.ts`; CSS `.site-*` / `.brand-*` in
+`globals.css` section 8. The landing page was rebuilt in Phase 2A (`src/components/landing/`, see `HOW_IT_WORKS.md` 3.7.2). `SignalLine` is gone; the screens that used it show a
 `halo-line` until they are rebuilt. `RoleHelp` shows an empty glass frame where the
 screenshot goes (Phase 7).

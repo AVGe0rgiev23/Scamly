@@ -43,3 +43,15 @@ component libraries visually, but writing our own components".
   `DynamicIsland` (Apple), `AvatarStack`, `Stage` (hero frame).
 - The halo motif itself (HaloField, HaloRings) is our own idea: a call is a sound wave
   that Scamly turns into a protective halo.
+
+## Live study for the landing page (20 Nov, Phase 2A)
+
+Each site was opened at 1440 × 900 for a few minutes and scrolled (screenshots kept
+out of the repo; nothing copied). What we noted and what we did with it:
+
+| Site | What we saw | What we took (as a principle) |
+| --- | --- | --- |
+| getlayers.ai | A rounded inset "stage" hero with a grainy light from one corner; a short, light headline whose last words are a quieter tone; one pill CTA with an icon disc; small outlined chips above section heads; bento cards with an inner, inset panel (a frame in a frame); lots of black between sections | Our hero `Stage` with one light source and a single bright pill; eyebrows above every section head; bento cells whose picture sits in its own inner panel; generous gaps |
+| skiper-ui.com | A huge typographic statement with tiny labels above and below, nearly nothing else on screen | Section 2 „Затворете телефона.“ as a lone display statement |
+| vengenceui.com | A split hero: text left, a framed line-art illustration right on a faint grid; mono sub-text | Our own line illustrations for the tools; mono only for numbers and codes |
+| animmasterlib.dev | A glow rising from the hero's bottom edge; but all-caps, neon cyan everywhere | The aurora horizon from the bottom edge (in our halo colours, changing with the verdict); a reminder of what to avoid: all caps and one loud colour |

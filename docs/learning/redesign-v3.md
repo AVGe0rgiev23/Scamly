@@ -64,6 +64,12 @@ Short notes for the defense. Details: `docs/redesign-v3/` and `docs/HOW_IT_WORKS
 - `HaloFieldLazy.tsx` loads the WebGL code only in the browser (`next/dynamic` with
   `ssr: false`), so other pages never download it; until it arrives the still rings show.
 
+## 6. The landing page (Phase 2A)
+
+- **One verdict, two places.** `HeroStage.tsx` runs the real engine (`analyseCall`) on the chosen sample call and gives the result to the phone's gauge and to the halo (`red → danger`). "The halo is driven by the same function the app uses."
+- **Scrolling stays the visitor's.** „Как работи“ uses CSS `position: sticky` and one scroll listener that only measures; it never moves the page (no scroll-jacking).
+- **No text depends on JavaScript.** Words are in the server HTML; animations only soften words that are still off-screen.
+
 ## For the defense
 
 Both of you should be able to explain sections 1, 4 and 5 for your own screens; the

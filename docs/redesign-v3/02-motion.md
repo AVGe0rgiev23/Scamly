@@ -32,6 +32,34 @@ Tokens: `--ease-out cubic-bezier(.16,1,.3,1)`, `--ease-in-out cubic-bezier(.65,0
 | Risk needle | `RiskMeter` (`.risk-needle`) | rotate from −90° to the score, 1100 ms ease-out; follows edits | the score is "measured", not just printed |
 | Number ticker | `NumberTicker` | motion `animate()` from the old to the new value, 0.9 s | a changing score is easy to follow; screen readers get the final value at once |
 | Dynamic island | `DynamicIsland` | motion `layout` (SPRING_UI) pill ↔ card; body fades in after 80 ms | a live status can grow into detail without a page jump |
+| Header spotlight | `SpotlightNav` (`.site-spot`) | one row-wide light cut to a link by `clip-path: inset(… round 999px)`, 420 ms ease-out; fades 150 ms; rests on the current page | the light follows where you point and returns to where you are |
+| Header scroll state | `SiteHeader` (`.site-header-pill`, `.site-header-frost`) | CSS scroll timeline over the first 40 px: translateY −4 px + scale 0.975, frosted layer opacity 0 → 1 | the bar steps back and frosts once content runs under it, with no script while scrolling |
+| Logo turn | `Logo` (`.brand-logo-mark`) | rotate −28° on hover, 700 ms ease-out | the halo "closes" around the dot when you reach for home |
+| Dock press | `SiteDock` (`.site-dock-link`, `pressable`) | scale 0.97, 150 ms; colour/plate 150 ms linear | a tap on the bottom bar is felt; nothing grows under the finger |
+
+
+### Landing page `/` (Phase 2A, `src/components/landing/landing.css`)
+
+| Animation | Where | How | Why it exists |
+| --- | --- | --- | --- |
+| Hero entrance (the only one) | demo phone | rises 48 px, rotateX 16° → pose, fade, 1100 ms ease-out, once; the headline never moves | the product arrives as an object; text is readable from frame one |
+| Phone tilt | hero stage (desktop mouse) | `--tilt-x/-y` ±6° + resting −6°/2° pose, 700 ms ease-out; reflection slides with `--glare` | the glass phone feels physical under the pointer |
+| Halo state from the verdict | HaloField behind the hero | green → calm, yellow → caution, red → danger (rings snap shut, one shockwave), shader blend ~1 s | the signature moment: a scam call closes the shield |
+| Horizon colour | `.landing-horizon` | three glow layers cross-fade by opacity, 900 ms | the aurora at the bottom turns amber/red with the risk |
+| Phone edge + island dot | `.landing-phone[data-level]` | box-shadow glow 700 ms; red dot blinks 1.2 s | the danger is felt at the phone too, not only in the field |
+| Gauge sweep | `RiskMeter` on the demo | `stroke-dasharray` 1100 ms ease-out (needle already turns) | the score is measured, not printed |
+| Word reveal | „Затворете телефона.“ | per word opacity .12 → 1, blur 14 → 0 px, 0.18 em rise, 140 ms stagger, once on entering view | the one rule lands word by word, like being said |
+| Sticky screens | „Как работи“ phone | the screen for the step at mid-window: fade + 16 px + blur 6 → 0, 450–600 ms | shows the product in the order the steps describe |
+| Progress line | `.landing-steps::after` | `scaleY(--how-progress)` from scroll | shows how far through the story you are |
+| Bento spotlight | bento cells (`GlassPanel spotlight`) | radial light follows the mouse | the glass reacts like glass |
+| Map glow | drawn districts | blurred copies pulse opacity, 4.5 s, staggered | a living map, without inventing data |
+| Voice rings | bento voice cell | three halo rings scale .4 → 1.15 and fade, 3 s, staggered | speech turning into a halo |
+| Rule-card morph | hard-rules deck (desktop mouse) | name fades/lifts + blur, explanation fades in, numeral lifts, 450–600 ms on hover/focus | the name becomes its reason; on touch both are always shown |
+| Island grows | family section | `DynamicIsland` opens once 450 ms after it is 60 % in view (motion layout spring) | the alert arrives the way it would on a phone |
+| Illustration reveal | tool cards (desktop) | `clip-path` inset 12 px → 0, art scale 1.05, glow up, 700–900 ms | invites the click on the whole card |
+| Accordion | FAQ `<details>` | `::details-content` block-size 0 → auto (`interpolate-size`), 400 ms; plus rotates 135° into a cross | the answer unfolds instead of jumping |
+
+Reduced motion on the landing: no entrance (150 ms fade), no tilt, no blinking dot, no map pulse, still voice rings, screens/words/rule morph as 150 ms fades, gauge and accordion jump; the HaloField draws one still frame.
 
 ## Reduced motion (`prefers-reduced-motion: reduce`)
 
@@ -44,3 +72,4 @@ Not a switch-off: movement goes, short fades stay, so every change is still visi
 - Tabs pill and DynamicIsland: `duration: 0` / 150 ms linear (`REDUCED`); NumberTicker
   shows the new number at once.
 - Skeleton: a still tone (no shimmer). Spinners: slowed to 2.4 s.
+- Header spotlight: jumps (opacity fade only). Header scroll state: off (the pill keeps its normal glass). Logo turn and dock press: off.

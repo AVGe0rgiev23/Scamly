@@ -26,7 +26,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · bottom dock vs hamburger · spotlight menu indicator · our own logo mark · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
@@ -1015,6 +1015,85 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never for the tournament; after it, a free MIT kit could be used for internal admin pages.
 
+
+### A glass bottom dock with labelled icons on phones (vs a hamburger menu, vs a menu row under the logo)  (status: in use since redesign v3 Phase 2, `src/components/layout/SiteDock.tsx`)
+
+**Used for:** the main places on screens below 1024 px: five icons with a word under each, fixed above the phone's home indicator. Hidden on the older person's check screens.
+
+**Alternatives we considered:** a hamburger button that opens a menu; the v2 menu row that wrapped under the logo; a dock with magnification (icons grow under the finger) and labels only on hover.
+
+**Why this one:**
+- Older people do not look for hidden menus: a hamburger hides every choice behind a symbol many of them do not know. In the dock every place is always visible with its name.
+- A thumb reaches the bottom of a phone easily; the top corners are the hardest place to tap. The targets are 56 px high, more than the 48 px minimum.
+- The v2 menu row took a second header line on every page and pushed the content down; the dock takes no space from the page.
+- No magnification and no hover-only labels: they move under the finger and need precise pointing, the opposite of what older hands need.
+
+**What we give up:** only five places fit, so the rest (registration, pairing, the fridge card) lives in the footer and on the home page; the dock covers 80 px at the bottom, so the footer, the toasts and the map leave room for it.
+
+**We would reconsider if:** the usability test (W4-05) showed that people do not notice the dock, or need more than five places one tap away.
+
+### A sliding spotlight under the header links (vs underlines, vs a coloured active link)  (status: in use since redesign v3 Phase 2, `SpotlightNav.tsx`)
+
+**Used for:** showing on a desktop where you are and where you point in the header menu.
+
+**Alternatives we considered:** an underline under the current link; a coloured or bold current link; a motion `layoutId` pill like the Tabs.
+
+**Why this one:**
+- One soft light that glides from link to link reads like the glass of the whole design (light, not lines) and connects "where I am" with "where I point".
+- It is cheap: one element as wide as the row, cut to one link with `clip-path`. Pointing only changes two CSS variables; CSS does the animation (no React re-render, no layout animation, no library). With reduced motion it jumps.
+- The current link also has `aria-current="page"`, so screen readers say it, and the text colour changes too, so the state never depends on the light alone.
+
+**What we give up:** a small client island and a resize listener for a menu that would work without them.
+
+**We would reconsider if:** the menu grew into a dropdown or more than one row; then a plain current-page style would be simpler.
+
+### Our own logo mark, the halo (vs a shield or phone symbol, vs a lettermark, vs a ready-made icon)  (status: in use since redesign v3 Phase 2, `scripts/icons/logo.svg`, `HaloLogo.tsx`)
+
+**Used for:** the header and footer logo, the app icons, the browser tab, the notification badge and the share picture.
+
+**Alternatives we considered:** a shield or a phone with a tick (the v1/v2 idea); a lettermark „S“; an icon from an icon set.
+
+**Why this one:**
+- It is the motif of the whole design in its simplest form: three arcs that close into a ring around a dot, like the halo closing around the person on the check screen. Nobody else's mark, and we can explain every number in it.
+- Shields and phones with ticks are what every security app uses; a lettermark says nothing about calls. An icon-set picture is not ours (and not original for the jury).
+- It is drawn once (`logo.svg`) with a small 16 px version, so it stays readable in a browser tab, and in one colour (`logo-mono.svg`) for print.
+
+**What we give up:** an abstract mark has to be learned; next to the word „Scamly“ that is easy, alone (app icon) it takes a few uses.
+
+**We would reconsider if:** a designer drew a stronger mark with the same meaning.
+
+### Scroll-driven sticky storytelling on the landing page (vs scroll-jacking, vs a plain list)  (status: in use since redesign v3 Phase 2A, `src/components/landing/HowItWorks.tsx`)
+
+**What it is:** in „Как работи“ the page scrolls normally; a phone stays in place with CSS `position: sticky` and shows the screen of the step at the middle of the window.
+
+| Option | For | Against |
+|---|---|---|
+| **Sticky phone + normal scrolling (chosen)** | The visitor keeps control of the scroll wheel, the trackpad and the keyboard; works with "find in page", screen readers and zoom; one passive listener, CSS does the rest | Needs some empty height per step |
+| Scroll-jacking (the page takes over the wheel and plays a timeline) | Very cinematic | Older visitors get lost; breaks keyboard and assistive tech; feels "AI-made"; heavy libraries (GSAP ScrollTrigger pinning) |
+| A plain list of 3 steps | Simplest | Does not show the real screens; the jury sees no product |
+
+**Why:** it shows the real product step by step and stays an ordinary page. On phones it becomes a stacked list with one small phone per step.
+
+### Our own SVG line illustrations (vs stock photos, vs AI-generated pictures)  (status: in use since redesign v3 Phase 2A, `src/components/landing/Illustrations.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **Our own inline SVG (chosen)** | Matches the halo style and both themes (colours are CSS variables); a few kB, no requests; licence is ours (GPL-3.0); allowed by our strict CSP | We draw them by hand |
+| Stock photos of older people | Quick | Looks generic and staged, the brief bans them; heavy images; licence terms |
+| AI-generated pictures | Quick, any style | Uncertain licence, typical "AI look", hard to make them match two themes |
+
+**Why:** original work for the jury, light pages and one visual language. The map is drawn from our own `public/geo/bg-districts.json` (Natural Earth, public domain) on the server.
+
+### The landing demo runs the real engine (vs a recorded animation, vs typed-in results)  (status: in use since redesign v2, kept in v3 Phase 2A, `HeroStage.tsx`)
+
+| Option | For | Against |
+|---|---|---|
+| **`analyseCall()` in the browser (chosen)** | The visitor can change the caller's words and see the score change; proves the product works; the same code as the app, so it never shows a result the app would not give | A little more JavaScript on `/` |
+| A recorded animation or video | No logic on the page | Cannot be tried, heavier, can drift from the real engine |
+| Results typed into the page | Simplest | Could lie; jurors may ask "is this real?" |
+
+**Why:** the engine is a pure function, so it runs anywhere and needs no server. The halo's state is taken from the same verdict, so the most dramatic moment on the page is also a true one.
+
 ### Our own design system "Signal"  (status: replaced by D28 „Ореол“ on 19 Nov; kept here as history)
 
 **Used for:** every screen: the tokens in `src/app/globals.css`, the components in `src/components/ui/`, the gallery `/dev/ui`. Details: `docs/redesign/03-design-system.md`.
@@ -1098,6 +1177,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 - A select showing „Според устройството“ didn't fit next to the logo at 360 px; three 48 px buttons do.
 - Native radio buttons in a named group („Изглед“): Tab, arrow keys and screen readers work without extra code; each choice keeps its full Bulgarian name for screen readers and as a tooltip.
 - A cycling button hides which modes exist; with three buttons all choices are visible at once.
+- Since redesign v3 Phase 2 the switch sits in the footer on a phone and between 1024 and 1280 px, where the header pill needs its room for the logo, the menu and the „Провери обаждане“ pill; the two copies follow each other.
 - Same behaviour as before: saved in `localStorage`, `system` follows the device.
 
 **What we give up:**
@@ -1312,7 +1392,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 **Alternatives we considered:** a free icon set; an online "PWA icon generator"; drawing PNGs in an image editor; a script with `sharp` (comes with Next.js).
 
 **Why this one:**
-- **Our own drawing**: no licence or credit questions (GPL-3.0, `THIRD_PARTY_LICENSES.md`), and it looks like the site. Since redesign v3 (D28) it is the interim **halo mark** (three rings closing around a dot, in the halo gradient on the „Night“ colour); Phase 2 refines it together with the logo and the OG image.
+- **Our own drawing**: no licence or credit questions (GPL-3.0, `THIRD_PARTY_LICENSES.md`), and it looks like the site. Since redesign v3 Phase 2 it is the final **halo logo** (`logo.svg`; see "Our own logo mark" in this section) on the „Night“ colour; the same Playwright set-up also renders the Open Graph picture (`npm run og`).
 - **Reproducible:** the SVG sources are in the repo; one command makes all five PNGs at the exact sizes. Playwright's Chromium is already installed for our browser tests, so no new package.
 - An online generator would need uploading and gives files we can't re-make; `sharp` is only an indirect dependency of Next.js and not ours to rely on.
 
@@ -2766,6 +2846,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-20 · redesign v3 Phase 2A (landing page): new entries "Scroll-driven sticky storytelling", "Our own SVG line illustrations", "The landing demo runs the real engine".
 - 2026-11-03 · created
 - 2026-11-03 · AI assistants entry now covers Claude Code (Alex) and Codex (Roberta); new entry: shared rules in `AGENTS.md` (D21)
 - 2026-11-03 · design-system entry is now implemented: native controls, accessible sizing, textual verdicts, theme persistence and both-theme preview; npm run check passes, browser verification remains blocked by a local Turbopack CSS-worker crash. Documented the npm lockfile repair for the missing optional Oxide WebAssembly entry.
@@ -2811,3 +2892,4 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 The ink and periwinkle theme gives Scamly a recognizable call checker identity. Its porcelain and cobalt light counterpart follows the existing theme preference. CSS draws the waveform without a download or animation. The primary action has its own colors, while the result also uses words and a symbol so the risk is clear without relying on color. Focus uses a separate ring, and static placeholders reserve space during real waits.
 - 2026-11-19 · Next.js and `eslint-config-next` 16.4.4 → 16.4.6: 16.4.4 has a known security vulnerability, and the build now stops on affected versions. Patch release in the same line, so no code changes.
 - 2026-11-19 · redesign v3 „Ореол“ (D28): new entries in section 4: design system v3 (glass lit from one light source vs the flat v2), `motion` vs GSAP vs CSS only, raw WebGL2 vs ogl vs Three.js for the HaloField, keeping Sofia Sans, studying paid libraries visually but writing our own components; the v2 „Signal“ entry is marked as replaced; the app-icon entry now describes the interim halo mark
+- 2026-11-19 · redesign v3 Phase 2: new entries in section 4: glass bottom dock with labelled icons (vs a hamburger), sliding spotlight under the header links, our own logo mark (the halo); the app-icon entry now describes the final logo and the OG picture
