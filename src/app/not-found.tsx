@@ -1,26 +1,25 @@
 // The page shown when an address does not exist (HTTP 404), in Bulgarian.
-// Look: a big quiet mono "404" with a flat (idle) signal line, the title, one
-// sentence and one primary link home.
+// Look: the calm error frame (StatusPage) with a still idle halo around a quiet mono
+// "404", the title, one sentence and one primary pill home.
 
 import { ArrowLeft } from "lucide-react";
+import { StatusPage } from "@/components/auth/StatusPage";
 import { ButtonLink } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
 
 export default function NotFoundPage() {
   return (
-    <main className="shell flex-1 py-12 md:py-24">
-      <div className="max-w-[60ch]">
-        <p aria-hidden="true" className="tabular font-mono text-display text-fg-subtle">
-          404
-        </p>
-        <hr aria-hidden="true" className="halo-line mt-4 mb-10 max-w-sm" />
-        <h1 className="text-h1">{bg.common.notFoundTitle}</h1>
-        <p className="mt-4 text-lg text-fg-muted">{bg.common.notFoundText}</p>
-        <ButtonLink href="/" size="lg" className="mt-8">
+    <StatusPage
+      code="404"
+      halo="idle"
+      title={bg.common.notFoundTitle}
+      text={bg.common.notFoundText}
+      actions={
+        <ButtonLink href="/" size="lg">
           <ArrowLeft className="size-5" aria-hidden="true" />
           {bg.common.backHome}
         </ButtonLink>
-      </div>
-    </main>
+      }
+    />
   );
 }

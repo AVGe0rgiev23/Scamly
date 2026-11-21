@@ -89,6 +89,14 @@ Short notes for the defense. Details: `docs/redesign-v3/` and `docs/HOW_IT_WORKS
 - **Facts only from the API.** The person cards ask the existing endpoints (`/api/checks?personId=…`, `/api/persons/:id`) in parallel with `Promise.all` (like `asyncio.gather`); nothing is invented.
 - **Logic untouched.** `api.ts`, `alerts.ts`, `alertSound.ts`, `format.ts`, `pushState.ts`, `qr.ts`, `preview.ts` and their tests are the same; only markup, CSS and motion changed.
 
+## 9. The public and sign-in pages (Phase 5)
+
+- **One frame for the entry pages.** Sign-in, registration, pairing and the invite share `AuthPage`: a form panel and a halo stage. `/svarzhi` uses the `large` variant because an older person types the code.
+- **The order of information is the order in the page.** On `/signal` the privacy points come before the form in the HTML (a screen reader hears them first); CSS only moves them to the right column on a wide screen. Visual order and reading order should not fight.
+- **Facts at build time vs. at request time.** Whether a help screenshot exists is a list in the code (`HELP_SCREENSHOTS`), not a file check on the server: on Vercel the `public/` files live on the CDN, so a server-side check would always say "missing".
+- **Colour means something.** The map levels are shades of the neutral info colour; red, amber and green are only for verdicts on calls.
+- **Logic untouched.** The forms, the map data, the education API and their tests are the same; only markup, CSS and the period switch control (now `Segmented`) changed.
+
 ## For the defense
 
 Both of you should be able to explain sections 1, 4 and 5 for your own screens; the

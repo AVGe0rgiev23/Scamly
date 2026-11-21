@@ -144,6 +144,4 @@ timestamps, numbers).
 Site frame (Phase 2, final): `layout/Logo` (HaloLogo + wordmark), `layout/SiteHeader`
 (floating glass pill, `SpotlightNav`, `HeaderCta`), `layout/SiteDock` (phone dock),
 `layout/SiteFooter`; nav model in `layout/siteNav.ts`; CSS `.site-*` / `.brand-*` in
-`globals.css` section 8. The landing page was rebuilt in Phase 2A (`src/components/landing/`, see `HOW_IT_WORKS.md` 3.7.2). `SignalLine` is gone; the screens that used it show a
-`halo-line` until they are rebuilt. `RoleHelp` shows an empty glass frame where the
-screenshot goes (Phase 7).
+`globals.css` section 8. The landing page was rebuilt in Phase 2A (`src/components/landing/`, see `HOW_IT_WORKS.md` 3.7.2). `SignalLine` is gone. The public and sign-in pages were rebuilt in Phase 5 (`HOW_IT_WORKS.md` 3.7.5); `RoleHelp` shows a quiet halo in its device frame until Phase 7 adds the screenshots and lists them in `HELP_SCREENSHOTS`.

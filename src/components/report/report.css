@@ -1,0 +1,199 @@
+/* The public report form /signal, Redesign v3 „Ореол“ Phase 5b. Imported by its page
+   only. Every class starts with .report-, so nothing here can change another screen;
+   the test hooks .report-trap and #report-website are not styled here (the honeypot
+   stays off the screen with its own utility classes, never display: none). Colours,
+   radii and curves come from the tokens in globals.css (no colour literals). The only
+   motion is the shared `appear` entrance of the success panel (globals.css, with its
+   own reduced-motion fade); nothing here animates. Reduced motion: section 4. */
+
+/* ── 1. Frame and page head ─────────────────────────────────────────────────── */
+
+.report {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+/* A soft aurora behind the top of the page (decoration only). */
+.report-aurora {
+  position: absolute;
+  inset: -3rem 0 auto;
+  z-index: -1;
+  height: 30rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42% 60% at 20% 0%,
+      color-mix(in oklab, var(--halo-1) 15%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      36% 52% at 80% 4%,
+      color-mix(in oklab, var(--halo-2) 12%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 40% at 52% 0%,
+      color-mix(in oklab, var(--halo-3) 8%, transparent),
+      transparent 70%
+    );
+}
+
+.report-head {
+  margin-bottom: 2.5rem;
+}
+@media (min-width: 48rem) {
+  .report-head {
+    margin-bottom: 3.5rem;
+  }
+}
+
+/* The eyebrow starts with a small halo dot. */
+.report-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+.report-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+/* ── 2. Layout: the form, and the privacy points beside it (below on a phone) ─ */
+
+.report-layout {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .report-layout {
+    grid-template-columns: minmax(0, 40rem) minmax(0, 24rem);
+    gap: 4rem;
+  }
+  /* The privacy points are first in the page; on a desktop they sit at the right. */
+  .report-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .report-privacy {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 7rem;
+  }
+}
+.report-main {
+  min-width: 0;
+  max-inline-size: 40rem;
+}
+
+/* The form on a raised panel (`surface-raised` gives the light and the shadows). */
+.report-form {
+  position: relative; /* the off-screen honeypot is placed from here */
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius-xl);
+}
+@media (min-width: 40rem) {
+  .report-form {
+    padding: 2.25rem 2.25rem 2.5rem;
+  }
+}
+
+.report-counter {
+  color: var(--text-subtle);
+}
+
+/* The privacy points: glass with a shield in a halo-ringed disc. */
+.report-privacy {
+  max-inline-size: 40rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+}
+@media (min-width: 48rem) {
+  .report-privacy {
+    padding: 2rem;
+  }
+}
+.report-shield {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+    var(--halo) border-box;
+  box-shadow: 0 0 22px -6px color-mix(in oklab, var(--halo-2) 70%, transparent);
+  color: var(--info-fg);
+}
+.report-privacy-list {
+  margin-top: 1rem;
+}
+.report-privacy-list > li {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  align-items: baseline;
+  padding-block: 0.875rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.report-privacy-list > li::before {
+  content: "";
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  translate: 0 -0.15em;
+}
+
+/* ── 3. After sending: a calm green panel with still halo rings ─────────────── */
+
+.report-success {
+  position: relative;
+  overflow: hidden;
+  max-inline-size: 40rem;
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--safe-border);
+  background-color: var(--safe-bg);
+  background-image: radial-gradient(
+    80% 70% at 0% 0%,
+    color-mix(in oklab, var(--safe-solid) 16%, transparent),
+    transparent 70%
+  );
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+@media (min-width: 40rem) {
+  .report-success {
+    padding: 2.5rem 2.5rem 2.75rem;
+  }
+}
+.report-success-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* ── 4. Reduced motion ───────────────────────────────────────────────────────
+   Nothing here moves; the success panel's `appear` becomes a 150 ms fade in
+   globals.css, and the halo rings are drawn still (animated={false}). */
+
+/* Windows high contrast: the drawn markers keep a visible edge. */
+@media (forced-colors: active) {
+  .report-shield {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .report-privacy-list > li::before,
+  .report-eyebrow::before {
+    background: CanvasText;
+  }
+}

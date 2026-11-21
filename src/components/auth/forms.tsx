@@ -1,6 +1,9 @@
 // Accessible sign-in, registration and pairing forms (and the header's „Изход“) on the
 // shared UI primitives: labelled fields, a large submit button, errors in a Notice that
 // gets focus. They call the existing JSON API; session cookies stay on the server.
+// Look: md fields and one 64 px primary pill for the adults' forms; on the pairing
+// page a very large centred mono code well (auth.css .auth-code-input) and hints in
+// 22 px text. The frame around them is AuthPage.
 "use client";
 
 import {
@@ -125,7 +128,7 @@ function AuthField({
         aria-invalid={invalid || undefined}
         size={large ? "lg" : "md"}
         mono={large}
-        className={large ? "max-w-[16rem] text-h3 tracking-[0.35em]" : undefined}
+        className={large ? "auth-code-input" : undefined}
         {...props}
       />
       {large && hint ? (

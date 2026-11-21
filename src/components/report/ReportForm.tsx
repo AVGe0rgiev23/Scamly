@@ -1,6 +1,8 @@
 // The public report form „Подай сигнал за измама“ on /signal (W3-02). Anyone, no login.
-// Look: one column (max 36rem) of labelled fields, the script type as big radio tiles,
-// a mono counter under the description and a calm success panel after sending.
+// Look (Ореол v3, report.css): one column (max 40rem) of labelled fields on a raised
+// panel, the script type as big choice tiles (halo ring when chosen), a mono counter
+// under the description, and after sending a calm green panel with still halo rings
+// that enters with the shared `appear` motion (8 px rise + fade).
 // Sends POST /api/reports and then shows „Благодарим!“. The browser checks the fields
 // first with the same Zod rules as the server (checkReport), so every problem is shown
 // at once next to its field; the server checks everything again (never trust the client).
@@ -15,7 +17,8 @@ import { fill } from "@/components/family/format";
 import { FormMessage, SelectField, TextField, type FormNotice } from "@/components/family/fields";
 import { BigChoice } from "@/components/ui/BigChoice";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { StatusIcon } from "@/components/ui/Badge";
+import { HaloRings } from "@/components/ui/HaloRings";
+import { Notice } from "@/components/ui/Notice";
 import { Textarea } from "@/components/ui/Field";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
@@ -218,16 +221,13 @@ export function ReportForm() {
 
   if (sent) {
     return (
-      <div
-        className="appear max-w-[36rem] rounded-lg border border-safe-line bg-safe-bg p-6 md:p-8"
-        role="status"
-      >
-        <StatusIcon status="safe" className="size-8 text-safe-fg" />
-        <h2 ref={successHeading} tabIndex={-1} className="mt-4 text-h2">
+      <div className="report-success appear" role="status">
+        <HaloRings state="calm" size={88} animated={false} className="report-success-rings" />
+        <h2 ref={successHeading} tabIndex={-1} className="mt-6 text-h2">
           {bg.reportForm.successTitle}
         </h2>
-        <p className="mt-3 text-lg">{bg.reportForm.successText}</p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <p className="mt-3 max-w-[48ch] text-lg">{bg.reportForm.successText}</p>
+        <div className="report-success-links">
           <ButtonLink href={ROUTES.education}>{bg.reportForm.successEducation}</ButtonLink>
           <ButtonLink href={ROUTES.map} variant="secondary">
             {bg.map.successLink}
@@ -249,7 +249,7 @@ export function ReportForm() {
       onSubmit={submit}
       aria-label={bg.reportForm.formLabel}
       aria-busy={pending}
-      className="relative max-w-[36rem]"
+      className="report-form surface-raised"
     >
       <fieldset disabled={pending} className="flex min-w-0 flex-col gap-8 border-0 p-0">
         <div>
@@ -329,7 +329,7 @@ export function ReportForm() {
               </p>
               <p
                 id={`${IDS.description}-counter`}
-                className="tabular font-mono text-xs text-fg-subtle"
+                className="report-counter tabular font-mono text-xs"
               >
                 {fill(bg.reportForm.descriptionCounter, {
                   count: values.description.length,
@@ -377,12 +377,13 @@ export function ReportForm() {
           />
         </div>
 
+        <div className="halo-line" aria-hidden="true" />
+
         {/* Field errors: a short note here, the messages under the fields. */}
         {firstInvalidField(errors) !== null ? (
-          <div className="flex items-start gap-3 rounded-md border border-danger-line bg-danger-bg px-4 py-3">
-            <StatusIcon status="danger" className="mt-[0.2em] text-danger-fg" />
-            <p className="text-fg">{bg.reportForm.fixErrors}</p>
-          </div>
+          <Notice status="danger">
+            <p>{bg.reportForm.fixErrors}</p>
+          </Notice>
         ) : null}
         {/* Other errors (no connection, too many reports): announced and focused. */}
         <FormMessage notice={notice} id={ERROR_ID} />

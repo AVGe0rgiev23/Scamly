@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { EducationFrame } from "@/components/education/EducationIntro";
 import { CardLoading } from "@/components/education/Loading";
 import { ScriptCard } from "@/components/education/ScriptCard";
 import { ScriptsUnavailable } from "@/components/education/ScriptList";
@@ -22,11 +23,11 @@ export const metadata: Metadata = {
 
 export default function EducationCardPage({ params }: PageProps<"/kak-raboti/[slug]">) {
   return (
-    <main className="shell py-10 md:py-16">
+    <EducationFrame>
       <Suspense fallback={<CardLoading />}>
         <PublishedCard params={params} />
       </Suspense>
-    </main>
+    </EducationFrame>
   );
 }
 

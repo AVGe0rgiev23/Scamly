@@ -1,13 +1,18 @@
-// The list of published education cards on /kak-raboti (W3-05): one big link row per
-// scam script with its type, title, how it starts and an arrow to the whole card.
-// Rows are separated by hairlines (an editorial list, not a grid of boxes).
+// The list of published education cards on /kak-raboti (W3-05): one big card per
+// scam script with its type, title, the start of "how it starts" and an arrow to the
+// whole card.
+// Look (Ореол v3): a bento grid of large glass cards (education.css .edu-bento). The
+// cards are not identical rows: the first and the fourth are wide, the others narrow,
+// and each type has its own soft halo light (data-type). The title link covers the
+// whole card (a stretched ::after), so the card is one big target.
 //
 // No "use client" and no server code: used by the real page (rendered on the server)
 // and by the browser-test preview /dev/kak-raboti (rendered in the browser).
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { Notice } from "@/components/ui/Notice";
 import { EmptyState } from "@/components/ui/States";
 import { bg } from "@/i18n/bg";
 import type { PublicScriptDto } from "@/schemas/scripts";
@@ -23,21 +28,19 @@ export function ScriptList({ scripts, hrefFor }: ScriptListProps) {
     return <EmptyState text={bg.education.empty} />;
   }
   return (
-    <ul className="border-t border-line">
+    <ul className="edu-bento">
       {scripts.map((script) => (
-        <li key={script.slug} className="border-b border-line py-8 md:py-10">
-          <Badge>{bg.scripts.typeNames[script.scriptType]}</Badge>
-          <Link
-            href={hrefFor(script.slug)}
-            className="group mt-3 flex min-h-12 items-start justify-between gap-6 text-fg no-underline hover:text-accent"
-          >
+        <li key={script.slug} className="edu-tile" data-type={script.scriptType}>
+          <div className="edu-tile-light" aria-hidden="true" />
+          <Badge className="edu-tile-badge">{bg.scripts.typeNames[script.scriptType]}</Badge>
+          <Link href={hrefFor(script.slug)} className="edu-tile-link">
             <span className="sr-only">{bg.education.readCard}: </span>
-            <span className="font-display text-h2 font-bold tracking-[-0.02em] text-balance">
-              {script.titleBg}
-            </span>
-            <ArrowRight className="mt-[0.3em] size-7 shrink-0 md:size-9" aria-hidden="true" />
+            <span className="edu-tile-title">{script.titleBg}</span>
           </Link>
-          <p className="mt-3 max-w-[60ch] text-lg text-fg-muted">{script.howItStartsBg}</p>
+          <p className="edu-tile-text">{script.howItStartsBg}</p>
+          <span className="edu-tile-arrow" aria-hidden="true">
+            <ArrowUpRight className="size-6" />
+          </span>
         </li>
       ))}
     </ul>
@@ -49,18 +52,16 @@ export function ScriptList({ scripts, hrefFor }: ScriptListProps) {
 export function ScriptsUnavailable() {
   return (
     <div className="flex flex-col gap-8">
-      <div role="alert" className="rounded-lg border border-danger-line bg-danger-bg px-5 py-4">
-        <p className="text-fg">{bg.education.loadError}</p>
-      </div>
-      <section aria-labelledby="edu-rules-title" className="max-w-[60ch]">
-        <h2 id="edu-rules-title" className="text-h3">
+      <Notice status="danger" role="alert" className="max-w-[60ch]">
+        <p>{bg.education.loadError}</p>
+      </Notice>
+      <section aria-labelledby="edu-rules-title" className="edu-rules surface-raised">
+        <h2 id="edu-rules-title" className="edu-section-title">
           {bg.education.rulesTitle}
         </h2>
-        <ul className="mt-4 border-t border-line">
+        <ul className="edu-rules-list">
           {bg.home.rules.map((rule) => (
-            <li key={rule} className="border-b border-line py-4 text-xl">
-              {rule}
-            </li>
+            <li key={rule}>{rule}</li>
           ))}
         </ul>
       </section>

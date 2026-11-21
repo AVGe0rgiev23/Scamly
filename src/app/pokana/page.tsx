@@ -4,10 +4,11 @@
 // `Referrer-Policy: no-referrer` in next.config.ts, plus the same <meta> tag here).
 // Reading the address (useSearchParams) stays inside <Suspense>, like /svarzhi, so
 // the frame is pre-rendered (Cache Components).
+// Look: the AuthPage frame; every state of the invite is shown inside its panel.
 
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { InviteAccept } from "@/components/auth/InviteAccept";
 import { bg } from "@/i18n/bg";
@@ -24,11 +25,16 @@ export default function InvitePage() {
     <AuthPage title={bg.invitePage.title} description={bg.invitePage.intro}>
       <Suspense
         fallback={
-          <div>
+          // The shape of the first answer: two lines of text and two pills.
+          <div className="flex flex-col gap-4">
             <p role="status" className="sr-only">
               {bg.common.loading}
             </p>
-            <Skeleton className="h-64 w-full max-w-md" />
+            <SkeletonText lines={2} className="max-w-sm" />
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Skeleton className="h-14 w-full rounded-full sm:w-32" />
+              <Skeleton className="h-14 w-full rounded-full sm:w-40" />
+            </div>
           </div>
         }
       >

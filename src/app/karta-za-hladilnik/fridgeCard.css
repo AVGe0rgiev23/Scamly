@@ -1,2 +1,269 @@
-/* Print rules of the A5 fridge card (/karta-za-hladilnik). Emptied in Ореол v3
-   Phase 0; the paper size and print rules come back with the new design. */
+/* The A5 fridge card (/karta-za-hladilnik), Redesign v3 „Ореол“ Phase 5b. Imported by
+   its page only. Every class starts with .fridge-, so nothing here can change another
+   screen. Colours, radii and curves come from the tokens in globals.css (the card
+   itself has data-theme="light", so it is paper in both themes). Only `rotate` (a
+   transform) is animated: the card straightens on hover, like the family's preview.
+   Print: section 3 (one A5 portrait page, black on white). Reduced motion: section 4. */
+
+/* ── 1. Screen: a stage with the paper card and the hint next to it ─────────── */
+
+.fridge {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+.fridge-layout {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (min-width: 64rem) {
+  .fridge-layout {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: 4rem;
+  }
+}
+
+/* The stage: a large rounded panel with the aurora rising from its top edge. */
+.fridge-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 2.25rem 0.5rem 1.75rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  background: var(--bg-elevated);
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+@media (min-width: 40rem) {
+  .fridge-stage {
+    padding: 4.5rem 3rem 4rem;
+  }
+}
+.fridge-stage-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 50% at 50% 0%,
+      color-mix(in oklab, var(--halo-1) 22%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      40% 42% at 85% 10%,
+      color-mix(in oklab, var(--halo-2) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      36% 40% at 12% 100%,
+      color-mix(in oklab, var(--halo-3) 10%, transparent),
+      transparent 70%
+    );
+}
+
+/* The paper card (A5 portrait on screens wide enough for it). */
+.fridge-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  inline-size: 100%;
+  max-inline-size: 30rem;
+  padding: 1.75rem 1.25rem 1.25rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  color: var(--text);
+  box-shadow: var(--highlight), var(--shadow-near), var(--shadow-overlay);
+  rotate: -1.5deg;
+  transition: rotate var(--dur-hero) var(--ease-out);
+}
+@media (min-width: 40rem) {
+  .fridge-card {
+    aspect-ratio: 148 / 210;
+    padding: 2.75rem 2.5rem 2.25rem;
+  }
+}
+@media (hover: hover) {
+  .fridge-card:hover {
+    rotate: 0deg;
+  }
+}
+/* A halo magnet holds it on the fridge. */
+.fridge-card::before {
+  content: "";
+  position: absolute;
+  top: -0.75rem;
+  left: 50%;
+  inline-size: 3.5rem;
+  block-size: 1.5rem;
+  border-radius: 999px;
+  background: var(--halo);
+  box-shadow: var(--highlight), var(--shadow-near);
+  translate: -50% 0;
+}
+
+.fridge-title {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* The three steps, numbered in the halo ink (a CSS counter, not part of the text). */
+.fridge-steps {
+  counter-reset: fridge-step;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+  font-weight: 600;
+}
+@media (min-width: 40rem) {
+  .fridge-steps {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+}
+.fridge-steps > li {
+  counter-increment: fridge-step;
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  align-items: baseline;
+}
+.fridge-steps > li::before {
+  content: counter(fridge-step);
+  color: var(--halo-ink-1);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.fridge-check {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+}
+
+.fridge-qr {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+@media (min-width: 40rem) {
+  .fridge-qr {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+}
+/* The QR code stays black on white (QrCode.tsx draws it so) with a thin frame. */
+.fridge-qr-code {
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+}
+.fridge-pairing {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+.fridge-url {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--halo-ink-1);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+/* ── 2. The hint and the print button ───────────────────────────────────────── */
+
+.fridge-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.fridge-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+/* ── 3. Print: one A5 portrait page, only the card, black on white ──────────── */
+@page {
+  size: A5 portrait;
+  margin: 12mm;
+}
+@media print {
+  .fridge {
+    max-inline-size: none;
+    padding: 0;
+  }
+  .fridge-layout {
+    display: block;
+  }
+  .fridge-stage {
+    display: block;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .fridge-stage-glow,
+  .fridge-card::before {
+    display: none;
+  }
+  /* data-theme="light" on the card would bring the grey paper tokens back; on
+     paper the card is pure ink on white (system colours of the light scheme). */
+  .fridge-card {
+    --text: CanvasText;
+    --text-muted: CanvasText;
+    --border: CanvasText;
+    color-scheme: light;
+    max-inline-size: none;
+    min-block-size: calc(210mm - 28mm);
+    aspect-ratio: auto;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    rotate: none;
+    break-inside: avoid;
+  }
+  .fridge-steps > li::before,
+  .fridge-url {
+    color: var(--text);
+  }
+  .fridge-qr {
+    grid-template-columns: 34mm 1fr;
+  }
+  .fridge-qr-code {
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* ── 4. Reduced motion: the card stays still (no straightening on hover). ───── */
+@media (prefers-reduced-motion: reduce) {
+  .fridge-card {
+    transition: none;
+  }
+  .fridge-card:hover {
+    rotate: -1.5deg;
+  }
+}

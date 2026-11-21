@@ -1,9 +1,16 @@
 // Shared server-rendered frame for sign-in, registration, device pairing and invites.
-// Desktop: a 12-column split, the title and the form in the left five columns and a
-// quiet "instrument panel" (measuring-paper lines, a calm signal line, the intro in
-// large text) on the right. Phone: one column, title, intro, form, links.
+// Look (Redesign v3 „Ореол“, auth.css): an entry into the product. On a desktop a
+// two-part composition: at the left a raised panel with the eyebrow, the title, the
+// form and the links; at the right a stage with a large still halo (HaloRings) and
+// the page's intro set large over a soft aurora. On a phone the stage becomes a short
+// halo band with the intro inside the panel, right above the form.
+// The reading order is always: title, intro, form, links (a CSS grid places them).
+// `large` is for the older person's pairing page: a bigger halo and larger intro.
 import type { ReactNode } from "react";
+import { HaloRings } from "@/components/ui/HaloRings";
+import type { HaloState } from "@/components/ui/halo/haloMath";
 import { bg } from "@/i18n/bg";
+import "./auth.css";
 
 // The look of the small text links under the auth forms (48 px tall tap area).
 export const AUTH_LINK =
@@ -14,30 +21,34 @@ export function AuthPage({
   description,
   children,
   footer,
+  halo = "calm",
+  large = false,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   footer?: ReactNode;
+  halo?: HaloState;
+  large?: boolean;
 }) {
   return (
-    <main className="shell py-10 md:py-16">
-      <div className="grid gap-y-8 md:grid-cols-12 md:gap-x-6">
-        <header className="md:col-span-5 md:col-start-1 md:row-start-1">
-          <p className="mb-3 font-mono text-xs text-fg-subtle">{bg.app.name}</p>
-          <h1 className="text-h1">{title}</h1>
-        </header>
-        {/* On a phone only the intro shows here; the panel look starts at md. */}
-        <div className="md:col-span-6 md:col-start-7 md:row-span-3 md:row-start-1 md:flex md:min-h-[26rem] md:flex-col md:justify-between md:rounded-lg md:border md:border-line md:bg-surface-1 md:p-10 md:grid-lines">
-          <hr aria-hidden="true" className="halo-line hidden md:block" />
-          <p className="max-w-[40ch] text-lg text-fg-muted md:text-xl">{description}</p>
+    <main className="auth shell" data-large={large || undefined}>
+      <div className="auth-aurora" aria-hidden="true" />
+      <div className="auth-grid">
+        {/* The two surfaces are decoration only; the content is drawn over them. */}
+        <div className="auth-panel-bg" aria-hidden="true" />
+        <div className="auth-stage-bg" aria-hidden="true">
+          <div className="auth-stage-halo">
+            <HaloRings state={halo} size="100%" />
+          </div>
         </div>
-        <div className="md:col-span-5 md:col-start-1 md:row-start-2">{children}</div>
-        {footer ? (
-          <nav className="flex flex-wrap gap-x-6 gap-y-1 border-t border-line pt-4 md:col-span-5 md:col-start-1 md:row-start-3">
-            {footer}
-          </nav>
-        ) : null}
+        <header className="auth-head">
+          <p className="eyebrow auth-eyebrow">{bg.app.name}</p>
+          <h1 className="text-h2">{title}</h1>
+        </header>
+        <p className={large ? "auth-intro text-xl" : "auth-intro text-lg"}>{description}</p>
+        <div className="auth-form">{children}</div>
+        {footer ? <nav className="auth-foot">{footer}</nav> : null}
       </div>
     </main>
   );

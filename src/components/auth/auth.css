@@ -1,0 +1,360 @@
+/* The entry pages (/vhod, /registratsia, /svarzhi, /pokana) and the error pages
+   (403, 404), Redesign v3 „Ореол“ Phase 5a. Imported by AuthPage.tsx and
+   StatusPage.tsx only. Every class starts with .auth-, so nothing here can change
+   another screen; the test hook .pairing-form is only read, never restyled.
+   Colours, radii and curves come from the tokens in globals.css (no colour
+   literals). Nothing here animates by itself: the only motion on these pages is the
+   slow breathing of the existing HaloRings (globals.css) and the primitives' own
+   press / focus effects. Reduced motion: section 5. */
+
+/* ── 1. Frame ───────────────────────────────────────────────────────────────── */
+
+/* The page never scrolls sideways (the halo glows may reach past the column). */
+.auth {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  padding-block: 1.5rem 3rem;
+}
+@media (min-width: 48rem) {
+  .auth {
+    padding-block: 3rem 5rem;
+  }
+}
+
+/* A soft aurora behind the top of the page (decoration only), like the family's. */
+.auth-aurora {
+  position: absolute;
+  inset: -3rem 0 auto;
+  z-index: -1;
+  height: 32rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      40% 60% at 20% 0%,
+      color-mix(in oklab, var(--halo-1) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      38% 56% at 80% 6%,
+      color-mix(in oklab, var(--halo-2) 12%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 40% at 52% 0%,
+      color-mix(in oklab, var(--halo-3) 8%, transparent),
+      transparent 70%
+    );
+}
+
+/* The eyebrow starts with a small halo dot (as in the family area). */
+.auth-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+.auth-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+/* ── 2. The two-part composition: form panel + stage ────────────────────────────
+   The DOM order stays: title, intro, form, links. A grid places them:
+   - phone / tablet: one raised panel; the intro sits in a short halo band between
+     the title and the form;
+   - desktop (≥ 64 rem): the panel at the left (title, form, links) and at the right
+     a stage with a large still halo and the intro set large.
+   The panel and the stage are two empty, decorative grid items (.auth-panel-bg,
+   .auth-stage-bg) drawn under the content of their area. */
+
+.auth-grid {
+  --auth-pad: 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 40rem;
+  margin-inline: auto;
+}
+@media (min-width: 30rem) {
+  .auth-grid {
+    --auth-pad: 1.75rem;
+  }
+}
+
+/* Every part of the panel column gets the panel's inner padding. */
+.auth-head,
+.auth-intro,
+.auth-form,
+.auth-foot {
+  grid-column: 1;
+  position: relative;
+  min-width: 0;
+  padding-inline: var(--auth-pad);
+}
+.auth-head {
+  grid-row: 1;
+  padding-top: var(--auth-pad);
+}
+.auth-form {
+  grid-row: 3;
+  padding-top: 1.75rem;
+}
+.auth-form:last-child {
+  padding-bottom: var(--auth-pad);
+}
+.auth-foot {
+  grid-row: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin-top: 1.75rem;
+  padding-top: 1rem;
+  padding-bottom: calc(var(--auth-pad) - 0.5rem);
+}
+/* The links' separator: a quiet halo hairline inside the panel's padding. */
+.auth-foot::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--auth-pad);
+  right: var(--auth-pad);
+  block-size: 1px;
+  background: var(--border);
+}
+
+/* The raised glass panel (the glass utility without the blur, which is only
+   worth its cost over the aurora; an opaque-enough fill keeps the text AA). */
+.auth-panel-bg {
+  grid-column: 1;
+  grid-row: 1 / 5;
+  border-radius: var(--radius-xl);
+  background-color: var(--surface-1);
+  background-image:
+    radial-gradient(120% 70% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-near), var(--shadow-long);
+}
+
+/* Phone: the stage is a short band inside the panel, right above the form. */
+.auth-stage-bg {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  overflow: hidden;
+  margin: 1.5rem var(--auth-pad) 0;
+  border-radius: var(--radius-lg);
+  background-color: var(--glass-1);
+  background-image:
+    radial-gradient(
+      70% 120% at 0% 50%,
+      color-mix(in oklab, var(--halo-2) 16%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight);
+}
+.auth-stage-halo {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  translate: 0 -50%;
+}
+.auth-intro {
+  grid-row: 2;
+  align-self: center;
+  margin: 1.5rem var(--auth-pad) 0;
+  padding: 1rem 1.125rem 1rem 5.5rem;
+  color: var(--text);
+}
+/* The older person's pairing page: a bigger halo and more room in the band. */
+.auth[data-large] .auth-stage-halo {
+  inline-size: 5rem;
+  block-size: 5rem;
+}
+.auth[data-large] .auth-intro {
+  padding-left: 6rem;
+}
+
+@media (min-width: 64rem) {
+  .auth-grid {
+    --auth-pad: 2.5rem;
+    max-width: none;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: auto auto 1fr;
+    column-gap: 1.5rem;
+    min-height: 36rem;
+  }
+  .auth-panel-bg {
+    grid-row: 1 / 4;
+  }
+  .auth-form {
+    grid-row: 2;
+    padding-top: 2.25rem;
+  }
+  .auth-foot {
+    grid-row: 3;
+    align-self: end;
+  }
+
+  /* Desktop: the stage fills the right column. */
+  .auth-stage-bg {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    margin: 0;
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-elevated);
+    background-image:
+      radial-gradient(
+        60% 50% at 50% 0%,
+        color-mix(in oklab, var(--halo-1) var(--aurora-strength), transparent),
+        transparent 72%
+      ),
+      radial-gradient(
+        40% 42% at 86% 12%,
+        color-mix(in oklab, var(--halo-2) var(--aurora-strength), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        46% 40% at 14% 100%,
+        color-mix(in oklab, var(--halo-3) calc(var(--aurora-strength) * 0.5), transparent),
+        transparent 72%
+      );
+    box-shadow: var(--highlight), var(--shadow-long);
+  }
+  .auth-stage-halo,
+  .auth[data-large] .auth-stage-halo {
+    top: 42%;
+    left: 50%;
+    inline-size: min(26rem, 70%);
+    block-size: auto;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+  }
+  /* The intro, set large at the bottom of the stage, over its own soft shade so it
+     stays readable over the halo. */
+  .auth-intro {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: end;
+    margin: 0;
+    padding: 2.5rem 3rem 3rem;
+    max-width: 30ch;
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1.3;
+    font-weight: 400;
+    text-wrap: balance;
+  }
+  .auth[data-large] .auth-intro {
+    padding-left: 3rem;
+  }
+}
+
+/* ── 3. The pairing code (older people) ─────────────────────────────────────── */
+
+/* A very large mono code with wide spacing; the spacing is balanced with an
+   indent so the six digits sit in the middle of the well. */
+.auth-code-input {
+  max-width: 20rem;
+  min-height: 4.5rem;
+  font-size: var(--text-h2);
+  line-height: 1;
+  letter-spacing: 0.32em;
+  text-indent: 0.32em;
+  text-align: center;
+}
+.auth-code-input::placeholder {
+  letter-spacing: 0.32em;
+}
+
+/* ── 4. Error pages (403, 404): a large still halo with the code as a graphic ─ */
+
+.auth-status-grid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+/* The halo and the code, a quiet mono graphic (decoration only): under the idle
+   rings (404), inside the one danger ring (403). */
+.auth-status-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: min(15rem, 66vw);
+  justify-self: center;
+}
+.auth-status-rings {
+  inline-size: 100%;
+  aspect-ratio: 1;
+}
+/* The danger halo is one closed ring (46 % of the box): drawn larger and a little
+   softer, so 403 stays calm and the ring has the same presence as the idle rings. */
+.auth-status-visual[data-state="danger"] .auth-status-rings {
+  scale: 1.5;
+  opacity: 0.7;
+}
+.auth-status-code {
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 2rem + 2.5vw, 4.5rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+}
+/* 403: the one ring is wide enough to hold the code in its middle. */
+.auth-status-visual[data-state="danger"] {
+  position: relative;
+}
+.auth-status-visual[data-state="danger"] .auth-status-code {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  translate: -50% -50%;
+  font-size: clamp(2.25rem, 1.75rem + 2vw, 3.75rem);
+}
+.auth-status-text {
+  max-width: 36rem;
+}
+.auth-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 2rem;
+}
+@media (min-width: 48rem) {
+  .auth-status-grid {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    gap: 3rem;
+    min-height: 30rem;
+  }
+  .auth-status-visual {
+    grid-column: 2;
+    grid-row: 1;
+    inline-size: min(22rem, 100%);
+  }
+  .auth-status-text {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+/* ── 5. Reduced motion ──────────────────────────────────────────────────────────
+   This file adds no animation of its own. The HaloRings breathing is switched off
+   by globals.css for reduced motion; the error pages use the rings still anyway. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-stage-halo .halo-rings-ring,
+  .auth-stage-halo .halo-rings::before {
+    animation: none;
+  }
+}

@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { bg } from "@/i18n/bg";
 import type { PublicScriptDto } from "@/schemas/scripts";
-import { EducationIntro } from "./EducationIntro";
+import { EducationFrame, EducationIntro } from "./EducationIntro";
 import { CardLoading, ListLoading } from "./Loading";
 import { ScriptCard } from "./ScriptCard";
 import { ScriptList, ScriptsUnavailable } from "./ScriptList";
@@ -40,10 +40,10 @@ function usePublishedScripts(): LoadState {
 export function EducationListPreview() {
   const state = usePublishedScripts();
   return (
-    <main className="shell py-10 md:py-16">
+    <EducationFrame>
       <EducationIntro />
       <section aria-labelledby="edu-list-title">
-        <h2 id="edu-list-title" className="mb-6 text-h3 text-fg-muted">
+        <h2 id="edu-list-title" className="edu-section-title">
           {bg.education.listTitle}
         </h2>
         {state.kind === "loading" ? <ListLoading /> : null}
@@ -55,7 +55,7 @@ export function EducationListPreview() {
           />
         ) : null}
       </section>
-    </main>
+    </EducationFrame>
   );
 }
 
@@ -70,13 +70,13 @@ export function EducationCardPreview() {
         )
       : undefined;
   return (
-    <main className="shell py-10 md:py-16">
+    <EducationFrame>
       {state.kind === "loading" ? <CardLoading /> : null}
       {state.kind === "error" ? <ScriptsUnavailable /> : null}
       {state.kind === "ready" && script === undefined ? (
         <p className="text-lg text-fg-muted">{bg.common.notFoundText}</p>
       ) : null}
       {script !== undefined ? <ScriptCard script={script} listHref={PREVIEW_PATH} /> : null}
-    </main>
+    </EducationFrame>
   );
 }

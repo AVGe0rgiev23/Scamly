@@ -562,6 +562,31 @@ The family member's pages (an adult son or daughter, often abroad) get the Ор�
 
 `tests/e2e/family.spec.ts`, `alerts.spec.ts`, `push-optin.spec.ts`, `invite.spec.ts`, `pwa.spec.ts` keep every hook and role. `family.spec.ts` now opens the tab it needs first (`openTab`), checks that a trusted contact has no „Настройки“ tab, that every button **and tab** at 360 px is at least 48 px, and that the pairing code survives a tab switch. Screenshots: `docs/evidence/redesign-v3/phase-4/` (1440 × 900 and Pixel 5, Night and Porcelain).
 
+### 3.7.5 Public and sign-in pages (redesign v3 „Ореол“, Phase 5)
+
+#### What it does
+
+Rebuilds every remaining public page with the Ореол system: sign-in `/vhod`, registration `/registratsia`, phone pairing `/svarzhi`, the invite `/pokana`, the 403 and 404 pages, the four help pages `/…/pomosht`, the education list `/kak-raboti` and one card `/kak-raboti/<slug>`, the fridge card `/karta-za-hladilnik`, the report form `/signal` and the scam map `/karta`. Logic, API calls, texts and the order of information are unchanged.
+
+#### How it works
+
+- **Sign-in, registration, pairing, invite** (`src/components/auth/AuthPage.tsx`, `auth.css`): an aurora behind the page; on a desktop the form sits on a raised panel at the left and a stage with the still, slowly breathing `HaloRings` and the page's intro sits at the right; on a phone the stage becomes a short halo band above the form. `/svarzhi` is for the older person: the `large` variant (bigger halo, text-xl, a very large mono code field, xl button). Loading states are skeletons shaped like the form.
+- **403 and 404** (`StatusPage.tsx`): one sentence, one button home, and a large still halo (red ring for 403, quiet rings for 404) with the code in thin mono as a picture.
+- **Help pages** (`RoleHelp.tsx`, `help.css`): the steps as a timeline with halo-ringed numbers, each step on a raised panel; beside it a glass "device frame" for the screenshot of that area. Which screenshots exist is a list in the code (`HELP_SCREENSHOTS`), not a disk check: on Vercel the files in `public/` are served from the CDN and are not next to the server code. The list is empty until Phase 7 makes the new screenshots, so the frame shows a quiet halo.
+- **Education** (`src/components/education/`, `education.css`): a bento grid of the scam cards (the whole card is the link); one card has three parts: "how it starts" on a raised panel, "what they say" as speech bubbles, "what to do" as numbered steps; body text-xl for older readers. Printing shows only the card, black on white.
+- **Fridge card** (`fridgeCard.css`): on screen a paper card on a stage; printed exactly one A5 page; the QR code stays black on white.
+- **Report form** (`src/components/report/`, `report.css`): the form on a raised panel; the privacy points are a glass panel at the right on a desktop. They come **before** the form in the page, so a screen reader hears them before filling it in (on a phone they show above the form). The honeypot field stays off-screen.
+- **Scam map** (`src/components/map/`, `map.css`): the map on a stage with an aurora, the period switch is a `Segmented` control, the district panel and the scam waves are glass panels. `map.css` was rebuilt: five fill levels mixed from the neutral info colour only (never the red/amber/green verdict colours), hover/selected outline in the focus colour, the attribution link underlined.
+- Each area has its own stylesheet with its own class prefix (`.auth-`, `.help-`, `.edu-`, `.fridge-`, `.report-`, `.map-`), like `family.css`, so nothing changes another screen. New texts: `bg.reportForm.eyebrow`, `bg.fridgeCard.screenHint`, `bg.education.eyebrow`, `bg.map.eyebrow`.
+
+#### Why it works like that
+
+The public pages are where the jury and new families meet Scamly first; they must feel like the same product as the landing page. The older person's pages (pairing, education cards, fridge card) stay large and calm. Motion is limited to feedback on hover (cards lift a little) and the existing slow halo breathing (see `docs/redesign-v3/02-motion.md`).
+
+#### How we know it works
+
+On 21 Nov 2026: `npm run check` green (753 unit tests), all 253 browser tests on the production build (desktop + phone), the real-database round trip (W2-11) green. One browser test changed: `map.spec.ts` now finds the period switch as radio buttons (`Segmented`) instead of pressed buttons; what it checks (the request for 12 weeks) is the same. Screenshots of all eleven pages at 1440 px (dark) and 390 px (light): no sideways scrolling.
+
 ### 3.8 Generated database types: `src/types/database.ts`
 
 #### What it does

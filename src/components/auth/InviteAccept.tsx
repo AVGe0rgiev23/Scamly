@@ -7,7 +7,9 @@
 //     (history.replaceState), then the result is shown;
 //   - any other role: „Тази покана е за профил на близък.“
 //
-// Look: the AuthPage frame; buttons from the UI primitives, results in a Notice.
+// Look: every state sits in the AuthPage panel (halo stage at the right on a desktop):
+// a skeleton shaped like the guest answer while checking, then one primary pill (plus
+// a glass „Регистрация“ for guests), results in a tinted Notice.
 //
 // We don't know whose invite it is before it is used: the API reveals the person's
 // name only to the family member who redeems it, so a leaked link shows nothing.
@@ -20,7 +22,7 @@ import { AUTH_LINK } from "@/components/auth/AuthPage";
 import { callApi } from "@/components/family/api";
 import { ButtonLink } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
-import { SkeletonText } from "@/components/ui/Skeleton";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 import { ROUTES, withNext } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { RedeemInviteSchema } from "@/schemas/invites";
@@ -97,6 +99,12 @@ export function InviteAccept() {
           {view.kind === "checking" ? bg.common.loading : bg.invitePage.redeeming}
         </p>
         <SkeletonText lines={2} className="max-w-sm" />
+        {view.kind === "checking" ? (
+          <div aria-hidden="true" className="flex flex-col gap-3 sm:flex-row">
+            <Skeleton className="h-14 w-full rounded-full sm:w-32" />
+            <Skeleton className="h-14 w-full rounded-full sm:w-40" />
+          </div>
+        ) : null}
       </div>
     );
   }

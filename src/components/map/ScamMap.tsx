@@ -7,25 +7,29 @@
 // own small file (next/dynamic, ssr: false); everything else shows without it.
 // Not colour-only: every number is also in the tooltips, the panel and the table.
 //
-// Look: the period switch as a segmented control; the map large on the left (8 of 12
-// columns), the district panel and the waves on the right; the table of districts
-// below with mono counts. A skeleton with the map's shape while loading, an error
-// state with „Опитай отново“ and an empty state when there are no reports yet.
+// Look (Ореол v3, map.css): the map is the hero. The period switch is a Segmented
+// control; the map sits on a stage-like frame with an aurora and the legend at its
+// foot; the district panel and the scam waves are glass panels at the right (below on
+// a phone); the table of districts is below on a raised panel with mono counts. A
+// skeleton with the map's shape while loading, an error state with „Опитай отново“
+// and an empty state when there are no reports yet.
 "use client";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { callApi } from "@/components/family/api";
 import { fill } from "@/components/family/format";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/components/ui/cn";
+import { Segmented } from "@/components/ui/Segmented";
 import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/States";
 import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import type { DistrictCode, DistrictStatsDto, MapStatsDto } from "@/schemas/reports";
+import "./map.css";
 import {
   DEFAULT_PERIOD,
   districtName,
@@ -47,7 +51,7 @@ const DistrictMap = dynamic(() => import("./DistrictMap"), {
       <p role="status" className="sr-only">
         {bg.map.loading}
       </p>
-      <Skeleton className="aspect-[3/2] w-full rounded-md" />
+      <Skeleton className="aspect-[3/2] w-full rounded-lg" />
     </div>
   ),
 });
@@ -82,28 +86,25 @@ export function ScamMap() {
   const onSelect = useCallback((code: DistrictCode) => setSelected(code), []);
 
   return (
-    <div className="flex flex-col gap-10">
-      <div
-        role="group"
-        aria-label={bg.map.periodLabel}
-        className="inline-flex max-w-full self-start rounded-md border border-line-strong bg-surface-1 p-1"
-      >
-        {MAP_PERIODS.map((period) => (
-          <button
-            key={period}
-            type="button"
-            className="pressable min-h-11 cursor-pointer rounded-sm border border-transparent px-4 font-semibold text-fg-muted hover:text-fg aria-pressed:border-accent-line aria-pressed:bg-accent-bg aria-pressed:text-fg"
-            aria-pressed={weeks === period}
-            onClick={() => {
-              if (period === weeks) return;
-              setState({ kind: "loading" });
-              setWeeks(period);
-            }}
-          >
-            {bg.map.periods[period]}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col gap-8 md:gap-10">
+      {/* The period switch: native radios (Segmented), so the arrow keys move between
+          the periods. The values are text; Number() turns "12" back into 12. */}
+      <Segmented
+        label={bg.map.periodLabel}
+        hideGroupLabel={false}
+        className="map-period flex-wrap self-start"
+        options={MAP_PERIODS.map((period) => ({
+          value: String(period),
+          label: bg.map.periods[period],
+        }))}
+        value={String(weeks)}
+        onChange={(value) => {
+          const period = Number(value) as MapPeriod;
+          if (period === weeks) return;
+          setState({ kind: "loading" });
+          setWeeks(period);
+        }}
+      />
 
       {state.kind === "loading" ? <MapLoading /> : null}
       {state.kind === "error" ? (
@@ -120,13 +121,10 @@ export function ScamMap() {
         <MapBody stats={state.stats} selected={selected} onSelect={onSelect} />
       ) : null}
 
-      <div className="flex flex-col gap-2 border-t border-line pt-6">
-        <p className="text-sm text-fg-subtle">{bg.map.attribution}</p>
+      <div className="map-credits">
+        <p className="max-w-[80ch] text-sm text-fg-muted">{bg.map.attribution}</p>
         <p>
-          <Link
-            href={ROUTES.report}
-            className="inline-flex min-h-12 items-center gap-2 font-semibold text-accent underline underline-offset-4 hover:text-accent-hover"
-          >
+          <Link href={ROUTES.report} className="map-report-link">
             {bg.map.reportLink}
             <ArrowRight className="size-5" aria-hidden="true" />
           </Link>
@@ -136,18 +134,24 @@ export function ScamMap() {
   );
 }
 
-// The shape of the page while the numbers load: the map box, the panel and the table.
+// The shape of the page while the numbers load: the map stage, the panels, the table.
 function MapLoading() {
   return (
     <div>
       <p role="status" className="sr-only">
         {bg.map.loading}
       </p>
-      <div className="grid gap-6 md:grid-cols-12" aria-hidden="true">
-        <Skeleton className="aspect-[3/2] w-full rounded-lg md:col-span-8" />
-        <div className="flex flex-col gap-6 md:col-span-4">
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <SkeletonText lines={4} />
+      <div className="map-layout" aria-hidden="true">
+        <div className="map-stage">
+          <Skeleton className="aspect-[3/2] w-full rounded-lg" />
+          <Skeleton className="mt-5 h-5 w-2/3 max-w-sm" />
+        </div>
+        <div className="map-side">
+          <Skeleton className="h-44 w-full rounded-xl" />
+          <div className="map-glass">
+            <Skeleton className="h-6 w-40" />
+            <SkeletonText lines={3} className="mt-4" />
+          </div>
         </div>
       </div>
     </div>
@@ -173,26 +177,28 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
         </div>
       ) : null}
 
-      <div className="grid gap-6 md:grid-cols-12">
-        <div className="flex flex-col gap-4 md:col-span-8">
-          <div className="rounded-lg border border-line bg-surface-1 p-2 grid-lines md:p-4">
-            <DistrictMap stats={stats} selected={selected} onSelect={onSelect} />
-          </div>
+      <div className="map-layout">
+        <div className="map-stage">
+          <div className="map-stage-aurora" aria-hidden="true" />
+          <DistrictMap stats={stats} selected={selected} onSelect={onSelect} />
           <Legend />
         </div>
-        <div className="flex flex-col gap-6 md:col-span-4">
+        <div className="map-side">
           <DistrictPanel district={chosen} />
-          <section aria-labelledby="map-waves-title" className="border-t border-line pt-5">
-            <h2 id="map-waves-title" className="text-h3">
+          <section aria-labelledby="map-waves-title" className="map-glass">
+            <h2 id="map-waves-title" className="map-side-title">
               {bg.map.wavesTitle}
             </h2>
             {waves.length === 0 ? (
               <p className="mt-3 text-fg-muted">{bg.map.noWaves}</p>
             ) : (
-              <ul className="mt-3 flex flex-col">
+              <ul className="map-waves">
                 {waves.map((text) => (
-                  <li key={text} className="border-t border-line py-3 first:border-t-0">
-                    {text}
+                  <li key={text}>
+                    <span className="map-wave-icon" aria-hidden="true">
+                      <TrendingUp className="size-5" />
+                    </span>
+                    <span>{text}</span>
                   </li>
                 ))}
               </ul>
@@ -201,39 +207,32 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
         </div>
       </div>
 
-      <section aria-labelledby="map-table-title">
-        <h2 id="map-table-title" className="text-h3">
+      <section aria-labelledby="map-table-title" className="map-table-panel surface-raised">
+        <h2 id="map-table-title" className="map-side-title">
           {bg.map.tableTitle}
         </h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="map-table">
             <caption className="sr-only">{bg.map.tableCaption}</caption>
             <thead>
-              <tr className="border-b border-line-strong text-sm text-fg-muted">
-                <th scope="col" className="py-2 pr-4 font-semibold">
-                  {bg.map.tableDistrict}
-                </th>
-                <th scope="col" className="py-2 pr-4 text-right font-semibold">
+              <tr>
+                <th scope="col">{bg.map.tableDistrict}</th>
+                <th scope="col" className="map-num">
                   {bg.map.tableTotal}
                 </th>
-                <th scope="col" className="py-2 font-semibold">
-                  {bg.map.tableWave}
-                </th>
+                <th scope="col">{bg.map.tableWave}</th>
               </tr>
             </thead>
             <tbody>
               {stats.districts.map((district) => (
                 <tr
                   key={district.districtCode}
-                  className={cn(
-                    "border-b border-line",
-                    district.districtCode === selected && "bg-surface-2",
-                  )}
+                  className={cn(district.districtCode === selected && "map-row-selected")}
                 >
-                  <th scope="row" className="pr-4 font-normal">
+                  <th scope="row">
                     <button
                       type="button"
-                      className="min-h-11 cursor-pointer text-left font-semibold text-fg underline-offset-4 hover:text-accent hover:underline aria-pressed:text-accent"
+                      className="map-row-button"
                       aria-label={fill(bg.map.tableSelect, {
                         district: districtName(district.districtCode),
                       })}
@@ -243,8 +242,8 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
                       {districtName(district.districtCode)}
                     </button>
                   </th>
-                  <td className="tabular py-2 pr-4 text-right font-mono">{district.total}</td>
-                  <td className="py-2 text-fg-muted">
+                  <td className="map-num tabular font-mono">{district.total}</td>
+                  <td className="text-fg-muted">
                     {district.waves.length === 0
                       ? bg.map.tableNoWave
                       : district.waves.map((wave) => scriptName(wave.scriptType)).join(", ")}
@@ -262,15 +261,12 @@ function MapBody({ stats, selected, onSelect }: BodyProps) {
 // The legend: a colour box and its numbers for every level.
 function Legend() {
   return (
-    <figure className="map-legend">
+    <figure className="map-legend map-legend-bar">
       <figcaption className="text-sm text-fg-muted">{bg.map.legendTitle}</figcaption>
-      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+      <ul className="map-legend-list">
         {LEVELS.map((range) => (
-          <li key={range.level} className="tabular flex items-center gap-2 font-mono text-xs">
-            <span
-              className={`map-swatch map-level-${range.level} size-4 rounded-sm border border-line-strong`}
-              aria-hidden="true"
-            />
+          <li key={range.level} className="tabular font-mono text-xs">
+            <span className={`map-swatch map-level-${range.level}`} aria-hidden="true" />
             {legendText(range)}
           </li>
         ))}
@@ -284,7 +280,7 @@ function Legend() {
 function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
   return (
     <section
-      className="map-panel min-h-40 rounded-lg border border-line bg-surface-1 p-5 md:p-6"
+      className="map-panel map-glass map-panel-box"
       aria-live="polite"
       aria-labelledby="map-panel-title"
     >
@@ -297,7 +293,7 @@ function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
         </>
       ) : (
         <>
-          <h2 id="map-panel-title" className="text-h3">
+          <h2 id="map-panel-title" className="map-side-title">
             {fill(bg.map.panelTitle, { district: districtName(district.districtCode) })}
           </h2>
           <p className="tabular mt-2 font-mono text-sm text-fg-muted">
@@ -306,9 +302,9 @@ function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
           {scriptCounts(district).length > 0 ? (
             <>
               <h3 className="mt-5 text-base font-semibold">{bg.map.panelByScript}</h3>
-              <ul className="mt-2 flex flex-col">
+              <ul className="map-panel-list">
                 {scriptCounts(district).map(({ script, count }) => (
-                  <li key={script} className="border-t border-line py-2">
+                  <li key={script}>
                     {scriptName(script)}: {reportsText(count)}
                   </li>
                 ))}
@@ -317,7 +313,9 @@ function DistrictPanel({ district }: { district: DistrictStatsDto | null }) {
           ) : null}
           {district.waves.map((wave) => (
             <p key={wave.scriptType} className="mt-3">
-              <Badge>{fill(bg.map.panelWave, { script: scriptName(wave.scriptType) })}</Badge>
+              <Badge status="info">
+                {fill(bg.map.panelWave, { script: scriptName(wave.scriptType) })}
+              </Badge>
             </p>
           ))}
         </>

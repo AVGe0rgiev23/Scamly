@@ -562,6 +562,8 @@ export const bg = {
   // The public report form /signal „Подай сигнал за измама“ (W3-02), its links on the
   // home page and in the footer. Errors of single fields come from bg.reports.
   reportForm: {
+    // The small label above the title (Ореол v3).
+    eyebrow: "Анонимен сигнал",
     title: "Подай сигнал за измама",
     lead: "Обадиха ли ви се измамници? Разкажете ни накратко и предупредете другите.",
     privacyTitle: "Какво трябва да знаете",
@@ -637,6 +639,9 @@ export const bg = {
   // The A5 reminder linked from the education page (W3-10).
   fridgeCard: {
     link: "Карта за хладилник (A5)",
+    // Next to the card on screen only (Ореол v3); never printed.
+    screenHint:
+      "Отпечатайте картата на лист A5 и я закачете на видно място, например на хладилника.",
     title: "Съмнително обаждане?",
     steps: [
       "Затворете телефона.",
@@ -649,6 +654,8 @@ export const bg = {
   },
   // The public education pages /kak-raboti and /kak-raboti/<card> (W3-05).
   education: {
+    // The small label above the title (Ореол v3).
+    eyebrow: "Научете схемите",
     title: "Как работи измамата",
     lead: "Как работят телефонните измами и какво да правите",
     intro:
@@ -773,6 +780,8 @@ export const bg = {
   },
   // The public scam map /karta „Карта на измамите“ (W3-03, src/components/map/).
   map: {
+    // The small label above the title (Ореол v3).
+    eyebrow: "Обществена карта",
     title: "Карта на измамите",
     lead: "Къде в България хората са получили обаждания от измамници. Показваме само области, никога адреси.",
     note: "Броим само сигнали, одобрени от модератор. Картата се обновява до минута след одобрението.",

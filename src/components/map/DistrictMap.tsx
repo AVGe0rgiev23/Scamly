@@ -14,15 +14,17 @@
 // as its label. Focus or hover shows the same text as a tooltip; Enter, Space or a
 // click opens the district's panel (onSelect).
 //
-// Look: map.css restyles Leaflet (transparent background, our tooltip and attribution)
-// and colours the districts with a one-hue scale of the info colour (.map-level-0…4).
+// Look (Ореол v3): map.css restyles Leaflet (transparent on our stage, hairline
+// borders, a glass-pill tooltip, a quiet underlined attribution) and colours the
+// districts with five steps of the info colour mixed into the surface (.map-level-0…4);
+// hover, focus and the chosen district get an outline in the focus-ring colour.
 "use client";
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./map.css";
 import { useEffect, useRef, useState } from "react";
-import { StatusIcon } from "@/components/ui/Badge";
+import { Notice } from "@/components/ui/Notice";
 import { bg } from "@/i18n/bg";
 import type { DistrictCode, MapStatsDto } from "@/schemas/reports";
 import { districtLabel, levelOf } from "./mapData";
@@ -160,13 +162,9 @@ export default function DistrictMap({ stats, selected, onSelect }: Props) {
   return (
     <>
       {failed ? (
-        <div
-          role="alert"
-          className="flex items-start gap-3 rounded-md border border-danger-line bg-danger-bg px-4 py-3"
-        >
-          <StatusIcon status="danger" className="mt-[0.2em] text-danger-fg" />
-          <p className="text-fg">{bg.map.loadError}</p>
-        </div>
+        <Notice status="danger" role="alert">
+          <p>{bg.map.loadError}</p>
+        </Notice>
       ) : null}
       <div
         ref={container}

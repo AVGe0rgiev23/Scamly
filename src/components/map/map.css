@@ -1,8 +1,410 @@
-/* The scam map's look (/karta, DistrictMap.tsx). Leaflet draws real DOM and SVG, so
-   it needs real CSS. Emptied in Ореол v3 Phase 0; the new rules come in a later phase. */
+/* The public scam map /karta, Redesign v3 „Ореол“ Phase 5b. Imported by the page,
+   ScamMap.tsx and DistrictMap.tsx (after Leaflet's own leaflet.css). New classes start
+   with .map-; the test hooks .map-legend, .map-tooltip, .map-panel, .map-district and
+   .map-level-0…4 keep their names (the tests only read them). Leaflet's own classes
+   are restyled only inside .map-canvas, with one class more than leaflet.css, so the
+   order in which the two files load does not matter. Colours, radii and curves come
+   from the tokens in globals.css (no colour literals). Nothing moves here: only
+   colours and outlines change, with short transitions (150 ms). Reduced motion:
+   section 6. */
 
 /* Keep Leaflet's own layers (z-index 400–1000) inside the map, so the floating site
    header and the phone dock (z-index 40) always stay on top of it (Phase 2). */
 .leaflet-container {
   isolation: isolate;
+}
+
+/* ── 1. Page frame and head ─────────────────────────────────────────────────── */
+
+.map-page {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+.map-page-aurora {
+  position: absolute;
+  inset: -3rem 0 auto;
+  z-index: -1;
+  height: 30rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      42% 60% at 20% 0%,
+      color-mix(in oklab, var(--halo-1) 15%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      36% 52% at 80% 4%,
+      color-mix(in oklab, var(--halo-2) 12%, transparent),
+      transparent 70%
+    );
+}
+.map-head {
+  margin-bottom: 2.5rem;
+}
+@media (min-width: 48rem) {
+  .map-head {
+    margin-bottom: 3rem;
+  }
+}
+.map-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+.map-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+/* ── 2. Layout: the map stage, the glass panels beside it ───────────────────── */
+
+.map-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+@media (min-width: 64rem) {
+  .map-layout {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+}
+
+/* The stage: the map's hero frame, with the aurora rising from its top edge. */
+.map-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 0.75rem 0.75rem 1.25rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--glass-border);
+  background: var(--bg-elevated);
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+@media (min-width: 48rem) {
+  .map-stage {
+    padding: 1.75rem 1.75rem 1.5rem;
+  }
+}
+.map-stage-aurora {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 50% at 50% 0%,
+      color-mix(in oklab, var(--halo-1) 18%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      38% 42% at 85% 6%,
+      color-mix(in oklab, var(--halo-2) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 40% at 8% 100%,
+      color-mix(in oklab, var(--halo-3) 8%, transparent),
+      transparent 70%
+    );
+}
+
+.map-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Glass lit from the top-left (the `glass` utility without the blur, which is only
+   worth its cost over the aurora). */
+.map-glass {
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  background-color: var(--glass-1);
+  background-image:
+    radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+.map-panel-box {
+  min-height: 11rem;
+}
+.map-side-title {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  line-height: 1.2;
+  font-weight: 600;
+}
+.map-panel-list {
+  margin-top: 0.5rem;
+}
+.map-panel-list > li {
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.map-waves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.map-waves > li {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+.map-wave-icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--info-border);
+  background: var(--info-bg);
+  color: var(--info-fg);
+}
+
+/* ── 3. The map drawing (Leaflet inside .map-canvas) ────────────────────────── */
+
+.map-canvas.leaflet-container {
+  background: transparent;
+  font-family: inherit;
+  outline: none;
+}
+
+/* Five sequential steps of the neutral info colour mixed into the surface. Never the
+   verdict colours (danger, caution, safe): a busy district is not a verdict. Each
+   level sets one variable, used as the fill of a district and as the colour of its
+   legend swatch. */
+.map-level-0 {
+  --map-fill: color-mix(in oklab, var(--info-solid) 4%, var(--surface-2));
+}
+.map-level-1 {
+  --map-fill: color-mix(in oklab, var(--info-solid) 22%, var(--surface-2));
+}
+.map-level-2 {
+  --map-fill: color-mix(in oklab, var(--info-solid) 42%, var(--surface-2));
+}
+.map-level-3 {
+  --map-fill: color-mix(in oklab, var(--info-solid) 64%, var(--surface-2));
+}
+.map-level-4 {
+  --map-fill: color-mix(in oklab, var(--info-solid) 88%, var(--surface-2));
+}
+
+/* A district: its level's fill and a hairline border. */
+.map-canvas path.map-district {
+  fill: var(--map-fill, var(--surface-2));
+  fill-opacity: 1;
+  stroke: var(--border);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  cursor: pointer;
+  outline: none;
+  transition:
+    stroke var(--dur-micro) linear,
+    stroke-width var(--dur-micro) linear;
+}
+/* Hover, keyboard focus and the chosen district: an outline in the ring colour. */
+.map-canvas path.map-district:hover,
+.map-canvas path.map-district:focus-visible,
+.map-canvas path.map-district.map-selected {
+  stroke: var(--ring);
+  stroke-width: 2.5px;
+}
+.map-canvas path.map-district:focus-visible {
+  stroke-width: 3.5px;
+}
+
+/* The tooltip: a small glass pill (the arrow of Leaflet's bubble is hidden). */
+.map-canvas .leaflet-tooltip.map-tooltip {
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background-color: color-mix(in oklab, var(--bg-elevated) 88%, transparent);
+  background-image: linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: var(--highlight), var(--shadow-long);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+.map-canvas .leaflet-tooltip.map-tooltip::before {
+  display: none;
+}
+
+/* The attribution: quiet, with its link underlined (not by colour alone). */
+.map-canvas.leaflet-container .leaflet-control-attribution {
+  margin: 0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px 0 0 0;
+  background: color-mix(in oklab, var(--bg-elevated) 70%, transparent);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+.map-canvas.leaflet-container .leaflet-control-attribution a {
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.map-canvas.leaflet-container .leaflet-control-attribution a:hover {
+  color: var(--text);
+}
+/* The map is fixed (no dragging or zooming), so no zoom buttons. */
+.map-canvas .leaflet-control-zoom {
+  display: none;
+}
+
+/* ── 4. Legend, table, credits ──────────────────────────────────────────────── */
+
+.map-legend-bar {
+  margin: 1rem 0.5rem 0;
+}
+@media (min-width: 48rem) {
+  .map-legend-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-inline: 0;
+  }
+}
+.map-legend-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.5rem;
+}
+@media (min-width: 48rem) {
+  .map-legend-list {
+    margin-top: 0;
+  }
+}
+.map-legend-list > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.map-swatch {
+  inline-size: 1.25rem;
+  block-size: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--map-fill);
+}
+
+.map-table-panel {
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius-xl);
+}
+@media (min-width: 48rem) {
+  .map-table-panel {
+    padding: 2rem;
+  }
+}
+.map-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.map-table thead th {
+  padding: 0 1rem 0.625rem 0;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.map-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+.map-table tbody th,
+.map-table tbody td {
+  padding: 0.25rem 1rem 0.25rem 0;
+  vertical-align: middle;
+}
+.map-table tbody th {
+  font-weight: 400;
+}
+.map-table .map-num {
+  text-align: right;
+}
+.map-row-selected {
+  background: var(--accent-bg);
+}
+.map-row-selected > th {
+  box-shadow: inset 2px 0 0 var(--ring);
+}
+.map-row-button {
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+  margin-inline-start: -0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.map-row-button:hover,
+.map-row-button[aria-pressed="true"] {
+  text-decoration: underline;
+}
+
+.map-credits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.map-report-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.map-report-link:hover {
+  text-decoration-color: var(--ring);
+}
+
+/* ── 5. Windows high contrast: districts keep visible borders ───────────────── */
+@media (forced-colors: active) {
+  .map-canvas path.map-district {
+    stroke: CanvasText;
+  }
+  .map-canvas path.map-district.map-selected,
+  .map-canvas path.map-district:focus-visible {
+    stroke: Highlight;
+  }
+  .map-eyebrow::before {
+    background: CanvasText;
+  }
+}
+
+/* ── 6. Reduced motion ───────────────────────────────────────────────────────
+   Nothing on the map moves; the colour and outline changes stay (they are not
+   motion), only shortened to an instant change. */
+@media (prefers-reduced-motion: reduce) {
+  .map-canvas path.map-district {
+    transition: none;
+  }
 }

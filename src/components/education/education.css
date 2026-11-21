@@ -1,0 +1,509 @@
+/* The education pages (/kak-raboti, /kak-raboti/<slug> and their previews
+   /dev/kak-raboti/*), Redesign v3 „Ореол“ Phase 5b. Imported by EducationIntro.tsx
+   (the frame of every education page) and ScriptCard.tsx. Every class starts with
+   .edu-, so nothing here can change another screen. Colours, radii and curves come
+   from the tokens in globals.css (no colour literals). Only transform and opacity are
+   animated. Every animation has a line in docs/redesign-v3/02-motion.md.
+   Print: section 5. Reduced motion: section 6. */
+
+/* ── 1. Frame and page head ─────────────────────────────────────────────────── */
+
+/* The page never scrolls sideways (the glows may reach past the column; clip,
+   unlike hidden, keeps position: sticky working). */
+.edu {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+/* A soft aurora behind the top of the page (decoration only). */
+.edu-aurora {
+  position: absolute;
+  inset: -3rem 0 auto;
+  z-index: -1;
+  height: 32rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      44% 60% at 18% 0%,
+      color-mix(in oklab, var(--halo-1) 16%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      38% 52% at 80% 6%,
+      color-mix(in oklab, var(--halo-2) 12%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 40% at 50% 0%,
+      color-mix(in oklab, var(--halo-3) 8%, transparent),
+      transparent 70%
+    );
+}
+
+.edu-head {
+  margin-bottom: 3.5rem;
+}
+@media (min-width: 48rem) {
+  .edu-head {
+    margin-bottom: 5rem;
+  }
+}
+
+/* The eyebrow starts with a small halo dot. */
+.edu-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+.edu-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+/* Titles of the parts of a page. A short halo bar leads the title. */
+.edu-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  line-height: 1.2;
+  font-weight: 600;
+}
+.edu-section-title::before {
+  content: "";
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 2px;
+  border-radius: 2px;
+  background: var(--halo);
+}
+
+/* ── 2. The list: a bento grid of large glass cards ─────────────────────────── */
+
+.edu-bento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+/* Wide, narrow, then two halves: the cards are not identical rows. */
+@media (min-width: 48rem) {
+  .edu-bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .edu-tile:nth-child(4n + 1) {
+    grid-column: span 4;
+  }
+  .edu-tile:nth-child(4n + 2) {
+    grid-column: span 2;
+  }
+  .edu-tile:nth-child(4n + 3),
+  .edu-tile:nth-child(4n + 4) {
+    grid-column: span 3;
+  }
+  /* A card alone in its row fills the row. */
+  .edu-tile:only-child,
+  .edu-tile:last-child:nth-child(4n + 3) {
+    grid-column: span 6;
+  }
+}
+
+.edu-tile {
+  --tile-hue: var(--halo-2);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 15rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  background-color: var(--glass-1);
+  background-image:
+    radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-long);
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+@media (min-width: 48rem) {
+  .edu-tile {
+    min-height: 19rem;
+    padding: 2rem;
+  }
+}
+/* Each kind of scam has its own soft light, so the cards read as different things. */
+.edu-tile[data-type="police"] {
+  --tile-hue: var(--halo-2);
+}
+.edu-tile[data-type="relative_in_trouble"] {
+  --tile-hue: var(--halo-1);
+}
+.edu-tile[data-type="fake_official"] {
+  --tile-hue: var(--halo-3);
+}
+.edu-tile[data-type="courier"] {
+  --tile-hue: color-mix(in oklab, var(--halo-1) 50%, var(--halo-2));
+}
+
+/* The halo hairline on the top edge; it lights up when the card is reached for. */
+.edu-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 1.5rem auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--halo-1) 20%,
+    var(--halo-2) 50%,
+    var(--halo-3) 80%,
+    transparent
+  );
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease-out);
+}
+
+.edu-tile-light {
+  position: absolute;
+  z-index: -1;
+  inset: auto -18% -45% auto;
+  inline-size: min(34rem, 80%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--tile-hue) 24%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+.edu-tile:nth-child(even) .edu-tile-light {
+  inset: -45% auto auto -20%;
+}
+
+.edu-tile-title {
+  display: block;
+  max-inline-size: 18ch;
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* The title link covers the whole card (one big target); the ring is on the card. */
+.edu-tile-link {
+  color: var(--text);
+  text-decoration: none;
+  outline: none;
+}
+.edu-tile-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.edu-tile:has(.edu-tile-link:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.edu-tile-text {
+  max-inline-size: 46ch;
+  color: var(--text-muted);
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+  /* Only the first two lines; the whole text is on the card itself. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.edu-tile-arrow {
+  display: inline-grid;
+  place-items: center;
+  align-self: flex-end;
+  margin-top: auto;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: 999px;
+  background: var(--glass-2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight);
+  color: var(--text);
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .edu-tile:not(.edu-tile-skeleton):hover {
+    transform: translateY(-3px);
+  }
+  .edu-tile:not(.edu-tile-skeleton):hover::before {
+    opacity: 1;
+  }
+  .edu-tile:hover .edu-tile-arrow {
+    transform: translate(3px, -3px);
+  }
+}
+.edu-tile:focus-within::before {
+  opacity: 1;
+}
+
+/* ── 3. When the cards can't load: the rules on a calm panel ────────────────── */
+
+.edu-rules {
+  max-inline-size: 44rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+}
+@media (min-width: 48rem) {
+  .edu-rules {
+    padding: 2rem 2.25rem;
+  }
+}
+.edu-rules-list > li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  align-items: baseline;
+  padding-block: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+}
+.edu-rules-list > li::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  translate: 0 -0.15em;
+}
+
+/* ── 4. One card: three separated parts ─────────────────────────────────────── */
+
+.edu-card {
+  max-inline-size: 52rem;
+}
+.edu-card-head {
+  margin-bottom: 2.5rem;
+}
+.edu-card-line {
+  max-inline-size: 22rem;
+  margin-top: 2rem;
+}
+.edu-part {
+  margin-top: 3rem;
+}
+@media (min-width: 48rem) {
+  .edu-part {
+    margin-top: 4rem;
+  }
+}
+.edu-part:first-of-type {
+  margin-top: 0;
+}
+
+/* "How it starts": a raised panel, the first thing to read. */
+.edu-start {
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  background-color: var(--surface-1);
+  background-image: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-near), var(--shadow-long);
+}
+@media (min-width: 48rem) {
+  .edu-start {
+    padding: 2rem 2.25rem;
+  }
+}
+
+/* "What they say": each quote in a glass speech bubble with a halo hairline at the
+   left (the bubble's lower left corner is small, like a speech bubble's tail). */
+.edu-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-inline-size: 44rem;
+}
+.edu-quote {
+  position: relative;
+  padding: 1.125rem 1.5rem 1.125rem 1.75rem;
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 6px;
+  background-color: var(--glass-1);
+  background-image:
+    radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+.edu-quote::before {
+  content: "";
+  position: absolute;
+  inset: 0.875rem auto 0.875rem 0.625rem;
+  inline-size: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--halo-1), var(--halo-2), var(--halo-3));
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 55%, transparent);
+}
+.edu-quote:nth-child(even) {
+  margin-inline-start: clamp(0rem, 4vw, 2.5rem);
+}
+
+/* "What to do": steps on a rail, each with a numbered halo node (a CSS counter). */
+.edu-steps {
+  counter-reset: edu-step;
+  display: flex;
+  flex-direction: column;
+}
+.edu-step {
+  counter-increment: edu-step;
+  position: relative;
+  min-height: 3rem;
+  padding: 0.5rem 0 1.75rem 4.25rem;
+}
+.edu-step:last-child {
+  padding-bottom: 0;
+}
+/* The node: the number in a disc ringed with the halo. */
+.edu-step::before {
+  content: counter(edu-step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+    var(--halo) border-box;
+  box-shadow: 0 0 18px -6px color-mix(in oklab, var(--halo-2) 70%, transparent);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+/* The rail between two nodes. */
+.edu-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 3.25rem;
+  bottom: 0.25rem;
+  left: calc(1.5rem - 1px);
+  inline-size: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--halo-2) 60%, transparent),
+    var(--border)
+  );
+}
+
+.edu-print-note {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-base);
+}
+
+.edu-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── 5. Print: black on white, no glass, no aurora, no glow ─────────────────── */
+@media print {
+  .edu {
+    padding-block: 0;
+  }
+  .edu-aurora,
+  .edu-card-line {
+    display: none;
+  }
+  .edu-card {
+    max-inline-size: none;
+  }
+  .edu-start,
+  .edu-quote {
+    background: none;
+    border: 1px solid var(--border);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    break-inside: avoid;
+  }
+  .edu-quote::before {
+    background: var(--text);
+    box-shadow: none;
+  }
+  .edu-step {
+    break-inside: avoid;
+  }
+  .edu-step::before {
+    background: none;
+    border-color: var(--text);
+    box-shadow: none;
+  }
+  .edu-step:not(:last-child)::after {
+    background: var(--border);
+  }
+  .edu-section-title::before {
+    background: var(--text);
+  }
+  .edu-part {
+    margin-top: 1.75rem;
+  }
+}
+
+/* ── 6. Reduced motion ───────────────────────────────────────────────────────
+   Movement goes, short fades stay: the cards do not lift and the arrow does not
+   move; the halo hairline on the top edge still fades in. */
+@media (prefers-reduced-motion: reduce) {
+  .edu-tile,
+  .edu-tile-arrow {
+    transition: none;
+  }
+  .edu-tile:not(.edu-tile-skeleton):hover,
+  .edu-tile:hover .edu-tile-arrow {
+    transform: none;
+  }
+  .edu-tile::before {
+    transition: opacity var(--dur-micro) linear;
+  }
+}
+
+/* Windows high contrast: the drawn nodes and markers keep a visible edge. */
+@media (forced-colors: active) {
+  .edu-step::before {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  .edu-rules-list > li::before,
+  .edu-eyebrow::before {
+    background: CanvasText;
+  }
+}

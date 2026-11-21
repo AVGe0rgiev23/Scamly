@@ -1,0 +1,267 @@
+/* The help pages /protected|family|moderator|admin/pomosht (RoleHelp.tsx), Redesign
+   v3 „Ореол“ Phase 5a. Imported by RoleHelp.tsx only. Every class starts with
+   .help-, so nothing here can change another screen. Colours, radii and curves come
+   from the tokens in globals.css (no colour literals). Nothing here animates: the
+   steps, nodes and the device frame are still; only the ghost pill has the
+   primitive's own press effect. Reduced motion: section 4 (nothing to switch off). */
+
+/* ── 1. Frame and head ──────────────────────────────────────────────────────── */
+
+.help {
+  position: relative;
+  isolation: isolate;
+}
+.help-head {
+  margin-bottom: 2.5rem;
+}
+@media (min-width: 48rem) {
+  .help-head {
+    margin-bottom: 3.5rem;
+  }
+}
+/* The eyebrow starts with a small halo dot (as in the family area). */
+.help-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+.help-eyebrow::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
+}
+
+.help-grid {
+  display: grid;
+  gap: 2.5rem;
+}
+@media (min-width: 64rem) {
+  .help-grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3rem;
+    align-items: start;
+  }
+}
+
+/* ── 2. The steps: a timeline with halo-numbered nodes ─────────────────────── */
+
+.help-steps {
+  --node: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 60ch;
+  counter-reset: help-step;
+}
+.help[data-large] .help-steps {
+  --node: 3.5rem;
+  gap: 1.25rem;
+}
+.help-step {
+  position: relative;
+  padding-left: calc(var(--node) + 1rem);
+  counter-increment: help-step;
+}
+/* The line the nodes hang on: from the first node to the last one. */
+.help-step::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--node) / 2 - 0.5px);
+  top: 0;
+  bottom: -1.25rem;
+  inline-size: 1px;
+  background: linear-gradient(180deg, var(--halo-2), var(--border));
+  opacity: 0.6;
+}
+.help-step:first-child::before {
+  top: calc(1rem + var(--node) / 2);
+}
+.help-step:last-child::before {
+  bottom: auto;
+  block-size: calc(1rem + var(--node) / 2);
+  background: linear-gradient(180deg, var(--border), var(--halo-3));
+}
+.help-step:only-child::before {
+  display: none;
+}
+
+/* A node: the number in mono inside a thin halo ring with a soft glow. */
+.help-node {
+  position: absolute;
+  left: 0;
+  top: 1rem;
+  display: grid;
+  place-items: center;
+  inline-size: var(--node);
+  block-size: var(--node);
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--halo-2) 8%, transparent);
+}
+.help-node::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--halo-conic);
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    black calc(100% - 2px)
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 2px));
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--halo-2) 45%, transparent));
+}
+.help-node::after {
+  content: counter(help-step);
+  position: relative;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+}
+.help[data-large] .help-node::after {
+  font-size: var(--text-xl);
+}
+
+/* Each step on a raised panel, lit from above. */
+.help-card {
+  min-width: 0;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  background-color: var(--surface-1);
+  background-image: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-near), var(--shadow-long);
+  color: var(--text);
+}
+@media (min-width: 48rem) {
+  .help-card {
+    padding: 1.125rem 1.5rem;
+  }
+}
+.help[data-large] .help-card {
+  padding-block: 1.25rem;
+}
+
+/* ── 3. The device frame with the screenshot ────────────────────────────────── */
+
+.help-device {
+  position: relative;
+  padding: 0.75rem;
+  border-radius: var(--radius-xl);
+  background-color: var(--glass-1);
+  background-image:
+    radial-gradient(120% 90% at 12% 0%, var(--light-source), transparent 55%),
+    linear-gradient(180deg, var(--glass-2), var(--glass-1));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--highlight), var(--shadow-long);
+}
+/* A soft halo glow behind the frame, as if the screen lit the page. */
+.help-device::before {
+  content: "";
+  position: absolute;
+  inset: 8% 6% -6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--halo-1) 18%, transparent),
+    color-mix(in oklab, var(--halo-2) 8%, transparent) 60%,
+    transparent
+  );
+  filter: blur(24px);
+  pointer-events: none;
+}
+.help-device[data-shape="phone"] {
+  inline-size: min(100%, 20rem);
+  justify-self: center;
+  border-radius: 2.75rem;
+  padding: 0.875rem;
+}
+@media (min-width: 64rem) {
+  .help-device {
+    position: sticky;
+    top: 7rem;
+  }
+}
+
+/* The browser bar (three dots) or, on the phone, a small speaker slot. */
+.help-device-bar {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.75rem;
+}
+.help-device-bar > span {
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: var(--border-strong);
+  opacity: 0.6;
+}
+.help-device[data-shape="phone"] .help-device-bar {
+  justify-content: center;
+  padding: 0.125rem 0 0.625rem;
+}
+.help-device[data-shape="phone"] .help-device-bar > span {
+  display: none;
+}
+.help-device[data-shape="phone"] .help-device-bar > span:first-child {
+  display: block;
+  inline-size: 3.5rem;
+  block-size: 0.375rem;
+  border-radius: 999px;
+}
+
+.help-device-screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.help-device[data-shape="phone"] .help-device-screen {
+  aspect-ratio: 4 / 5;
+  border-radius: 2rem;
+}
+.help-device-img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+/* No screenshot yet: a quiet aurora and a still halo in the middle of the screen. */
+.help-device-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(
+      60% 55% at 50% 0%,
+      color-mix(in oklab, var(--halo-1) calc(var(--aurora-strength) * 0.7), transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      40% 40% at 50% 100%,
+      color-mix(in oklab, var(--halo-3) calc(var(--aurora-strength) * 0.4), transparent),
+      transparent 72%
+    );
+}
+.help-device-halo {
+  inline-size: min(11rem, 45%);
+  aspect-ratio: 1;
+  opacity: 0.8;
+}
+
+/* ── 4. Reduced motion ──────────────────────────────────────────────────────────
+   Nothing in this file moves (the halo in the empty frame is drawn still), so
+   there is nothing to switch off. */

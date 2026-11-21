@@ -112,6 +112,18 @@ Reduced motion on the protected flow: the flood colour is there at once, no shoc
 
 Reduced motion in the family area: the island opens and settles with a 150 ms fade (`REDUCED`); no pulse rings, ping, waves, bell, blink or scan line; digits fade in (150 ms) instead of flipping; no card lift; countdown bar, progress ring, chevron and fridge card jump.
 
+### Public and sign-in pages (Phase 5: `auth.css`, `help.css`, `education.css`, `fridgeCard.css`, `report.css`, `map.css`)
+
+| Animation | Where | How | Why it exists |
+| --- | --- | --- | --- |
+| Halo breathing | auth stage / phone band (`HaloRings` calm) | the existing slow breathing of the still rings, 8 s | the entry pages feel alive and calm; nothing to read is delayed |
+| Card lift | `.edu-tile:hover` (hover-capable devices) | translateY −3 px, 300 ms ease-out; a halo hairline on the top edge fades in (also on keyboard focus); the arrow moves 3 px up-right | the whole card is the link |
+| Fridge card | `.fridge-card:hover` | rotate −1.5° → 0, 900 ms ease-out | a paper card held by a magnet (same as the family preview) |
+| Report sent | `.report-success` | the existing `appear` (8 px rise + fade, 300 ms) | the result arrives softly after the action |
+| District outline | `path.map-district` | stroke colour and width, 150 ms (not movement) | the chosen district is outlined |
+
+Reduced motion on these pages: no halo breathing, no card lift or arrow move, the fridge card stays still, the report result and the hairline fade in 150 ms, the district outline changes at once. 403/404, the help placeholder and the report success use the halo with `animated={false}`.
+
 ## Reduced motion (`prefers-reduced-motion: reduce`)
 
 Not a switch-off: movement goes, short fades stay, so every change is still visible.

@@ -1,5 +1,6 @@
 // /kak-raboti: the public education page „Как работи измамата“ (W3-05, brief 5.2 E).
-// Anyone, no login. A short intro and one tile per PUBLISHED scam card.
+// Anyone, no login. A short intro and one card per PUBLISHED scam card (a bento grid,
+// Ореол v3; the look is described in ScriptList.tsx and education.css).
 //
 // The heading and intro are static (pre-rendered at `next build`); the cards are read
 // from the database at request time (connection() inside <Suspense>), with the
@@ -10,7 +11,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { EducationIntro } from "@/components/education/EducationIntro";
+import { EducationFrame, EducationIntro } from "@/components/education/EducationIntro";
 import { ListLoading } from "@/components/education/Loading";
 import { ScriptList, ScriptsUnavailable } from "@/components/education/ScriptList";
 import { ROUTES } from "@/config/routes";
@@ -24,17 +25,17 @@ export const metadata: Metadata = {
 
 export default function EducationPage() {
   return (
-    <main className="shell py-10 md:py-16">
+    <EducationFrame>
       <EducationIntro />
       <section aria-labelledby="edu-list-title">
-        <h2 id="edu-list-title" className="mb-6 text-h3 text-fg-muted">
+        <h2 id="edu-list-title" className="edu-section-title">
           {bg.education.listTitle}
         </h2>
         <Suspense fallback={<ListLoading />}>
           <PublishedCards />
         </Suspense>
       </section>
-    </main>
+    </EducationFrame>
   );
 }
 

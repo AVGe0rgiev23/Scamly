@@ -95,16 +95,11 @@ test("shows the scam-wave text, or „Няма вълни…“ when there is no
 test("switching the period asks for the new numbers", async ({ page }) => {
   const asked = await fakeApi(page);
   await openMap(page);
-  await expect(page.getByRole("button", { name: bg.map.periods[4] })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  // The period switch is a Segmented control (native radios, Ореол v3).
+  await expect(page.getByRole("radio", { name: bg.map.periods[4] })).toBeChecked();
 
-  await page.getByRole("button", { name: bg.map.periods[12] }).click();
-  await expect(page.getByRole("button", { name: bg.map.periods[12] })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await page.getByRole("radio", { name: bg.map.periods[12] }).click();
+  await expect(page.getByRole("radio", { name: bg.map.periods[12] })).toBeChecked();
   await expect.poll(() => asked).toContain("?weeks=12");
   expect(asked[0]).toBe("?weeks=4");
 });
