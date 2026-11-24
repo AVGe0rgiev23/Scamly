@@ -8,6 +8,8 @@
 
 **24 November, W4-02.** Playwright checks the rendering that users see. Vitest checks the real Supabase client's request body through a local fetch stub. The checks use synthetic values and can run without sending a request to the hosted database.
 
+**24 November, W4-07.** The JSON export uses explicit field lists and the same user-scoped Supabase client as the rest of the family area. The service role is used for the confirmed self-deletion because only Supabase Auth's admin API can remove login accounts. A database trigger cleans up paired phone logins when their protected person is deleted, so a failed account deletion rolls back both kinds of records together.
+
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
 Our constraints, which most answers come back to:

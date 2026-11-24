@@ -33,6 +33,7 @@ const COLUMNS: { title: string; links: NavLink[] }[] = [
       { href: ROUTES.report, label: bg.reportForm.footerLink },
       { href: ROUTES.map, label: bg.map.footerLink },
       { href: ROUTES.fridgeCard, label: bg.fridgeCard.link },
+      { href: ROUTES.privacy, label: bg.privacy.title },
     ],
   },
 ];

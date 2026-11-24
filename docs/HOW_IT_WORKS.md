@@ -15,6 +15,8 @@ Last updated: **2026-11-10**
 
 **24 November, W4-02.** The moderation browser test verifies that report markup appears as literal text. The person repository test captures the Supabase request and verifies that punctuation in a name stays inside its JSON field. The security matrix links the other defenses to their existing tests.
 
+**24 November, W4-07.** The footer links to the Bulgarian privacy notice at `/poveritelnost`. The family dashboard links to `/family/danni`, where the signed-in family member can download a JSON export or confirm account deletion by typing „ИЗТРИЙ“. The export reads the caller's profile, owned people and their contacts, invite history, devices and checks, the caller's contact memberships and the alerts addressed to them. It uses the caller's database permissions and omits credentials, push subscription secrets and caller-number hashes. Deletion checks the request origin, family role and confirmation before calling Supabase Auth. Foreign keys cascade from the account to its owned records. Migration `20261124000001` removes paired phone logins in the same transaction. Apply it before deploying the account controls. API tests use synthetic sessions and the database test verifies deletion with synthetic records.
+
 **Contents**
 
 1. [The big picture](#1-the-big-picture)
@@ -3087,3 +3089,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-20 · new section 3.7.3 (redesign v3 Phase 3): the protected flow `/protected` and the verdict moment (round button with a CSS halo, halo dots, our own answer icons, voice rings, clip-path flood, shield emblem, vibration once, family Dynamic Island, „Помощ“ button, reduced motion, why no shader); 3.33 updated (round button, icons)
 - 2026-11-20 · new section 3.7.4 (redesign v3 Phase 4): the family area `/family/*` (person cards with facts from the API, push banner with our own drawing, alert island pill → card → calm line with the pulsing halo and risk arc, timeline with halo nodes, tabs that keep panels mounted, flip-reveal pairing code and scanning QR frame, device cards, danger zone, stepped create form with a progress halo and the fridge-card preview, reduced motion).
 - 2026-11-24 · connected the security matrix to automated coverage and added report-rendering and structured-input regression tests (W4-02).
+- 2026-11-24 · added privacy notice, family export and confirmed deletion, with an atomic cleanup of paired logins (W4-07).

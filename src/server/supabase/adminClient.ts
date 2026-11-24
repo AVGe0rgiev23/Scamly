@@ -26,6 +26,7 @@
 //   9. inviteService (W2-08): store an invite (browsers have no INSERT right on
 //      contact_invites) and redeem it: read the invite and the person's list, use the
 //      invite up, add/link the contact with user_id (only the server may set it)
+//   10. DELETE /api/me (W4-07): delete the confirmed family caller's auth account
 // Anything else must use the user client (userClient.ts).
 
 import "server-only";
