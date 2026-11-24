@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**24 November, W4-06.** The Bulgarian copy uses concrete actions on warning screens and describes a green verdict as an absence of detected typical signs. Users can understand what the system checked and decide whether to call a trusted contact.
+
 This file answers the jury question **"why this and not something else?"** for every technology, library, service, tool and important design choice in Scamly. It's written for us (Alex and Roberta) so we can defend each choice in our own words. Each entry is honest: it says what we gain **and what we lose**.
 
 Our constraints, which most answers come back to:

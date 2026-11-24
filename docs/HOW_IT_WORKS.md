@@ -11,6 +11,8 @@
 
 Last updated: **2026-11-10**
 
+**24 November, W4-06.** The Bulgarian landing page, FAQ, report form and installation instructions now describe the limits of a green verdict, the protected form of reported phone numbers and when a notification can be delivered.
+
 **Contents**
 
 1. [The big picture](#1-the-big-picture)
