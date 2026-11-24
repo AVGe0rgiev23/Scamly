@@ -115,6 +115,18 @@ function cards(page: Page) {
   return page.getByRole("tabpanel").getByRole("listitem");
 }
 
+test("the queue displays angle brackets and ampersands as report text", async ({ page }) => {
+  const description = "На екрана пишеше <strong>Иван & Мария</strong>.";
+  await fakeQueue(page, {
+    pending: { reports: [report(ID_A, { description })], nextCursor: null },
+  });
+
+  await page.goto(QUEUE);
+
+  await expect(cards(page).getByText(description, { exact: true })).toBeVisible();
+  await expect(cards(page).locator("strong")).toHaveCount(0);
+});
+
 test("the queue shows pending reports and the tabs switch the status", async ({ page }) => {
   const fake = await fakeQueue(page, {
     pending: { reports: PENDING, nextCursor: null },

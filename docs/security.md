@@ -1,18 +1,18 @@
 # Scamly: security
 
-Task W4-01 (Alex). One row per attack: how Scamly defends against it and which test proves it. W4-02 (Roberta) adds the missing per-attack tests; every row should link to a passing test before the release (W4-08).
+Task W4-01 (Alex) describes the defenses. W4-02 (Roberta) maps each defense to automated coverage. Run the browser suite as part of release verification (W4-08).
 
 ## 1. Attacks and defences
 
 | # | Attack | Defence | Where | Test |
 | --- | --- | --- | --- | --- |
-| 1 | **XSS**: a script hidden in a report, a script card or a name | React escapes all text; no `dangerouslySetInnerHTML` except our two fixed scripts in `<head>`; the CSP allows scripts only from our site, no `eval()` in production, no plugins | `src/config/securityHeaders.ts`, `src/config/inlineScripts.ts` | `src/config/securityHeaders.test.ts` · W4-02: payload rendered as text |
+| 1 | **XSS**: markup embedded in user content | React renders user content as text and the CSP restricts script sources | `src/config/securityHeaders.ts`, `src/components/moderator/ReportQueue.tsx` | `securityHeaders.test.ts`, `moderation.spec.ts` (report markup appears as literal text) |
 | 2 | **Clickjacking**: Scamly shown inside a hidden frame on another site | `frame-ancestors 'none'` + `X-Frame-Options: DENY` | `securityHeaders.ts` | `securityHeaders.test.ts` |
-| 3 | **CSRF**: another site makes the browser send a request with our cookie | Every writing API route checks `Origin` (same site only, else 403); the one exception, the scheduled escalation job, needs its own secret instead; `SameSite=Lax` HttpOnly cookies; `form-action 'self'` | `src/server/security/origin.ts`, `src/server/supabase/cookieOptions.ts` | `origin.test.ts` · W4-02: foreign origin → 403 |
-| 4 | **SQL injection** | No SQL strings: Supabase builds parameterised queries; database functions take typed arguments; Zod checks every input first | `src/schemas/`, `src/server/repositories/` | `schemas.test.ts` · W4-02: SQL string as a name |
-| 5 | **Guessing pairing codes** | 6 digits valid 10 minutes, one use, stored only as an HMAC; 5 tries per IP per 15 min and 100 in total | `src/server/services/pairingService.ts`, `rateLimit.ts` | `pairingService.test.ts`, `rateLimit.test.ts` · W4-02: brute force → 429 |
+| 3 | **CSRF**: another site makes the browser send a request with our cookie | Writing API routes check request origin. The scheduled escalation job requires its own secret. Cookies use `SameSite=Lax` and `HttpOnly`, and the CSP sets `form-action 'self'`. | `src/server/security/origin.ts`, `src/server/supabase/cookieOptions.ts` | `origin.test.ts`, `moderation.spec.ts` (foreign origin rejected) |
+| 4 | **SQL injection** | Supabase sends field values as structured data, database functions take typed arguments and Zod validates API input | `src/schemas/`, `src/server/repositories/` | `personsRepository.test.ts` (punctuation in a name stays inside a JSON field) |
+| 5 | **Guessing pairing codes** | 6 digits valid 10 minutes, one use, stored only as an HMAC; 5 tries per IP per 15 min and 100 in total | `src/server/services/pairingService.ts`, `rateLimit.ts` | `pairingService.test.ts` (attempt limit returns 429), `rateLimit.test.ts` |
 | 6 | **Password guessing / mass sign-ups** | 10 logins per IP per 15 min, 5 registrations per IP per hour; same message for a wrong e-mail and a wrong password | `rateLimit.ts`, `authService.ts` | `authService.test.ts` |
-| 7 | **IDOR**: opening another family's person or check by changing the id | RLS on every table **and** role/ownership checks in each service; unknown and forbidden ids both answer 404 | `supabase/migrations/*rls*`, `src/server/services/` | pgTAP `supabase/tests/02–08`, `personService.test.ts` · W4-02: other family's id → 404 |
+| 7 | **IDOR**: opening another family's person or check by changing the id | RLS on every table **and** role/ownership checks in each service; unknown and forbidden ids both answer 404 | `supabase/migrations/*rls*`, `src/server/services/` | pgTAP `supabase/tests/02–08`, `personService.test.ts` (a different family's record is hidden) |
 | 8 | **Spam reports / alert spam** | Honeypot field, 3 reports per IP per hour and 100 in total; 10 checks per paired phone per hour | `reportService.ts`, `checkService.ts` | `reportService.test.ts`, `report.spec.ts` |
 | 9 | **Leaked personal data** | Phone numbers, card numbers and names are removed from free text before storing; caller numbers kept only as an HMAC; no call details in e-mails or push | `src/engine/redact.ts`, `src/server/security/hash.ts` | `redact.test.ts`, `hash.test.ts`, `alertEmail.test.ts` |
 | 10 | **Stolen secrets** | Keys only in environment variables (`.env.local`, Vercel settings); `server-only` makes the build fail if browser code imports server code; secret scan below | `src/lib/env.ts`, `src/server/supabase/adminClient.ts` | `env.test.ts` |

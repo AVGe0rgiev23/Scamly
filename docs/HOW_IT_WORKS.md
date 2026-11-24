@@ -13,6 +13,8 @@ Last updated: **2026-11-10**
 
 **24 November, W4-06.** The Bulgarian landing page, FAQ, report form and installation instructions now describe the limits of a green verdict, the protected form of reported phone numbers and when a notification can be delivered.
 
+**24 November, W4-02.** The moderation browser test verifies that report markup appears as literal text. The person repository test captures the Supabase request and verifies that punctuation in a name stays inside its JSON field. The security matrix links the other defenses to their existing tests.
+
 **Contents**
 
 1. [The big picture](#1-the-big-picture)
@@ -3084,3 +3086,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-19 · new section 3.7.1 (redesign v3 Phase 2): floating glass header with the spotlight menu and the „Провери обаждане“ pill, scroll state with a CSS scroll timeline, phone dock with labelled icons (hidden on the protected flow), new footer, skip link, the final halo logo (`HaloLogo`), brand assets from `scripts/icons/` and the v3 Open Graph picture; 3.38 icon lines updated
 - 2026-11-20 · new section 3.7.3 (redesign v3 Phase 3): the protected flow `/protected` and the verdict moment (round button with a CSS halo, halo dots, our own answer icons, voice rings, clip-path flood, shield emblem, vibration once, family Dynamic Island, „Помощ“ button, reduced motion, why no shader); 3.33 updated (round button, icons)
 - 2026-11-20 · new section 3.7.4 (redesign v3 Phase 4): the family area `/family/*` (person cards with facts from the API, push banner with our own drawing, alert island pill → card → calm line with the pulsing halo and risk arc, timeline with halo nodes, tabs that keep panels mounted, flip-reveal pairing code and scanning QR frame, device cards, danger zone, stepped create form with a progress halo and the fridge-card preview, reduced motion).
+- 2026-11-24 · connected the security matrix to automated coverage and added report-rendering and structured-input regression tests (W4-02).
