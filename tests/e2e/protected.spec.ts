@@ -149,10 +149,11 @@ async function tap(page: Page, label: string) {
 
 test("a practice call teaches the response without creating a live check", async ({ page }) => {
   const calls = await mockApi(page);
+  const scenario = bg.practice.scenarios.police;
   await page.goto("/dev/protected");
   await page.getByRole("button", { name: bg.practice.entry, exact: true }).click();
   await expect(page.getByText(bg.practice.title, { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: bg.practice.scenarios.police.title, exact: true }).click();
+  await page.getByRole("button", { name: scenario.title, exact: true }).click();
   await page.getByRole("button", { name: bg.practice.start, exact: true }).click();
 
   await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
@@ -163,10 +164,15 @@ test("a practice call teaches the response without creating a live check", async
   await tap(page, bg.protectedCheck.tri.yes);
   await tap(page, bg.protectedCheck.tri.yes);
 
+  await expect(question(page, bg.practice.nextActionQuestion)).toBeFocused();
+  await page.getByRole("button", { name: scenario.nextActions.verify, exact: true }).click();
+
   await expect(
     page.getByRole("heading", { name: bg.practice.resultTitle, exact: true }),
   ).toBeVisible();
   await expect(page.getByText(bg.practice.title, { exact: true })).toBeVisible();
+  await expect(page.getByText(bg.practice.correctAction, { exact: true })).toBeVisible();
+  await expect(page.getByText(scenario.action, { exact: true })).toBeVisible();
   expect(calls).toEqual({ starts: 0, answers: [], reads: 0 });
 
   await page.getByRole("button", { name: bg.practice.exit, exact: true }).click();
@@ -191,10 +197,14 @@ test("the relative-in-trouble drill teaches calling the relative back", async ({
   await tap(page, bg.protectedCheck.tri.yes);
   await tap(page, bg.protectedCheck.tri.yes);
 
+  await expect(question(page, bg.practice.nextActionQuestion)).toBeFocused();
+  await page.getByRole("button", { name: scenario.nextActions.callback, exact: true }).click();
+
   await expect(
     page.getByRole("heading", { name: bg.practice.resultTitle, exact: true }),
   ).toBeVisible();
   await expect(page.getByText(bg.practice.recognized, { exact: true })).toBeVisible();
+  await expect(page.getByText(bg.practice.reviewAction, { exact: true })).toBeVisible();
   await expect(page.getByText(scenario.action, { exact: true })).toBeVisible();
   await expect(page.getByText(bg.protectedCheck.hangUpPhrase, { exact: true })).toBeVisible();
   expect(calls).toEqual({ starts: 0, answers: [], reads: 0 });

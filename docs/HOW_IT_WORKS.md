@@ -11,6 +11,8 @@
 
 Last updated: **2026-11-10**
 
+**25 November, D33.** After the warning-sign questions, both practice calls ask the user to choose what they would do. The result gives immediate feedback and the recommended action for that scenario. The choice stays in memory with the rest of the drill.
+
 **25 November, D32.** Practice starts with a choice between „Фалшив полицай“ and „Близък в беда“. Each scenario has its own answer key and feedback. The relative scenario advises calling the relative on a known number before sending money.
 
 **25 November, D31.** An active call with a red verdict shows a short phrase to read aloud before hanging up. The trusted-contact action follows it. The same phrase appears in the practice lesson.

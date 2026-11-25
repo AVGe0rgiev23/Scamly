@@ -44,6 +44,7 @@ These are settled. Don't re-open them unless something blocks you; if it does, e
 | D30 | Practice call (idea #1, 25 Nov) | Roberta approved one text-based drill on the paired phone. It reuses the call-check questions and gives feedback on a fictional scenario. Practice answers stay on the current screen. |
 | D31 | Words to end a call (idea #4, 25 Nov) | Roberta approved a short phrase on the red verdict while the call is still active. The practice lesson uses the same wording. |
 | D32 | Relative-in-trouble drill (25 Nov) | Roberta approved a second practice scenario that teaches users to verify a relative's story by calling a number they already know. |
+| D33 | Practice choosing the next action (25 Nov) | Roberta approved a final choice in each drill. The result explains what to do after the warning signs are recognized. |
 
 **Open items (we will decide as we go; propose a default and keep it easy to change):**
 - ~~Final work split between Alex and Roberta (see section 11).~~ Decided 3 Nov: D17, D18.

@@ -15,6 +15,7 @@ import {
 } from "./questions";
 
 const SCENARIOS = ["police", "relative"] as const;
+const NEXT_ACTIONS = ["send", "verify", "callback"] as const;
 type Scenario = (typeof SCENARIOS)[number];
 
 // Like a Python dict of answer keys for the fictional passages in bg.ts.
@@ -41,20 +42,23 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
   const copy = bg.practice;
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
   const [index, setIndex] = useState(0);
-  const [step, setStep] = useState<"intro" | "questions" | "result">("intro");
+  const [step, setStep] = useState<"intro" | "questions" | "action" | "result">("intro");
+  const [correctAction, setCorrectAction] = useState(false);
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const scenarioCopy = scenario === null ? null : copy.scenarios[scenario];
   const intro = useRef<HTMLHeadingElement>(null);
+  const actionHeading = useRef<HTMLHeadingElement>(null);
   const result = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (step === "intro") intro.current?.focus();
+    if (step === "action") actionHeading.current?.focus();
     if (step === "result") result.current?.focus();
   }, [step, scenario]);
 
   function advance(current = answers) {
     if (index + 1 < questionOrder(current).length) setIndex(index + 1);
-    else setStep("result");
+    else setStep("action");
   }
 
   function pick(id: QuestionId, value: string) {
@@ -66,6 +70,7 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
   function restart() {
     setAnswers(EMPTY_ANSWERS);
     setIndex(0);
+    setCorrectAction(false);
     setStep("intro");
   }
 
@@ -112,11 +117,35 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
           />
         </>
       ) : null}
+      {scenarioCopy !== null && step === "action" ? (
+        <>
+          <h1 className="check-question" ref={actionHeading} tabIndex={-1}>
+            {copy.nextActionQuestion}
+          </h1>
+          {NEXT_ACTIONS.map((action) => (
+            <Button
+              key={action}
+              variant="secondary"
+              size="xl"
+              onClick={() => {
+                setCorrectAction(action === "verify");
+                setStep("result");
+              }}
+            >
+              {scenarioCopy.nextActions[action]}
+            </Button>
+          ))}
+          <Button variant="secondary" size="xl" onClick={() => setStep("questions")}>
+            {bg.protectedCheck.back}
+          </Button>
+        </>
+      ) : null}
       {scenarioCopy !== null && step === "result" ? (
         <>
           <h1 className="check-question" ref={result} tabIndex={-1}>
             {copy.resultTitle}
           </h1>
+          <p className="font-semibold">{correctAction ? copy.correctAction : copy.reviewAction}</p>
           <p>{recognized ? copy.recognized : copy.review}</p>
           <div className="surface-raised space-y-3 rounded-xl p-5">
             <p>{scenarioCopy.explanation}</p>
@@ -131,7 +160,7 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
           </Button>
         </>
       ) : null}
-      {scenarioCopy !== null && step !== "questions" ? (
+      {scenarioCopy !== null && (step === "intro" || step === "result") ? (
         <Button
           variant="secondary"
           size="xl"

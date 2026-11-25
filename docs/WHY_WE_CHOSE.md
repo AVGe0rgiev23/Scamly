@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**25 November, D33.** The last drill question lets people rehearse deciding what to do after spotting a scam. It uses existing large buttons and shows feedback immediately after the choice.
+
 **25 November, D32.** Both practice scenarios use the same wizard and reset their answers when the user switches scenarios. Each lesson teaches an action that fits the scenario.
 
 **25 November, D31.** The red verdict offers a short, neutral way to end the conversation. Using the same text in the drill lets people rehearse what they will see during a real call.

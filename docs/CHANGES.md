@@ -3,6 +3,8 @@
 One line per change, newest first. The AI agent adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-25 · Roberta · Add a final action choice and immediate feedback to both practice calls · D33.
+
 - 2026-11-25 · Roberta · Add a choice of two drills and teach independent callback in „Близък в беда“ · D32.
 
 - 2026-11-25 · Roberta · Add words to end a suspicious call to the active red verdict and the practice lesson · idea #4, D31.
