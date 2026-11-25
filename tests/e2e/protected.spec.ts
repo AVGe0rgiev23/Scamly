@@ -147,6 +147,34 @@ async function tap(page: Page, label: string) {
   await page.getByRole("radio", { name: label, exact: true }).click();
 }
 
+test("a practice call teaches the response without creating a live check", async ({ page }) => {
+  const calls = await mockApi(page);
+  await page.goto("/dev/protected");
+  await page.getByRole("button", { name: bg.practice.entry, exact: true }).click();
+  await expect(page.getByText(bg.practice.title, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: bg.practice.start, exact: true }).click();
+
+  await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
+  await expect(page.getByText(bg.practice.title, { exact: true })).toBeVisible();
+  await tap(page, bg.protectedCheck.identities.police);
+  await tap(page, bg.protectedCheck.tri.yes);
+  await tap(page, bg.protectedCheck.handoverMethods.courier_or_stranger);
+  await tap(page, bg.protectedCheck.tri.yes);
+  await tap(page, bg.protectedCheck.tri.yes);
+
+  await expect(
+    page.getByRole("heading", { name: bg.practice.resultTitle, exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(bg.practice.title, { exact: true })).toBeVisible();
+  expect(calls).toEqual({ starts: 0, answers: [], reads: 0 });
+
+  await page.getByRole("button", { name: bg.practice.exit, exact: true }).click();
+  await expect(page.getByText(bg.practice.title, { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: bg.protectedCheck.bigButton, exact: true }).click();
+  await expect.poll(() => calls.starts).toBe(1);
+  await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
+});
+
 // Police + money, handed to a courier, rushing, secrecy unknown.
 async function answerPoliceMoney(page: Page) {
   await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();

@@ -25,13 +25,14 @@ import { CallerText } from "./CallerText";
 import { CheckResult } from "./CheckResult";
 import { saveCallContact, useCallContact } from "./callContact";
 import { CheckHome } from "./CheckHome";
+import { PracticeCall } from "./PracticeCall";
 import { QuestionWizard } from "./QuestionWizard";
 import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
 import { sendAnswers } from "./sendAnswers";
 import { LOCAL_FALLBACK_MS, uploadAnswers, type UploadDeps } from "./upload";
 
 // Which screen is shown. Like a Python Literal["home", "questions", "text", "result"].
-type Stage = "home" | "questions" | "text" | "result";
+type Stage = "home" | "practice" | "questions" | "text" | "result";
 
 // What the result screen shows. Like a small Python dataclass.
 type ShownResult = {
@@ -216,10 +217,11 @@ export function CallCheck({
         {announcement}
       </p>
       {stage === "home" ? (
-        <CheckHome contact={contact} onStart={start}>
+        <CheckHome contact={contact} onStart={start} onPractice={() => setStage("practice")}>
           {districtNotice}
         </CheckHome>
       ) : null}
+      {stage === "practice" ? <PracticeCall onExit={goHome} /> : null}
       {stage === "questions" ? (
         <QuestionWizard
           answers={answers}

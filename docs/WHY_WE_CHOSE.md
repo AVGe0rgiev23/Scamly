@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**25 November, D30.** The drill reuses the existing Ореол question wizard so the user rehearses the controls they will see during a real check. A separate client component owns the practice state, keeping it outside the real check's upload and notification path. A single text scenario supports a repeatable demo with synthetic data.
+
 **25 November, D29.** The paired-phone warning reuses the map's wave rule so the two screens agree about when to warn. It uses the existing informational Notice with the Ореол theme tokens and sits below the call-check actions. The first stage can be demonstrated with synthetic reports and does not depend on push delivery.
 
 **24 November, W4-06.** The Bulgarian copy uses concrete actions on warning screens and describes a green verdict as an absence of detected typical signs. Users can understand what the system checked and decide whether to call a trusted contact.

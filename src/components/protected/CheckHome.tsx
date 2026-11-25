@@ -8,7 +8,7 @@
 // The halo is plain CSS (protected.css .check-cta-halo): no WebGL on this screen. It
 // stands still with reduced motion and on weak phones (≤ 4 cores or ≤ 4 GB memory).
 
-import { PhoneIncoming } from "lucide-react";
+import { BookOpen, PhoneIncoming } from "lucide-react";
 import { useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { isLowEndDevice } from "@/components/ui/halo/haloMath";
@@ -19,6 +19,7 @@ import { CallContactButton } from "./CallContactButton";
 type CheckHomeProps = {
   contact: CallContactDto | null;
   onStart: (afterCall: boolean) => void;
+  onPractice: () => void;
   children?: ReactNode;
 };
 
@@ -41,7 +42,7 @@ function weakOnServer(): boolean {
   return true;
 }
 
-export function CheckHome({ contact, onStart, children }: CheckHomeProps) {
+export function CheckHome({ contact, onStart, onPractice, children }: CheckHomeProps) {
   const weak = useSyncExternalStore(noChanges, isWeakPhone, weakOnServer);
   return (
     <div className="check-home flex flex-col gap-5">
@@ -71,6 +72,10 @@ export function CheckHome({ contact, onStart, children }: CheckHomeProps) {
         {contact === null ? null : <CallContactButton contact={contact} variant="secondary" />}
       </div>
       {children}
+      <Button variant="secondary" size="xl" onClick={onPractice}>
+        <BookOpen aria-hidden="true" className="size-5 shrink-0" />
+        {bg.practice.entry}
+      </Button>
     </div>
   );
 }
