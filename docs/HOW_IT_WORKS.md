@@ -11,6 +11,8 @@
 
 Last updated: **2026-11-10**
 
+**25 November, D31.** An active call with a red verdict shows a short phrase to read aloud before hanging up. The trusted-contact action follows it. The same phrase appears in the practice lesson.
+
 **25 November, D30.** The paired phone can open a labeled practice call from its home screen. It presents a fictional police impersonation scenario, uses the same questions as a real check and explains the warning signs afterwards. The component keeps answers in memory and never calls the check API, opens a family alert or adds to statistics. The user can leave at any step and replay from the result.
 
 **25 November, D29.** The paired phone's home screen can show one district warning below the call-check actions. The server reads the paired person's district with the device session and uses the same approved-report windows and threshold as the public map. It selects the wave with the most reports over the past seven days. The optional lookup runs in its own Suspense boundary. A failed lookup or a district with no wave leaves the check usable without a notice.

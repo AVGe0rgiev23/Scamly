@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**25 November, D31.** The red verdict offers a short, neutral way to end the conversation. Using the same text in the drill lets people rehearse what they will see during a real call.
+
 **25 November, D30.** The drill reuses the existing Ореол question wizard so the user rehearses the controls they will see during a real check. A separate client component owns the practice state, keeping it outside the real check's upload and notification path. A single text scenario supports a repeatable demo with synthetic data.
 
 **25 November, D29.** The paired-phone warning reuses the map's wave rule so the two screens agree about when to warn. It uses the existing informational Notice with the Ореол theme tokens and sits below the call-check actions. The first stage can be demonstrated with synthetic reports and does not depend on push delivery.

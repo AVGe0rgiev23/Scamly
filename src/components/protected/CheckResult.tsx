@@ -103,7 +103,13 @@ export function CheckResult({
           {text.title}
         </h1>
         {level === "red" && !afterCall ? (
-          <p className="check-verdict-lead check-rise">{bg.protectedCheck.hangUp}</p>
+          <>
+            <p className="check-verdict-lead check-rise">{bg.protectedCheck.hangUp}</p>
+            <p className="check-rise mt-3 text-lg text-fg">
+              {bg.protectedCheck.hangUpPhraseLabel}{" "}
+              <strong>{bg.protectedCheck.hangUpPhrase}</strong>
+            </p>
+          </>
         ) : null}
       </header>
 

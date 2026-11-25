@@ -86,6 +86,10 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
           <p>{recognized ? copy.recognized : copy.review}</p>
           <div className="surface-raised space-y-3 rounded-xl p-5">
             <p>{copy.explanation}</p>
+            <p>
+              {bg.protectedCheck.hangUpPhraseLabel}{" "}
+              <strong>{bg.protectedCheck.hangUpPhrase}</strong>
+            </p>
             <p className="font-semibold">{copy.action}</p>
           </div>
           <Button size="xl" onClick={restart}>
