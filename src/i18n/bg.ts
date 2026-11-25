@@ -1159,6 +1159,9 @@ export const bg = {
   // The older person's call check on the paired phone (/protected, W2-01).
   // Few words, big text: this screen is for an 80-year-old during a stressful call.
   protectedCheck: {
+    waveTitle: "Сигнали за измами в област {district}",
+    waveReports: "През последните 7 дни има {count} сигнала за схемата „{script}“.",
+    waveAdvice: "Ако ви поискат пари по телефона, затворете и се обадете на свой близък.",
     // Read aloud as the page heading (hidden on screen: the big button says it all).
     title: "Проверка на обаждане",
     bigButton: "Обаждат ми се за пари!",

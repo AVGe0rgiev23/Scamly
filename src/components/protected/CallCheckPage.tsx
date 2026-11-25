@@ -8,10 +8,11 @@
 // has one; the preview page adds its own).
 
 import { connection } from "next/server";
+import type { ReactNode } from "react";
 import { getFeatures } from "@/config/features";
 import { CallCheck } from "./CallCheck";
 
-export async function CallCheckPage() {
+export async function CallCheckPage({ districtNotice }: { districtNotice?: ReactNode }) {
   await connection();
-  return <CallCheck voiceEnabled={getFeatures().voice} />;
+  return <CallCheck voiceEnabled={getFeatures().voice} districtNotice={districtNotice} />;
 }

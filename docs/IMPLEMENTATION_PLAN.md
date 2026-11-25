@@ -221,7 +221,7 @@ Not built before the defense; shown in the slides as the next big step (W5-03: a
 
 | Idea | Week | Owner | Status |
 |---|---|---|---|
-| *(none yet; tell the agent which ideas you want)* | | | |
+| #25, first stage (district warning on the paired phone's home screen) | 4 | Roberta | ✅ In-app warning built. Push delivery follows physical-phone verification. |
 
 ---
 

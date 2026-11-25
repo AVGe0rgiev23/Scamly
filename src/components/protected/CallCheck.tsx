@@ -14,7 +14,7 @@
 // телефона.“ never depends on the network.
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { callApi } from "@/components/family/api";
 import { analyseCall, type RiskLevel } from "@/engine";
 import { bg } from "@/i18n/bg";
@@ -56,7 +56,13 @@ const UPLOAD_DEPS: UploadDeps = {
 };
 
 // voiceEnabled: the FEATURE_VOICE switch, read on the server (CallCheckPage.tsx).
-export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) {
+export function CallCheck({
+  voiceEnabled = false,
+  districtNotice,
+}: {
+  voiceEnabled?: boolean;
+  districtNotice?: ReactNode;
+}) {
   const contact = useCallContact();
   const [stage, setStage] = useState<Stage>("home");
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
@@ -209,7 +215,11 @@ export function CallCheck({ voiceEnabled = false }: { voiceEnabled?: boolean }) 
       <p className="sr-only" role="status">
         {announcement}
       </p>
-      {stage === "home" ? <CheckHome contact={contact} onStart={start} /> : null}
+      {stage === "home" ? (
+        <CheckHome contact={contact} onStart={start}>
+          {districtNotice}
+        </CheckHome>
+      ) : null}
       {stage === "questions" ? (
         <QuestionWizard
           answers={answers}

@@ -11,6 +11,8 @@
 
 Last updated: **2026-11-10**
 
+**25 November, D29.** The paired phone's home screen can show one district warning below the call-check actions. The server reads the paired person's district with the device session and uses the same approved-report windows and threshold as the public map. It selects the wave with the most reports over the past seven days. The optional lookup runs in its own Suspense boundary. A failed lookup or a district with no wave leaves the check usable without a notice.
+
 **24 November, W4-06.** The Bulgarian landing page, FAQ, report form and installation instructions now describe the limits of a green verdict, the protected form of reported phone numbers and when a notification can be delivered.
 
 **24 November, W4-02.** The moderation browser test verifies that report markup appears as literal text. The person repository test captures the Supabase request and verifies that punctuation in a name stays inside its JSON field. The security matrix links the other defenses to their existing tests.

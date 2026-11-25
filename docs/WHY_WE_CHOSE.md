@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**25 November, D29.** The paired-phone warning reuses the map's wave rule so the two screens agree about when to warn. It uses the existing informational Notice with the Ореол theme tokens and sits below the call-check actions. The first stage can be demonstrated with synthetic reports and does not depend on push delivery.
+
 **24 November, W4-06.** The Bulgarian copy uses concrete actions on warning screens and describes a green verdict as an absence of detected typical signs. Users can understand what the system checked and decide whether to call a trusted contact.
 
 **24 November, W4-02.** Playwright checks the rendering that users see. Vitest checks the real Supabase client's request body through a local fetch stub. The checks use synthetic values and can run without sending a request to the hosted database.

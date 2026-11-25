@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { MapStatsRow } from "@/server/repositories/reportsRepository";
 import {
   buildMapStats,
+  getDistrictWave,
   getMapStats,
   isScamWave,
   type MapStatsDeps,
@@ -121,5 +122,49 @@ describe("getMapStats", () => {
     const burgas = stats.districts.find((d) => d.districtCode === "BG-02");
     expect(burgas?.total).toBe(5);
     expect(burgas?.waves).toHaveLength(1);
+  });
+});
+
+describe("getDistrictWave", () => {
+  it("asks only for wave windows and picks the largest wave in the requested district", async () => {
+    const asked: number[] = [];
+    const rows = [
+      row("BG-02", "police", 6),
+      row("BG-02", "courier", 9),
+      row("BG-03", "police", 20),
+    ];
+    const deps: MapStatsDeps = {
+      getMapStats: async (weeks) => {
+        asked.push(weeks);
+        return rows;
+      },
+    };
+
+    await expect(getDistrictWave(deps, "BG-02")).resolves.toEqual({
+      scriptType: "courier",
+      lastSevenDays: 9,
+      weeklyAverage: 0,
+    });
+    expect(asked).toEqual([1, 5]);
+  });
+
+  it("keeps the map's script order when the largest waves tie", async () => {
+    const rows = [row("BG-02", "courier", 8), row("BG-02", "police", 8)];
+
+    await expect(
+      getDistrictWave({ getMapStats: async () => rows }, "BG-02"),
+    ).resolves.toMatchObject({
+      scriptType: "police",
+    });
+  });
+
+  it("returns null when other districts qualify but the requested district has no wave", async () => {
+    const lastWeek = [row("BG-02", "police", 6), row("BG-03", "police", 8)];
+    const lastFiveWeeks = [...lastWeek, row("BG-02", "police", 16, "2026-10-19")];
+    const deps: MapStatsDeps = {
+      getMapStats: async (weeks) => (weeks === 1 ? lastWeek : lastFiveWeeks),
+    };
+
+    await expect(getDistrictWave(deps, "BG-02")).resolves.toBeNull();
   });
 });

@@ -9,7 +9,7 @@
 // stands still with reduced motion and on weak phones (≤ 4 cores or ≤ 4 GB memory).
 
 import { PhoneIncoming } from "lucide-react";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { isLowEndDevice } from "@/components/ui/halo/haloMath";
 import { bg } from "@/i18n/bg";
@@ -19,6 +19,7 @@ import { CallContactButton } from "./CallContactButton";
 type CheckHomeProps = {
   contact: CallContactDto | null;
   onStart: (afterCall: boolean) => void;
+  children?: ReactNode;
 };
 
 // Is this a weak phone? Read with useSyncExternalStore (like VoiceInput does), so the
@@ -40,7 +41,7 @@ function weakOnServer(): boolean {
   return true;
 }
 
-export function CheckHome({ contact, onStart }: CheckHomeProps) {
+export function CheckHome({ contact, onStart, children }: CheckHomeProps) {
   const weak = useSyncExternalStore(noChanges, isWeakPhone, weakOnServer);
   return (
     <div className="check-home flex flex-col gap-5">
@@ -69,6 +70,7 @@ export function CheckHome({ contact, onStart }: CheckHomeProps) {
         </Button>
         {contact === null ? null : <CallContactButton contact={contact} variant="secondary" />}
       </div>
+      {children}
     </div>
   );
 }

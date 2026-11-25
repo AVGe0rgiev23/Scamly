@@ -7,14 +7,22 @@
 // sits above the verdict's flood (relative z-1, like the check itself).
 
 import { CircleHelp } from "lucide-react";
+import { Suspense } from "react";
 import { CallCheckPage } from "@/components/protected/CallCheckPage";
+import { DistrictWaveNotice } from "@/components/protected/DistrictWaveNotice";
 import { ButtonLink } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
 
 export default function ProtectedPage() {
   return (
     <>
-      <CallCheckPage />
+      <CallCheckPage
+        districtNotice={
+          <Suspense fallback={null}>
+            <DistrictWaveNotice />
+          </Suspense>
+        }
+      />
       <div className="shell relative z-1 max-w-2xl pb-6">
         <ButtonLink href="/protected/pomosht" variant="secondary" size="xl" className="w-full">
           <CircleHelp className="size-6 shrink-0" aria-hidden="true" />

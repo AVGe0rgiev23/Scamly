@@ -21,6 +21,7 @@ import "server-only";
 import { SCRIPT_TYPES, type ScriptType } from "@/engine";
 import {
   DISTRICT_CODES,
+  type DistrictCode,
   type DistrictStatsDto,
   type MapStatsDto,
   type WaveDto,
@@ -124,6 +125,24 @@ export async function getMapStats(deps: MapStatsDeps, weeks: number): Promise<Ma
     deps.getMapStats(1 + WAVE_HISTORY_WEEKS),
   ]);
   return buildMapStats(weeks, periodRows, lastWeekRows, lastFiveWeeksRows);
+}
+
+// The protected home shows only the largest wave in the phone's own district.
+export async function getDistrictWave(
+  deps: MapStatsDeps,
+  districtCode: DistrictCode,
+): Promise<WaveDto | null> {
+  const [lastWeek, lastFiveWeeks] = await Promise.all([
+    deps.getMapStats(1),
+    deps.getMapStats(1 + WAVE_HISTORY_WEEKS),
+  ]);
+  const waves = findWaves(
+    districtCode,
+    sumByDistrictAndScript(lastWeek),
+    sumByDistrictAndScript(lastFiveWeeks),
+  );
+  // Stable sort keeps the map's script order when the recent counts tie.
+  return waves.sort((left, right) => right.lastSevenDays - left.lastSevenDays)[0] ?? null;
 }
 
 // The real deps: the PUBLIC client (guest rights are enough for get_map_stats).
