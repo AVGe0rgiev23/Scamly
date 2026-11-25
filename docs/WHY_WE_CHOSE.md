@@ -4,6 +4,8 @@
 >
 > Last updated: 2026-11-19
 
+**25 November, D32.** Both practice scenarios use the same wizard and reset their answers when the user switches scenarios. Each lesson teaches an action that fits the scenario.
+
 **25 November, D31.** The red verdict offers a short, neutral way to end the conversation. Using the same text in the drill lets people rehearse what they will see during a real call.
 
 **25 November, D30.** The drill reuses the existing Ореол question wizard so the user rehearses the controls they will see during a real check. A separate client component owns the practice state, keeping it outside the real check's upload and notification path. A single text scenario supports a repeatable demo with synthetic data.

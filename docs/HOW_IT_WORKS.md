@@ -11,6 +11,8 @@
 
 Last updated: **2026-11-10**
 
+**25 November, D32.** Practice starts with a choice between „Фалшив полицай“ and „Близък в беда“. Each scenario has its own answer key and feedback. The relative scenario advises calling the relative on a known number before sending money.
+
 **25 November, D31.** An active call with a red verdict shows a short phrase to read aloud before hanging up. The trusted-contact action follows it. The same phrase appears in the practice lesson.
 
 **25 November, D30.** The paired phone can open a labeled practice call from its home screen. It presents a fictional police impersonation scenario, uses the same questions as a real check and explains the warning signs afterwards. The component keeps answers in memory and never calls the check API, opens a family alert or adds to statistics. The user can leave at any step and replay from the result.

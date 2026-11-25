@@ -6,29 +6,51 @@ import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
 import { bg } from "@/i18n/bg";
 import { QuestionWizard } from "./QuestionWizard";
-import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
+import {
+  EMPTY_ANSWERS,
+  questionOrder,
+  withAnswer,
+  type CheckAnswers,
+  type QuestionId,
+} from "./questions";
 
-// The expected answers describe the same fictional scenario as the Bulgarian copy.
-const EXAMPLE_ANSWERS = {
-  claimedIdentity: "police",
-  asksMoney: "yes",
-  handover: "courier_or_stranger",
-  rushing: "yes",
-  secrecy: "yes",
-} as const;
+const SCENARIOS = ["police", "relative"] as const;
+type Scenario = (typeof SCENARIOS)[number];
+
+// Like a Python dict of answer keys for the fictional passages in bg.ts.
+const EXPECTED_ANSWERS: Record<Scenario, CheckAnswers> = {
+  police: {
+    ...EMPTY_ANSWERS,
+    claimedIdentity: "police",
+    asksMoney: "yes",
+    handover: "courier_or_stranger",
+    rushing: "yes",
+    secrecy: "yes",
+  },
+  relative: {
+    ...EMPTY_ANSWERS,
+    claimedIdentity: "relative",
+    asksMoney: "yes",
+    handover: "bank_transfer",
+    rushing: "yes",
+    secrecy: "yes",
+  },
+};
 
 export function PracticeCall({ onExit }: { onExit: () => void }) {
   const copy = bg.practice;
   const [answers, setAnswers] = useState(EMPTY_ANSWERS);
   const [index, setIndex] = useState(0);
   const [step, setStep] = useState<"intro" | "questions" | "result">("intro");
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const scenarioCopy = scenario === null ? null : copy.scenarios[scenario];
   const intro = useRef<HTMLHeadingElement>(null);
   const result = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (step === "intro") intro.current?.focus();
     if (step === "result") result.current?.focus();
-  }, [step]);
+  }, [step, scenario]);
 
   function advance(current = answers) {
     if (index + 1 < questionOrder(current).length) setIndex(index + 1);
@@ -47,27 +69,39 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
     setStep("intro");
   }
 
-  const recognized = questionOrder({ ...EMPTY_ANSWERS, ...EXAMPLE_ANSWERS }).every(
-    (id) => answers[id] === EXAMPLE_ANSWERS[id],
-  );
+  const expected = scenario === null ? null : EXPECTED_ANSWERS[scenario];
+  const recognized =
+    expected !== null && questionOrder(expected).every((id) => answers[id] === expected[id]);
 
   return (
     <section className="flex flex-col gap-5" aria-label={copy.title}>
       <Notice title={copy.title}>{copy.noAlert}</Notice>
-      {step === "intro" ? (
+      {scenarioCopy === null ? (
+        <>
+          <h1 className="check-question" ref={intro} tabIndex={-1}>
+            {copy.choose}
+          </h1>
+          {SCENARIOS.map((item) => (
+            <Button key={item} variant="secondary" size="xl" onClick={() => setScenario(item)}>
+              {copy.scenarios[item].title}
+            </Button>
+          ))}
+        </>
+      ) : null}
+      {scenarioCopy !== null && step === "intro" ? (
         <>
           <h1 className="check-question" ref={intro} tabIndex={-1}>
             {copy.intro}
           </h1>
-          <p className="surface-raised rounded-xl p-5">{copy.caller}</p>
+          <p className="surface-raised rounded-xl p-5">{scenarioCopy.caller}</p>
           <Button size="xl" onClick={() => setStep("questions")}>
             {copy.start}
           </Button>
         </>
       ) : null}
-      {step === "questions" ? (
+      {scenarioCopy !== null && step === "questions" ? (
         <>
-          <p className="text-lg text-fg-muted">{copy.caller}</p>
+          <p className="text-lg text-fg-muted">{scenarioCopy.caller}</p>
           <QuestionWizard
             answers={answers}
             index={index}
@@ -78,24 +112,36 @@ export function PracticeCall({ onExit }: { onExit: () => void }) {
           />
         </>
       ) : null}
-      {step === "result" ? (
+      {scenarioCopy !== null && step === "result" ? (
         <>
           <h1 className="check-question" ref={result} tabIndex={-1}>
             {copy.resultTitle}
           </h1>
           <p>{recognized ? copy.recognized : copy.review}</p>
           <div className="surface-raised space-y-3 rounded-xl p-5">
-            <p>{copy.explanation}</p>
+            <p>{scenarioCopy.explanation}</p>
             <p>
               {bg.protectedCheck.hangUpPhraseLabel}{" "}
               <strong>{bg.protectedCheck.hangUpPhrase}</strong>
             </p>
-            <p className="font-semibold">{copy.action}</p>
+            <p className="font-semibold">{scenarioCopy.action}</p>
           </div>
           <Button size="xl" onClick={restart}>
             {copy.retry}
           </Button>
         </>
+      ) : null}
+      {scenarioCopy !== null && step !== "questions" ? (
+        <Button
+          variant="secondary"
+          size="xl"
+          onClick={() => {
+            restart();
+            setScenario(null);
+          }}
+        >
+          {copy.chooseAnother}
+        </Button>
       ) : null}
       <Button variant="secondary" size="xl" onClick={onExit}>
         {copy.exit}

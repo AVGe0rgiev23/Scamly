@@ -3,6 +3,8 @@
 One line per change, newest first. The AI agent adds a line every time the team changes the plan.
 Format: `date · who decided · what changed · documents/tasks affected`.
 
+- 2026-11-25 · Roberta · Add a choice of two drills and teach independent callback in „Близък в беда“ · D32.
+
 - 2026-11-25 · Roberta · Add words to end a suspicious call to the active red verdict and the practice lesson · idea #4, D31.
 
 - 2026-11-25 · Roberta · Add a text-based scam drill to the paired phone (idea #1, D30). The drill reuses the questions and gives local feedback · `IMPLEMENTATION_PLAN.md` section 5.
