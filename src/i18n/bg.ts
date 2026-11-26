@@ -588,6 +588,11 @@ export const bg = {
     // Web push to the family member the caller pretends to be.
     askTitle: "Някой се представя за теб",
     askBody: "Някой се представя за теб пред {person} и иска пари. Ти ли си?",
+    // Web push to the NEXT family member when the claimed one did not answer in 45 s.
+    // {claimed} = who the caller pretends to be. No „той“ / „тя“ (gender unknown).
+    askOtherTitle: "Някой се представя за {claimed}",
+    askOtherBody:
+      "Някой се представя за {claimed} пред {person} и иска пари. Знаеш ли дали наистина е {claimed}?",
     // Web push (and the live warning) to the rest of the family after „Не съм аз“ (#38).
     warnTitle: "Внимание! Измамник се представя за {name}",
     warnBody: "Някой се представя за {name}. Ако ви звънне, затворете.",
@@ -639,6 +644,9 @@ export const bg = {
     notComing: "Не отваряйте на непознати и не давайте пари на никого.",
     // „Аз съм“: the calm screen. Green never says "safe" (D9): the hard rules still apply.
     itsMeTitle: "{name} потвърди: „Аз съм.“",
+    // When another family member answered: {asked} = who answered, {name} = who the
+    // caller pretends to be.
+    itsMeOtherTitle: "{asked} потвърди, че наистина е {name}.",
     itsMeLead: "Дори и така — никога:",
     rules: [
       "Не давайте пари в брой на куриер или непознат.",
@@ -649,13 +657,19 @@ export const bg = {
     toStart: "Към началото",
   },
   // „Провери истинския“ for the family member who is asked (/family/proveri, P-06).
-  // {person} = the protected person's name.
+  // {person} = the protected person's name. The "Other" texts are for a family member
+  // who is asked about SOMEONE ELSE ({claimed}, who did not answer in 45 s).
   identityAnswer: {
     eyebrow: "Провери истинския",
     title: "Ти ли си?",
     question: "Някой се представя за теб пред {person} и иска пари.",
     notMe: "Не съм аз — обаждам ти се сега!",
     itsMe: "Аз съм",
+    titleOther: "Наистина ли е {claimed}?",
+    questionOther:
+      "Някой се представя за {claimed} пред {person} и иска пари. Знаеш ли дали наистина е {claimed}?",
+    notMeOther: "Не е {claimed} — обаждам се на {person}",
+    itsMeOther: "Да, наистина е {claimed}",
     sending: "Изпращане…",
     // {time} = minutes and seconds left, e.g. „14:32“.
     timeLeft: "Можете да отговорите още {time} мин.",
@@ -666,6 +680,10 @@ export const bg = {
       "Отговорихте „Не съм аз“. На телефона на {person} вече пише, че това не сте вие.",
     familyWarned: "Предупредихме и останалите близки.",
     answeredItsMe: "Отговорихте „Аз съм“. На телефона на {person} пише, че сте вие.",
+    answeredNotMeOther:
+      "Отговорихте „Не е {claimed}“. На телефона на {person} вече пише, че това не е {claimed}.",
+    answeredItsMeOther:
+      "Отговорихте „Да, наистина е {claimed}“. На телефона на {person} пише, че сте го потвърдили.",
     expired: "Времето за отговор изтече.",
     already: "Вече е отговорено.",
     loading: "Зареждаме въпроса…",
@@ -675,6 +693,7 @@ export const bg = {
     listLabel: "Въпроси „Ти ли си?“",
     // {person} = the protected person.
     pendingLine: "Някой се представя за теб пред {person}.",
+    pendingLineOther: "Някой се представя за {claimed} пред {person}.",
     open: "Отговорете сега",
     warningsLabel: "Предупреждения от семейството",
   },

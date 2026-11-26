@@ -32,6 +32,7 @@ vi.mock("@/server/services/identityCheckService", () => ({
 
 const ID = "1c000000-0000-0000-0000-000000000001";
 const IVAN = "c0000000-0000-0000-0000-000000000003";
+const MARIA = "c0000000-0000-0000-0000-000000000004";
 const phone = { userId: "phone", role: "protected" };
 const ivan = { userId: IVAN, role: "family" };
 
@@ -59,6 +60,28 @@ describe("POST /api/identity-checks", () => {
     expect(await response.json()).toEqual({ identityCheck: { id: ID, status: "pending" } });
     expect(fakes.requireRole).toHaveBeenCalledWith(["protected"], expect.anything());
     expect(fakes.askFamilyMember).toHaveBeenCalledWith({}, phone, { claimedUserId: IVAN });
+  });
+
+  it("passes askedUserId on (the next family member is asked about the same person)", async () => {
+    fakes.requireRole.mockResolvedValue(phone);
+    fakes.askFamilyMember.mockResolvedValue({ id: ID, status: "pending" });
+    const response = await ask(
+      send("POST", "/api/identity-checks", { claimedUserId: IVAN, askedUserId: MARIA }),
+    );
+    expect(response.status).toBe(201);
+    expect(fakes.askFamilyMember).toHaveBeenCalledWith({}, phone, {
+      claimedUserId: IVAN,
+      askedUserId: MARIA,
+    });
+  });
+
+  it("answers 400 for a malformed askedUserId", async () => {
+    fakes.requireRole.mockResolvedValue(phone);
+    const response = await ask(
+      send("POST", "/api/identity-checks", { claimedUserId: IVAN, askedUserId: "maria" }),
+    );
+    expect(response.status).toBe(400);
+    expect(fakes.askFamilyMember).not.toHaveBeenCalled();
   });
 
   it("refuses another site (CSRF) before anything else", async () => {

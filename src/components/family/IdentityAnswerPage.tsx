@@ -5,6 +5,10 @@
 //   [ Не съм аз — обаждам ти се сега! ]  PATCH { answer: "not_me" } (the red button)
 //   [ Аз съм ]                            PATCH { answer: "its_me" }
 //
+// When the claimed person (Иван) did not answer in 45 s, the NEXT family member is
+// asked about him: „Наистина ли е Иван?“ — „Някой се представя за Иван пред Мария…“
+//   [ Не е Иван — обаждам се на Мария ]  not_me      [ Да, наистина е Иван ]  its_me
+//
 // It loads the question (GET /api/identity-checks/:id) and watches it live
 // (watchIdentityCheck), so it changes by itself when the time runs out or the phone
 // moved on to the next family member. Under the buttons: how long one can still
@@ -54,11 +58,13 @@ export function IdentityAnswerPage() {
   const checkId = useCheckId();
   return (
     <>
-      <FamilyHeader eyebrow={bg.identityAnswer.eyebrow} title={bg.identityAnswer.title} />
       {checkId === null ? (
-        <Notice status="caution" className="max-w-3xl text-lg">
-          {bg.identityAnswer.missing}
-        </Notice>
+        <>
+          <FamilyHeader eyebrow={bg.identityAnswer.eyebrow} title={bg.identityAnswer.title} />
+          <Notice status="caution" className="max-w-3xl text-lg">
+            {bg.identityAnswer.missing}
+          </Notice>
+        </>
       ) : (
         <IdentityAnswer key={checkId} checkId={checkId} />
       )}
@@ -130,92 +136,118 @@ function IdentityAnswer({ checkId }: { checkId: string }) {
     }
   }
 
+  const defaultHeader = (
+    <FamilyHeader eyebrow={bg.identityAnswer.eyebrow} title={bg.identityAnswer.title} />
+  );
   if (load.kind === "loading") {
     return (
-      <div className="max-w-3xl">
-        <p role="status" className="sr-only">
-          {bg.identityAnswer.loading}
-        </p>
-        <SkeletonList rows={2} />
-      </div>
+      <>
+        {defaultHeader}
+        <div className="max-w-3xl">
+          <p role="status" className="sr-only">
+            {bg.identityAnswer.loading}
+          </p>
+          <SkeletonList rows={2} />
+        </div>
+      </>
     );
   }
   if (load.kind === "error") {
     return (
-      <Notice status="caution" role="alert" className="max-w-3xl text-lg">
-        {load.message}
-      </Notice>
+      <>
+        {defaultHeader}
+        <Notice status="caution" role="alert" className="max-w-3xl text-lg">
+          {load.message}
+        </Notice>
+      </>
     );
   }
 
   const check = load.check;
   const person = check.personName ?? bg.identityChecks.someone;
+  // Asked about themselves („Ти ли си?“) or about the claimed person („Наистина ли е Иван?“).
+  const self = check.askedUserId === check.claimedUserId;
+  const claimed = check.claimedName ?? bg.identityChecks.someone;
+  const texts = self
+    ? {
+        title: bg.identityAnswer.title,
+        question: fill(bg.identityAnswer.question, { person }),
+        notMe: bg.identityAnswer.notMe,
+        itsMe: bg.identityAnswer.itsMe,
+        answeredNotMe: fill(bg.identityAnswer.answeredNotMe, { person }),
+        answeredItsMe: fill(bg.identityAnswer.answeredItsMe, { person }),
+      }
+    : {
+        title: fill(bg.identityAnswer.titleOther, { claimed }),
+        question: fill(bg.identityAnswer.questionOther, { claimed, person }),
+        notMe: fill(bg.identityAnswer.notMeOther, { claimed, person }),
+        itsMe: fill(bg.identityAnswer.itsMeOther, { claimed }),
+        answeredNotMe: fill(bg.identityAnswer.answeredNotMeOther, { claimed, person }),
+        answeredItsMe: fill(bg.identityAnswer.answeredItsMeOther, { claimed, person }),
+      };
   const msLeft = now === null ? null : Date.parse(check.answerableUntil) - now;
   const open = check.status === "pending" && !already && (msLeft === null || msLeft > 0);
 
   return (
-    <section className="family-identity family-glass glass max-w-3xl" data-status={check.status}>
-      {/* A live region: the new state is read aloud when the answer is saved. */}
-      <div role="status" className="flex flex-col gap-4">
-        {open ? (
-          <p className="family-identity-question">{fill(bg.identityAnswer.question, { person })}</p>
-        ) : null}
-        {already ? <p className="family-identity-state">{bg.identityAnswer.already}</p> : null}
-        {!already && check.status === "not_me" ? (
-          <>
-            <p className="family-identity-state">
-              {fill(bg.identityAnswer.answeredNotMe, { person })}
-            </p>
-            <p className="family-identity-call">{fill(bg.identityAnswer.callNow, { person })}</p>
-            <p className="text-lg text-fg-muted">{bg.identityAnswer.familyWarned}</p>
-          </>
-        ) : null}
-        {!already && check.status === "its_me" ? (
-          <p className="family-identity-state">
-            {fill(bg.identityAnswer.answeredItsMe, { person })}
-          </p>
-        ) : null}
-        {!already && !open && check.status !== "not_me" && check.status !== "its_me" ? (
-          <p className="family-identity-state">{bg.identityAnswer.expired}</p>
-        ) : null}
-      </div>
-
-      {open ? (
-        <div className="mt-6 flex flex-col gap-4">
-          <Button
-            variant="danger"
-            size="xl"
-            className="family-identity-button"
-            loading={sending === "not_me"}
-            disabled={sending !== null}
-            onClick={() => void answer("not_me")}
-          >
-            <ShieldAlert className="size-7 shrink-0" aria-hidden="true" />
-            {sending === "not_me" ? bg.identityAnswer.sending : bg.identityAnswer.notMe}
-          </Button>
-          <Button
-            variant="secondary"
-            size="xl"
-            className="family-identity-button"
-            loading={sending === "its_me"}
-            disabled={sending !== null}
-            onClick={() => void answer("its_me")}
-          >
-            <UserCheck className="size-7 shrink-0" aria-hidden="true" />
-            {sending === "its_me" ? bg.identityAnswer.sending : bg.identityAnswer.itsMe}
-          </Button>
-          {msLeft === null ? null : (
-            <p className="tabular text-lg text-fg-muted">
-              {fill(bg.identityAnswer.timeLeft, { time: minutesAndSeconds(msLeft / 1000) })}
-            </p>
-          )}
+    <>
+      <FamilyHeader eyebrow={bg.identityAnswer.eyebrow} title={texts.title} />
+      <section className="family-identity family-glass glass max-w-3xl" data-status={check.status}>
+        {/* A live region: the new state is read aloud when the answer is saved. */}
+        <div role="status" className="flex flex-col gap-4">
+          {open ? <p className="family-identity-question">{texts.question}</p> : null}
+          {already ? <p className="family-identity-state">{bg.identityAnswer.already}</p> : null}
+          {!already && check.status === "not_me" ? (
+            <>
+              <p className="family-identity-state">{texts.answeredNotMe}</p>
+              <p className="family-identity-call">{fill(bg.identityAnswer.callNow, { person })}</p>
+              <p className="text-lg text-fg-muted">{bg.identityAnswer.familyWarned}</p>
+            </>
+          ) : null}
+          {!already && check.status === "its_me" ? (
+            <p className="family-identity-state">{texts.answeredItsMe}</p>
+          ) : null}
+          {!already && !open && check.status !== "not_me" && check.status !== "its_me" ? (
+            <p className="family-identity-state">{bg.identityAnswer.expired}</p>
+          ) : null}
         </div>
-      ) : null}
-      {error === null ? null : (
-        <Notice status="danger" role="alert" className="mt-4 text-lg">
-          {error}
-        </Notice>
-      )}
-    </section>
+
+        {open ? (
+          <div className="mt-6 flex flex-col gap-4">
+            <Button
+              variant="danger"
+              size="xl"
+              className="family-identity-button"
+              loading={sending === "not_me"}
+              disabled={sending !== null}
+              onClick={() => void answer("not_me")}
+            >
+              <ShieldAlert className="size-7 shrink-0" aria-hidden="true" />
+              {sending === "not_me" ? bg.identityAnswer.sending : texts.notMe}
+            </Button>
+            <Button
+              variant="secondary"
+              size="xl"
+              className="family-identity-button"
+              loading={sending === "its_me"}
+              disabled={sending !== null}
+              onClick={() => void answer("its_me")}
+            >
+              <UserCheck className="size-7 shrink-0" aria-hidden="true" />
+              {sending === "its_me" ? bg.identityAnswer.sending : texts.itsMe}
+            </Button>
+            {msLeft === null ? null : (
+              <p className="tabular text-lg text-fg-muted">
+                {fill(bg.identityAnswer.timeLeft, { time: minutesAndSeconds(msLeft / 1000) })}
+              </p>
+            )}
+          </div>
+        ) : null}
+        {error === null ? null : (
+          <Notice status="danger" role="alert" className="mt-4 text-lg">
+            {error}
+          </Notice>
+        )}
+      </section>
+    </>
   );
 }

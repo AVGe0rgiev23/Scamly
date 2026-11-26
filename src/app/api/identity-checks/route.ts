@@ -1,10 +1,13 @@
 // /api/identity-checks („Провери истинския“, D34, task P-05, BUILD_PLAN 5b)
-//   POST { claimedUserId } -> 201 { identityCheck }: the protected phone asks the real
-//          family member „Ти ли си?“ (push + live alert to them). Phone only (role
-//          "protected"). Asking the next family member after 45 s is simply another
-//          POST: the phone's previous pending question becomes "expired".
+//   POST { claimedUserId, askedUserId? } -> 201 { identityCheck }: the protected phone
+//          asks a real family member (push + live alert to them). claimedUserId = who
+//          the caller pretends to be; askedUserId = who is asked (left out = the
+//          claimed person: „Ти ли си?“). Phone only (role "protected"). Asking the
+//          next family member after 45 s is simply another POST with the same
+//          claimedUserId and the next askedUserId: the phone's previous pending
+//          question becomes "expired".
 //          400 not_family, 409 identity_busy, 429 after 20 questions per hour.
-//   GET  -> 200 { pending, warnings }: a family member's open questions (addressed to
+//   GET  -> 200 { pending, warnings }: a family member's open questions (asked to
 //          them, still answerable) and the „Не съм аз“ warnings of the rest of the
 //          family in the last 24 hours. Family only.
 

@@ -8,6 +8,10 @@
 //                  and „Някой идва ли към вас за парите?“ → „Обадете се на 112“ (#44).
 //   IdentityItsMe  „Аз съм“: the calm mint glow and the hard rules that still apply
 //                  (D10). Green never says "safe" (D9).
+//
+// The headline always names the CLAIMED person (who the caller pretends to be, Иван).
+// When Иван did not answer and Мария was asked: „Това НЕ е Иван.“ + „Мария ви звъни
+// сега.“, or „Мария потвърди, че наистина е Иван.“
 
 import { Phone } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
@@ -38,15 +42,26 @@ function useHeadlineFocus() {
   return heading;
 }
 
-// The name of the person who answered, as the contact list calls them.
-function answeredName(state: IdentityAskState): string {
-  return state.answer?.claimedName ?? state.current.displayName;
+// Who the caller pretends to be, as the contact list calls them (Иван).
+function claimedName(state: IdentityAskState): string {
+  return state.answer?.claimedName ?? state.claimed.displayName;
+}
+
+// Who answered (Иван, or Мария after Иван did not answer in 45 s).
+function askedName(state: IdentityAskState): string {
+  return state.answer?.askedName ?? state.current.displayName;
+}
+
+// True when the claimed person answered themselves.
+function answeredThemselves(state: IdentityAskState): boolean {
+  return state.answer === null || state.answer.askedUserId === state.answer.claimedUserId;
 }
 
 export function IdentityNotMe({ state, onDone }: { state: IdentityAskState; onDone: () => void }) {
   const heading = useHeadlineFocus();
   const [coming, setComing] = useState<string | null>(null);
-  const name = answeredName(state);
+  const name = claimedName(state);
+  const caller = askedName(state); // the one who calls her now („Мария ви звъни сега.“)
   // ONLY the number saved in the family's contact list (D34).
   const phone = state.answer?.claimedPhone ?? null;
 
@@ -69,7 +84,7 @@ export function IdentityNotMe({ state, onDone }: { state: IdentityAskState; onDo
           {bg.protectedCheck.hangUpPhraseLabel} <strong>{bg.protectedCheck.hangUpPhrase}</strong>
         </p>
         <p className="check-verdict-advice check-rise check-rise-2 mt-4">
-          {fill(bg.identityAsk.callsYou, { name })}
+          {fill(bg.identityAsk.callsYou, { name: caller })}
         </p>
       </header>
 
@@ -115,14 +130,17 @@ export function IdentityItsMe({
   onDone: () => void;
 }) {
   const heading = useHeadlineFocus();
-  const name = answeredName(state);
+  const name = claimedName(state);
+  const title = answeredThemselves(state)
+    ? fill(bg.identityAsk.itsMeTitle, { name })
+    : fill(bg.identityAsk.itsMeOtherTitle, { name, asked: askedName(state) });
   return (
     <section className="check-result flex flex-col gap-6" data-level="green">
       <span className="check-flood" data-level="green" aria-hidden="true" />
       <header className="check-verdict flex flex-col items-center text-center">
         <VerdictEmblem level="green" />
         <h1 ref={heading} tabIndex={-1} className="check-verdict-title">
-          {fill(bg.identityAsk.itsMeTitle, { name })}
+          {title}
         </h1>
       </header>
       <div className="check-reasons check-rise check-rise-2">

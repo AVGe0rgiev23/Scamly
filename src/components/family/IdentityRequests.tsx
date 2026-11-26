@@ -1,5 +1,6 @@
 // The „Провери истинския“ part of /family/alerts (P-06), at the top of the page:
-//   - my open questions („Някой се представя за теб пред Мария.“ + „Отговорете сега“,
+//   - my open questions („Някой се представя за теб пред Мария.“, or „… за Иван пред
+//     Мария.“ when Иван did not answer and I am asked about him; + „Отговорете сега“,
 //     a link to the answer screen /family/proveri?id=…);
 //   - the family's warnings of the last 24 hours („Някой се представя за Иван. Ако ви
 //     звънне, затворете.“, #38).
@@ -38,9 +39,14 @@ export function IdentityRequests({ personIds }: { personIds: string[] }) {
           {data.pending.map((check) => (
             <li key={check.id} className="family-identity-item">
               <p className="family-identity-item-text">
-                {fill(bg.identityAnswer.pendingLine, {
-                  person: check.personName ?? bg.identityChecks.someone,
-                })}
+                {check.askedUserId === check.claimedUserId
+                  ? fill(bg.identityAnswer.pendingLine, {
+                      person: check.personName ?? bg.identityChecks.someone,
+                    })
+                  : fill(bg.identityAnswer.pendingLineOther, {
+                      person: check.personName ?? bg.identityChecks.someone,
+                      claimed: check.claimedName ?? bg.identityChecks.someone,
+                    })}
               </p>
               <ButtonLink
                 href={`${ROUTES.familyIdentity}?id=${encodeURIComponent(check.id)}`}

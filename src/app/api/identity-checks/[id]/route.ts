@@ -2,7 +2,7 @@
 //   GET   -> 200 { identityCheck }: one question. The phone that asked (its Realtime
 //            safety poll) or the family of the person. Anything else -> 404.
 //   PATCH { answer: "not_me" | "its_me" } -> 200 { identityCheck }: the answer of the
-//            family member the caller pretends to be. Only them (else 403), only once,
+//            family member who is asked (askedUserId). Only them (else 403), only once,
 //            while pending and younger than 15 minutes (else 409 already_answered).
 //            „Не съм аз“ also warns the rest of the family (push + live) and is audited.
 
@@ -49,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/identi
     }
     const input = AnswerIdentityCheckSchema.parse(await readJsonBody(request)); // 2. valid answer? (400)
     const deps = createIdentityCheckDeps(client, createAdminClient());
-    // 3. only the claimed member, compare-and-set, then the circle warning
+    // 3. only the asked member, compare-and-set, then the circle warning
     const identityCheck = await answerIdentityCheck(deps, actor, checkId.data, input.answer);
     return json({ identityCheck }); // 4. respond
   } catch (error) {

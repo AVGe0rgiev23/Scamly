@@ -426,9 +426,9 @@ Common to all routes: JSON only, errors as `{ error: { code, messageBg } }`, a s
 | 22 | GET | `/api/checks/:id` | family (access), protected (own) | `IdParam` | One check with its verdict and reasons |
 | **„Провери истинския“ (P-05, D34, HOW_IT_WORKS 3.48)** ||||||
 | 22a | GET | `/api/identity-checks/family` | protected | none | Family tiles in calling order: `{people: [{userId, displayName, initials, phone, priority, canReceive}]}`; `phone` = the saved number for the call-back |
-| 22b | POST | `/api/identity-checks` | protected (rate-limited, 20/h) | `CreateIdentityCheckSchema {claimedUserId}` | "The caller says they are X": store a pending question, push + live alert to X only; the phone's previous pending question becomes `expired` (the 45 s step) → 201 `{identityCheck}` |
+| 22b | POST | `/api/identity-checks` | protected (rate-limited, 20/h) | `CreateIdentityCheckSchema {claimedUserId, askedUserId?}` | "The caller says they are X, ask Y" (Y = X when left out; after 45 s the next family member about the same X): store a pending question, push + live alert to Y only; the phone's previous pending question becomes `expired` (the 45 s step) → 201 `{identityCheck}` |
 | 22c | GET | `/api/identity-checks/:id` | protected (own), family (access) | `IdParam` | One question (the phone's Realtime safety poll) → `{identityCheck}` |
-| 22d | PATCH | `/api/identity-checks/:id` | family (the claimed member only) | `AnswerIdentityCheckSchema {answer: not_me\|its_me}` | Answer once, only while pending and < 15 min (else 409); `not_me` warns the rest of the family (#38) and is audited |
+| 22d | PATCH | `/api/identity-checks/:id` | family (the asked member only) | `AnswerIdentityCheckSchema {answer: not_me\|its_me}` | Answer once, only while pending and < 15 min (else 409); `not_me` warns the rest of the family (#38) and is audited |
 | 22e | GET | `/api/identity-checks` | family | none | `{pending, warnings}`: my open questions + the others' „Не съм аз“ (24 h) |
 | **Notifications** ||||||
 | 23 | POST | `/api/push/subscriptions` | any logged in | `PushSubscriptionSchema {endpoint, keys:{p256dh, auth}}` | Save a web-push subscription |
@@ -707,12 +707,12 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 The main feature. Backend built 26 Nov (P-05, HOW_IT_WORKS 3.48); screens in P-06 (section 6). The design reuses what exists: device sessions (section 5), the alert fan-out and Realtime (W2-03), web push (W2-05), contacts order (W2-08), RLS helpers (2.4).
 
 **Data (one new table; built in P-05, 26 Nov, migration `20261126000001_identity_checks.sql`).** As built: the person column is `protected_person_id` (like every other table), no extra column elsewhere, and the chain needs no table: a new question from the same phone marks its previous pending one `expired` (before-insert trigger + one pending question per phone, partial unique index). The insert and the answer use the caller's own client, so RLS is the second lock; `answered_at` is written by a trigger.
-- `identity_checks`: `id`, `person_id` (→ protected person), `device_id`, `claimed_user_id` (the family member the caller claims to be; must be a linked family account of that person), `status` (`pending` | `not_me` | `its_me` | `expired`), `created_at`, `answered_at`. Time-to-answer = `answered_at − created_at` (#7).
-- RLS: the device of that person may insert and read its own rows; the claimed family member may read the row and update `status` once (`pending` → `not_me` / `its_me`, compare-and-set); other family members of that person may read. pgTAP tests for every rule, including IDOR.
+- `identity_checks`: `id`, `person_id` (→ protected person), `device_id`, `claimed_user_id` (the family member the caller claims to be; must be a linked family account of that person), `asked_user_id` (who gets this question and answers it: the claimed person first, after 45 s the next family member; added 26 Nov in migration `20261126000002_identity_checks_asked_user.sql`), `status` (`pending` | `not_me` | `its_me` | `expired`), `created_at`, `answered_at`. Time-to-answer = `answered_at − created_at` (#7).
+- RLS: the device of that person may insert and read its own rows; the asked family member (the claimed one first, then the next) may read the row and update `status` once (`pending` → `not_me` / `its_me`, compare-and-set); other family members of that person may read. pgTAP tests for every rule, including IDOR.
 
 **API.**
-- `POST /api/identity-checks` (protected device): `{claimedUserId}` → row + push and a live alert to the claimed person only. Rate limit per device.
-- `PATCH /api/identity-checks/{id}` (claimed person): `{answer: "not_me" | "its_me"}`; only while `pending` and younger than 15 min, else 409. On `not_me`: push + alert to every other family member („Някой се представя за Иван…“, #38) and an audit row.
+- `POST /api/identity-checks` (protected device): `{claimedUserId, askedUserId?}` → row + push and a live alert to the asked person only („Ти ли си?“ when asked = claimed, else „Знаеш ли дали наистина е Иван?“). Rate limit per device.
+- `PATCH /api/identity-checks/{id}` (asked person): `{answer: "not_me" | "its_me"}`; only while `pending` and younger than 15 min, else 409. On `not_me`: push + alert to every other family member („Някой се представя за Иван…“, #38) and an audit row.
 - The protected screen follows the row through Realtime (with the same 10 s safety poll as W2-03).
 
 **Screens (one-button flow, improved 26 Nov).**
@@ -720,7 +720,7 @@ The main feature. Backend built 26 Nov (P-05, HOW_IT_WORKS 3.48); screens in P-0
   - **Yes** → family tiles („Казва, че е Иван“) → the request is sent at once (it covers a call and a „новият ми номер“ message), and **while waiting** (45 s ring) she answers the rest of the 30-second check.
   - **„Не съм аз“** → red screen „Това НЕ е Иван. Затворете. Иван ви звъни сега.“, the words to end the call (#4, built), a call-back button that **always uses the number saved in the family, never the calling number**, „Някой идва към вас?“ → `tel:112` (#44), and one tap "send anonymously to the map".
   - **„Аз съм“** → calm screen + a reminder of the hard rules.
-  - **No answer in 45 s** → the next family member gets the request, the screen reminds her „Попитайте го нещо, което само истинският Иван знае.“ (nothing stored), and she gets the verdict of the check.
+  - **No answer in 45 s** → the next family member gets the request **about Ivan** („Знаеш ли дали наистина е Иван?“, `askedUserId` = the next person, `claimedUserId` stays Ivan; the red screen still says „Това НЕ е Иван.“), the screen reminds her „Попитайте го нещо, което само истинският Иван знае.“ (nothing stored), and she gets the verdict of the check.
   - **No** → the normal 30-second check.
 - Family: a full-screen request from the push or the live page with two big buttons, **„Не съм аз — обаждам ти се сега!“** (saves `not_me` and then opens `tel:` to the protected person's number, so his call reaches her as a waiting call during the scam call) and **„Аз съм“**.
 
@@ -739,7 +739,7 @@ sequenceDiagram
   API->>DB: status = not_me, answered_at = now() (only if pending)
   DB-->>M: Realtime: not_me → red screen „Това не е Иван. Затворете.“
   API-->>F: push + alert „Някой се представя за Иван“
-  Note over M: No answer in 45 s → next family member,<br/>reminder to ask something only Ivan knows, check verdict
+  Note over M: No answer in 45 s → POST {claimedUserId: Ivan, askedUserId: next member},<br/>„Знаеш ли дали наистина е Иван?“, reminder, check verdict
 ```
 
 ## 6. Week-by-week tasks

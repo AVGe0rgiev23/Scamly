@@ -17,10 +17,15 @@ export type IdentityAnswer = (typeof IDENTITY_ANSWERS)[number]; // "not_me" | "i
 // The four states of a question (database enum identity_check_status).
 export type IdentityCheckStatus = "pending" | "not_me" | "its_me" | "expired";
 
-// POST /api/identity-checks: "the caller says they are this family member".
+// POST /api/identity-checks: "the caller says they are claimedUserId; ask askedUserId".
+// askedUserId is left out for the first question (then the claimed person is asked)
+// and set to the next family member after 45 s without an answer.
 // The person and the phone are never read from the body: they come from the pairing.
 export const CreateIdentityCheckSchema = z.object(
-  { claimedUserId: z.guid({ error: bg.identityChecks.notFamily }) },
+  {
+    claimedUserId: z.guid({ error: bg.identityChecks.notFamily }),
+    askedUserId: z.guid({ error: bg.identityChecks.notFamily }).optional(),
+  },
   { error: bg.errors.validation },
 );
 export type CreateIdentityCheckInput = z.infer<typeof CreateIdentityCheckSchema>;
@@ -42,9 +47,11 @@ export type IdentityCheckDto = {
   id: string;
   protectedPersonId: string;
   personName: string | null; // the protected person, e.g. „Мария“
-  claimedUserId: string;
-  claimedName: string | null; // the family member as the contact list calls them, e.g. „Иван“
+  claimedUserId: string; // who the caller pretends to be
+  claimedName: string | null; // as the contact list calls them, e.g. „Иван“
   claimedPhone: string | null; // their SAVED number (the call-back button), never the caller's
+  askedUserId: string; // who gets this question and answers it (= claimedUserId first)
+  askedName: string | null; // e.g. „Мария“ after Иван did not answer in 45 s
   status: IdentityCheckStatus;
   createdAt: string; // ISO date and time
   answeredAt: string | null;

@@ -2,7 +2,8 @@
 // -> 200 { people: [{ userId, displayName, initials, phone, priority, canReceive }] }
 // The protected phone's family tiles („Казва, че е Иван“), in calling order, with the
 // SAVED phone numbers for the call-back button. canReceive = has a Scamly account, so
-// userId can be sent as claimedUserId to POST /api/identity-checks. Phone only.
+// userId can be sent as claimedUserId / askedUserId to POST /api/identity-checks.
+// Phone only.
 
 import { connection } from "next/server";
 import { requireRole } from "@/server/auth/requireRole";

@@ -94,7 +94,7 @@ export async function exportFamilyData(client: DbClient, userId: string, email: 
       collectRows((from, to) =>
         client
           .from("identity_checks")
-          .select("id, device_id, claimed_user_id, status, created_at, answered_at")
+          .select("id, device_id, claimed_user_id, asked_user_id, status, created_at, answered_at")
           .eq("protected_person_id", person.id)
           .order("id")
           .range(from, to),

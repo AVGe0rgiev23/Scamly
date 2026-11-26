@@ -137,7 +137,9 @@ function depsFor(world: World, callerId: string): IdentityCheckDeps {
         device.id !== check.deviceId ||
         device.personId !== check.protectedPersonId ||
         !isFamily(world, check.claimedUserId, check.protectedPersonId) ||
-        world.roles.get(check.claimedUserId) !== "family"
+        world.roles.get(check.claimedUserId) !== "family" ||
+        !isFamily(world, check.askedUserId, check.protectedPersonId) ||
+        world.roles.get(check.askedUserId) !== "family"
       ) {
         return "refused";
       }
@@ -151,6 +153,7 @@ function depsFor(world: World, callerId: string): IdentityCheckDeps {
         protected_person_id: check.protectedPersonId,
         device_id: check.deviceId,
         claimed_user_id: check.claimedUserId,
+        asked_user_id: check.askedUserId,
         status: "pending",
         created_at: world.now.toISOString(),
         answered_at: null,
@@ -168,13 +171,13 @@ function depsFor(world: World, callerId: string): IdentityCheckDeps {
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
         .slice(0, limit)
         .map((r) => ({ ...r })),
-    // Like UPDATE … WHERE id AND claimed_user_id = me AND status = 'pending' AND created_at > notBefore.
+    // Like UPDATE … WHERE id AND asked_user_id = me AND status = 'pending' AND created_at > notBefore.
     answerForCaller: async (check) => {
       const row = world.rows.find((r) => r.id === check.id);
       if (
         row === undefined ||
         world.raceOnAnswer ||
-        row.claimed_user_id !== check.userId ||
+        row.asked_user_id !== check.userId ||
         row.status !== "pending" ||
         row.created_at <= check.notBefore
       ) {
@@ -222,9 +225,17 @@ async function errorOf(promise: Promise<unknown>): Promise<ApiError> {
   throw new Error("expected an ApiError");
 }
 
-// Мария's phone asks `userId`.
+// Мария's phone asks `userId` „Ти ли си?“.
 function ask(world: World, userId: string, phone: string = PHONE) {
   return askFamilyMember(depsFor(world, phone), actorFor(world, phone), { claimedUserId: userId });
+}
+
+// Мария's phone asks `askedUserId` whether it is really `claimedUserId` (the chain).
+function askAbout(world: World, claimedUserId: string, askedUserId: string) {
+  return askFamilyMember(depsFor(world, PHONE), actorFor(world, PHONE), {
+    claimedUserId,
+    askedUserId,
+  });
 }
 
 let world: World;
@@ -277,6 +288,8 @@ describe("POST /api/identity-checks (the phone asks)", () => {
       claimedUserId: IVAN,
       claimedName: "Иван Петров",
       claimedPhone: "+359888111222",
+      askedUserId: IVAN,
+      askedName: "Иван Петров",
       status: "pending",
       answeredAt: null,
       secondsToAnswer: null,
@@ -315,6 +328,34 @@ describe("POST /api/identity-checks (the phone asks)", () => {
       answerIdentityCheck(depsFor(world, IVAN), actorFor(world, IVAN), first.id, "not_me"),
     );
     expect(late.status).toBe(409);
+  });
+
+  it("claimed ≠ asked: Елена is asked whether it is really Иван", async () => {
+    const dto = await askAbout(world, IVAN, ELENA);
+    expect(dto).toMatchObject({
+      claimedUserId: IVAN,
+      claimedName: "Иван Петров",
+      claimedPhone: "+359888111222", // the call-back goes to the CLAIMED person's number
+      askedUserId: ELENA,
+      askedName: "Елена",
+      status: "pending",
+    });
+    expect(world.rows[0]).toMatchObject({ claimed_user_id: IVAN, asked_user_id: ELENA });
+    expect(world.pushes.map((p) => p.userId)).toEqual([ELENA]);
+    expect(world.pushes[0]?.message.title).toBe("Някой се представя за Иван Петров");
+    expect(world.pushes[0]?.message.body).toBe(
+      "Някой се представя за Иван Петров пред Мария и иска пари. Знаеш ли дали наистина е Иван Петров?",
+    );
+  });
+
+  it("refuses an asked person outside the family or without an account (400)", async () => {
+    expect((await errorOf(askAbout(world, IVAN, EVE))).code).toBe("not_family");
+    expect((await errorOf(askAbout(world, IVAN, "no-such-user"))).code).toBe("not_family");
+    expect((await errorOf(askAbout(world, EVE, ELENA))).code).toBe("not_family");
+    world.roles.set(ELENA, "moderator");
+    expect((await errorOf(askAbout(world, IVAN, ELENA))).status).toBe(400);
+    expect(world.rows).toHaveLength(0);
+    expect(world.pushes).toHaveLength(0);
   });
 
   it("answers 409 when two questions of the same phone race", async () => {
@@ -407,7 +448,7 @@ describe("PATCH /api/identity-checks/:id (the answer)", () => {
     expect(world.audit).toHaveLength(0);
   });
 
-  it("only the claimed member may answer (403), another family can't even see it (404)", async () => {
+  it("only the asked member may answer (403), another family can't even see it (404)", async () => {
     const question = await ask(world, IVAN);
     const byAnna = await errorOf(
       answerIdentityCheck(depsFor(world, ANNA), actorFor(world, ANNA), question.id, "not_me"),
@@ -418,6 +459,26 @@ describe("PATCH /api/identity-checks/:id (the answer)", () => {
     );
     expect(byEve.status).toBe(404);
     expect(world.rows[0]?.status).toBe("pending");
+  });
+
+  it("claimed ≠ asked: only Елена answers; the warning names Иван and reaches him too", async () => {
+    const question = await askAbout(world, IVAN, ELENA);
+    world.pushes = [];
+    const byIvan = await errorOf(
+      answerIdentityCheck(depsFor(world, IVAN), actorFor(world, IVAN), question.id, "its_me"),
+    );
+    expect(byIvan.status).toBe(403);
+    expect(world.rows[0]?.status).toBe("pending");
+
+    const dto = await answerIdentityCheck(
+      depsFor(world, ELENA),
+      actorFor(world, ELENA),
+      question.id,
+      "not_me",
+    );
+    expect(dto).toMatchObject({ status: "not_me", claimedName: "Иван Петров", askedName: "Елена" });
+    expect(world.pushes.map((p) => p.userId).sort()).toEqual([ANNA, IVAN].sort());
+    expect(world.pushes[0]?.message.title).toBe("Внимание! Измамник се представя за Иван Петров");
   });
 
   it("can't be answered after 15 minutes (409)", async () => {
@@ -490,6 +551,20 @@ describe("GET /api/identity-checks (a family member's list)", () => {
     expect(anna.warnings.map((q) => q.claimedName)).toEqual(["Иван Петров"]);
     const eve = await listMyIdentityChecks(depsFor(world, EVE), actorFor(world, EVE));
     expect(eve).toEqual({ pending: [], warnings: [] });
+  });
+
+  it("claimed ≠ asked: the open question is Елена's, the warning reaches Иван", async () => {
+    const question = await askAbout(world, IVAN, ELENA);
+    const elena = await listMyIdentityChecks(depsFor(world, ELENA), actorFor(world, ELENA));
+    expect(elena.pending.map((q) => q.id)).toEqual([question.id]);
+    const ivan = await listMyIdentityChecks(depsFor(world, IVAN), actorFor(world, IVAN));
+    expect(ivan).toEqual({ pending: [], warnings: [] });
+
+    await answerIdentityCheck(depsFor(world, ELENA), actorFor(world, ELENA), question.id, "not_me");
+    const ivanAfter = await listMyIdentityChecks(depsFor(world, IVAN), actorFor(world, IVAN));
+    expect(ivanAfter.warnings.map((q) => q.claimedName)).toEqual(["Иван Петров"]);
+    const elenaAfter = await listMyIdentityChecks(depsFor(world, ELENA), actorFor(world, ELENA));
+    expect(elenaAfter).toEqual({ pending: [], warnings: [] });
   });
 
   it("drops questions that can no longer be answered", async () => {

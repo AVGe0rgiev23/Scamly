@@ -2,14 +2,16 @@
 -- 15_identity_checks: „Провери истинския“ (D34, task P-05).
 --   * a phone may ask only a family member (with an account) of ITS person
 --   * a new question from the same phone expires its previous pending one
---   * only the claimed family member answers, once, within 15 minutes;
+--   * only the ASKED family member answers, once, within 15 minutes;
 --     the database writes answered_at itself
+--   * the chain: the caller still claims to be Anna while Cveta is asked
+--     (claimed_user_id <> asked_user_id, migration 20261126000002)
 --   * the family of the person reads every question; strangers, other phones
 --     and moderators read nothing (IDOR); admins read all
 --   * nobody can fake status, created_at or answered_at
 -- =============================================================================
 begin;
-select plan(33);
+select plan(44);
 
 delete from auth.users;   -- cascades to profiles, persons, contacts, devices, questions...
 
@@ -155,7 +157,7 @@ update public.identity_checks set status = 'not_me' where device_id = 'd1000000-
 select is(
   (select status::text from public.identity_checks where device_id = 'd1000000-0000-0000-0000-000000000004' and claimed_user_id = 'a0000000-0000-0000-0000-000000000001'),
   'pending',
-  'only the claimed family member can answer (Cveta can''t answer Anna''s question)'
+  'only the asked family member can answer (Cveta can''t answer Anna''s question)'
 );
 
 update public.identity_checks set status = 'not_me' where device_id = 'd1000000-0000-0000-0000-000000000004' and claimed_user_id = 'c0000000-0000-0000-0000-000000000003';
@@ -217,7 +219,7 @@ select results_eq(
   $$ select status::text, answered_at is not null from public.identity_checks
      where device_id = 'd1000000-0000-0000-0000-000000000004' and claimed_user_id = 'a0000000-0000-0000-0000-000000000001' $$,
   $$ values ('not_me', true) $$,
-  'the claimed family member answers „Не съм аз“; the database writes answered_at'
+  'the asked family member answers „Не съм аз“; the database writes answered_at'
 );
 
 update public.identity_checks set status = 'its_me' where device_id = 'd1000000-0000-0000-0000-000000000004' and claimed_user_id = 'a0000000-0000-0000-0000-000000000001';
@@ -296,6 +298,106 @@ select is(
   array['identity_checks'],
   'identity_checks is published to Realtime'
 );
+
+-- =============================================================================
+-- Claimed <> asked (migration 20261126000002): the caller says he is Anna,
+-- Anna does not answer in 45 s, so the phone asks Cveta about ANNA.
+-- =============================================================================
+select has_column('public', 'identity_checks', 'asked_user_id',
+  'identity_checks has asked_user_id (who is asked)');
+
+select is(
+  (select count(*)::int from public.identity_checks where asked_user_id <> claimed_user_id),
+  0,
+  'without asked_user_id the claimed person is asked (trigger default, old rows backfilled)'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "d0000000-0000-0000-0000-000000000004", "role": "authenticated"}';
+
+select lives_ok(
+  $$ insert into public.identity_checks (protected_person_id, device_id, claimed_user_id, asked_user_id)
+     values ('a1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000004',
+             'a0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003') $$,
+  'a phone can ask Cveta whether it is really Anna'
+);
+
+select throws_ok(
+  $$ insert into public.identity_checks (protected_person_id, device_id, claimed_user_id, asked_user_id)
+     values ('a1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000004',
+             'a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002') $$,
+  '42501', null,
+  'IDOR: the asked person must be in the family too (not Boris)'
+);
+
+select throws_ok(
+  $$ insert into public.identity_checks (protected_person_id, device_id, claimed_user_id, asked_user_id)
+     values ('a1000000-0000-0000-0000-000000000001', 'd1000000-0000-0000-0000-000000000004',
+             'b0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000003') $$,
+  '42501', null,
+  'IDOR: the claimed person must be in the family too (not Boris)'
+);
+
+select results_eq(
+  $$ select claimed_user_id::text, asked_user_id::text, status::text from public.identity_checks
+     where status = 'pending' $$,
+  $$ values ('a0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000003', 'pending') $$,
+  'the question keeps who is claimed (Anna) and who is asked (Cveta)'
+);
+
+-- Anna (claimed, not asked): may read, may not answer.
+set local request.jwt.claims = '{"sub": "a0000000-0000-0000-0000-000000000001", "role": "authenticated"}';
+
+select is(
+  (select count(*)::int from public.identity_checks
+   where claimed_user_id = 'a0000000-0000-0000-0000-000000000001'
+     and asked_user_id = 'c0000000-0000-0000-0000-000000000003'),
+  1,
+  'the claimed family member can read the question asked to someone else'
+);
+
+update public.identity_checks set status = 'its_me'
+where asked_user_id = 'c0000000-0000-0000-0000-000000000003' and status = 'pending';
+reset role;
+select is(
+  (select status::text from public.identity_checks
+   where claimed_user_id = 'a0000000-0000-0000-0000-000000000001'
+     and asked_user_id = 'c0000000-0000-0000-0000-000000000003'),
+  'pending',
+  'IDOR: the claimed family member can''t answer a question asked to someone else'
+);
+
+-- Cveta (asked): answers.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "c0000000-0000-0000-0000-000000000003", "role": "authenticated"}';
+
+select throws_ok(
+  $$ update public.identity_checks set asked_user_id = 'a0000000-0000-0000-0000-000000000001'
+     where asked_user_id = 'c0000000-0000-0000-0000-000000000003' and status = 'pending' $$,
+  '42501', null,
+  'nobody can change who is asked (no privilege)'
+);
+
+update public.identity_checks set status = 'not_me'
+where asked_user_id = 'c0000000-0000-0000-0000-000000000003'
+  and claimed_user_id = 'a0000000-0000-0000-0000-000000000001';
+select results_eq(
+  $$ select status::text, answered_at is not null from public.identity_checks
+     where asked_user_id = 'c0000000-0000-0000-0000-000000000003'
+       and claimed_user_id = 'a0000000-0000-0000-0000-000000000001' $$,
+  $$ values ('not_me', true) $$,
+  'the asked family member answers „Не е Анна“ (not_me)'
+);
+
+set local request.jwt.claims = '{"sub": "d0000000-0000-0000-0000-000000000004", "role": "authenticated"}';
+select is(
+  (select status::text from public.identity_checks
+   where asked_user_id = 'c0000000-0000-0000-0000-000000000003'
+     and claimed_user_id = 'a0000000-0000-0000-0000-000000000001'),
+  'not_me',
+  'the phone that asked sees the answer'
+);
+reset role;
 
 select * from finish();
 rollback;

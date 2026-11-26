@@ -2621,7 +2621,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 ### Compare-and-set answer within 15 minutes (vs read-then-write)  (status: in use (P-05))
 
-**Used for:** `PATCH /api/identity-checks/:id`: one `UPDATE … SET status = $answer WHERE id = $1 AND claimed_user_id = $me AND status = 'pending' AND created_at > now − 15 min`; the database trigger writes `answered_at`.
+**Used for:** `PATCH /api/identity-checks/:id`: one `UPDATE … SET status = $answer WHERE id = $1 AND asked_user_id = $me AND status = 'pending' AND created_at > now − 15 min`; the database trigger writes `answered_at`.
 
 **Alternatives we considered:** read the row, check it in TypeScript, then update it; a row lock (`select … for update`) in a SQL function; letting the answer be changed later.
 
@@ -2643,13 +2643,28 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 **Why this one:**
 - **One row tells the whole story:** asked, answered or expired, and how fast. The chain needs no table of its own: the phone's previous pending row is the previous step.
-- **Realtime for free:** the row itself is the live alert for the claimed member (INSERT) and for the rest of the family and the phone (UPDATE), filtered by RLS. No `alerts` rows needed.
-- **RLS can express the whole rule**, because the browser stores no computed result (unlike a verdict): a phone may insert only for its own person and a family account (`is_own_device()`, `is_family_member_of()`), the claimed member may update only `status`, once. So the writes use the caller's **user** client and the database is a real second lock; the service role is used only for the rate limit, the audit line and push.
+- **Realtime for free:** the row itself is the live alert for the asked member (INSERT) and for the rest of the family and the phone (UPDATE), filtered by RLS. No `alerts` rows needed.
+- **RLS can express the whole rule**, because the browser stores no computed result (unlike a verdict): a phone may insert only for its own person and a family account (`is_own_device()`, `is_family_member_of()`), the asked member may update only `status`, once. So the writes use the caller's **user** client and the database is a real second lock; the service role is used only for the rate limit, the audit line and push.
 - `checks` stays what it is (the 30-second check); mixing in a second kind of row would make every query and policy there more complicated.
 
 **What we give up:** the questions are not part of the checks timeline; P-06 shows them in their own block at the top of `/family/alerts` and on their own answer screen `/family/proveri`.
 
 **We would reconsider if:** we needed a full history of each push delivery per family member (then `alerts`-style rows).
+
+### Two columns, claimed and asked (vs one column, vs a separate chain table)  (status: in use (P-05 fix, 26 Nov))
+
+**Used for:** `identity_checks.claimed_user_id` (who the caller pretends to be, Ivan) and `asked_user_id` (who gets this question: Ivan, then Мария after 45 s). Migration `20261126000002_identity_checks_asked_user.sql`, HOW_IT_WORKS 3.48.
+
+**Alternatives we considered:** keep one column (the next person gets „Някой се представя за теб…“ and her „Не съм аз“ said „Това НЕ е Мария.“, wrong); a `chain` table that links the questions of one call; storing only the claimed person and finding the asked one from the calling order.
+
+**Why this one:**
+- **One row still tells the whole story:** who was claimed, who was asked, the answer and how fast. The texts follow directly: asked = claimed → „Ти ли си?“, otherwise „Знаеш ли дали наистина е Иван?“; the red screen and the circle warning always name the claimed person.
+- **The smallest safe change on the live database:** one new column, filled from `claimed_user_id` for old rows, and a before-insert trigger that copies it when an insert leaves it out, so the old code keeps working until the deploy. RLS changes in two policies only.
+- **RLS stays simple:** both must be family accounts of the person (insert), only `asked_user_id = auth.uid()` answers (update).
+
+**What we give up:** a trigger that fills a default from another column is one more thing to explain; a plain `DEFAULT` can't refer to another column.
+
+**We would reconsider if:** one call could be about several claimed people at once (then a `chain` table).
 
 ### One big button, then „Казват ли, че са някой близък?“ (vs a second button for „Провери истинския“)  (status: in use (P-06, 26 Nov))
 

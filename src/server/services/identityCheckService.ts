@@ -7,14 +7,19 @@
 //   listMyIdentityChecks() GET   /api/identity-checks         a family member's list
 //   answerIdentityCheck()  PATCH /api/identity-checks/:id     „Не съм аз“ / „Аз съм“
 //
+// Two people per question: claimed = who the caller PRETENDS to be (Иван), asked =
+// who gets the question and answers it (Иван first, then Мария, …). Both are in the
+// person's family with a Scamly account. The red screen always names the claimed one.
+//
 // The chain (45 s without an answer -> the next family member) is driven by the
-// PHONE: it simply asks the next person with another POST. The database then marks
+// PHONE: it simply asks the next person with another POST (same claimedUserId, the
+// next askedUserId). The database then marks
 // the previous pending question 'expired' (one open question per phone), so a late
 // answer to the old question is refused with 409. No server job, no timer here.
 //
 // The two locks (BUILD_PLAN section 0):
 //   1. this file checks the rules in code (the phone's own person, a family member
-//      with an account, only the claimed member answers, once, within 15 minutes);
+//      with an account, only the asked member answers, once, within 15 minutes);
 //   2. the reads and writes use the caller's USER client, so RLS and the column
 //      privileges check the same rules again in the database.
 // Only the audit row and the push messages use the service role (other users' data).
@@ -74,6 +79,7 @@ export type IdentityCheckDeps = {
     protectedPersonId: string;
     deviceId: string;
     claimedUserId: string;
+    askedUserId: string;
   }) => Promise<IdentityCheckRow | "refused" | "busy">;
   findForCaller: (checkId: string) => Promise<IdentityCheckRow | null>;
   listRecentForCaller: (since: string, limit: number) => Promise<IdentityCheckRow[]>;
@@ -137,6 +143,7 @@ function toDto(
   contacts: ContactRef[],
 ): IdentityCheckDto {
   const contact = contacts.find((c) => c.user_id === row.claimed_user_id);
+  const asked = contacts.find((c) => c.user_id === row.asked_user_id);
   const created = Date.parse(row.created_at);
   return {
     id: row.id,
@@ -145,6 +152,8 @@ function toDto(
     claimedUserId: row.claimed_user_id,
     claimedName: contact === undefined ? null : contact.display_name,
     claimedPhone: contact === undefined ? null : contact.phone,
+    askedUserId: row.asked_user_id,
+    askedName: asked === undefined ? null : asked.display_name,
     status: effectiveStatus(row, now),
     createdAt: row.created_at,
     answeredAt: row.answered_at,
@@ -181,24 +190,42 @@ async function pushQuietly(
   }
 }
 
-// The push to the family member the caller pretends to be.
-export function askMessage(checkId: string, personName: string | null): PushMessage {
-  const person =
-    personName === null || personName.trim() === "" ? bg.identityChecks.someone : personName.trim();
+// A name for a text, or „ваш близък“ when it is unknown.
+function nameOrSomeone(name: string | null): string {
+  return name === null || name.trim() === "" ? bg.identityChecks.someone : name.trim();
+}
+
+// The push to the asked family member. claimedName = null: they are asked about
+// themselves („Ти ли си?“); otherwise about the claimed person („Знаеш ли дали
+// наистина е Иван?“).
+export function askMessage(
+  checkId: string,
+  personName: string | null,
+  claimedName: string | null = null,
+): PushMessage {
+  const person = nameOrSomeone(personName);
+  const url = `${ROUTES.familyIdentity}?id=${encodeURIComponent(checkId)}`;
+  const tag = `identity-${checkId}`;
+  if (claimedName === null) {
+    return {
+      title: bg.identityChecks.askTitle,
+      body: fillText(bg.identityChecks.askBody, { person }),
+      url,
+      tag,
+    };
+  }
+  const claimed = nameOrSomeone(claimedName);
   return {
-    title: bg.identityChecks.askTitle,
-    body: fillText(bg.identityChecks.askBody, { person }),
-    url: `${ROUTES.familyIdentity}?id=${encodeURIComponent(checkId)}`,
-    tag: `identity-${checkId}`,
+    title: fillText(bg.identityChecks.askOtherTitle, { claimed }),
+    body: fillText(bg.identityChecks.askOtherBody, { claimed, person }),
+    url,
+    tag,
   };
 }
 
 // The push to the rest of the family after „Не съм аз“ (#38).
 export function warnMessage(checkId: string, claimedName: string | null): PushMessage {
-  const name =
-    claimedName === null || claimedName.trim() === ""
-      ? bg.identityChecks.someone
-      : claimedName.trim();
+  const name = nameOrSomeone(claimedName);
   return {
     title: fillText(bg.identityChecks.warnTitle, { name }),
     body: fillText(bg.identityChecks.warnBody, { name }),
@@ -229,7 +256,8 @@ export async function listFamilyForPhone(
 }
 
 // ---------------------------------------------------------------------------------
-// 2. POST /api/identity-checks (phone): "the caller says they are X"
+// 2. POST /api/identity-checks (phone): "the caller says they are X, ask Y"
+//    (Y = X for the first question, the next family member after 45 s)
 // ---------------------------------------------------------------------------------
 export async function askFamilyMember(
   deps: IdentityCheckDeps,
@@ -242,20 +270,24 @@ export async function askFamilyMember(
   const rule = RATE_LIMITS.identityPerDevice;
   await enforceRateLimit(deps.hitCounter, rule, `${rule.name}:${device.id}`);
 
-  // X must be in THIS person's contact list with a Scamly account. The person always
-  // comes from the phone's own pairing, never from the request.
+  // X and Y must be in THIS person's contact list with a Scamly account (Y can then
+  // receive the question). The person always comes from the phone's own pairing,
+  // never from the request.
   const personId = device.protectedPersonId;
+  const askedUserId = input.askedUserId ?? input.claimedUserId;
   const { personName, contacts } = await personContext(deps, personId);
   const claimed = contacts.find((c) => c.user_id !== null && c.user_id === input.claimedUserId);
-  if (claimed === undefined) {
+  const asked = contacts.find((c) => c.user_id !== null && c.user_id === askedUserId);
+  if (claimed === undefined || asked === undefined) {
     throw badRequest("not_family", bg.identityChecks.notFamily);
   }
 
-  // Lock 2: RLS checks the same again (and that X is a 'family' account).
+  // Lock 2: RLS checks the same again (and that X and Y are 'family' accounts).
   const row = await deps.insertForCaller({
     protectedPersonId: personId,
     deviceId: device.id,
     claimedUserId: input.claimedUserId,
+    askedUserId,
   });
   if (row === "refused") {
     throw badRequest("not_family", bg.identityChecks.notFamily);
@@ -265,7 +297,8 @@ export async function askFamilyMember(
   }
 
   // The live alert is the new row itself (Realtime); the push wakes the phone.
-  await pushQuietly(deps, input.claimedUserId, askMessage(row.id, personName));
+  const aboutSomeoneElse = askedUserId === input.claimedUserId ? null : claimed.display_name;
+  await pushQuietly(deps, askedUserId, askMessage(row.id, personName, aboutSomeoneElse));
 
   return toDto(row, deps.now(), personName, contacts);
 }
@@ -318,9 +351,9 @@ export async function listMyIdentityChecks(
       continue;
     }
     const dto = toDto(row, now, context.personName, context.contacts);
-    if (row.claimed_user_id === actor.userId && dto.status === "pending") {
+    if (row.asked_user_id === actor.userId && dto.status === "pending") {
       pending.push(dto);
-    } else if (row.claimed_user_id !== actor.userId && dto.status === "not_me") {
+    } else if (row.asked_user_id !== actor.userId && dto.status === "not_me") {
       warnings.push(dto);
     }
   }
@@ -328,7 +361,7 @@ export async function listMyIdentityChecks(
 }
 
 // ---------------------------------------------------------------------------------
-// 5. PATCH /api/identity-checks/:id (the claimed family member): the answer
+// 5. PATCH /api/identity-checks/:id (the asked family member): the answer
 // ---------------------------------------------------------------------------------
 export async function answerIdentityCheck(
   deps: IdentityCheckDeps,
@@ -336,12 +369,12 @@ export async function answerIdentityCheck(
   checkId: string,
   answer: IdentityAnswer,
 ): Promise<IdentityCheckDto> {
-  // Lock 1: RLS must show the question (family of the person), then only X answers.
+  // Lock 1: RLS must show the question (family of the person), then only Y answers.
   const row = await deps.findForCaller(checkId);
   if (row === null) {
     throw notFound();
   }
-  if (row.claimed_user_id !== actor.userId) {
+  if (row.asked_user_id !== actor.userId) {
     throw forbidden();
   }
   const now = deps.now();
@@ -373,7 +406,8 @@ export async function answerIdentityCheck(
       targetId: checkId,
       details: { protected_person_id: updated.protected_person_id },
     });
-    // „Предупреди кръга“ (#38): everybody else in the family with an account. The
+    // „Предупреди кръга“ (#38): everybody else in the family with an account (also the
+    // claimed person, when someone else answered). The warning names the CLAIMED one. The
     // live warning is the UPDATE of the row (Realtime); the push reaches closed pages.
     const message = warnMessage(checkId, dto.claimedName);
     const others: string[] = [];

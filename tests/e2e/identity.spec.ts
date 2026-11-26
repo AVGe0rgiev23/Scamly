@@ -44,16 +44,24 @@ const PEOPLE: IdentityPersonDto[] = [
   },
 ];
 
-// One question as the API sends it. Its id is made from the person's id.
-function question(userId: string, status: IdentityCheckDto["status"]): IdentityCheckDto {
-  const person = PEOPLE.find((item) => item.userId === userId);
+// One question as the API sends it. Its id is made from the ASKED person's id;
+// claimedUserId = who the caller pretends to be (the asked person by default).
+function question(
+  userId: string,
+  status: IdentityCheckDto["status"],
+  claimedUserId: string = userId,
+): IdentityCheckDto {
+  const asked = PEOPLE.find((item) => item.userId === userId);
+  const claimed = PEOPLE.find((item) => item.userId === claimedUserId);
   return {
     id: `c${userId.slice(1)}`,
     protectedPersonId: PERSON_ID,
     personName: "Мама",
-    claimedUserId: userId,
-    claimedName: person?.displayName ?? null,
-    claimedPhone: person?.phone ?? null,
+    claimedUserId,
+    claimedName: claimed?.displayName ?? null,
+    claimedPhone: claimed?.phone ?? null,
+    askedUserId: userId,
+    askedName: asked?.displayName ?? null,
     status,
     createdAt: new Date().toISOString(),
     answeredAt: status === "pending" ? null : new Date().toISOString(),
@@ -64,13 +72,21 @@ function question(userId: string, status: IdentityCheckDto["status"]): IdentityC
 
 // What the fake API received, and the status each question has now.
 type PhoneApi = {
-  asked: string[]; // claimedUserId of every POST /api/identity-checks
+  asked: string[]; // askedUserId of every POST /api/identity-checks
+  claimed: string[]; // claimedUserId of every POST (stays the same in the chain)
+  claimedBy: Map<string, string>; // asked userId -> claimed userId
   status: Map<string, IdentityCheckDto["status"]>; // userId -> status
   postFailures: number; // how many POSTs still answer 429
 };
 
 async function mockPhone(page: Page, postFailures = 0): Promise<PhoneApi> {
-  const api: PhoneApi = { asked: [], status: new Map(), postFailures };
+  const api: PhoneApi = {
+    asked: [],
+    claimed: [],
+    claimedBy: new Map(),
+    status: new Map(),
+    postFailures,
+  };
   // The 30-second check (as in protected.spec.ts, with the real engine).
   await page.route(
     (url) => url.pathname === "/api/checks",
@@ -122,12 +138,18 @@ async function mockPhone(page: Page, postFailures = 0): Promise<PhoneApi> {
           json: { error: { code: "rate_limited", messageBg: "Твърде много опити." } },
         });
       }
-      const { claimedUserId } = route.request().postDataJSON() as { claimedUserId: string };
-      api.asked.push(claimedUserId);
-      api.status.set(claimedUserId, "pending");
+      const body = route.request().postDataJSON() as {
+        claimedUserId: string;
+        askedUserId?: string;
+      };
+      const askedUserId = body.askedUserId ?? body.claimedUserId;
+      api.asked.push(askedUserId);
+      api.claimed.push(body.claimedUserId);
+      api.claimedBy.set(askedUserId, body.claimedUserId);
+      api.status.set(askedUserId, "pending");
       return route.fulfill({
         status: 201,
-        json: { identityCheck: question(claimedUserId, "pending") },
+        json: { identityCheck: question(askedUserId, "pending", body.claimedUserId) },
       });
     },
   );
@@ -137,7 +159,13 @@ async function mockPhone(page: Page, postFailures = 0): Promise<PhoneApi> {
       const id = new URL(route.request().url()).pathname.split("/").pop() ?? "";
       const userId = `b${id.slice(1)}`;
       return route.fulfill({
-        json: { identityCheck: question(userId, api.status.get(userId) ?? "expired") },
+        json: {
+          identityCheck: question(
+            userId,
+            api.status.get(userId) ?? "expired",
+            api.claimedBy.get(userId) ?? userId,
+          ),
+        },
       });
     },
   );
@@ -257,6 +285,7 @@ test("no answer in 45 s → the next person; a late answer to the old question i
 
   await page.clock.fastForward(46_000);
   await expect.poll(() => api.asked).toEqual([IVAN_ID, MARIA_ID]); // Petar has no Scamly
+  expect(api.claimed).toEqual([IVAN_ID, IVAN_ID]); // Мария is asked about IVAN
   await expect(page.getByText("Иван не отговори.")).toBeVisible();
   await expect(page.getByText("Питаме Мария…")).toBeVisible();
   await expect(page.getByText("Попитайте нещо, което знае само Иван.")).toBeVisible();
@@ -267,6 +296,46 @@ test("no answer in 45 s → the next person; a late answer to the old question i
   await page.clock.fastForward(6_000);
   await expect(heading(page, "Това НЕ е Иван.")).toHaveCount(0);
   await expect(page.getByText("Питаме Мария…")).toBeVisible();
+});
+
+test("Иван does not answer, Мария says „Не е Иван“ → „Това НЕ е Иван.“, call-back to Иван", async ({
+  page,
+}) => {
+  await page.clock.install();
+  const api = await mockPhone(page);
+  await askIvan(page);
+  await page.clock.fastForward(46_000);
+  await expect(page.getByText("Питаме Мария…")).toBeVisible();
+
+  api.status.set(MARIA_ID, "not_me");
+  await page.clock.fastForward(6_000);
+  await expect(heading(page, "Това НЕ е Иван.")).toBeFocused({ timeout: 8_000 });
+  await expect(heading(page, "Това НЕ е Мария.")).toHaveCount(0);
+  await expect(page.getByText("Мария ви звъни сега.")).toBeVisible();
+  // The saved number of the CLAIMED person (Иван), never the calling number.
+  await expect(page.getByRole("link", { name: "Обади се на Иван" })).toHaveAttribute(
+    "href",
+    "tel:+359888123456",
+  );
+});
+
+test("Иван does not answer, Мария confirms → „Мария потвърди, че наистина е Иван.“", async ({
+  page,
+}) => {
+  await page.clock.install();
+  const api = await mockPhone(page);
+  await askIvan(page);
+  await page.clock.fastForward(46_000);
+  await expect(page.getByText("Питаме Мария…")).toBeVisible();
+
+  api.status.set(MARIA_ID, "its_me");
+  await page.clock.fastForward(6_000);
+  await expect(heading(page, "Мария потвърди, че наистина е Иван.")).toBeFocused({
+    timeout: 8_000,
+  });
+  for (const rule of bg.identityAsk.rules) {
+    await expect(page.getByText(rule)).toBeVisible();
+  }
 });
 
 test("nobody left → the check she answered gives the verdict", async ({ page }) => {
@@ -343,7 +412,8 @@ test("360 px: no sideways scrolling and every target at least 64 px; reduced mot
 // The family member's answer screen /family/proveri?id=…
 // ---------------------------------------------------------------------------------
 
-async function mockFamily(page: Page, patch: "ok" | "409" = "ok") {
+// claimedUserId: who the caller pretends to be (Иван = asked about himself).
+async function mockFamily(page: Page, patch: "ok" | "409" = "ok", claimedUserId = IVAN_ID) {
   const sent: unknown[] = [];
   const state = { status: "pending" as IdentityCheckDto["status"] };
   await page.route(
@@ -369,7 +439,9 @@ async function mockFamily(page: Page, patch: "ok" | "409" = "ok") {
         }
         state.status = body.answer;
       }
-      return route.fulfill({ json: { identityCheck: question(IVAN_ID, state.status) } });
+      return route.fulfill({
+        json: { identityCheck: question(IVAN_ID, state.status, claimedUserId) },
+      });
     },
   );
   return sent;
@@ -413,8 +485,30 @@ test("family: „Аз съм“ and a 409 „Вече е отговорено.�
   await expect(page.getByText(bg.identityAnswer.missing)).toBeVisible();
 });
 
+test("family: asked about someone else → „Наистина ли е Мария?“, „Не е Мария“", async ({
+  page,
+}) => {
+  // The caller says he is Мария; Мария did not answer, so Иван (this page) is asked.
+  const sent = await mockFamily(page, "ok", MARIA_ID);
+  await page.goto(`/dev/family/proveri?id=${IVAN_QUESTION}`);
+  await expect(heading(page, "Наистина ли е Мария?")).toBeVisible();
+  await expect(heading(page, bg.identityAnswer.title)).toHaveCount(0);
+  await expect(
+    page.getByText(
+      "Някой се представя за Мария пред Мама и иска пари. Знаеш ли дали наистина е Мария?",
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Да, наистина е Мария" })).toBeVisible();
+  await page.getByRole("button", { name: "Не е Мария — обаждам се на Мама" }).click();
+  await expect(
+    page.getByText("Отговорихте „Не е Мария“. На телефона на Мама вече пише, че това не е Мария."),
+  ).toBeVisible();
+  expect(sent).toEqual([{ answer: "not_me" }]);
+});
+
 test("family alerts: my open question on top, and the family's warning", async ({ page }) => {
   const pending = question(IVAN_ID, "pending");
+  const aboutMaria = question(IVAN_ID, "pending", MARIA_ID);
   const warning = { ...question(MARIA_ID, "not_me") };
   await page.route(
     (url) => url.pathname === "/api/realtime/token",
@@ -443,11 +537,18 @@ test("family alerts: my open question on top, and the family's warning", async (
   );
   await page.route(
     (url) => url.pathname === "/api/identity-checks",
-    (route) => route.fulfill({ json: { pending: [pending], warnings: [warning] } }),
+    (route) =>
+      route.fulfill({
+        json: {
+          pending: [pending, { ...aboutMaria, id: `${aboutMaria.id}2` }],
+          warnings: [warning],
+        },
+      }),
   );
   await page.goto("/dev/family/alerts");
   await expect(page.getByText("Някой се представя за теб пред Мама.")).toBeVisible();
-  await expect(page.getByRole("link", { name: bg.identityAnswer.open })).toHaveAttribute(
+  await expect(page.getByText("Някой се представя за Мария пред Мама.")).toBeVisible();
+  await expect(page.getByRole("link", { name: bg.identityAnswer.open }).first()).toHaveAttribute(
     "href",
     `/family/proveri?id=${pending.id}`,
   );

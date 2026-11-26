@@ -1,9 +1,11 @@
 // The brain of „Провери истинския“ on the older person's phone (P-06): a React hook
 // that asks the real family member and waits for the answer.
 //
-//   start(people, person)  POST /api/identity-checks { claimedUserId } -> "waiting"
-//   every 45 s, no answer  POST for the next person in calling order (the server
-//                          marks the previous question "expired"); nobody left -> "nobody"
+//   start(people, person)  POST /api/identity-checks { claimedUserId, askedUserId } with
+//                          both = the tapped person („Ти ли си?“) -> "waiting"
+//   every 45 s, no answer  POST with the SAME claimedUserId and the next person in calling
+//                          order as askedUserId („Знаеш ли дали наистина е Иван?“; the
+//                          server marks the previous question "expired"); nobody left -> "nobody"
 //   „Не съм аз“ / „Аз съм“ watchIdentityCheck (Realtime + 5 s / 10 s polling) -> "not_me" / "its_me"
 //   retry()                the POST failed (offline, 409, 429): try the same person again
 //   reset()                back / „Към началото“: forget everything on this screen
@@ -59,6 +61,8 @@ export function useIdentityAsk() {
     const thisRun = run.current;
     currentCheckId.current = null;
     const userId = person.userId;
+    // Who the caller pretends to be stays the same for the whole chain.
+    const claimedUserId = base.claimed.userId ?? userId;
     const next: IdentityAskState = {
       ...base,
       phase: "sending",
@@ -72,7 +76,7 @@ export function useIdentityAsk() {
     const result = await callApi<{ identityCheck: IdentityCheckDto }>(
       "/api/identity-checks",
       "POST",
-      { claimedUserId: userId },
+      { claimedUserId, askedUserId: userId },
     );
     if (run.current !== thisRun) {
       return; // the person went back or started again meanwhile

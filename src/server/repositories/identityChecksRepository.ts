@@ -2,8 +2,8 @@
 //
 // Unlike checks, every read AND write here uses the caller's USER client: the
 // database itself allows a phone to ask only a family member of its own person, and
-// only the claimed family member to answer, once, within 15 minutes (RLS and column
-// privileges, migration 20261126000001). The service checks the same rules in code
+// only the ASKED family member to answer, once, within 15 minutes (RLS and column
+// privileges, migrations 20261126000001 and 20261126000002). The service checks the same rules in code
 // first, so these are the second lock, not the only one.
 
 import type { IdentityAnswer } from "@/schemas/identityChecks";
@@ -14,7 +14,7 @@ import type { Database } from "@/types/database";
 export type IdentityCheckRow = Database["public"]["Tables"]["identity_checks"]["Row"];
 
 const COLUMNS =
-  "id, protected_person_id, device_id, claimed_user_id, status, created_at, answered_at";
+  "id, protected_person_id, device_id, claimed_user_id, asked_user_id, status, created_at, answered_at";
 
 // PostgreSQL error codes we expect.
 const INSUFFICIENT_PRIVILEGE = "42501"; // RLS refused the new row
@@ -22,11 +22,18 @@ const UNIQUE_VIOLATION = "23505"; // another pending question of the same phone 
 
 // A new question from the caller's phone. The database sets status 'pending' and
 // created_at, and marks the phone's previous pending question 'expired' (trigger).
-// "refused" = RLS said no (e.g. the account is not a family account of the person),
+// claimedUserId = who the caller pretends to be, askedUserId = who gets the question
+// (the same person first, the next family member after 45 s without an answer).
+// "refused" = RLS said no (e.g. an account is not a family account of the person),
 // "busy" = a second question of the same phone was stored at the same moment.
 export async function insertIdentityCheck(
   client: DbClient,
-  check: { protectedPersonId: string; deviceId: string; claimedUserId: string },
+  check: {
+    protectedPersonId: string;
+    deviceId: string;
+    claimedUserId: string;
+    askedUserId: string;
+  },
 ): Promise<IdentityCheckRow | "refused" | "busy"> {
   const { data, error } = await client
     .from("identity_checks")
@@ -34,6 +41,7 @@ export async function insertIdentityCheck(
       protected_person_id: check.protectedPersonId,
       device_id: check.deviceId,
       claimed_user_id: check.claimedUserId,
+      asked_user_id: check.askedUserId,
     })
     .select(COLUMNS)
     .single();
@@ -85,7 +93,7 @@ export async function listRecentIdentityChecks(
 
 // The answer, as a compare-and-set in ONE statement:
 //   UPDATE identity_checks SET status = $answer
-//   WHERE id = $1 AND claimed_user_id = $me AND status = 'pending' AND created_at > $notBefore
+//   WHERE id = $1 AND asked_user_id = $me AND status = 'pending' AND created_at > $notBefore
 // Two answers at the same moment: PostgreSQL runs them one after the other, and the
 // second finds status <> 'pending', so it changes nothing. The database trigger writes
 // answered_at. Returns the updated row, or null when nothing was changed.
@@ -97,7 +105,7 @@ export async function answerIdentityCheck(
     .from("identity_checks")
     .update({ status: check.answer })
     .eq("id", check.id)
-    .eq("claimed_user_id", check.userId)
+    .eq("asked_user_id", check.userId)
     .eq("status", "pending")
     .gt("created_at", check.notBefore)
     .select(COLUMNS)

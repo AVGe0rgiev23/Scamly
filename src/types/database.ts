@@ -8,7 +8,8 @@
 // (PG_META_GENERATE_TYPES=typescript, schema public, PostgREST 14.18 like the live
 // project). The output is identical in format to `supabase gen types typescript`.
 // identity_checks, identity_check_status, is_own_device() and is_family_member_of()
-// (migration 20261126000001, 26 Nov) were added by hand in exactly that format.
+// (migration 20261126000001, 26 Nov) and identity_checks.asked_user_id (migration
+// 20261126000002, 26 Nov) were added by hand in exactly that format.
 //
 // When a migration changes, regenerate this file, e.g. with the Supabase CLI:
 //   npx supabase gen types typescript --local > src/types/database.ts
@@ -328,6 +329,7 @@ export type Database = {
       identity_checks: {
         Row: {
           answered_at: string | null;
+          asked_user_id: string;
           claimed_user_id: string;
           created_at: string;
           device_id: string | null;
@@ -338,6 +340,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           answered_at?: string | null;
+          asked_user_id?: string;
           claimed_user_id: string;
           created_at?: string;
           device_id?: string | null;
@@ -347,6 +350,7 @@ export type Database = {
         };
         Update: {
           answered_at?: string | null;
+          asked_user_id?: string;
           claimed_user_id?: string;
           created_at?: string;
           device_id?: string | null;
@@ -355,6 +359,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["identity_check_status"];
         };
         Relationships: [
+          {
+            foreignKeyName: "identity_checks_asked_user_id_fkey";
+            columns: ["asked_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "identity_checks_claimed_user_id_fkey";
             columns: ["claimed_user_id"];
