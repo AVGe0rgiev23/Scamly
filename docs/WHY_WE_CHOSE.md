@@ -2753,6 +2753,23 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 **We would reconsider if:** push could not be made reliable on real phones before the defense; then the live page and the 30-second check carry the demo.
 
+### Neutral „someone close“ wording (vs „баба“ and „възрастни хора“)  (status: in use (P-04, 26 Nov))
+
+**Used for:** every product text in `bg.ts`, the samples, the demo family, the fridge card and sticker, the README.
+
+**Alternatives we considered:** keep „баба“ / „възрастният човек“ as the main person; write separate texts for each relationship.
+
+**Why this one:**
+- The scam borrows **any** close relationship (D34), and a parent of 50 can be the target as well as a grandmother of 80.
+- „Близък“ and „човекът, когото пазите“ fit every family with one text, which keeps `bg.ts` small and easy to proofread.
+- It does not label the user as old, which older people often dislike.
+- Concrete examples (Мама, Баба Мария, „Здравей, мамо…“) still make it real; „баба“ stays as one example among others.
+
+**What we give up:**
+- „Близък“ is less vivid than „баба“; the landing page (P-03) adds the concrete two-phone scene.
+
+**We would reconsider if:** tests with real families (W4-05) show that the neutral words confuse the people we protect.
+
 ### Few essential features over a feature catalogue  (status: decided (D35, 21 Nov))
 
 **Used for:** what stays in the app and on the landing page.
@@ -3126,6 +3143,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-26 · P-04 story texts (Alex): new entry in section 10 "Neutral „someone close“ wording (vs „баба“ and „възрастни хора“)"
 - 2026-11-26 · P-06 „Провери истинския“ screens (Alex): new entries in section 9 "One big button, then „Казват ли, че са някой близък?“", "Client-side 45 s countdown on the phone", "The call-back button uses only the saved number"; statuses of „Провери истинския“ updated
 - 2026-11-26 · P-05 „Провери истинския“ backend (Alex): new entries in section 9 "who moves to the next family member (the phone, not a server job)", "Compare-and-set answer within 15 minutes", "One `identity_checks` table, written with the user's own client"; statuses of „Провери истинския“ and the on-screen fallback updated
 - 2026-11-26 · P-02 „Cuts“ (Alex): new entries "`/dev/*` hidden on the live site by one environment variable" and "On-screen fallback instead of a server-side escalation job"; `pg_cron` marked removed; feature switches updated (voice and email off by default, AI and escalation switches removed).

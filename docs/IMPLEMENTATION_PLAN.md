@@ -226,7 +226,7 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 | P-01 | Push on real phones (Android + iPhone with the installed PWA) | Alex + Roberta | ⬜ first |
 | P-02 | Cuts: voice hidden, `CommandPalette` + `FEATURE_AI` removed, `/dev/*` blocked in production, escalation job removed, Brevo set up or "по имейл" removed, navigation slimmed | Alex (backend) + Roberta (navigation) | ✅ (Alex, 26 Nov; navigation built in Alex's session, tell Roberta) · voice + e-mail off by default, e-mail promises removed, escalation route/switch/ops script removed (app no longer depends on the escalation migration), `/dev/*` 404 without `SCAMLY_DEV_PAGES=1`, header „Как работи“ / „Вход“ / „Провери“, dock Начало / Провери / Вход, practice behind „Упражнение“ |
 | P-03 | Landing page 10 → 5 sections with the hook and a two-phone scene | Roberta (FAQ texts: Alex) | ⬜ |
-| P-04 | Story texts: `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker, help texts, README | Roberta (seed + README: Alex) | ⬜ |
+| P-04 | Story texts: `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker, help texts, README | Roberta (seed + README: Alex) | ✅ (Alex, 26 Nov; built in Alex's session, tell Roberta) · neutral „близък“ wording, demo family Мария / Иван / Ана, „Роднина в беда“ first (UI sort, DB seed unchanged), fridge card + sticker on a second printed page, help steps, OG image, README |
 | P-05 | „Провери истинския“ backend: `identity_checks`, RLS + pgTAP, API, push + Realtime, circle warning | Alex (RLS tests: Roberta) | ✅ (Alex, 26 Nov; RLS tests written in Alex's session, tell Roberta) · `/api/identity-checks` (+ `/family`, `/:id`), 45 s step driven by the phone (new question expires the previous one), compare-and-set answer < 15 min, `not_me` warns the rest of the family + audit; run migration `20261126000001_identity_checks.sql` live before the push · **fixed 26 Nov:** claimed vs asked (`asked_user_id`, `POST {claimedUserId, askedUserId?}`); run `20261126000002_identity_checks_asked_user.sql` live before the push |
 | P-06 | „Провери истинския“ screens: one-button flow („Казват ли, че са някой близък?“), check answered while waiting (45 s), call-back to the saved number, „Някой идва към вас?“ → 112; family answer „Не съм аз — обаждам ти се сега!“ | Roberta (family answer screen: Alex) | ✅ (Alex, 26 Nov; protected flow built in Alex's session, tell Roberta) · first question → tiles → 45 s ring with the check below → not me / it's me / next person / nobody, `/family/proveri`, questions on `/family/alerts`; family side has no `tel:` (the older person's number is not stored) · **fixed 26 Nov:** the next person is asked about the claimed one („Наистина ли е Иван?“), red screen always „Това НЕ е Иван.“ |
 | P-07 | ~~Family question~~ → one reminder line on the no-answer screen, inside P-06 | Roberta | ✂ 26 Nov |
@@ -273,7 +273,7 @@ Not built before the defense; shown in the slides as the next big step (W5-03: "
 | #36 + #28 + #17 „Провери истинския“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
 | #37 „новият ми номер“ (merged into #36), #38 „Предупреди кръга“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
 | #7 time-to-answer (task P-09) | P | Alex | ⬜ |
-| #24 phone sticker (with the fridge card) (task P-04) | P | Roberta | ⬜ |
+| #24 phone sticker (with the fridge card) (task P-04) | P | Roberta | ✅ (Alex, 26 Nov) |
 | #39 juror demo kit (task P-12) | P | Alex | ⬜ |
 | #44 „Някой идва към вас?“ → 112 (task P-06) | P | Roberta | ⬜ |
 

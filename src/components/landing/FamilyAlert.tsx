@@ -1,5 +1,5 @@
 // The family's alert on the home page: the DynamicIsland primitive starts as a small
-// pill („Баба Мария провери обаждане“) and, the first time it scrolls into view, grows
+// pill („Мария провери обаждане“) and, the first time it scrolls into view, grows
 // into the full alert card: the verdict, what happened second by second, and the
 // „Обаждам ѝ се сега“ action as the real app shows it. After that the visitor can
 // close and open it with the pill. With reduced motion it simply opens (no spring).

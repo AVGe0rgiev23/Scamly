@@ -166,6 +166,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | P-02 cuts: voice and e-mail off by default, `/dev/*` 404 without `SCAMLY_DEV_PAGES=1`, short header and dock, „Упражнение“ button | ✅ (P-02, Alex, 26 Nov) | `src/config/features.ts`, `src/app/dev/layout.tsx`, `playwright.config.ts`, `src/components/layout/`, `src/components/protected/CheckHome.tsx`, `src/i18n/bg.ts` | `features.test.ts`, `siteNav.test.ts`, `layout.spec.ts`, `voice.spec.ts`, `protected.spec.ts` |
 | „Провери истинския“ backend: `identity_checks`, RLS, API, push + Realtime, circle warning (3.48) | ✅ (P-05, Alex, 26 Nov; claimed vs asked fixed 26 Nov) · screens ✅ (P-06, 3.49) | `supabase/migrations/20261126000001_identity_checks.sql`, `20261126000002_identity_checks_asked_user.sql`, `src/app/api/identity-checks/`, `src/server/services/identityCheckService.ts`, `src/server/repositories/identityChecksRepository.ts`, `src/schemas/identityChecks.ts`, `src/lib/realtime.ts` | `identityCheckService` (27), `identity-checks/route.test.ts` (14), `15_identity_checks` (44) |
 | „Провери истинския“ screens: first question after the big button, family tiles, 45 s waiting ring, „Не съм аз“ / „Аз съм“ / no answer, family answer screen `/family/proveri`, questions on `/family/alerts` (3.49) | ✅ (P-06, built in Alex's session 26 Nov; protected flow is Roberta's task, tell her) | `src/components/protected/{CallCheck,IdentityQuestion,IdentityWaiting,IdentityAnswered}.tsx`, `useIdentityAsk.ts`, `identityFlow.ts`, `protected.css` 5b, `src/components/family/{IdentityAnswerPage,IdentityRequests,AlertsPage}.tsx`, `family.css` 10, `src/app/family/proveri/`, `src/app/dev/family/proveri/` | `identityFlow.test.ts` (7), `tests/e2e/identity.spec.ts` (13 × 2 screens) |
+| Story texts (D34): neutral „близък“ wording, demo family Мария / Иван / Ана, fake-relative education card first, fridge card + phone sticker, OG image (3.50) | ✅ (P-04, Alex, 26 Nov; Roberta's former task, tell her) | `src/i18n/bg.ts`, `src/content/placeholders.ts`, `src/components/education/{order,ScriptList}.ts(x)`, `src/app/karta-za-hladilnik/`, `scripts/og/og.html`, `src/app/opengraph-image.*`, `README.md` | `order.test.ts` (2), `tests/e2e/scripts.spec.ts` (fake-relative tile first; fridge card + sticker on a second printed page) |
 | Security hardening (CSP, headers, attack tests) | ⬜ planned (week 4, W4-01, W4-02) | | |
 
 ---
@@ -2178,6 +2179,30 @@ Text in `bg.ts` (`identityAsk`, `identityAnswer`); the texts avoid „той“ 
 - `tests/e2e/protected.spec.ts`, `voice.spec.ts`, `tests/roundtrip/roundtrip.spec.ts`: one extra tap „Не“ after the big button.
 - Screenshots: `docs/evidence/redesign-v3/identity-check/` (Pixel 5 and 1440 × 900, Night and Porcelain).
 
+### 3.50 The main story in every text (P-04, D34)
+
+#### What it does
+
+Every screen tells the D34 story: a scammer pretends to be **someone close** (son, daughter, grandchild, parent, sibling), the voice can be faked, the real person cannot („Гласът може да е фалшив. Близкият ти — не.“). No text says the product is only for grandparents.
+
+#### How it works
+
+- **Where the story texts live:** all in `src/i18n/bg.ts` as before. Product texts say „близък“, „човекът, когото пазите“ or „вашият близък“ instead of „възрастният човек“; „баба“ stays only as one example among others (e.g. the name hint „Мама, Баба Мария или Чичо Петър“). `app.description` (page metadata and the PWA manifest description) and `home.problem` describe „Провери истинския“. The help pages for the protected phone and the family each have a step about „Провери истинския“. The landing-page sections are only corrected where they were wrong; phase 5 (P-03) rewrites them.
+- **Demo family:** the mother Мария is protected, her son Иван is called first, her daughter Ана is second: `SAMPLE` in `src/content/placeholders.ts` (landing examples; the friendly sample call is now „Здравей, мамо…“) and `bg.seed` for `npm run seed`. The live database is not changed; its demo rows from 4 Nov keep the old names until a new empty database is seeded.
+- **Education order:** the database still sorts the cards by script type (police first) and its seed migration is not edited. `fakeRelativeFirst()` (`src/components/education/order.ts`) moves the „Роднина в беда“ cards to the front in `ScriptList`, so the real page and the `/dev` preview show it first; the rest keep their order. The moderator's library keeps the database order.
+- **Fridge card + phone sticker** (`/karta-za-hladilnik`): the card has the title „Близък иска пари по телефона?“, the hook, three steps (big button → choose who they claim to be, Scamly asks the real person → no money, data or codes) and the fallback „затворете и се обадете сами на номер, който знаете“. Under it, the **phone sticker** (#24): „Звънят ти, че съм в беда? Провери ме в Scamly.“ and the family rule, in a dashed cut-out box. In print the card fills the first A5 page and the sticker (85 × 55 mm) starts a second page (`break-before: page`).
+- **Open Graph picture:** `scripts/og/og.html` shows the hook; `npm run og` made the new `opengraph-image.png`, and its alt text says the same.
+
+#### Why it works like that
+
+The scam borrows any close relationship, so „баба“-only wording would hide the main idea and exclude many families. Sorting in the UI keeps the seeded data and the moderator's order untouched. The sticker is in the family member's own voice („Провери ме“), because that is who the protected person trusts.
+
+#### How we know it works
+
+- `src/components/education/order.test.ts` (2 tests): the fake-relative card first, the others in order; no change without one.
+- `tests/e2e/scripts.spec.ts`: the list shows „Роднина в беда“ first although the API sends police first; the fridge card shows the hook and the sticker, and in print the button and hints are hidden and the sticker area starts a new page.
+- Every other test reads its expected text from `bg`, so changed wording is checked where it is shown.
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -3215,3 +3240,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-26 · new section 3.48: „Провери истинския“ backend (P-05, Alex): `identity_checks` table, RLS + column privileges, client-driven 45 s chain with a before-insert expiry trigger and one pending question per phone, compare-and-set answer within 15 minutes, push + Realtime, circle warning (#38), audit; status row, 5.2, 5.12 and 6.2 updated.
 - 2026-11-26 · new section 3.49: „Провери истинския“ screens (P-06, Alex): first question after the big button, family tiles, 45 s waiting ring with the chain to the next person, „Не съм аз“ red screen with the saved-number call-back and 112, „Аз съм“ calm screen, the family answer screen `/family/proveri` and the questions on `/family/alerts`
 - 2026-11-26 · 3.48, 3.49: claimed vs asked („Провери истинския“ fix, Alex): new column `asked_user_id` (migration `20261126000002`), `POST {claimedUserId, askedUserId?}`, the next person is asked about the claimed one, texts for „Наистина ли е Иван?“; known-limit note removed.
+- 2026-11-26 · new section 3.50: the main story in every text (P-04, Alex, D34): neutral „близък“ wording in `bg.ts`, demo family Мария / Иван / Ана (samples and seed), fake-relative education card first (UI sort), fridge card rewritten + phone sticker on a second printed page (#24), help steps for „Провери истинския“, OG image and alt text with the hook, README.

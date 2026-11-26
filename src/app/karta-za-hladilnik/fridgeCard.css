@@ -3,7 +3,8 @@
    screen. Colours, radii and curves come from the tokens in globals.css (the card
    itself has data-theme="light", so it is paper in both themes). Only `rotate` (a
    transform) is animated: the card straightens on hover, like the family's preview.
-   Print: section 3 (one A5 portrait page, black on white). Reduced motion: section 4. */
+   Print: section 3 (the card on one A5 portrait page, the phone sticker alone on a
+   second page, black on white). Reduced motion: section 4. */
 
 /* ── 1. Screen: a stage with the paper card and the hint next to it ─────────── */
 
@@ -131,6 +132,13 @@
     line-height: var(--text-xl--line-height);
   }
 }
+.fridge-hook {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .fridge-steps > li {
   counter-increment: fridge-step;
   display: grid;
@@ -202,7 +210,37 @@
   box-shadow: 0 0 10px color-mix(in oklab, var(--halo-2) 70%, transparent);
 }
 
-/* ── 3. Print: one A5 portrait page, only the card, black on white ──────────── */
+/* The phone sticker (#24): a small paper label with a dashed cut line, about the
+   size of a bank card (85 × 55 mm), under the stage. */
+.fridge-sticker-area {
+  margin-top: 3rem;
+}
+.fridge-sticker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  inline-size: 100%;
+  max-inline-size: 22rem;
+  margin-top: 1.25rem;
+  padding: 1rem 1.125rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  box-shadow: var(--shadow-near);
+}
+.fridge-sticker-text {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  font-weight: 700;
+}
+.fridge-sticker-rule {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+/* ── 3. Print: the card on one A5 page, the sticker on a second, black on white ── */
 @page {
   size: A5 portrait;
   margin: 12mm;
@@ -255,6 +293,24 @@
   .fridge-qr-code {
     padding: 0;
     border: 0;
+  }
+  /* The sticker starts a new page, so the card keeps its whole A5 page. */
+  .fridge-sticker-area {
+    break-before: page;
+    margin-top: 0;
+  }
+  .fridge-sticker {
+    --text: CanvasText;
+    --border-strong: CanvasText;
+    color-scheme: light;
+    inline-size: 85mm;
+    min-block-size: 55mm;
+    max-inline-size: none;
+    margin-top: 0;
+    padding: 5mm;
+    background: none;
+    box-shadow: none;
+    break-inside: avoid;
   }
 }
 

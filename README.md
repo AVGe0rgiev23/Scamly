@@ -1,11 +1,14 @@
 # Scamly
 
-> Scamly – уеб приложение, което помага на възрастните хора да разпознаят телефонна измама за 30 секунди и предупреждава близките им.
+> Scamly – уеб приложение срещу телефонни измами, при които някой се представя за ваш близък. Гласът може да е фалшив. Близкият ти — не.
 
-Scamly is a web app (PWA) that helps older people in Bulgaria recognise phone scams. During or
-right after a suspicious call, the person answers a few big-button questions and gets a clear
-verdict in about 30 seconds, while their family is alerted at once. Guests can read about
-current scam scripts, see a map of reported scams by district and report a scam themselves.
+Scamly is a web app (PWA) against phone scams in Bulgaria where the caller pretends to be
+someone close: a son or daughter, a grandchild, a parent, a sibling. A voice can be faked, the
+real person cannot: with one tap („Провери истинския“) the protected person asks the real loved
+one on their own signed-in phone, who answers „Не съм аз“ or „Аз съм“. A 30-second check with
+big-button questions and hard rules is the safety net, and the whole family is alerted at once.
+Guests can read about current scam scripts, see a map of reported scams by district and report a
+scam themselves.
 
 The full project description is in [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md), and the
 build plan is in [`docs/BUILD_PLAN.md`](./docs/BUILD_PLAN.md).
@@ -73,17 +76,17 @@ npm run seed -- --apply --target https://APPROVED-PROJECT.supabase.co
 
 The target must match `NEXT_PUBLIC_SUPABASE_URL`. The script refuses existing Auth users or rows in user-data tables and never resets or deletes them. If a step fails after writes began, it stops; inspect the demo database with Alex before retrying. This is initial setup for an empty database, not a reset command.
 
-| Role                           | Login                                                   | Password                                               |
-| ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------ |
-| Близък (family owner)          | `family@demo.scamly.invalid`                            | Demo password (given to the jury privately)            |
-| Втори близък (trusted contact) | `contact@demo.scamly.invalid`                           | Demo password (given to the jury privately)            |
-| Модератор                      | `moderator@demo.scamly.invalid`                         | Demo password (given to the jury privately)            |
-| Администратор                  | `admin@demo.scamly.invalid`                             | Demo password (given to the jury privately)            |
-| Защитен човек (device)         | No email/password entry; pair the browser at `/svarzhi` | Random internal credentials are never printed or saved |
+| Role                          | Login                                                   | Password                                               |
+| ----------------------------- | ------------------------------------------------------- | ------------------------------------------------------ |
+| Близък: Иван, the son (owner) | `family@demo.scamly.invalid`                            | Demo password (given to the jury privately)            |
+| Близък: Ана, the daughter     | `contact@demo.scamly.invalid`                           | Demo password (given to the jury privately)            |
+| Модератор                     | `moderator@demo.scamly.invalid`                         | Demo password (given to the jury privately)            |
+| Администратор                 | `admin@demo.scamly.invalid`                             | Demo password (given to the jury privately)            |
+| Защитен: Мария, the mother    | No email/password entry; pair the browser at `/svarzhi` | Random internal credentials are never printed or saved |
 
-The human accounts are confirmed automatically. The seed creates one protected person, two linked contacts (the owner plus another family member), one paired device using the existing pairing service, two sample checks and two reports. Check verdicts are synthetic fixtures marked `demo-fixture-1`; they are not detection-engine results.
+The human accounts are confirmed automatically. The seed creates the demo family of the main story (D34): the protected mother Мария Петрова, her son Иван Петров (the family owner, contact #1) and her daughter Ана Петрова (contact #2), plus one paired device using the existing pairing service, two sample checks and two reports. Check verdicts are synthetic fixtures marked `demo-fixture-1`; they are not detection-engine results.
 
-A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. **Status (4 Nov 2026):** the seed has been applied to the live Supabase project. All four human demo accounts log in through `/api/auth/login` with the expected roles (family, family, moderator, admin), and the protected person, two contacts, the paired demo device, two sample checks and two reports exist.
+A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. **Status (4 Nov 2026):** the seed has been applied to the live Supabase project. All four human demo accounts log in through `/api/auth/login` with the expected roles (family, family, moderator, admin), and the protected person, two contacts, the paired demo device, two sample checks and two reports exist. That live data still has the earlier demo names; the names above apply to the next seed of an empty database (the live database is not changed).
 
 The demo password is **not** written in this public repository: anyone could then log in as the demo administrator on the live site. It is given to the jury privately (registration form and printed documentation).
 

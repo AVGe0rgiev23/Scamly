@@ -1,6 +1,6 @@
 // The list of published education cards on /kak-raboti (W3-05): one big card per
 // scam script with its type, title, the start of "how it starts" and an arrow to the
-// whole card.
+// whole card. The „Роднина в беда“ card comes first (order.ts, D34).
 // Look (Ореол v3): a bento grid of large glass cards (education.css .edu-bento). The
 // cards are not identical rows: the first and the fourth are wide, the others narrow,
 // and each type has its own soft halo light (data-type). The title link covers the
@@ -16,6 +16,7 @@ import { Notice } from "@/components/ui/Notice";
 import { EmptyState } from "@/components/ui/States";
 import { bg } from "@/i18n/bg";
 import type { PublicScriptDto } from "@/schemas/scripts";
+import { fakeRelativeFirst } from "./order";
 
 type ScriptListProps = {
   scripts: PublicScriptDto[];
@@ -29,7 +30,7 @@ export function ScriptList({ scripts, hrefFor }: ScriptListProps) {
   }
   return (
     <ul className="edu-bento">
-      {scripts.map((script) => (
+      {fakeRelativeFirst(scripts).map((script) => (
         <li key={script.slug} className="edu-tile" data-type={script.scriptType}>
           <div className="edu-tile-light" aria-hidden="true" />
           <Badge className="edu-tile-badge">{bg.scripts.typeNames[script.scriptType]}</Badge>

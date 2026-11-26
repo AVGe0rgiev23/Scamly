@@ -42,21 +42,22 @@ export const SAMPLE_CALLS: SampleCall[] = [
   },
   {
     id: "relative",
-    label: "Обаждане от внучката",
+    label: "Обаждане от сина",
     input: {
       claimedIdentity: "relative",
       asksMoney: "no",
       handover: null,
       rushing: "no",
       secrecy: "no",
-      text: "Здравей, бабо, аз съм. Ще дойда в събота на обяд. Да донеса ли нещо от магазина?",
+      text: "Здравей, мамо, аз съм. Ще дойда в събота на обяд. Да донеса ли нещо от магазина?",
     },
   },
 ];
 
 // The example people and values in the small feature screens.
 export const SAMPLE = {
-  protectedName: "Баба Мария",
+  // The demo family (D34): the mother Мария is protected, her son Иван is called first.
+  protectedName: "Мария",
   familyName: "Иван",
   pairingCode: "482 915",
   pairingTimeLeft: "9:42",
@@ -66,7 +67,7 @@ export const SAMPLE = {
   // The sample family on the home page, in the order Scamly calls them (AvatarStack).
   familyOrder: [
     { id: "f1", name: "Иван Петров" },
-    { id: "f2", name: "Елена Петрова" },
+    { id: "f2", name: "Ана Петрова" },
     { id: "f3", name: "Георги Петров" },
   ],
 } as const;

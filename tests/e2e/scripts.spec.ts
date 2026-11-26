@@ -19,6 +19,14 @@ const POLICE_CARD = {
   whatTheySayBg: "„Помогнете ни да хванем измамниците.“ „Не казвайте на никого.“",
   whatToDoBg: "Затворете телефона. Полицията никога не иска пари. Обадете се на 112.",
 };
+const RELATIVE_CARD = {
+  slug: "rodnina-v-beda",
+  scriptType: "relative_in_trouble",
+  titleBg: "Роднина в беда",
+  howItStartsBg: "Обажда се глас: „Мамо, аз съм…“",
+  whatTheySayBg: "„Катастрофирах.“",
+  whatToDoBg: "Затворете телефона.",
+};
 const COURIER_CARD = {
   slug: "kolet-kurier",
   scriptType: "courier",
@@ -50,16 +58,18 @@ async function fitsScreen(page: Page): Promise<boolean> {
 }
 
 test("the education list shows the intro and one tile per published card", async ({ page }) => {
-  await servePublishedCards(page, [POLICE_CARD, COURIER_CARD]);
+  // The API sends the database order (police first); the fake-relative card is shown first (D34).
+  await servePublishedCards(page, [POLICE_CARD, RELATIVE_CARD, COURIER_CARD]);
   await page.goto("/dev/kak-raboti");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.education.title);
   await expect(page.getByText(bg.education.lead)).toBeVisible();
   const tiles = page.getByRole("main").getByRole("listitem");
-  await expect(tiles).toHaveCount(2);
-  await expect(tiles.nth(0)).toContainText(bg.scripts.typeNames.police);
-  await expect(tiles.nth(0)).toContainText(POLICE_CARD.titleBg);
-  await expect(tiles.nth(1)).toContainText(COURIER_CARD.howItStartsBg);
+  await expect(tiles).toHaveCount(3);
+  await expect(tiles.nth(0)).toContainText(RELATIVE_CARD.titleBg);
+  await expect(tiles.nth(1)).toContainText(bg.scripts.typeNames.police);
+  await expect(tiles.nth(1)).toContainText(POLICE_CARD.titleBg);
+  await expect(tiles.nth(2)).toContainText(COURIER_CARD.howItStartsBg);
 
   // The link's name says which card it opens; it opens that card.
   await page
@@ -119,6 +129,31 @@ test("one card: how it starts, what they say, what to do, big text and print", a
 
   await card.getByRole("link", { name: bg.education.backToList }).click();
   await expect(page).toHaveURL(/\/dev\/kak-raboti$/);
+});
+
+test("the fridge card tells the D34 story and has the phone sticker on a second page", async ({
+  page,
+}) => {
+  const card = bg.fridgeCard;
+  await page.goto("/karta-za-hladilnik");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(card.title);
+  await expect(page.getByText(card.hook)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: card.stickerTitle })).toBeVisible();
+  await expect(page.getByText(card.sticker)).toBeVisible();
+  await expect(page.getByText(card.stickerRule)).toBeVisible();
+
+  // On paper: no hints and no button, the card and the sticker stay; the sticker
+  // starts a new page, so the card keeps its whole A5 page.
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("button", { name: bg.education.print })).toBeHidden();
+  await expect(page.getByText(card.stickerHint)).toBeHidden();
+  await expect(page.getByText(card.steps[0])).toBeVisible();
+  await expect(page.getByText(card.sticker)).toBeVisible();
+  const breakBefore = await page
+    .locator(".fridge-sticker-area")
+    .evaluate((element) => getComputedStyle(element).breakBefore);
+  expect(breakBefore).toBe("page");
+  await page.emulateMedia({ media: "screen" });
 });
 
 test("the footer and the home page link to „Как работи измамата“", async ({ page }) => {
