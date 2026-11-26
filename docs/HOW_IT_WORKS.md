@@ -164,6 +164,7 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | AI second opinion (Gemini / Groq chain) | ❌ dropped (D35); `FEATURE_AI` removed (P-02) | | |
 | Escalation chain (W3-09) | ❌ app-side job removed (P-02, D35); the old migration stays unused | `supabase/migrations/20261111000001_alert_escalation.sql` (not read by the app any more) | `13_alert_escalation.test.sql` (tests the migration only) |
 | P-02 cuts: voice and e-mail off by default, `/dev/*` 404 without `SCAMLY_DEV_PAGES=1`, short header and dock, „Упражнение“ button | ✅ (P-02, Alex, 26 Nov) | `src/config/features.ts`, `src/app/dev/layout.tsx`, `playwright.config.ts`, `src/components/layout/`, `src/components/protected/CheckHome.tsx`, `src/i18n/bg.ts` | `features.test.ts`, `siteNav.test.ts`, `layout.spec.ts`, `voice.spec.ts`, `protected.spec.ts` |
+| „Провери истинския“ backend: `identity_checks`, RLS, API, push + Realtime, circle warning (3.48) | ✅ (P-05, Alex, 26 Nov) · screens in P-06 | `supabase/migrations/20261126000001_identity_checks.sql`, `src/app/api/identity-checks/`, `src/server/services/identityCheckService.ts`, `src/server/repositories/identityChecksRepository.ts`, `src/schemas/identityChecks.ts`, `src/lib/realtime.ts` | `identityCheckService` (23), `identity-checks/route.test.ts` (12), `15_identity_checks` (33) |
 | Security hardening (CSP, headers, attack tests) | ⬜ planned (week 4, W4-01, W4-02) | | |
 
 ---
@@ -2080,6 +2081,44 @@ A nonce-based CSP would be stricter, but the Next.js docs say it needs every pag
 
 securityheaders.com gives the live site **grade A** (`docs/evidence/securityheaders.png`); Lighthouse finds no CSP issue (`docs/evidence/lighthouse-2026-11-12.md`). `src/config/securityHeaders.test.ts` (12 tests) checks every directive and header. A production build was opened on 12 pages with a script that collects CSP errors: 0 violations, every page started. `npm audit --omit=dev`: 0 vulnerabilities. Secret scan of every commit: 0 findings.
 
+### 3.48 „Провери истинския“ backend: `/api/identity-checks` (P-05, D34)
+
+#### What it does
+
+The main feature's server side. Grandma's paired phone says "the caller claims to be Ivan"; the **real** Ivan gets a web push and a live alert „Някой се представя за теб пред Мария и иска пари. Ти ли си?“ and answers once: „Не съм аз“ (`not_me`) or „Аз съм“ (`its_me`). On „Не съм аз“ everybody **else** in the family gets „Някой се представя за Иван. Ако ви звънне, затворете.“ (#38) and an audit line is written. If Ivan does not answer within 45 s, the phone asks the next family member. The screens come in P-06 (phase 3).
+
+| Endpoint | Who | Request → answer |
+|---|---|---|
+| `GET /api/identity-checks/family` | phone (`protected`) | → 200 `{ people: [{ userId, displayName, initials, phone, priority, canReceive }] }` in calling order; `userId` is `null` (and `canReceive` false) for a contact without an account; `phone` = the **saved** number for the call-back button |
+| `POST /api/identity-checks` | phone | `{ claimedUserId }` → 201 `{ identityCheck }`; 400 `not_family`, 409 `identity_busy`, 429 after 20 per phone per hour |
+| `GET /api/identity-checks/:id` | the phone that asked, or the family of the person | → 200 `{ identityCheck }`; anything else 404 |
+| `PATCH /api/identity-checks/:id` | the claimed family member only | `{ answer: "not_me" \| "its_me" }` → 200 `{ identityCheck }`; 403 another family member, 404 no access, 409 `already_answered` (answered, expired, or older than 15 min), 400 any other answer |
+| `GET /api/identity-checks` | family | → 200 `{ pending, warnings }`: my questions I can still answer + the „Не съм аз“ answers of the others (last 24 h) |
+
+`identityCheck` (`IdentityCheckDto`, `src/schemas/identityChecks.ts`): `{ id, protectedPersonId, personName, claimedUserId, claimedName, claimedPhone, status: "pending" | "not_me" | "its_me" | "expired", createdAt, answeredAt, answerableUntil, secondsToAnswer }`. `status` is the **effective** status: a row still `pending` after 15 minutes is sent as `expired`. Live updates: `watchIdentityCheck(id, …)` (the phone) and `watchMyIdentityChecks(personIds, …)` (a family member) in `src/lib/realtime.ts`, with the same 5 s / 10 s polling safety net as the alerts (3.25). The push opens `/family/proveri?id=…` (the answer screen, P-06) or `/family/alerts` (the warning).
+
+#### How it works
+
+Routes in `src/app/api/identity-checks/**`, logic in `src/server/services/identityCheckService.ts`, queries in `src/server/repositories/identityChecksRepository.ts`, migration `20261126000001_identity_checks.sql`.
+
+- **One table, `identity_checks`**: `id`, `protected_person_id`, `device_id` (the phone that asked; set null when unpaired), `claimed_user_id`, `status` (enum `identity_check_status`), `created_at`, `answered_at`. Time-to-answer (#7) = `answered_at − created_at` (`secondsToAnswer`).
+- **The chain and the 45 s step are driven by the phone.** After 45 s without an answer the phone simply sends another `POST` for the next person. A **before-insert trigger** (`expire_previous_identity_check`, SECURITY DEFINER) marks the same phone's previous `pending` question `expired`, and a **partial unique index** (`device_id` where `status = 'pending'`) guarantees one open question per phone, even when two requests race (the loser gets 409). A late answer to the old question is then refused (409). No server timer, no scheduled job.
+- **The answer is a compare-and-set**: one `UPDATE identity_checks SET status = $answer WHERE id = $1 AND claimed_user_id = $me AND status = 'pending' AND created_at > now − 15 min`. Two answers at once: PostgreSQL runs them one after the other, the second changes nothing → 409. A trigger writes `answered_at = now()`, so nobody can send their own time.
+- **Both locks use the caller's own client.** The service checks the rules in code first (the phone's own person from `getActor()`, never from the body; X must be in that person's contact list with an account; only X answers; once; 15 minutes). Then the insert and the update go through the **user** client, so RLS and column privileges check the same rules again in the database (`is_own_device()`, `is_family_member_of()` and the update policy). Only the rate limiter, the audit line and the push messages use the service role (other users' data).
+- **Live alerts are the row itself.** `identity_checks` is in the Realtime publication: Ivan's page sees the new row (INSERT), the rest of the family and the phone see the answer (UPDATE). RLS decides who receives what. Push (`sendPushToUser()`, split out of `pushChannel.ts`) wakes closed pages; a failing push is only logged, never fails the request.
+- **The phone's list** reuses the contact list the phone could already read through RLS (`trusted_contacts`, „Обади се на …“). The owner's export (`GET /api/me/export`) now also lists the questions about each person.
+
+#### Why it works like that
+
+- **Client-driven 45 s step instead of a server job**: the escalation job (W3-09) needed `pg_cron`, `pg_net` and a secret and was never live; here the phone is open anyway (grandma is on the call), and the server still enforces the safe part (one open question, old one expired, 15 minutes). Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "„Провери истинския“: who moves to the next family member".
+- **Compare-and-set in one UPDATE** instead of "read, check, write": nothing can slip in between.
+- **User client for the writes (unlike `checks`)**: here the browser writes no computed result, only "who is asked" and "my answer", so RLS can express the whole rule; we keep the service-role surface small.
+- **Answer only within 15 minutes**: a scam call is over by then; an old question answered by accident could confuse the family.
+
+#### How we know it works
+
+`identityCheckService.test.ts` (23 tests: tiles with saved numbers, only phones ask, not-family → 400, chain expires the previous question and a late answer is 409, race → 409, 20 per hour then 429, push to the claimed member only, not_me → audit + push to everyone else (not Ivan, not a phone-only contact, not another family), its_me → nothing, second answer 409, only X answers (403) and another family gets 404, 15 minutes → 409, a failing push never fails the request, IDOR reads → 404, effective `expired`, the family list). `src/app/api/identity-checks/route.test.ts` (12 tests: roles, CSRF, Zod 400, bad id 404, 409 passed on). `supabase/tests/15_identity_checks.test.sql` (33 assertions, below in 6.2).
+
 ## 4. Code quality, tests and CI
 
 ### 4.1 Code quality tools and npm scripts
@@ -2309,7 +2348,7 @@ All tables live in the schema `public`. Every `id` is a random UUID (`gen_random
 
 #### How we know it works
 
-`supabase/tests/01_schema.test.sql`: exactly these 14 tables and 10 enums exist, the important indexes exist, and 9 CHECK/foreign-key tests (61-char name, empty name, score 101, 2001-char text, answered without verdict, priority 6, 1001-char description, unknown district).
+`supabase/tests/01_schema.test.sql`: exactly these 15 tables and 11 enums exist, the important indexes exist, and 9 CHECK/foreign-key tests (61-char name, empty name, score 101, 2001-char text, answered without verdict, priority 6, 1001-char description, unknown district).
 
 ### 5.2 Enums
 
@@ -2327,6 +2366,7 @@ An **enum** is a fixed list of allowed values (like Python's `enum.Enum`).
 | `alert_channel` | `realtime`, `push`, `email` |
 | `alert_status` | `pending`, `sent`, `failed` |
 | `report_status` | `pending`, `approved`, `rejected` |
+| `identity_check_status` | `pending`, `not_me`, `its_me`, `expired` („Провери истинския“, 3.48) |
 
 Proven by `01_schema` (`enums_are`, `enum_has_labels`).
 
@@ -2642,7 +2682,7 @@ Only `service_role` may execute it.
 
 #### What it does
 
-Supabase Realtime sends live database changes to subscribed browsers. Only `checks` and `alerts` are sent.
+Supabase Realtime sends live database changes to subscribed browsers. Only `checks`, `alerts` and `identity_checks` (P-05, 3.48) are sent.
 
 #### How it works
 
@@ -2654,7 +2694,7 @@ The family's live alert page (D7, primary channel) needs new alerts and check up
 
 #### How we know it works
 
-`01_schema`: exactly `alerts` and `checks` are in the publication. Live delivery: the smoke test of 4 Nov (alert via Realtime 111 ms after the API answer, 3.23); the e2e test W2-11 will prove it in CI.
+`01_schema`: exactly `alerts`, `checks` and `identity_checks` are in the publication. Live delivery: the smoke test of 4 Nov (alert via Realtime 111 ms after the API answer, 3.23); the e2e test W2-11 will prove it in CI.
 
 ### 5.13 HMAC-hashed pairing codes
 
@@ -2748,7 +2788,7 @@ All 9 files pass (171 assertions) locally (4 Nov); CI runs the same files.
 
 | File | Assertions | What it proves |
 |---|---|---|
-| `01_schema.test.sql` | 21 | Exactly 14 tables and 10 enums; RLS on for **every** table; 28 districts with correct codes and names; key indexes exist; only `checks` and `alerts` in Realtime; CHECK and foreign-key constraints reject bad values |
+| `01_schema.test.sql` | 21 | Exactly 15 tables and 11 enums; RLS on for **every** table; 28 districts with correct codes and names; key indexes exist; only `checks`, `alerts` and `identity_checks` in Realtime; CHECK and foreign-key constraints reject bad values |
 | `02_profiles.test.sql` | 17 | Sign-up trigger: role `family`, name fallbacks, `"role": "admin"` ignored, cut to 60; each user sees only their own profile, admin sees all; family can update name/email setting but **not their role**; nobody can insert profiles; a device can't edit its profile; guests refused; IDOR (can't read or rename another user) |
 | `03_persons_contacts.test.sql` | 29 | Owner auto-added as contact #1; owner, trusted contact, device, moderator, admin and guest each see exactly the right people, contacts and invites; only the owner changes a person or its contacts; owner can't give a person away or attach someone's account; family can't create a person for someone else; a device can't create people; IDOR (A can't read, add to, rename or delete B's person) |
 | `04_devices_pairing.test.sql` | 13 | A device sees only its own row; a **revoked device sees nothing**; nobody can change devices or create them from the browser; nobody (not owner, not admin, not guest) can read or create pairing codes; deleting a device login deletes the device but keeps the check history; IDOR (B can't see A's devices; a device can't read another family's person) |
@@ -2757,6 +2797,7 @@ All 9 files pass (171 assertions) locally (4 Nov); CI runs the same files.
 | `07_admin_audit.test.sql` | 12 | The audit log is append-only and admin-only, even against `service_role`; the line survives the actor's deletion |
 | `08_functions.test.sql` | 18 | `hit_rate_limit` behaviour and permissions; who may execute which function; helper functions answer correctly per role; every SECURITY DEFINER function pins `search_path` |
 | `11_replace_contacts.test.sql` | 20 | `replace_trusted_contacts()` (5.14): swap, rename, add, remove in one call; full 5-place rotation; accounts kept, a sent `user_id` ignored; owner's row required; unknown ids and double places refused; non-owner contact, stranger and guest refused; SECURITY INVOKER with empty `search_path`; no `anon` execute |
+| `15_identity_checks.test.sql` | 33 | „Провери истинския“ (3.48): a phone asks only a family account of its own person (not a stranger, not a non-family account, not in another phone's name, not about another person); it can't write `status` or `created_at`; a new question expires the previous pending one; only the claimed member answers, once (compare-and-set), never an expired or 15-minute-old question, never `expired` as an answer; the database writes `answered_at`; nobody deletes, changes who was asked or writes `answered_at`; family reads all, IDOR (another phone, another family, a moderator, a guest see nothing); admin reads all but can't answer |
 
 **IDOR tests.** Every "only own rows" rule has a test where user B (or another device) tries to reach user A's data by its id: profile, protected person, contacts, adding a contact, renaming/deleting the person, devices, checks, alerts. Each one must give 0 rows or an error, and the superuser check afterwards confirms nothing changed. In the test files they are named `IDOR: ...`.
 
@@ -3112,3 +3153,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-24 · connected the security matrix to automated coverage and added report-rendering and structured-input regression tests (W4-02).
 - 2026-11-24 · added privacy notice, family export and confirmed deletion, with an atomic cleanup of paired logins (W4-07).
 - 2026-11-26 · P-02 „Cuts“ (Alex, D35): `FEATURE_VOICE` and `FEATURE_EMAIL` off by default, voice and e-mail promises removed from the landing page, FAQ and privacy notice; app-side escalation removed (3.46: route, `FEATURE_ESCALATION`, `CRON_SECRET`, ops script, `alertVisible` / `suggestEmergencyCall`; the migration stays unused); `CommandPalette` and `FEATURE_AI` removed; `/dev/*` answers 404 without `SCAMLY_DEV_PAGES=1` (`src/app/dev/layout.tsx`); header „Как работи“ / „Вход“ / „Провери“, dock Начало / Провери / Вход; practice behind „Упражнение“; sections 3.3, 3.7.1, 3.30, 3.36, 3.46, status table.
+- 2026-11-26 · new section 3.48: „Провери истинския“ backend (P-05, Alex): `identity_checks` table, RLS + column privileges, client-driven 45 s chain with a before-insert expiry trigger and one pending question per phone, compare-and-set answer within 15 minutes, push + Realtime, circle warning (#38), audit; status row, 5.2, 5.12 and 6.2 updated.

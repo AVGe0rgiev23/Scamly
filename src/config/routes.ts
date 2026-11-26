@@ -25,6 +25,7 @@ export const ROUTES = {
   familyData: "/family/danni",
   privacy: "/poveritelnost",
   familyAlerts: "/family/alerts", // the live alert page („Сигнали“), W2-03
+  familyIdentity: "/family/proveri", // the answer screen of „Провери истинския“ (P-06, ?id=…)
   moderator: "/moderator",
   moderatorScripts: "/moderator/scripts", // the scam-script editor, W3-05
   moderatorReports: "/moderator/reports", // the report queue („Сигнали“), W3-04

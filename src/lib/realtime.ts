@@ -5,6 +5,8 @@
 //                                          обади веднага“, Roberta's W2-01)
 //   watchChecksOfPersons(ids, onChecks)   the family's alert page /family/alerts
 //   watchPersonChecks(personId, onChecks) the live list of one person's checks
+//   watchIdentityCheck(id, onCheck)        the phone waits for „Не съм аз“ / „Аз съм“ (P-05)
+//   watchMyIdentityChecks(personIds, …)    a family member's questions + warnings (P-05)
 //
 // All return a stop() function; call it when the page closes (React: in the cleanup
 // of useEffect).
@@ -34,6 +36,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getPublicEnv } from "@/lib/publicEnv";
 import type { CheckDto, RealtimeTokenDto } from "@/schemas/checks";
+import type { IdentityCheckDto, MyIdentityChecksDto } from "@/schemas/identityChecks";
 import type { Database } from "@/types/database";
 
 // How often we ask our API while Realtime is not connected.
@@ -244,7 +247,7 @@ export function browserWakeListener(onWake: () => void): () => void {
 // One kind of database change to listen to. The filter uses PostgREST syntax,
 // e.g. "id=eq.<uuid>". RLS still decides whether this user receives it.
 type Watch = {
-  table: "checks" | "alerts";
+  table: "checks" | "alerts" | "identity_checks";
   event: "*" | "INSERT" | "UPDATE";
   filter: string;
 };
@@ -374,4 +377,58 @@ export function newestFirst(checks: CheckDto[]): CheckDto[] {
   return [...byId.values()].sort((a, b) =>
     a.startedAt < b.startedAt ? 1 : a.startedAt > b.startedAt ? -1 : 0,
   );
+}
+
+// ---------------------------------------------------------------------------------
+// „Провери истинския“ (P-05)
+// ---------------------------------------------------------------------------------
+
+// One question, live: the phone that asked waits for the answer (or "expired").
+export function watchIdentityCheck(
+  checkId: string,
+  onCheck: (check: IdentityCheckDto) => void,
+  onError: (error: unknown) => void = () => undefined,
+): () => void {
+  return startLiveWatch({
+    refresh: async () => {
+      const body = (await getJson(`/api/identity-checks/${encodeURIComponent(checkId)}`)) as {
+        identityCheck: IdentityCheckDto;
+      };
+      onCheck(body.identityCheck);
+    },
+    connect: realtimeConnector(`identity:${checkId}`, () => [
+      { table: "identity_checks", event: "UPDATE", filter: `id=eq.${checkId}` },
+    ]),
+    pollMs: POLL_INTERVAL_MS,
+    safetyPollMs: SAFETY_POLL_INTERVAL_MS,
+    onError,
+    listenForWake: browserWakeListener,
+  });
+}
+
+// A family member's open questions and the family's „Не съм аз“ warnings, live
+// (family only). Every new question and every answer about the people this family
+// member looks after rings the doorbell; each load asks GET /api/identity-checks.
+export function watchMyIdentityChecks(
+  personIds: string[],
+  onChecks: (checks: MyIdentityChecksDto) => void,
+  options: WatchOptions = {},
+): () => void {
+  return startLiveWatch({
+    refresh: async () => {
+      onChecks((await getJson("/api/identity-checks")) as MyIdentityChecksDto);
+    },
+    connect: realtimeConnector("family-identity", () =>
+      personIds.map((personId): Watch => ({
+        table: "identity_checks",
+        event: "*",
+        filter: `protected_person_id=eq.${personId}`,
+      })),
+    ),
+    pollMs: POLL_INTERVAL_MS,
+    safetyPollMs: SAFETY_POLL_INTERVAL_MS,
+    onError: options.onError ?? (() => undefined),
+    onLive: options.onLive,
+    listenForWake: browserWakeListener,
+  });
 }

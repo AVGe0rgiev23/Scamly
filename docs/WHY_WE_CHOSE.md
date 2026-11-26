@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-19
+> Last updated: 2026-11-26
 
 **25 November, D33.** The last drill question lets people rehearse deciding what to do after spotting a scam. It uses existing large buttons and shows feedback immediately after the choice.
 
@@ -2588,7 +2588,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 **We would reconsider if:** we dropped the escalation feature (it's a stretch goal). We did (D35).
 
-### On-screen fallback instead of a server-side escalation job  (status: decided (D35); job removed in P-02, fallback built in P-06)
+### On-screen fallback instead of a server-side escalation job  (status: decided (D35); job removed in P-02, backend built in P-05, screens in P-06)
 
 **Used for:** what happens when the first family member does not answer.
 
@@ -2602,6 +2602,54 @@ The claim and Realtime insert share one database transaction so two job runs can
 **What we give up:** a server that keeps trying when the phone is closed. The migration `20261111000001_alert_escalation.sql` stays in the repo (we never delete migrations), unused by the app, so the app works with or without it on the live database.
 
 **We would reconsider if:** real tests showed family members miss alerts that a later reminder would have caught.
+
+### „Провери истинския“: who moves to the next family member (the phone, not a server job)  (status: in use (P-05, 26 Nov; screens in P-06))
+
+**Used for:** "no answer in 45 s → ask the next family member" (HOW_IT_WORKS 3.48).
+
+**Alternatives we considered:** a server job that expires questions and asks the next person (`pg_cron` every minute, or a Vercel cron); a timer inside the API request (`setTimeout` for 45 s); the server picking the next person itself in a "next" endpoint.
+
+**Why this one:**
+- **The phone is open anyway:** grandma is on the call, the waiting screen counts the 45 s. When it runs out, it simply sends another `POST` for the next person. One endpoint, nothing new to run.
+- **The server still enforces the safe part:** a before-insert trigger marks the phone's previous pending question `expired`, and a partial unique index allows only one pending question per phone, so a late „Аз съм“ to the old question is refused (409) and two racing requests can't both win.
+- **No scheduled job to set up or forget** (the W3-09 escalation job needed `pg_cron`, `pg_net` and a secret and was never live, D35). A `setTimeout` in a serverless function dies when the answer is sent.
+- **Easy to test:** the trigger and the index in pgTAP, the chain in the service tests, no clock mocking of a background worker.
+
+**What we give up:** if the phone goes offline after the first question, nobody else is asked automatically. The family still sees the open question live, and the 30-second check with the hard rules is the safety net.
+
+**We would reconsider if:** the Android companion (F-01) could keep asking in the background, or tests showed phones often drop off mid-call.
+
+### Compare-and-set answer within 15 minutes (vs read-then-write)  (status: in use (P-05))
+
+**Used for:** `PATCH /api/identity-checks/:id`: one `UPDATE … SET status = $answer WHERE id = $1 AND claimed_user_id = $me AND status = 'pending' AND created_at > now − 15 min`; the database trigger writes `answered_at`.
+
+**Alternatives we considered:** read the row, check it in TypeScript, then update it; a row lock (`select … for update`) in a SQL function; letting the answer be changed later.
+
+**Why this one:**
+- **Nothing can slip in between:** two taps, two tabs or a late answer after the phone moved on: exactly one UPDATE wins, the other gets 409. The same pattern as „Обаждам ѝ се сега“ (3.23).
+- **The same rule lives in RLS too** (the update policy has the same conditions), so even a request that bypassed our API could only answer once, only for itself.
+- **One answer is the evidence:** time-to-answer (#7) and the audit line of „Не съм аз“ must not change afterwards.
+- **15 minutes:** a scam call is over by then; an old question answered by accident would only confuse the family.
+
+**What we give up:** a family member who tapped the wrong button can't correct it; they call grandma instead (which the „Не съм аз“ button does anyway in P-06).
+
+**We would reconsider if:** families asked for an undo; then a short undo window, still audited.
+
+### One `identity_checks` table, written with the user's own client (vs extra tables, vs the service role)  (status: in use (P-05))
+
+**Used for:** every „Провери истинския“ question: who asked (the phone), who is claimed, the status and the two times.
+
+**Alternatives we considered:** reuse `checks` / `alerts` (a new kind of check, one alert row per family member); a separate `identity_answers` table and a `chain` table; writing with the service role like `checks`.
+
+**Why this one:**
+- **One row tells the whole story:** asked, answered or expired, and how fast. The chain needs no table of its own: the phone's previous pending row is the previous step.
+- **Realtime for free:** the row itself is the live alert for the claimed member (INSERT) and for the rest of the family and the phone (UPDATE), filtered by RLS. No `alerts` rows needed.
+- **RLS can express the whole rule**, because the browser stores no computed result (unlike a verdict): a phone may insert only for its own person and a family account (`is_own_device()`, `is_family_member_of()`), the claimed member may update only `status`, once. So the writes use the caller's **user** client and the database is a real second lock; the service role is used only for the rate limit, the audit line and push.
+- `checks` stays what it is (the 30-second check); mixing in a second kind of row would make every query and policy there more complicated.
+
+**What we give up:** the family's alert history page (`/family/alerts`) does not show these questions yet; P-06 shows them on their own screen.
+
+**We would reconsider if:** we needed a full history of each push delivery per family member (then `alerts`-style rows).
 
 ### Pinned exact dependency versions (`.npmrc save-exact=true` + `package-lock.json`)  (status: in use)
 
@@ -2623,7 +2671,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 ## 10. Project process and documentation
 
-### Verify the relationship, not the call: „Провери истинския“  (status: decided (D34, 21 Nov), to build in P-05/P-06)
+### Verify the relationship, not the call: „Провери истинския“  (status: decided (D34, 21 Nov); backend in use (P-05, 26 Nov), screens in P-06)
 
 **Used for:** the main feature and the main story. When "someone close" calls asking for money, one tap asks the real person on their own signed-in phone: „Не съм аз — затвори!“ or „Аз съм“.
 
@@ -3014,6 +3062,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-26 · P-05 „Провери истинския“ backend (Alex): new entries in section 9 "who moves to the next family member (the phone, not a server job)", "Compare-and-set answer within 15 minutes", "One `identity_checks` table, written with the user's own client"; statuses of „Провери истинския“ and the on-screen fallback updated
 - 2026-11-26 · P-02 „Cuts“ (Alex): new entries "`/dev/*` hidden on the live site by one environment variable" and "On-screen fallback instead of a server-side escalation job"; `pg_cron` marked removed; feature switches updated (voice and email off by default, AI and escalation switches removed).
 - 2026-11-21 · product review (D34, D35): new entries "Verify the relationship, not the call" and "Few essential features over a feature catalogue"; the AI-layer entry marked dropped.
 - 2026-11-20 · redesign v3 Phase 4 (the family area and the live alert island): new entries "A Dynamic Island for a new alert", "A timeline with halo nodes", "A flip-reveal pairing code", "Tabs that keep every panel mounted".

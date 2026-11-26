@@ -115,46 +115,59 @@ export function createPushChannel(deps: PushChannelDeps): AlertChannel {
       if (message === null) {
         return "skipped";
       }
-      const subscriptions = await deps.listSubscriptions(recipient.userId);
-      if (subscriptions.length === 0) {
-        return "skipped"; // this family member never switched notifications on
-      }
-
-      // Try every browser of this person, one after the other.
-      let sentCount = 0;
-      let goneCount = 0;
-      const problems: string[] = [];
-      for (const subscription of subscriptions) {
-        try {
-          const result = await deps.send(
-            {
-              endpoint: subscription.endpoint,
-              keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-            },
-            message,
-          );
-          if (result === "sent") {
-            sentCount += 1;
-          } else {
-            goneCount += 1;
-            await deleteQuietly(deps, subscription.id);
-          }
-        } catch (error) {
-          problems.push(describeError(error));
-        }
-      }
-
-      // At least one browser got it: the alert counts as "sent".
-      if (sentCount > 0) {
-        return;
-      }
-      // Nobody got it: throw, so the alert service writes a "failed" row.
-      if (problems.length === 0) {
-        throw new Error(`all ${goneCount} push subscription(s) expired and were removed`);
-      }
-      throw new Error(`push failed for ${problems.length} subscription(s): ${problems[0]}`);
+      const result = await sendPushToUser(deps, recipient.userId, message);
+      return result === "skipped" ? "skipped" : undefined;
     },
   };
+}
+
+// Sends ONE message to every browser of ONE account. Also used by „Провери истинския“
+// (identityCheckService.ts), whose messages are not about a check.
+// "skipped" = this account never switched notifications on. Throws when no browser
+// could be reached.
+export async function sendPushToUser(
+  deps: PushChannelDeps,
+  userId: string,
+  message: PushMessage,
+): Promise<"sent" | "skipped"> {
+  const subscriptions = await deps.listSubscriptions(userId);
+  if (subscriptions.length === 0) {
+    return "skipped"; // this family member never switched notifications on
+  }
+
+  // Try every browser of this person, one after the other.
+  let sentCount = 0;
+  let goneCount = 0;
+  const problems: string[] = [];
+  for (const subscription of subscriptions) {
+    try {
+      const result = await deps.send(
+        {
+          endpoint: subscription.endpoint,
+          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+        },
+        message,
+      );
+      if (result === "sent") {
+        sentCount += 1;
+      } else {
+        goneCount += 1;
+        await deleteQuietly(deps, subscription.id);
+      }
+    } catch (error) {
+      problems.push(describeError(error));
+    }
+  }
+
+  // At least one browser got it: the alert counts as "sent".
+  if (sentCount > 0) {
+    return "sent";
+  }
+  // Nobody got it: throw, so the caller can record the failure.
+  if (problems.length === 0) {
+    throw new Error(`all ${goneCount} push subscription(s) expired and were removed`);
+  }
+  throw new Error(`push failed for ${problems.length} subscription(s): ${problems[0]}`);
 }
 
 // Deleting a dead subscription is housekeeping: if it fails, we only log it (the next
@@ -167,20 +180,30 @@ async function deleteQuietly(deps: PushChannelDeps, subscriptionId: string): Pro
   }
 }
 
-// The real push channel, or null when push is off (see getPushConfig). Subscriptions
+// The real push deps, or null when push is off (see getPushConfig). Subscriptions
 // are read and cleaned up through the admin client (service role, use 4).
+export function createRealPushDeps(
+  admin: DbClient,
+  env: ServerEnv = getServerEnv(),
+  features: Features = getFeatures(),
+): PushChannelDeps | null {
+  const config = getPushConfig(env, features);
+  if (config === null) {
+    return null;
+  }
+  return {
+    send: createWebPushSender(config),
+    listSubscriptions: (userId) => listPushSubscriptionsOfUser(admin, userId),
+    deleteSubscription: (subscriptionId) => deletePushSubscriptionById(admin, subscriptionId),
+  };
+}
+
+// The real push channel, or null when push is off.
 export function createRealPushChannel(
   admin: DbClient,
   env: ServerEnv = getServerEnv(),
   features: Features = getFeatures(),
 ): AlertChannel | null {
-  const config = getPushConfig(env, features);
-  if (config === null) {
-    return null;
-  }
-  return createPushChannel({
-    send: createWebPushSender(config),
-    listSubscriptions: (userId) => listPushSubscriptionsOfUser(admin, userId),
-    deleteSubscription: (subscriptionId) => deletePushSubscriptionById(admin, subscriptionId),
-  });
+  const deps = createRealPushDeps(admin, env, features);
+  return deps === null ? null : createPushChannel(deps);
 }

@@ -7,6 +7,8 @@
 // 0.100.0, against a local PostgreSQL 16 with our 6 migrations applied
 // (PG_META_GENERATE_TYPES=typescript, schema public, PostgREST 14.18 like the live
 // project). The output is identical in format to `supabase gen types typescript`.
+// identity_checks, identity_check_status, is_own_device() and is_family_member_of()
+// (migration 20261126000001, 26 Nov) were added by hand in exactly that format.
 //
 // When a migration changes, regenerate this file, e.g. with the Supabase CLI:
 //   npx supabase gen types typescript --local > src/types/database.ts
@@ -322,6 +324,59 @@ export type Database = {
           name_bg?: string;
         };
         Relationships: [];
+      };
+      identity_checks: {
+        Row: {
+          answered_at: string | null;
+          claimed_user_id: string;
+          created_at: string;
+          device_id: string | null;
+          id: string;
+          protected_person_id: string;
+          status: Database["public"]["Enums"]["identity_check_status"];
+        };
+        ComputedFields: never;
+        Insert: {
+          answered_at?: string | null;
+          claimed_user_id: string;
+          created_at?: string;
+          device_id?: string | null;
+          id?: string;
+          protected_person_id: string;
+          status?: Database["public"]["Enums"]["identity_check_status"];
+        };
+        Update: {
+          answered_at?: string | null;
+          claimed_user_id?: string;
+          created_at?: string;
+          device_id?: string | null;
+          id?: string;
+          protected_person_id?: string;
+          status?: Database["public"]["Enums"]["identity_check_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "identity_checks_claimed_user_id_fkey";
+            columns: ["claimed_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "identity_checks_device_id_fkey";
+            columns: ["device_id"];
+            isOneToOne: false;
+            referencedRelation: "devices";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "identity_checks_protected_person_id_fkey";
+            columns: ["protected_person_id"];
+            isOneToOne: false;
+            referencedRelation: "protected_persons";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       pairing_codes: {
         Row: {
@@ -684,7 +739,9 @@ export type Database = {
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_device_of: { Args: { pid: string }; Returns: boolean };
+      is_family_member_of: { Args: { pid: string; uid: string }; Returns: boolean };
       is_moderator: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_own_device: { Args: { did: string; pid: string }; Returns: boolean };
       is_owner_of: { Args: { pid: string }; Returns: boolean };
       replace_trusted_contacts: {
         Args: { p_contacts: Json; p_person_id: string };
@@ -698,6 +755,7 @@ export type Database = {
       check_status: "started" | "answered";
       claimed_identity: "police" | "relative" | "official" | "courier" | "other";
       handover_method: "courier_or_stranger" | "throw" | "bank_transfer" | "other";
+      identity_check_status: "pending" | "not_me" | "its_me" | "expired";
       report_status: "pending" | "approved" | "rejected";
       risk_level: "green" | "yellow" | "red";
       script_type: "police" | "relative_in_trouble" | "fake_official" | "courier" | "unknown";
@@ -829,6 +887,7 @@ export const Constants = {
       check_status: ["started", "answered"],
       claimed_identity: ["police", "relative", "official", "courier", "other"],
       handover_method: ["courier_or_stranger", "throw", "bank_transfer", "other"],
+      identity_check_status: ["pending", "not_me", "its_me", "expired"],
       report_status: ["pending", "approved", "rejected"],
       risk_level: ["green", "yellow", "red"],
       script_type: ["police", "relative_in_trouble", "fake_official", "courier", "unknown"],

@@ -55,7 +55,7 @@ export async function exportFamilyData(client: DbClient, userId: string, email: 
 
   const protectedPeople = [];
   for (const person of people) {
-    const [contacts, invites, devices, checks] = await Promise.all([
+    const [contacts, invites, devices, checks, identityChecks] = await Promise.all([
       collectRows((from, to) =>
         client
           .from("trusted_contacts")
@@ -90,8 +90,17 @@ export async function exportFamilyData(client: DbClient, userId: string, email: 
           .order("id")
           .range(from, to),
       ),
+      // „Провери истинския“ questions about this person (P-05).
+      collectRows((from, to) =>
+        client
+          .from("identity_checks")
+          .select("id, device_id, claimed_user_id, status, created_at, answered_at")
+          .eq("protected_person_id", person.id)
+          .order("id")
+          .range(from, to),
+      ),
     ]);
-    protectedPeople.push({ ...person, contacts, invites, devices, checks });
+    protectedPeople.push({ ...person, contacts, invites, devices, checks, identityChecks });
   }
   return { profile: { ...profile, email }, protectedPeople, contactMemberships, alerts };
 }

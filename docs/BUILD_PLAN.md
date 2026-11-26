@@ -336,6 +336,8 @@ Helper functions (`SECURITY DEFINER`, `STABLE`, `search_path = ''`, so policies 
 | `is_owner_of(pid)` | caller created protected person `pid` |
 | `has_family_access(pid)` | caller is the owner **or** a trusted contact with `user_id = auth.uid()` |
 | `is_device_of(pid)` | caller is a non-revoked device paired to `pid` |
+| `is_own_device(did, pid)` | device `did` is the caller's own non-revoked phone of `pid` (P-05) |
+| `is_family_member_of(pid, uid)` | account `uid` is a `family` account and the owner or a trusted contact of `pid` (P-05) |
 
 **The service role (bypasses RLS) is used only in these server functions**, each covered by tests:
 1. `pairingService.redeem()`: creates the device's auth user and binds it.
@@ -348,6 +350,7 @@ Helper functions (`SECURITY DEFINER`, `STABLE`, `search_path = ''`, so policies 
 7. `rateLimiter.hit()`.
 8. `GET /api/health` (keep-alive).
 9. `inviteService.createInvite()` / `redeemInvite()`: stores an invite (browsers have no INSERT right on `contact_invites`); on redeem reads the invite, the person and the contact list, uses the invite up (one atomic UPDATE, given back if adding fails) and adds or links the contact **with `user_id`**, which only the server may set. The owner check before creating uses the user client.
+10. `identityCheckService` („Провери истинския“, P-05): only the audit line of „Не съм аз“ and reading other users' push subscriptions to send the push; the question itself and the answer are written with the **user** client (RLS + column privileges).
 
 Every one of these first checks permission in code. Where the caller is logged in, it also loads the target with the **user-scoped** client, so RLS proves the caller may see it. That gives us two locks.
 
@@ -421,6 +424,12 @@ Common to all routes: JSON only, errors as `{ error: { code, messageBg } }`, a s
 | 20 | POST | `/api/checks/:id/acknowledge` | family (access) | `IdParam` | „Обаждам ѝ се сега“: the protected screen shows „Иван ще ви се обади веднага“ |
 | 21 | GET | `/api/checks` | family | `ListChecksQuery {personId, cursor?}` | History of checks for one person |
 | 22 | GET | `/api/checks/:id` | family (access), protected (own) | `IdParam` | One check with its verdict and reasons |
+| **„Провери истинския“ (P-05, D34, HOW_IT_WORKS 3.48)** ||||||
+| 22a | GET | `/api/identity-checks/family` | protected | none | Family tiles in calling order: `{people: [{userId, displayName, initials, phone, priority, canReceive}]}`; `phone` = the saved number for the call-back |
+| 22b | POST | `/api/identity-checks` | protected (rate-limited, 20/h) | `CreateIdentityCheckSchema {claimedUserId}` | "The caller says they are X": store a pending question, push + live alert to X only; the phone's previous pending question becomes `expired` (the 45 s step) → 201 `{identityCheck}` |
+| 22c | GET | `/api/identity-checks/:id` | protected (own), family (access) | `IdParam` | One question (the phone's Realtime safety poll) → `{identityCheck}` |
+| 22d | PATCH | `/api/identity-checks/:id` | family (the claimed member only) | `AnswerIdentityCheckSchema {answer: not_me\|its_me}` | Answer once, only while pending and < 15 min (else 409); `not_me` warns the rest of the family (#38) and is audited |
+| 22e | GET | `/api/identity-checks` | family | none | `{pending, warnings}`: my open questions + the others' „Не съм аз“ (24 h) |
 | **Notifications** ||||||
 | 23 | POST | `/api/push/subscriptions` | any logged in | `PushSubscriptionSchema {endpoint, keys:{p256dh, auth}}` | Save a web-push subscription |
 | 24 | DELETE | `/api/push/subscriptions` | any logged in | `{endpoint}` | Remove it |
@@ -695,9 +704,9 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 ## 5b. „Провери истинския“ flow (D34, planned 21 Nov)
 
-The main feature. Nothing here is built yet; tasks P-05 and P-06 in section 6. The design reuses what exists: device sessions (section 5), the alert fan-out and Realtime (W2-03), web push (W2-05), contacts order (W2-08), RLS helpers (2.4).
+The main feature. Backend built 26 Nov (P-05, HOW_IT_WORKS 3.48); screens in P-06 (section 6). The design reuses what exists: device sessions (section 5), the alert fan-out and Realtime (W2-03), web push (W2-05), contacts order (W2-08), RLS helpers (2.4).
 
-**Data (one new table + one column).**
+**Data (one new table; built in P-05, 26 Nov, migration `20261126000001_identity_checks.sql`).** As built: the person column is `protected_person_id` (like every other table), no extra column elsewhere, and the chain needs no table: a new question from the same phone marks its previous pending one `expired` (before-insert trigger + one pending question per phone, partial unique index). The insert and the answer use the caller's own client, so RLS is the second lock; `answered_at` is written by a trigger.
 - `identity_checks`: `id`, `person_id` (→ protected person), `device_id`, `claimed_user_id` (the family member the caller claims to be; must be a linked family account of that person), `status` (`pending` | `not_me` | `its_me` | `expired`), `created_at`, `answered_at`. Time-to-answer = `answered_at − created_at` (#7).
 - RLS: the device of that person may insert and read its own rows; the claimed family member may read the row and update `status` once (`pending` → `not_me` / `its_me`, compare-and-set); other family members of that person may read. pgTAP tests for every rule, including IDOR.
 

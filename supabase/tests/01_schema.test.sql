@@ -4,7 +4,7 @@
 --   * RLS is switched on for EVERY table in public
 --   * the 28 districts are seeded with the right codes and names
 --   * the important indexes exist
---   * only checks and alerts are in the Realtime publication
+--   * only checks, alerts and identity_checks are in the Realtime publication
 --   * CHECK constraints reject bad values (score 101, 61-char name ...)
 -- =============================================================================
 begin;
@@ -24,18 +24,20 @@ select tables_are(
   array[
     'profiles', 'protected_persons', 'trusted_contacts', 'contact_invites',
     'pairing_codes', 'devices', 'checks', 'alerts', 'push_subscriptions',
-    'districts', 'reports', 'scam_scripts', 'audit_log', 'rate_limits'
+    'districts', 'reports', 'scam_scripts', 'audit_log', 'rate_limits',
+    'identity_checks'
   ],
-  'public schema has exactly the 14 Scamly tables'
+  'public schema has exactly the 15 Scamly tables'
 );
 
 select enums_are(
   'public',
   array[
     'app_role', 'claimed_identity', 'tri', 'handover_method', 'risk_level',
-    'script_type', 'check_status', 'alert_channel', 'alert_status', 'report_status'
+    'script_type', 'check_status', 'alert_channel', 'alert_status', 'report_status',
+    'identity_check_status'
   ],
-  'public schema has exactly the 10 enums from BUILD_PLAN 2.2'
+  'public schema has exactly the 11 enums (BUILD_PLAN 2.2 + identity_check_status)'
 );
 
 select enum_has_labels('public', 'app_role', array['family', 'protected', 'moderator', 'admin'],
@@ -79,8 +81,8 @@ select has_index('public', 'pairing_codes', 'pairing_codes_unused_code_hash_key'
 select is(
   array(select tablename::text from pg_catalog.pg_publication_tables
         where pubname = 'supabase_realtime' order by 1),
-  array['alerts', 'checks'],
-  'only checks and alerts are published to Realtime'
+  array['alerts', 'checks', 'identity_checks'],
+  'only checks, alerts and identity_checks are published to Realtime'
 );
 
 -- --- CHECK constraints ------------------------------------------------------------

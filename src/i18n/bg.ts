@@ -580,6 +580,25 @@ export const bg = {
     // The same, when we don't know the name (the family member is no longer in the list).
     acknowledgedBySomeone: "Ваш близък ще ви се обади веднага.",
   },
+  // „Провери истинския“ (D34, P-05, src/server/services/identityCheckService.ts).
+  // {person} = the protected person's name (e.g. „Мария“), {name} = the family member
+  // the caller pretends to be, as the family's contact list calls them (e.g. „Иван“).
+  // Push titles are short: a phone shows about 40 characters.
+  identityChecks: {
+    // Web push to the family member the caller pretends to be.
+    askTitle: "Някой се представя за теб",
+    askBody: "Някой се представя за теб пред {person} и иска пари. Ти ли си?",
+    // Web push (and the live warning) to the rest of the family after „Не съм аз“ (#38).
+    warnTitle: "Внимание! Измамник се представя за {name}",
+    warnBody: "Някой се представя за {name}. Ако ви звънне, затворете.",
+    // Used for {person} / {name} when the name is unknown.
+    someone: "ваш близък",
+    // Errors of the API.
+    answerInvalid: "Изберете „Не съм аз“ или „Аз съм“.",
+    notFamily: "Този близък няма профил в Scamly и не може да получи въпроса.",
+    alreadyAnswered: "На този въпрос вече е отговорено или времето за отговор е изтекло.",
+    busy: "Въпросът вече се изпраща. Опитайте отново след малко.",
+  },
   // Alert e-mails to family members (W2-06, src/server/notifications/email/alertEmail.ts).
   // Proofread by Roberta (W2-06 wording, 6 Nov).
   // {name} = the protected person's name, {time} = e.g. „9 ноември в 12:05 ч.“,
@@ -1429,6 +1448,7 @@ export const bg = {
       invite_created: "Създадена покана",
       invite_redeemed: "Приета покана",
       check_acknowledged: "Близък пое обаждането",
+      identity_not_me: "Близък отговори „Не съм аз“",
       script_created: "Създадена схема",
       script_updated: "Променена схема",
       script_published: "Публикувана схема",
@@ -1444,6 +1464,7 @@ export const bg = {
       contact_invite: "Покана",
       trusted_contact: "Доверен контакт",
       check: "Проверка",
+      identity_check: "Въпрос „Провери истинския“",
       scam_script: "Схема",
       report: "Сигнал",
     },
