@@ -10,6 +10,8 @@
 //      screen readers (aria-live) and, only if the user turned it on, beeps/vibrates.
 //   4. ?check=<id> (the link in a push notification or an e-mail) scrolls to that
 //      check, focuses it and marks it „Сигналът от известието“.
+//   0. On top: „Провери истинския“ (P-06, IdentityRequests): my open questions „Ти ли
+//      си?“ (link to /family/proveri?id=…) and the family's warnings of the last 24 h.
 //   5. „Обаждам ѝ се сега“ sends POST /api/checks/:id/acknowledge. The first family
 //      member to press it "takes the call" („Вие поехте обаждането.“); the older
 //      person's phone then shows „<Име> ще ви се обади веднага.“ (Roberta's W2-01).
@@ -58,6 +60,7 @@ import {
 import { callApi, type CheckDto, type PersonDto } from "./api";
 import { acknowledgementText, identityText } from "./CheckHistory";
 import { FamilyHeader } from "./FamilyFrame";
+import { IdentityRequests } from "./IdentityRequests";
 import { fill, formatDateTime } from "./format";
 
 type PersonsState =
@@ -278,6 +281,7 @@ function AlertsList({ persons }: { persons: PersonDto[] }) {
       <p role="status" className="sr-only">
         {announcement}
       </p>
+      <IdentityRequests personIds={persons.map((person) => person.id)} />
       <div className="family-toolbar">
         {live === null ? (
           <span className="family-toolbar-wait" aria-hidden="true" />

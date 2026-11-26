@@ -2603,7 +2603,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 **We would reconsider if:** real tests showed family members miss alerts that a later reminder would have caught.
 
-### „Провери истинския“: who moves to the next family member (the phone, not a server job)  (status: in use (P-05, 26 Nov; screens in P-06))
+### „Провери истинския“: who moves to the next family member (the phone, not a server job)  (status: in use (P-05, 26 Nov; screens P-06, 26 Nov))
 
 **Used for:** "no answer in 45 s → ask the next family member" (HOW_IT_WORKS 3.48).
 
@@ -2647,9 +2647,58 @@ The claim and Realtime insert share one database transaction so two job runs can
 - **RLS can express the whole rule**, because the browser stores no computed result (unlike a verdict): a phone may insert only for its own person and a family account (`is_own_device()`, `is_family_member_of()`), the claimed member may update only `status`, once. So the writes use the caller's **user** client and the database is a real second lock; the service role is used only for the rate limit, the audit line and push.
 - `checks` stays what it is (the 30-second check); mixing in a second kind of row would make every query and policy there more complicated.
 
-**What we give up:** the family's alert history page (`/family/alerts`) does not show these questions yet; P-06 shows them on their own screen.
+**What we give up:** the questions are not part of the checks timeline; P-06 shows them in their own block at the top of `/family/alerts` and on their own answer screen `/family/proveri`.
 
 **We would reconsider if:** we needed a full history of each push delivery per family member (then `alerts`-style rows).
+
+### One big button, then „Казват ли, че са някой близък?“ (vs a second button for „Провери истинския“)  (status: in use (P-06, 26 Nov))
+
+**Used for:** the older person's phone (`/protected`): the big button „Обаждат ми се за пари!“ leads to one Да / Не question; „Да“ opens the family tiles, „Не“ the 30-second check (HOW_IT_WORKS 3.49).
+
+**Alternatives we considered:** a second big button „Казва, че е близък“ on the home screen; the family tiles straight after the big button; asking „Кой казва, че е?“ (the first question of the check) and branching on „Роднина“.
+
+**Why this one:**
+- **One thing to press in a panic** (D35): the home screen stays the same as before, so nothing new has to be learned.
+- **One plain question** with the same big Да / Не tiles as the check: a frightened person answers it in a second; the screen reader reads it like every other question.
+- **The check is not lost:** after a tile the first question is already answered („Роднина“) and the rest of the check runs while the family member is asked, so a missing answer still ends in a verdict with the hard rules.
+- The family alert of the check still starts at the big button, as before.
+
+**What we give up:** one more tap before the check for calls that are not about a relative („Не“).
+
+**We would reconsider if:** tests with real older people showed they hesitate at the question; then the tiles could sit on the home screen under the big button.
+
+### Client-side 45 s countdown on the phone (vs a timer on the server)  (status: in use (P-06, 26 Nov))
+
+**Used for:** the halo ring „Питаме Иван…“ and the step to the next family member after 45 s (`useIdentityAsk.ts`, `identityFlow.ts`).
+
+**Alternatives we considered:** the server sends the next question by itself (a scheduled job, or a "next" endpoint the phone polls); the countdown from the question's `createdAt` (server time).
+
+**Why this one:**
+- **The phone is open anyway** (she is on the call), so the browser can count and send the next `POST`; the server already expires the previous question and allows one open question per phone (P-05).
+- **Phone and server clocks can differ:** counting from the moment the `POST` answered (the phone's own clock) always gives the full 45 s on screen.
+- **Late answers are ignored by design:** the phone listens only to the id of the question it sent last; the server refuses an answer to an expired one (409).
+- **Easy to test:** the next-person rule is a pure function with unit tests; the browser tests move Playwright's fake clock 46 s forward instead of waiting.
+
+**What we give up:** if the phone is closed during the wait, nobody else is asked. The family still sees the open question live, and the 30-second check is the safety net.
+
+**We would reconsider if:** the Android companion (F-01) could keep asking in the background.
+
+### The call-back button uses only the saved number (vs the calling number, vs a number typed on the spot)  (status: in use (P-06, 26 Nov))
+
+**Used for:** „Обади се на Иван“ on the red „Това НЕ е Иван.“ screen (`claimedPhone` of the answered question) and on a tile of a contact without Scamly (the contact's saved `phone`).
+
+**Alternatives we considered:** offer to call back the number that just called; let the person type a number; no call button at all.
+
+**Why this one:**
+- **The calling number can be spoofed** and belongs to the scammer; calling it back reaches the scammer again.
+- **The saved number was written by the family**, calmly, before any call (the contact list, W2-08). It comes from the server (`claimedPhone`), never from what the caller said.
+- Typing a number in a panic is slow and error-prone.
+
+**What we give up:** if the real person changed their number and nobody updated the contact list, the button calls the old one (the family keeps the list up to date on `/family`).
+
+**On the family side:** the protected person's own number is not stored in Scamly at all (privacy, data minimisation), so after „Не съм аз — обаждам ти се сега!“ the answer screen says, big, „Обадете се веднага на … на номера, който знаете.“ instead of a `tel:` link.
+
+**We would reconsider if:** families asked to store the older person's number; then it would be one more field in the person's data, readable only by their family (RLS), and a `tel:` link here.
 
 ### Pinned exact dependency versions (`.npmrc save-exact=true` + `package-lock.json`)  (status: in use)
 
@@ -2671,7 +2720,7 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 ## 10. Project process and documentation
 
-### Verify the relationship, not the call: „Провери истинския“  (status: decided (D34, 21 Nov); backend in use (P-05, 26 Nov), screens in P-06)
+### Verify the relationship, not the call: „Провери истинския“  (status: decided (D34, 21 Nov); backend in use (P-05, 26 Nov), screens in use (P-06, 26 Nov))
 
 **Used for:** the main feature and the main story. When "someone close" calls asking for money, one tap asks the real person on their own signed-in phone: „Не съм аз — затвори!“ or „Аз съм“.
 
@@ -3062,6 +3111,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-26 · P-06 „Провери истинския“ screens (Alex): new entries in section 9 "One big button, then „Казват ли, че са някой близък?“", "Client-side 45 s countdown on the phone", "The call-back button uses only the saved number"; statuses of „Провери истинския“ updated
 - 2026-11-26 · P-05 „Провери истинския“ backend (Alex): new entries in section 9 "who moves to the next family member (the phone, not a server job)", "Compare-and-set answer within 15 minutes", "One `identity_checks` table, written with the user's own client"; statuses of „Провери истинския“ and the on-screen fallback updated
 - 2026-11-26 · P-02 „Cuts“ (Alex): new entries "`/dev/*` hidden on the live site by one environment variable" and "On-screen fallback instead of a server-side escalation job"; `pg_cron` marked removed; feature switches updated (voice and email off by default, AI and escalation switches removed).
 - 2026-11-21 · product review (D34, D35): new entries "Verify the relationship, not the call" and "Few essential features over a feature catalogue"; the AI-layer entry marked dropped.

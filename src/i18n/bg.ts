@@ -599,6 +599,85 @@ export const bg = {
     alreadyAnswered: "На този въпрос вече е отговорено или времето за отговор е изтекло.",
     busy: "Въпросът вече се изпраща. Опитайте отново след малко.",
   },
+  // „Провери истинския“ on the older person's phone (P-06, IdentityAsk*.tsx).
+  // Few words, big text. {name} = the family member as the contact list calls them.
+  // The texts avoid „той“ / „тя“, because we do not know if {name} is a man or a woman.
+  identityAsk: {
+    // The first question after the big button (one-button flow, D34).
+    question: "Казват ли, че са някой близък?",
+    hint: "Например син, дъщеря, внук, брат или съпруг.",
+    // The family tiles.
+    tilesTitle: "За кого се представят?",
+    tilesHint: "Докоснете името. Ще попитаме истинския човек на собствения му телефон.",
+    tilesLabel: "Вашите близки",
+    // A contact without a Scamly account: shown, but it cannot get the question.
+    noApp: "Няма Scamly — обадете се сами",
+    noAppNoPhone: "Няма Scamly и няма записан номер.",
+    noneOfThem: "Никой от тях",
+    loading: "Зареждаме близките ви…",
+    empty: "Още няма записани близки. Продължете с въпросите.",
+    continueCheck: "Продължете с въпросите",
+    // The waiting header (the halo ring counts down 45 seconds).
+    sending: "Изпращаме въпроса на {name}…",
+    waiting: "Питаме {name}…",
+    waitingHint: "Докато чакаме, отговорете на въпросите отдолу.",
+    seconds: "секунди",
+    // No answer in 45 s: the next family member is asked.
+    noAnswer: "{name} не отговори.",
+    askingNext: "Питаме {name}…",
+    // The reminder line (P-07 became this line). Nothing is stored.
+    askSomething: "Попитайте нещо, което знае само {name}.",
+    nobody: "Никой не отговори. Довършете проверката — тя ще ви каже какво да правите.",
+    failed: "Не успяхме да попитаме {name}.",
+    retry: "Опитайте отново",
+    // „Не съм аз“: the red screen.
+    notMeTitle: "Това НЕ е {name}.",
+    callsYou: "{name} ви звъни сега.",
+    // #44: is someone coming to collect the money?
+    comingQuestion: "Някой идва ли към вас за парите?",
+    call112: "Обадете се на 112",
+    notComing: "Не отваряйте на непознати и не давайте пари на никого.",
+    // „Аз съм“: the calm screen. Green never says "safe" (D9): the hard rules still apply.
+    itsMeTitle: "{name} потвърди: „Аз съм.“",
+    itsMeLead: "Дори и така — никога:",
+    rules: [
+      "Не давайте пари в брой на куриер или непознат.",
+      "Не изпращайте пари по линк от съобщение.",
+      "Не хвърляйте пари или ценности от балкона или през прозореца.",
+    ],
+    backToCheck: "Довършете проверката",
+    toStart: "Към началото",
+  },
+  // „Провери истинския“ for the family member who is asked (/family/proveri, P-06).
+  // {person} = the protected person's name.
+  identityAnswer: {
+    eyebrow: "Провери истинския",
+    title: "Ти ли си?",
+    question: "Някой се представя за теб пред {person} и иска пари.",
+    notMe: "Не съм аз — обаждам ти се сега!",
+    itsMe: "Аз съм",
+    sending: "Изпращане…",
+    // {time} = minutes and seconds left, e.g. „14:32“.
+    timeLeft: "Можете да отговорите още {time} мин.",
+    // The protected person's number is not stored in Scamly, so the family member calls
+    // the number they know.
+    callNow: "Обадете се веднага на {person} на номера, който знаете.",
+    answeredNotMe:
+      "Отговорихте „Не съм аз“. На телефона на {person} вече пише, че това не сте вие.",
+    familyWarned: "Предупредихме и останалите близки.",
+    answeredItsMe: "Отговорихте „Аз съм“. На телефона на {person} пише, че сте вие.",
+    expired: "Времето за отговор изтече.",
+    already: "Вече е отговорено.",
+    loading: "Зареждаме въпроса…",
+    missing: "Липсва номерът на въпроса. Отворете връзката от известието отново.",
+    toAlerts: "Към сигналите",
+    // On /family/alerts: open questions to me and the family's warnings (last 24 h).
+    listLabel: "Въпроси „Ти ли си?“",
+    // {person} = the protected person.
+    pendingLine: "Някой се представя за теб пред {person}.",
+    open: "Отговорете сега",
+    warningsLabel: "Предупреждения от семейството",
+  },
   // Alert e-mails to family members (W2-06, src/server/notifications/email/alertEmail.ts).
   // Proofread by Roberta (W2-06 wording, 6 Nov).
   // {name} = the protected person's name, {time} = e.g. „9 ноември в 12:05 ч.“,

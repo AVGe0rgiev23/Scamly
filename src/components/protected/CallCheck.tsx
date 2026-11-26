@@ -1,7 +1,12 @@
 // The whole call check on the older person's phone (/protected, W2-01), as one
 // Client Component that moves through the screens:
 //
-//   home  (the big button)  ->  questions (one per screen)  ->  text  ->  result
+//   home (the big button) -> „Казват ли, че са някой близък?“ (P-06)
+//     Не -> questions (one per screen) -> text -> result
+//     Да -> family tiles -> the real family member is asked („Провери истинския“,
+//           useIdentityAsk) and, while the 45 s ring counts down above them, the same
+//           questions -> text -> result. „Не съм аз“ / „Аз съм“ replace the screen.
+//   „Обаждането вече приключи…“ goes straight to the questions.
 //
 // Pressing the big button sends POST /api/checks at once (the server alerts the
 // family before any question is answered) and opens the questions without waiting
@@ -25,14 +30,19 @@ import { CallerText } from "./CallerText";
 import { CheckResult } from "./CheckResult";
 import { saveCallContact, useCallContact } from "./callContact";
 import { CheckHome } from "./CheckHome";
+import { IdentityItsMe, IdentityNotMe } from "./IdentityAnswered";
+import { FamilyTiles, RelativeQuestion } from "./IdentityQuestion";
+import { IdentityWaiting } from "./IdentityWaiting";
 import { PracticeCall } from "./PracticeCall";
 import { QuestionWizard } from "./QuestionWizard";
 import { EMPTY_ANSWERS, questionOrder, withAnswer, type QuestionId } from "./questions";
 import { sendAnswers } from "./sendAnswers";
 import { LOCAL_FALLBACK_MS, uploadAnswers, type UploadDeps } from "./upload";
+import { useIdentityAsk } from "./useIdentityAsk";
 
 // Which screen is shown. Like a Python Literal["home", "questions", "text", "result"].
-type Stage = "home" | "practice" | "questions" | "text" | "result";
+// "relative" = „Казват ли, че са някой близък?“, "family" = the family tiles (P-06).
+type Stage = "home" | "practice" | "relative" | "family" | "questions" | "text" | "result";
 
 // What the result screen shows. Like a small Python dataclass.
 type ShownResult = {
@@ -82,6 +92,8 @@ export function CallCheck({
   // Counts the checks on this screen. A background upload of an OLD check (after
   // „Нова проверка“) must not change the screen any more.
   const run = useRef(0);
+  // „Провери истинския“: who is asked, the 45 s countdown and the answer.
+  const identity = useIdentityAsk();
 
   function start(startedAfterCall: boolean) {
     run.current += 1;
@@ -93,12 +105,39 @@ export function CallCheck({
     setResult(null);
     setCheckId(null);
     setMessage(null);
-    setStage("questions");
+    identity.reset();
+    // The big button asks first whether the caller says they are someone close.
+    setStage(startedAfterCall ? "questions" : "relative");
   }
 
   function goHome() {
     run.current += 1;
+    identity.reset();
     setStage("home");
+  }
+
+  // „Да“ to „Казват ли, че са някой близък?“: the family tiles; „Не“: the questions.
+  function answerRelative(relative: boolean) {
+    setQuestionIndex(0);
+    setStage(relative ? "family" : "questions");
+  }
+
+  // A tile was tapped (or „Никой от тях“): the caller claims to be a relative, so
+  // the first question is already answered and the check goes on with the second.
+  function continueAsRelative() {
+    setAnswers(withAnswer(EMPTY_ANSWERS, "claimedIdentity", "relative"));
+    setQuestionIndex(1);
+    setStage("questions");
+  }
+
+  // „Назад“ on the first question: back to „Казват ли…“ (or home after a call).
+  function backFromFirstQuestion() {
+    if (afterCall) {
+      goHome();
+      return;
+    }
+    identity.reset();
+    setStage("relative");
   }
 
   // The next question, or the last (text) step after the last question.
@@ -207,50 +246,90 @@ export function CallCheck({
   // if the focus is somewhere else. Hidden on screen (the verdict is shown big).
   const announcement = stage === "result" && result !== null ? bg.verdict[result.level].title : "";
 
+  // The family member's answer replaces the whole screen: „Не съм аз“ always,
+  // „Аз съм“ until the person goes back to the check.
+  const ask = identity.state;
+  const answered =
+    ask !== null && (ask.phase === "not_me" || (ask.phase === "its_me" && !ask.dismissed));
+  // The waiting header above the questions, the text step and the result.
+  const showWaiting =
+    ask !== null &&
+    !answered &&
+    ask.phase !== "its_me" &&
+    (stage === "questions" || stage === "text" || stage === "result");
+
   return (
     // relative z-1: the screen sits above the verdict's flood (protected.css).
     <main className="call-check shell relative z-1 flex max-w-2xl flex-col gap-5 py-6 text-xl md:py-12">
       <p className="sr-only" role="status">
         {announcement}
       </p>
-      {stage === "home" ? (
-        <CheckHome contact={contact} onStart={start} onPractice={() => setStage("practice")}>
-          {districtNotice}
-        </CheckHome>
+      {ask !== null && ask.phase === "not_me" ? (
+        <IdentityNotMe state={ask} onDone={goHome} />
       ) : null}
-      {stage === "practice" ? <PracticeCall onExit={goHome} /> : null}
-      {stage === "questions" ? (
-        <QuestionWizard
-          answers={answers}
-          index={questionIndex}
-          onAnswer={answer}
-          onPick={pick}
-          onNext={() => goForward()}
-          // On the first question „Назад“ goes back to the big button.
-          onBack={() => (questionIndex === 0 ? goHome() : setQuestionIndex(questionIndex - 1))}
-        />
+      {ask !== null && ask.phase === "its_me" && !ask.dismissed ? (
+        <IdentityItsMe state={ask} onContinue={identity.dismiss} onDone={goHome} />
       ) : null}
-      {stage === "text" ? (
-        <CallerText
-          text={answers.text}
-          onTextChange={(text) => setAnswers({ ...answers, text })}
-          onSubmit={(text) => void submit(text)}
-          onBack={() => setStage("questions")}
-          sending={sending}
-          voiceEnabled={voiceEnabled}
-        />
+      {showWaiting && ask !== null ? (
+        <IdentityWaiting state={ask} now={identity.now} onRetry={identity.retry} />
       ) : null}
-      {stage === "result" && result !== null ? (
-        <CheckResult
-          level={result.level}
-          reasons={result.reasons}
-          callContact={result.callContact}
-          afterCall={afterCall}
-          local={result.local}
-          familyMessage={message}
-          onNewCheck={goHome}
-        />
-      ) : null}
+      {answered ? null : (
+        <>
+          {stage === "home" ? (
+            <CheckHome contact={contact} onStart={start} onPractice={() => setStage("practice")}>
+              {districtNotice}
+            </CheckHome>
+          ) : null}
+          {stage === "relative" ? (
+            <RelativeQuestion onAnswer={answerRelative} onBack={goHome} />
+          ) : null}
+          {stage === "family" ? (
+            <FamilyTiles
+              onPick={(people, person) => {
+                identity.start(people, person);
+                continueAsRelative();
+              }}
+              onNone={continueAsRelative}
+              onBack={() => setStage("relative")}
+            />
+          ) : null}
+          {stage === "practice" ? <PracticeCall onExit={goHome} /> : null}
+          {stage === "questions" ? (
+            <QuestionWizard
+              answers={answers}
+              index={questionIndex}
+              onAnswer={answer}
+              onPick={pick}
+              onNext={() => goForward()}
+              // On the first question „Назад“ goes back to „Казват ли…“ / the big button.
+              onBack={() =>
+                questionIndex === 0 ? backFromFirstQuestion() : setQuestionIndex(questionIndex - 1)
+              }
+            />
+          ) : null}
+          {stage === "text" ? (
+            <CallerText
+              text={answers.text}
+              onTextChange={(text) => setAnswers({ ...answers, text })}
+              onSubmit={(text) => void submit(text)}
+              onBack={() => setStage("questions")}
+              sending={sending}
+              voiceEnabled={voiceEnabled}
+            />
+          ) : null}
+          {stage === "result" && result !== null ? (
+            <CheckResult
+              level={result.level}
+              reasons={result.reasons}
+              callContact={result.callContact}
+              afterCall={afterCall}
+              local={result.local}
+              familyMessage={message}
+              onNewCheck={goHome}
+            />
+          ) : null}
+        </>
+      )}
     </main>
   );
 }

@@ -228,7 +228,7 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 | P-03 | Landing page 10 → 5 sections with the hook and a two-phone scene | Roberta (FAQ texts: Alex) | ⬜ |
 | P-04 | Story texts: `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker, help texts, README | Roberta (seed + README: Alex) | ⬜ |
 | P-05 | „Провери истинския“ backend: `identity_checks`, RLS + pgTAP, API, push + Realtime, circle warning | Alex (RLS tests: Roberta) | ✅ (Alex, 26 Nov; RLS tests written in Alex's session, tell Roberta) · `/api/identity-checks` (+ `/family`, `/:id`), 45 s step driven by the phone (new question expires the previous one), compare-and-set answer < 15 min, `not_me` warns the rest of the family + audit; run migration `20261126000001_identity_checks.sql` live before the push |
-| P-06 | „Провери истинския“ screens: one-button flow („Казват ли, че са някой близък?“), check answered while waiting (45 s), call-back to the saved number, „Някой идва към вас?“ → 112; family answer „Не съм аз — обаждам ти се сега!“ | Roberta (family answer screen: Alex) | ⬜ |
+| P-06 | „Провери истинския“ screens: one-button flow („Казват ли, че са някой близък?“), check answered while waiting (45 s), call-back to the saved number, „Някой идва към вас?“ → 112; family answer „Не съм аз — обаждам ти се сега!“ | Roberta (family answer screen: Alex) | ✅ (Alex, 26 Nov; protected flow built in Alex's session, tell Roberta) · first question → tiles → 45 s ring with the check below → not me / it's me / next person / nobody, `/family/proveri`, questions on `/family/alerts`; family side has no `tel:` (the older person's number is not stored) |
 | P-07 | ~~Family question~~ → one reminder line on the no-answer screen, inside P-06 | Roberta | ✂ 26 Nov |
 | P-08 | ~~Home-screen shortcut~~ (the automatic trigger, `IDEAS.md` #22, solves the real problem) | Roberta | ✂ 26 Nov |
 | P-09 | Time-to-answer as evidence only (median from the database, no admin screen) | Alex | ⬜ |
@@ -240,7 +240,7 @@ Remaining for this block: **Alex ≈ 20.5 h, Roberta ≈ 21 h** (P-07, P-08 remo
 
 ### Build phases for the "build now" package (Alex, 26 Nov)
 
-One phase at a time, one commit per task (Alex), all checks green before the next phase. Nothing is pushed until Alex says "push". Roberta's tasks (P-03, P-04, P-06) are built in Alex's session on 26 Nov at Alex's request; **Alex tells Roberta before she pulls** (D17, D23).
+One phase at a time, one commit per task (Alex), all checks green before the next phase. Nothing is pushed until Alex says "push". **Owners changed 26 Nov (Alex):** Alex builds every remaining build task (P-02 … P-12, incl. Roberta's former P-03, P-04, P-06 and the RLS tests of P-05); Roberta takes over what Alex leaves unfinished: the manual tasks (P-01 push on real phones, W4-05 test with real families), her Week 5 parts and anything Alex hands over. **Alex tells Roberta before she pulls** (D17, D23).
 
 | Phase | Tasks | What gets built | Done when |
 |---|---|---|---|

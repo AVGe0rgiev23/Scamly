@@ -85,8 +85,11 @@ Reduced motion on the landing: no entrance (150 ms fade), no tilt, no blinking d
 | Reasons one by one | `.check-reason` | 14 px rise + fade, 460 ms, 1000 ms + 140 ms × position | each reason can be read as it arrives |
 | Family island | `FamilyIsland` (`DynamicIsland`) | arrives as a pill, opens into a card after 450 ms (motion layout, SPRING_UI) | the family's answer arrives like a live notification |
 | Vibration (not visual) | `CheckResult` | `navigator.vibrate([200, 100, 200])`, once per result, red only | felt even with the phone at the ear |
+| Countdown ring (P-06) | `.check-ask-ring-value` (waiting card) | `stroke-dashoffset` shrinks with the seconds left, 250 ms linear per tick | the 45 s of waiting are seen, not only read |
+| Waiting glow (P-06) | `.check-ask-ring::before` | the breathing of the big button (`check-breathe`), 3 s alternate, only while waiting | calm: "we are asking, nothing is wrong yet" |
+| „Не съм аз“ / „Аз съм“ (P-06) | `IdentityAnswered.tsx` | reuses the red flood + shield + title landing + rise waves + one vibration, and the mint glow + calm rings | the family member's answer lands like a verdict |
 
-Reduced motion on the protected flow: the flood colour is there at once, no shockwave, no breathing or voice rings, no vibration; steps, title, rise waves and reasons are 150 ms fades; the island opens at once.
+Reduced motion on the protected flow: the flood colour is there at once, no shockwave, no breathing, waiting glow or voice rings, the countdown ring jumps, no vibration; steps, title, rise waves and reasons are 150 ms fades; the island opens at once.
 
 ### Family area `/family/*` (Phase 4, `src/components/family/family.css`)
 

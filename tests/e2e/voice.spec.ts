@@ -80,6 +80,8 @@ async function mockApi(page: Page) {
 async function openTextStep(page: Page) {
   await page.goto("/dev/protected");
   await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  // „Казват ли, че са някой близък?“ → „Не“.
+  await page.getByRole("radio", { name: bg.protectedCheck.tri.no, exact: true }).click();
   await page.getByRole("radio", { name: bg.protectedCheck.identities.other, exact: true }).click();
   for (let i = 0; i < 3; i++) {
     await page.getByRole("radio", { name: bg.protectedCheck.tri.no, exact: true }).click();

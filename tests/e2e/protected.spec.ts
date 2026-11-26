@@ -156,7 +156,7 @@ test("a practice call teaches the response without creating a live check", async
   await expect(page.getByText(bg.practice.title, { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: bg.protectedCheck.bigButton, exact: true }).click();
   await expect.poll(() => calls.starts).toBe(1);
-  await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
+  await expect(question(page, bg.identityAsk.question)).toBeFocused();
 });
 
 test("the relative-in-trouble drill teaches calling the relative back", async ({ page }) => {
@@ -190,6 +190,9 @@ test("the relative-in-trouble drill teaches calling the relative back", async ({
 // Police + money, handed to a courier, rushing, secrecy unknown.
 async function answerPoliceMoney(page: Page) {
   await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  // The first question of the one-button flow (P-06): „Не“ = the 30-second check.
+  await expect(question(page, bg.identityAsk.question)).toBeFocused();
+  await tap(page, bg.protectedCheck.tri.no);
   await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
   await expect(page.getByText("Въпрос 1 от 4")).toBeVisible();
   await tap(page, bg.protectedCheck.identities.police);
@@ -365,6 +368,8 @@ test("big targets, big text and no sideways scrolling at 360 px", async ({ page 
     .locator("main.call-check")
     .evaluate((element) => parseFloat(getComputedStyle(element).fontSize));
   expect(baseSize).toBeGreaterThanOrEqual(22);
+  await checkScreen(); // „Казват ли, че са някой близък?“
+  await tap(page, bg.protectedCheck.tri.no);
   await checkScreen();
   await tap(page, bg.protectedCheck.identities.police);
   await tap(page, bg.protectedCheck.tri.yes);
@@ -381,11 +386,15 @@ test("big targets, big text and no sideways scrolling at 360 px", async ({ page 
   expect(call?.height).toBeGreaterThanOrEqual(72);
 });
 
-test("„Назад“ on the first question goes back to the big button", async ({ page }) => {
+test("„Назад“ goes back step by step to the big button", async ({ page }) => {
   await mockApi(page);
   await page.goto("/dev/protected");
   await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  await expect(question(page, bg.identityAsk.question)).toBeFocused();
+  await tap(page, bg.protectedCheck.tri.no);
   await expect(question(page, bg.protectedCheck.questions.claimedIdentity)).toBeFocused();
+  await page.getByRole("button", { name: bg.protectedCheck.back }).click();
+  await expect(question(page, bg.identityAsk.question)).toBeFocused();
   await page.getByRole("button", { name: bg.protectedCheck.back }).click();
   await expect(page.getByRole("button", { name: bg.protectedCheck.bigButton })).toBeVisible();
 });

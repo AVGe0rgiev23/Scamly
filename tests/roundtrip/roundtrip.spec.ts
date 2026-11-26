@@ -108,6 +108,8 @@ test("grandma checks a call, the family is alerted live and answers, grandma see
 
   // 5. A suspicious call: grandma presses the big button and answers with one tap each.
   await grandma.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  // „Казват ли, че са някой близък?“ → „Не“: the 30-second check.
+  await grandma.getByRole("radio", { name: bg.protectedCheck.tri.no, exact: true }).click();
   const answers = [
     bg.protectedCheck.identities.police,
     bg.protectedCheck.tri.yes, // they ask for money

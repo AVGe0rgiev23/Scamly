@@ -164,7 +164,8 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | AI second opinion (Gemini / Groq chain) | ❌ dropped (D35); `FEATURE_AI` removed (P-02) | | |
 | Escalation chain (W3-09) | ❌ app-side job removed (P-02, D35); the old migration stays unused | `supabase/migrations/20261111000001_alert_escalation.sql` (not read by the app any more) | `13_alert_escalation.test.sql` (tests the migration only) |
 | P-02 cuts: voice and e-mail off by default, `/dev/*` 404 without `SCAMLY_DEV_PAGES=1`, short header and dock, „Упражнение“ button | ✅ (P-02, Alex, 26 Nov) | `src/config/features.ts`, `src/app/dev/layout.tsx`, `playwright.config.ts`, `src/components/layout/`, `src/components/protected/CheckHome.tsx`, `src/i18n/bg.ts` | `features.test.ts`, `siteNav.test.ts`, `layout.spec.ts`, `voice.spec.ts`, `protected.spec.ts` |
-| „Провери истинския“ backend: `identity_checks`, RLS, API, push + Realtime, circle warning (3.48) | ✅ (P-05, Alex, 26 Nov) · screens in P-06 | `supabase/migrations/20261126000001_identity_checks.sql`, `src/app/api/identity-checks/`, `src/server/services/identityCheckService.ts`, `src/server/repositories/identityChecksRepository.ts`, `src/schemas/identityChecks.ts`, `src/lib/realtime.ts` | `identityCheckService` (23), `identity-checks/route.test.ts` (12), `15_identity_checks` (33) |
+| „Провери истинския“ backend: `identity_checks`, RLS, API, push + Realtime, circle warning (3.48) | ✅ (P-05, Alex, 26 Nov) · screens ✅ (P-06, 3.49) | `supabase/migrations/20261126000001_identity_checks.sql`, `src/app/api/identity-checks/`, `src/server/services/identityCheckService.ts`, `src/server/repositories/identityChecksRepository.ts`, `src/schemas/identityChecks.ts`, `src/lib/realtime.ts` | `identityCheckService` (23), `identity-checks/route.test.ts` (12), `15_identity_checks` (33) |
+| „Провери истинския“ screens: first question after the big button, family tiles, 45 s waiting ring, „Не съм аз“ / „Аз съм“ / no answer, family answer screen `/family/proveri`, questions on `/family/alerts` (3.49) | ✅ (P-06, built in Alex's session 26 Nov; protected flow is Roberta's task, tell her) | `src/components/protected/{CallCheck,IdentityQuestion,IdentityWaiting,IdentityAnswered}.tsx`, `useIdentityAsk.ts`, `identityFlow.ts`, `protected.css` 5b, `src/components/family/{IdentityAnswerPage,IdentityRequests,AlertsPage}.tsx`, `family.css` 10, `src/app/family/proveri/`, `src/app/dev/family/proveri/` | `identityFlow.test.ts` (7), `tests/e2e/identity.spec.ts` (10 × 2 screens) |
 | Security hardening (CSP, headers, attack tests) | ⬜ planned (week 4, W4-01, W4-02) | | |
 
 ---
@@ -2085,7 +2086,7 @@ securityheaders.com gives the live site **grade A** (`docs/evidence/securityhead
 
 #### What it does
 
-The main feature's server side. Grandma's paired phone says "the caller claims to be Ivan"; the **real** Ivan gets a web push and a live alert „Някой се представя за теб пред Мария и иска пари. Ти ли си?“ and answers once: „Не съм аз“ (`not_me`) or „Аз съм“ (`its_me`). On „Не съм аз“ everybody **else** in the family gets „Някой се представя за Иван. Ако ви звънне, затворете.“ (#38) and an audit line is written. If Ivan does not answer within 45 s, the phone asks the next family member. The screens come in P-06 (phase 3).
+The main feature's server side. Grandma's paired phone says "the caller claims to be Ivan"; the **real** Ivan gets a web push and a live alert „Някой се представя за теб пред Мария и иска пари. Ти ли си?“ and answers once: „Не съм аз“ (`not_me`) or „Аз съм“ (`its_me`). On „Не съм аз“ everybody **else** in the family gets „Някой се представя за Иван. Ако ви звънне, затворете.“ (#38) and an audit line is written. If Ivan does not answer within 45 s, the phone asks the next family member. The screens are in 3.49 (P-06).
 
 | Endpoint | Who | Request → answer |
 |---|---|---|
@@ -2118,6 +2119,62 @@ Routes in `src/app/api/identity-checks/**`, logic in `src/server/services/identi
 #### How we know it works
 
 `identityCheckService.test.ts` (23 tests: tiles with saved numbers, only phones ask, not-family → 400, chain expires the previous question and a late answer is 409, race → 409, 20 per hour then 429, push to the claimed member only, not_me → audit + push to everyone else (not Ivan, not a phone-only contact, not another family), its_me → nothing, second answer 409, only X answers (403) and another family gets 404, 15 minutes → 409, a failing push never fails the request, IDOR reads → 404, effective `expired`, the family list). `src/app/api/identity-checks/route.test.ts` (12 tests: roles, CSRF, Zod 400, bad id 404, 409 passed on). `supabase/tests/15_identity_checks.test.sql` (33 assertions, below in 6.2).
+
+### 3.49 „Провери истинския“ screens (P-06, D34)
+
+#### What it does
+
+The main feature on screen, for the older person and for the family member who is asked.
+
+**The older person's phone (`/protected`):**
+
+1. The **one big button** „Обаждат ми се за пари!“ stays the only main action. It starts the 30-second check on the server at once (the family alert, as before) and asks one question: **„Казват ли, че са някой близък?“** (Да / Не, the same big tiles as the check). „Обаждането вече приключи…“ still goes straight to the check.
+2. **Не** → the 30-second check, unchanged.
+3. **Да** → **„За кого се представят?“**: the family as big tiles (initials in a halo ring + the name), in calling order. A contact without a Scamly account is shown too, quieter, with „Няма Scamly — обадете се сами“ and a `tel:` button to their **saved** number. „Никой от тях“ goes on with the check.
+4. A tap on a tile sends the question (`POST /api/identity-checks`) and opens the check at question 2 (question 1 is already „Роднина“). Above the questions a glass card counts **45 s** down in a halo ring: „Питаме Иван… Докато чакаме, отговорете на въпросите отдолу.“
+5. **„Не съм аз“** → the whole screen turns red (the verdict flood and the shield emblem of the check): „Това НЕ е Иван. Затворете телефона.“, the words to end the call („Ще затворя и ще проверя.“, #4), „Иван ви звъни сега.“, the big „Обади се на Иван“ to the **saved** number (`claimedPhone`), and „Някой идва ли към вас за парите?“: Да → a big red „Обадете се на 112“ (`tel:112`, #44), Не → „Не отваряйте на непознати…“. „Към началото“ goes home.
+6. **„Аз съм“** → a calm mint screen „Иван потвърди: „Аз съм.““ with the hard rules that still apply (no cash to a courier, no money by a link, nothing thrown from the balcony) and the green advice of D9 (never "safe"). „Довършете проверката“ goes back to the check where she was.
+7. **No answer in 45 s** → the phone asks the next family member with an account: „Иван не отговори. Питаме Мария…“ and the reminder „Попитайте нещо, което знае само Иван.“ (nothing is stored). When nobody is left: „Никой не отговори. Довършете проверката — тя ще ви каже какво да правите.“; the check gives the verdict as always.
+8. Errors in plain Bulgarian: the family list failed (message + „Опитайте отново“ + go on with the check), the question could not be sent (offline, 409 busy, 429 too many: the API's message + „Опитайте отново“; the check goes on). „Назад“ works at every step.
+
+**The family member (`/family/proveri?id=…`, opened from the push or from `/family/alerts`):** the title „Ти ли си?“, „Някой се представя за теб пред Мария и иска пари.“, and two huge buttons: red **„Не съм аз — обаждам ти се сега!“** and **„Аз съм“**, with „Можете да отговорите още 14:32 мин.“ (until `answerableUntil`). After the answer it says what the phone shows now; after „Не съм аз“ also, big: „Обадете се веднага на Мария на номера, който знаете.“ 409 → „Вече е отговорено.“; an expired question → „Времето за отговор изтече.“
+
+**`/family/alerts`** shows, above the checks, my open questions („Някой се представя за теб пред Мария.“ + „Отговорете сега“) and the family's warnings of the last 24 hours („Някой се представя за Иван. Ако ви звънне, затворете.“, #38).
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/components/protected/CallCheck.tsx` | The screen machine: new stages `relative` (the first question) and `family` (the tiles); a tile pre-answers „Роднина“ and opens question 2; „Не съм аз“ / „Аз съм“ replace the whole screen; the waiting card sits above the questions, the text step and the result |
+| `src/components/protected/IdentityQuestion.tsx` | `RelativeQuestion` (BigChoice Да / Не, „Назад“ / „Напред“) and `FamilyTiles` (loads `GET /api/identity-checks/family`) |
+| `src/components/protected/useIdentityAsk.ts` | A custom hook (like a small Python class with state): `start`, `retry`, `dismiss`, `reset`; sends the `POST`, counts 45 s with a 250 ms interval, asks the next person, watches the open question with `watchIdentityCheck` (Realtime + 5 s / 10 s polling, 3.25) |
+| `src/components/protected/identityFlow.ts` | Pure helpers: `nextPersonToAsk` (first person in calling order with an account who was not asked yet), `secondsLeft`, `minutesAndSeconds`, `IDENTITY_WAIT_MS = 45 000` |
+| `src/components/protected/IdentityWaiting.tsx` | The waiting card: an SVG ring whose stroke shrinks with the seconds, the words in a live region (`role="status"`) |
+| `src/components/protected/IdentityAnswered.tsx` | `IdentityNotMe` (reuses `.check-flood`, `VerdictEmblem`, the title landing, vibrates once like a red verdict) and `IdentityItsMe` |
+| `src/components/family/IdentityAnswerPage.tsx` | The answer screen: `GET` once (to show the API's message on 404), then `watchIdentityCheck`; `PATCH { answer }`; a 1 s clock for the time left |
+| `src/components/family/IdentityRequests.tsx` | The block on `/family/alerts` (`watchMyIdentityChecks`) |
+| `src/app/family/proveri/page.tsx`, `src/app/dev/family/proveri/page.tsx` | The real page (behind `FamilyGate`) and the test preview (only with `SCAMLY_DEV_PAGES=1`) |
+
+The chain step by step: the phone remembers the ids asked (`asked`), the names that did not answer (`missed`) and the deadline. When the interval sees `now ≥ deadline`, it calls `nextPersonToAsk`; if somebody is left it sends a new `POST` (the server marks the old question `expired`, 3.48), else the phase becomes `nobody`. Only the id of the **last** question counts (`currentCheckId`), so a late answer to an expired one is ignored. In `nobody` the last question stays watched: a late „Не съм аз“ from that person (still answerable on the server) still turns the screen red.
+
+Text in `bg.ts` (`identityAsk`, `identityAnswer`); the texts avoid „той“ / „тя“, because the app does not know whether Ivan is a man or a woman. Styles: `protected.css` section 5b (`.check-ask-*`), `family.css` section 10 (`.family-identity-*`); movement in `docs/redesign-v3/02-motion.md`.
+
+#### Why it works like that
+
+- **One big button, then one question** (D35): nothing new to learn on the home screen; „Да“ / „Не“ is answered in a second. Comparison in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "One big button, then „Казват ли, че са някой близък?“".
+- **The check runs while she waits:** no answer, a wrong tap or no family with an account still ends in a verdict with the hard rules (the safety net, D34).
+- **The countdown is on the phone:** the phone is open anyway, the server already expires the previous question; counting from the `POST` answer avoids clock differences. WHY_WE_CHOSE "Client-side 45 s countdown".
+- **Call back only the saved number:** the calling number can be spoofed. On the family side there is no `tel:` link, because Scamly does not store the older person's number (the API has none); the screen tells the family member to call the number they know. WHY_WE_CHOSE "The call-back button uses only the saved number".
+- **Reusing the verdict moment** (flood, emblem, title, rise waves) makes „Не съм аз“ unmistakable and keeps one visual language.
+
+**Known limit (for Alex to decide):** after 45 s the next person (Мария) gets the same question as Ivan, „Някой се представя за теб…“, because the API only knows `claimedUserId`. Мария's „Не съм аз“ then means "I am not calling" and the red screen says „Това НЕ е Мария.“, although the caller claimed to be Ivan. A clear fix needs one more column (who the caller claimed to be vs who is asked) and a different push text; not changed in P-06.
+
+#### How we know it works
+
+- `src/components/protected/identityFlow.test.ts` (7 tests): skips people without Scamly and the ones asked, follows the calling order, null when nobody is left, never asks without a userId, the 45 s countdown, minutes and seconds.
+- `tests/e2e/identity.spec.ts` (10 tests, desktop and Pixel 5): tiles in calling order with the `tel:` of a contact without Scamly; „Не съм аз“ → red screen, the words to end the call, call-back `tel:` to the saved number, 112 (≥ 72 px); „Аз съм“ with the keyboard → the hard rules, no „безопас“, back to the check; 45 s → Мария (Playwright's fake clock) and a late answer from Ivan ignored; nobody left → the reminder and the check's red verdict; 429 → message and retry; 360 px with every target ≥ 64 px and reduced motion; the family screen „Не съм аз“ / „Аз съм“ / 409 / no id; the block on `/family/alerts`.
+- `tests/e2e/protected.spec.ts`, `voice.spec.ts`, `tests/roundtrip/roundtrip.spec.ts`: one extra tap „Не“ after the big button.
+- Screenshots: `docs/evidence/redesign-v3/identity-check/` (Pixel 5 and 1440 × 900, Night and Porcelain).
 
 ## 4. Code quality, tests and CI
 
@@ -3154,3 +3211,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-24 · added privacy notice, family export and confirmed deletion, with an atomic cleanup of paired logins (W4-07).
 - 2026-11-26 · P-02 „Cuts“ (Alex, D35): `FEATURE_VOICE` and `FEATURE_EMAIL` off by default, voice and e-mail promises removed from the landing page, FAQ and privacy notice; app-side escalation removed (3.46: route, `FEATURE_ESCALATION`, `CRON_SECRET`, ops script, `alertVisible` / `suggestEmergencyCall`; the migration stays unused); `CommandPalette` and `FEATURE_AI` removed; `/dev/*` answers 404 without `SCAMLY_DEV_PAGES=1` (`src/app/dev/layout.tsx`); header „Как работи“ / „Вход“ / „Провери“, dock Начало / Провери / Вход; practice behind „Упражнение“; sections 3.3, 3.7.1, 3.30, 3.36, 3.46, status table.
 - 2026-11-26 · new section 3.48: „Провери истинския“ backend (P-05, Alex): `identity_checks` table, RLS + column privileges, client-driven 45 s chain with a before-insert expiry trigger and one pending question per phone, compare-and-set answer within 15 minutes, push + Realtime, circle warning (#38), audit; status row, 5.2, 5.12 and 6.2 updated.
+- 2026-11-26 · new section 3.49: „Провери истинския“ screens (P-06, Alex): first question after the big button, family tiles, 45 s waiting ring with the chain to the next person, „Не съм аз“ red screen with the saved-number call-back and 112, „Аз съм“ calm screen, the family answer screen `/family/proveri` and the questions on `/family/alerts`
