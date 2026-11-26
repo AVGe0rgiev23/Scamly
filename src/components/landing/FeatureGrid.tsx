@@ -1,13 +1,13 @@
 // „Какво прави Scamly“ on the home page: an asymmetric bento grid. The cells have
 // different sizes AND different kinds of content, so no two look alike:
 //   a verdict (computed by the real engine on the sample police call at build time),
-//   the family's alert as a live DynamicIsland, a drawn map, the 6-digit pairing code,
-//   a voice "waveform" made of halo rings, and the offline fallback.
+//   the family's alert as a live DynamicIsland, a drawn map, the 6-digit pairing code
+//   and the offline fallback. (Voice input is hidden, D35, so it has no cell.)
 // Each cell is glass with a cursor spotlight on desktop (GlassPanel). The small screens
 // are examples (src/content/placeholders.ts) and are labelled „Примерен екран“ for
 // screen readers; their insides are hidden from them, the cell's heading says it all.
 
-import { Mic, WifiOff } from "lucide-react";
+import { WifiOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { fill } from "@/components/family/format";
 import { StatusPill } from "@/components/ui/Badge";
@@ -155,7 +155,7 @@ export function FeatureGrid() {
       </Cell>
 
       {/* 4. The pairing code: six digits, in two groups of three. */}
-      <Cell title={f.pairing.title} text={f.pairing.text} className="lg:col-span-4" wordsFirst>
+      <Cell title={f.pairing.title} text={f.pairing.text} className="lg:col-span-7" wordsFirst>
         <div className="mt-auto">
           <p className="text-sm text-fg-muted">{bg.family.codeLabel}</p>
           <p className="mt-2 flex gap-1.5">
@@ -178,20 +178,7 @@ export function FeatureGrid() {
         </div>
       </Cell>
 
-      {/* 5. Voice: rings spreading from the microphone, like a halo. */}
-      <Cell title={f.voice.title} text={f.voice.text} className="lg:col-span-3">
-        <div className="landing-voice">
-          <span className="landing-voice-ring" />
-          <span className="landing-voice-ring" />
-          <span className="landing-voice-ring" />
-          <span className="relative grid size-14 place-items-center rounded-full bg-primary text-on-primary shadow-raised">
-            <Mic className="size-6" />
-          </span>
-        </div>
-        <p className="mt-4 text-sm text-fg">{fill(bg.voice.heard, { text: SAMPLE.voiceHeard })}</p>
-      </Cell>
-
-      {/* 6. Offline: the phone decides by itself. */}
+      {/* 5. Offline: the phone decides by itself. */}
       <Cell
         title={f.offline.title}
         text={f.offline.text}

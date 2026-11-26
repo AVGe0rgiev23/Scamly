@@ -1929,7 +1929,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 6. AI layer (planned, week 3)
 
-### Rule-based engine first, AI only as an optional second opinion  (status: decided (D6), not built yet (week 3) ✂ first to cut)
+### Rule-based engine first, AI only as an optional second opinion  (status: **dropped (D35, 21 Nov)**; never built. Kept here as the record of the choice: the rules engine stays the only verdict, and AI ideas are after-tournament work, `IDEAS.md` #33, #18)
 
 **Used for:** an AI model reads the (redacted) text and suggests the scam type and risk level.
 
@@ -2344,6 +2344,21 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we had a test Supabase project in CI; then one end-to-end test with a real login (W2-11).
 
+### `/dev/*` hidden on the live site by one environment variable (vs deleting the previews, vs a check in the proxy)  (status: in use (P-02, D35: `src/app/dev/layout.tsx`, `SCAMLY_DEV_PAGES`))
+
+**Used for:** the preview pages above answer 404 on the live site and still work for the browser tests.
+
+**Alternatives we considered:** deleting the previews (then most browser tests would need a real login and a database); a path check in `src/proxy.ts` (it runs on every request and already guards logins); a `NODE_ENV` check (the tests run the production build, so `NODE_ENV` is `production` there too).
+
+**Why this one:**
+- **One file, one `if`:** the layout of the `/dev` folder wraps every preview, so `notFound()` there hides all of them, including previews added later.
+- **Off unless asked for:** without `SCAMLY_DEV_PAGES=1` the pages do not exist, so forgetting the variable on Vercel is safe. Only `playwright.config.ts` (and the CI e2e step) set it.
+- **A real 404:** `next build` pre-renders the pages with the value it sees, so the live site sends status 404, not a "not found" text inside a 200 page.
+
+**What we give up:** the build and the server must see the same value; Playwright sets it for both. Someone running `npm run start` by hand without the variable cannot open `/dev/ui`.
+
+**We would reconsider if:** the previews were replaced by tests with a real login (W2-11 style) everywhere.
+
 ### pgTAP for database and RLS tests  (status: in use (9 test files, 171 assertions))
 
 **Used for:** proving in SQL that each role sees exactly the rows it should (`supabase/tests/*.test.sql`), including IDOR tests (family B can't see family A's data).
@@ -2555,7 +2570,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** never during the competition.
 
-### `pg_cron` for frequent jobs  (status: built, production setup pending)
+### `pg_cron` for frequent jobs  (status: **removed (P-02, 26 Nov)**: the escalation job it would run is gone; see the next entry)
 
 **Used for:** the escalation job (every minute: an alert nobody acknowledged → notify the next contact), using Supabase's `pg_cron` scheduler calling our secret-protected `/api/cron/escalate` endpoint.
 
@@ -2571,7 +2586,22 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 The claim and Realtime insert share one database transaction so two job runs cannot advance the same check twice. Reusing the existing push and email channels keeps notification delivery separate from the database lock.
 
-**We would reconsider if:** we dropped the escalation feature (it's a stretch goal).
+**We would reconsider if:** we dropped the escalation feature (it's a stretch goal). We did (D35).
+
+### On-screen fallback instead of a server-side escalation job  (status: decided (D35); job removed in P-02, fallback built in P-06)
+
+**Used for:** what happens when the first family member does not answer.
+
+**Alternatives we considered:** keep the escalation job (`pg_cron` every minute → `/api/cron/escalate` → the next contact after two minutes, then the 112 advice).
+
+**Why this one:**
+- **Everyone is alerted at once.** The normal fan-out reaches every family account in the same second; the job made the second person wait two minutes or more.
+- **Nothing to set up or forget in production.** The job needed `pg_cron`, `pg_net`, Vault secrets and a `CRON_SECRET` in Vercel, and it was never switched on live.
+- **The person on the phone gets the help where they are:** after 45 s without an answer, „Провери истинския“ offers the next family member and a reminder to ask something only the real person knows.
+
+**What we give up:** a server that keeps trying when the phone is closed. The migration `20261111000001_alert_escalation.sql` stays in the repo (we never delete migrations), unused by the app, so the app works with or without it on the live database.
+
+**We would reconsider if:** real tests showed family members miss alerts that a later reminder would have caught.
 
 ### Pinned exact dependency versions (`.npmrc save-exact=true` + `package-lock.json`)  (status: in use)
 
@@ -2592,6 +2622,41 @@ The claim and Realtime insert share one database transaction so two job runs can
 ---
 
 ## 10. Project process and documentation
+
+### Verify the relationship, not the call: „Провери истинския“  (status: decided (D34, 21 Nov), to build in P-05/P-06)
+
+**Used for:** the main feature and the main story. When "someone close" calls asking for money, one tap asks the real person on their own signed-in phone: „Не съм аз — затвори!“ or „Аз съм“.
+
+**Alternatives we considered:** keep the 30-second questionnaire as the main feature; detect fake voices / deepfakes; check messages with an AI model; block numbers.
+
+**Why this one:**
+- **It removes the lie instead of scoring it.** The most common Bulgarian script borrows the identity of a loved one. The real person can disprove it in seconds; a questionnaire can only estimate risk.
+- **It does not depend on things scammers can fake.** The caller's number can be spoofed and a voice can be cloned. A paired, signed-in family account protected by RLS and server checks cannot.
+- **It fits the category:** a distributed application in the literal sense; one family's devices confirm each other in real time.
+- **It reuses what we built:** device pairing, contacts order, the alert fan-out, Realtime and web push.
+
+**What we give up:**
+- It needs the loved one to have the app and to answer. Hence the fallback after 45 s: the next family member, a reminder to ask something only the real person knows, the 30-second check with hard rules (never cut).
+- It depends on web push, which was not tested on a real phone before 21 Nov (risk R18, task P-01).
+
+**We would reconsider if:** push could not be made reliable on real phones before the defense; then the live page and the 30-second check carry the demo.
+
+### Few essential features over a feature catalogue  (status: decided (D35, 21 Nov))
+
+**Used for:** what stays in the app and on the landing page.
+
+**Alternatives we considered:** keep every built feature visible (voice, escalation job, report form in the main navigation, a 10-section landing page).
+
+**Why this one:**
+- **People buy one clear promise, not a list.** A visitor must understand the product in a few seconds; every extra section or link is a reason not to press the main button.
+- **Half-tested features cost more trust than they earn.** Voice input and the escalation job were never tested live; the site promised e-mail alerts without a working sender. Hidden or replaced features cannot fail on stage.
+- **The jury scores completeness:** fewer finished features beat many half-finished ones.
+- **Jury-value parts stay:** moderator, admin and the map show roles, security and the network effect, so they remain, without new work.
+
+**What we give up:** some work that was already done (voice input stays in the code behind a flag; the escalation code is replaced by an on-screen fallback).
+
+**We would reconsider if:** a real usability test (W4-05) shows people need one of the hidden features.
+
 
 ### One `main` branch, no pull requests  (status: in use (D13, Q16))
 
@@ -2733,12 +2798,12 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 ### Feature switches in environment variables  (status: in use (`src/config/features.ts`))
 
-**Used for:** turning optional features (AI, voice, escalation, push, email) on or off with `FEATURE_*` variables, without code changes.
+**Used for:** turning optional features (voice, push, email) on or off with `FEATURE_*` variables, without code changes. Voice and email are off by default since D35; `FEATURE_AI` and `FEATURE_ESCALATION` were removed in P-02.
 
 **Alternatives we considered:** a feature-flag service (e.g. LaunchDarkly), deleting code to cut a feature.
 
 **Why this one:**
-- Cutting a feature per D12, or turning AI off for the demo, is one variable on Vercel.
+- Cutting a feature (D12, D35) is one variable on Vercel, and the code stays ready to come back.
 - A small, tested function; no extra service or account.
 
 **What we give up:**
@@ -2949,6 +3014,8 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-26 · P-02 „Cuts“ (Alex): new entries "`/dev/*` hidden on the live site by one environment variable" and "On-screen fallback instead of a server-side escalation job"; `pg_cron` marked removed; feature switches updated (voice and email off by default, AI and escalation switches removed).
+- 2026-11-21 · product review (D34, D35): new entries "Verify the relationship, not the call" and "Few essential features over a feature catalogue"; the AI-layer entry marked dropped.
 - 2026-11-20 · redesign v3 Phase 4 (the family area and the live alert island): new entries "A Dynamic Island for a new alert", "A timeline with halo nodes", "A flip-reveal pairing code", "Tabs that keep every panel mounted".
 - 2026-11-20 · redesign v3 Phase 3 (the protected flow and the verdict moment): new entries "A clip-path flood for the verdict", "Vibrate once on red", "Halo dots for the progress".
 - 2026-11-20 · redesign v3 Phase 2A (landing page): new entries "Scroll-driven sticky storytelling", "Our own SVG line illustrations", "The landing demo runs the real engine".

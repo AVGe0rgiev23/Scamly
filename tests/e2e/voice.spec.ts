@@ -6,6 +6,10 @@
 // or fail (window.__voiceError), exactly as the real API calls the page back. The
 // call check is opened on the preview page /dev/protected, like protected.spec.ts.
 // Real Bulgarian speech recognition can only be tested by hand on a phone.
+//
+// Voice input is OFF by default on the live site (D35, FEATURE_VOICE). The browser
+// tests switch it on for their own server (playwright.config.ts, webServer.env), so
+// the hidden feature stays tested and can be switched back on with one variable.
 
 import { expect, test, type Page } from "@playwright/test";
 import { bg } from "@/i18n/bg";

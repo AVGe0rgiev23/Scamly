@@ -14,7 +14,6 @@ import { Badge, StatusPill } from "@/components/ui/Badge";
 import { BigChoice } from "@/components/ui/BigChoice";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { CommandPalette } from "@/components/ui/CommandPalette";
 import { Dialog, Sheet } from "@/components/ui/Dialog";
 import { Divider } from "@/components/ui/Divider";
 import { DynamicIsland } from "@/components/ui/DynamicIsland";
@@ -36,7 +35,6 @@ import { Checkbox, Switch } from "@/components/ui/Toggle";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Verdict } from "@/components/ui/Verdict";
 import { VerdictBadge } from "@/components/ui/VerdictBadge";
-import { ROUTES } from "@/config/routes";
 import { SAMPLE, SAMPLE_CALLS } from "@/content/placeholders";
 import { bg } from "@/i18n/bg";
 
@@ -303,7 +301,6 @@ function Samples({ theme, haloState }: { theme: "light" | "dark"; haloState: Hal
 }
 
 export default function UiPage() {
-  const [paletteOpen, setPaletteOpen] = useState(false);
   const [haloState, setHaloState] = useState<HaloState>("idle");
   return (
     <main className="py-6 md:py-10">
@@ -316,14 +313,6 @@ export default function UiPage() {
           <p className="eyebrow">{bg.app.name}</p>
           <h1 className="mt-3 text-h1">{t.title}</h1>
           <p className="mt-4 text-lg text-fg-muted">{t.description}</p>
-          <Button
-            size="xl"
-            variant="secondary"
-            className="mt-8"
-            onClick={() => setPaletteOpen(true)}
-          >
-            {t.openPalette}
-          </Button>
           <div className="mt-10">
             <Segmented
               label={t.haloStateLabel}
@@ -341,16 +330,6 @@ export default function UiPage() {
         <Samples theme="light" haloState={haloState} />
         <Samples theme="dark" haloState={haloState} />
       </div>
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        commands={[
-          { id: "home", label: bg.common.backHome, href: ROUTES.home },
-          { id: "report", label: bg.reportForm.footerLink, href: ROUTES.report },
-          { id: "map", label: bg.map.footerLink, href: ROUTES.map },
-          { id: "education", label: bg.layout.education, href: ROUTES.education },
-        ]}
-      />
     </main>
   );
 }

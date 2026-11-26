@@ -35,7 +35,6 @@ function fakeDeps(channels: AlertChannel[], checkExists: boolean = true) {
       checkExists && checkId === CHECK ? { protected_person_id: PERSON, risk_level: null } : null,
     findPersonName: async () => "Мария Петрова",
     listContacts: async () => CONTACTS,
-    listAlertedRecipients: async () => [],
     insertAlerts: async (alerts) => {
       inserted.push(...alerts); // `...` spreads the list, like list.extend() in Python
       insertCalls += 1;
@@ -154,21 +153,6 @@ describe("fanOut", () => {
 });
 
 describe("notifyVerdict", () => {
-  it("follows up only with contacts who have already been alerted during escalation", async () => {
-    const push = recordingChannel("push");
-    const { deps } = fakeDeps([push.channel]);
-    deps.findCheck = async () => ({
-      protected_person_id: PERSON,
-      risk_level: "red",
-      escalation_due_at: NOW.toISOString(),
-    });
-    deps.listAlertedRecipients = async () => ["owner-anna"];
-
-    await notifyVerdict(deps, CHECK);
-
-    expect(push.sent.map((message) => message.recipient.userId)).toEqual(["owner-anna"]);
-  });
-
   it("sends the verdict on every channel but writes no new alerts rows", async () => {
     const push = recordingChannel("push");
     const { deps, inserted } = fakeDeps([realtimeChannel, push.channel]);

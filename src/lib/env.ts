@@ -59,13 +59,6 @@ const serverEnvSchema = z.object({
     .regex(/^(mailto:|https:\/\/)\S+$/, 'must start with "mailto:" or "https://"')
     .default("mailto:scamly-demo@example.invalid")
     .catch(() => fallback("VAPID_SUBJECT", "mailto:scamly-demo@example.invalid")),
-
-  // AI providers (Week 3, optional feature).
-  GEMINI_API_KEY: z.string().min(1).optional(),
-  GROQ_API_KEY: z.string().min(1).optional(),
-
-  // Shared secret that protects our scheduled (cron) endpoints.
-  CRON_SECRET: z.string().min(1).optional(),
 });
 
 // The type of the checked result, worked out from the schema

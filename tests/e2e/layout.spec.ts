@@ -6,7 +6,9 @@
 //
 // On a phone (the "android-phone" project, isMobile) the menu is the glass dock at the
 // bottom (still inside the header landmark, with the same name) and the theme switch
-// is in the footer; on a desktop both are in the header pill.
+// is in the footer; on a desktop both are in the header pill. Since D35 a guest's menu
+// is short: „Как работи“ and „Вход“ (desktop), Начало / Провери / Вход (phone); every
+// other page is linked from the footer.
 
 import { expect, test, type Page } from "@playwright/test";
 import { bg } from "@/i18n/bg";
@@ -24,11 +26,21 @@ async function fitsScreen(page: Page): Promise<boolean> {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 }
 
-// The menu links a guest must see: in the header pill on a desktop, in the dock on a phone.
+// The menu links a guest must see (D35): in the header pill on a desktop, in the dock
+// on a phone.
 function guestMenuLabels(isMobile: boolean): string[] {
   return isMobile
-    ? [bg.layout.dockHome, bg.layout.dockEducation, bg.layout.dockMap, bg.layout.dockLogin]
-    : [bg.layout.login, bg.layout.register, bg.layout.pair, bg.layout.education];
+    ? [bg.layout.dockHome, bg.layout.dockCheck, bg.layout.dockLogin]
+    : [bg.layout.howItWorks, bg.layout.login];
+}
+
+// The bright „Провери“ pill. On a phone the dock has a link with the same word, and
+// it comes after the pill on the page, so the first match is the pill.
+function checkPill(page: Page) {
+  return page
+    .getByRole("banner")
+    .getByRole("link", { name: bg.layout.checkCta, exact: true })
+    .first();
 }
 
 // Where the theme switch is: the header on a desktop, the footer on a phone.
@@ -42,7 +54,7 @@ test("every public page has the header, the menu and the footer", async ({ page,
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
     const header = page.getByRole("banner");
     await expect(header.getByRole("link", { name: bg.app.name })).toBeVisible();
-    await expect(header.getByRole("link", { name: bg.layout.checkCta, exact: true })).toBeVisible();
+    await expect(checkPill(page)).toBeVisible();
     const menu = header.getByRole("navigation", { name: bg.layout.navLabel });
     for (const label of guestMenuLabels(isMobile)) {
       await expect(menu.getByRole("link", { name: label, exact: true })).toBeVisible();
@@ -113,12 +125,13 @@ test("the menu and the logo lead to the right pages", async ({ page, isMobile })
   const targets = isMobile
     ? [
         { label: bg.layout.dockLogin, url: /\/vhod$/, heading: bg.auth.loginTitle },
-        { label: bg.layout.dockEducation, url: /\/kak-raboti$/, heading: bg.education.title },
+        // „Провери“ opens the check; a phone that is not paired is sent to pairing.
+        { label: bg.layout.dockCheck, url: /\/svarzhi$/, heading: bg.pairing.title },
       ]
     : [
         { label: bg.layout.login, url: /\/vhod$/, heading: bg.auth.loginTitle },
-        { label: bg.layout.register, url: /\/registratsia$/, heading: bg.auth.registerTitle },
-        { label: bg.layout.pair, url: /\/svarzhi$/, heading: bg.pairing.title },
+        // „Как работи“ jumps to the three steps on the home page.
+        { label: bg.layout.howItWorks, url: /\/#how$/, heading: bg.app.tagline },
       ];
   for (const target of targets) {
     await menu.getByRole("link", { name: target.label, exact: true }).click();
@@ -129,7 +142,7 @@ test("the menu and the logo lead to the right pages", async ({ page, isMobile })
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.app.tagline);
 
   // The bright pill opens the check; a phone that is not paired is sent to pairing.
-  await page.getByRole("banner").getByRole("link", { name: bg.layout.checkCta }).click();
+  await checkPill(page).click();
   await expect(page).toHaveURL(/\/svarzhi$/);
 });
 
@@ -151,7 +164,7 @@ test("the phone dock is hidden on the older person's check screen", async ({ pag
   // Back on a public page the dock is there, with a word under every icon.
   await page.goto("/karta-za-hladilnik");
   const dock = page.getByRole("banner").getByRole("navigation", { name: bg.layout.navLabel });
-  await expect(dock.getByRole("link")).toHaveCount(5);
+  await expect(dock.getByRole("link")).toHaveCount(3);
   for (const link of await dock.getByRole("link").all()) {
     expect((await link.innerText()).trim().length).toBeGreaterThan(0);
   }

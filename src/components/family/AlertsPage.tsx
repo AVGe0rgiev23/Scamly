@@ -173,8 +173,7 @@ function AlertsList({ persons }: { persons: PersonDto[] }) {
     let known: Set<string> | null = null;
     return watchChecksOfPersons(
       persons.map((person) => person.id),
-      (latest) => {
-        const fresh = latest.filter((check) => check.alertVisible !== false);
+      (fresh) => {
         const firstLoad = known === null;
         const added = findNewCheckIds(known, fresh);
         known = new Set([...(known ?? []), ...fresh.map((check) => check.id)]);
@@ -212,7 +211,7 @@ function AlertsList({ persons }: { persons: PersonDto[] }) {
     async function load() {
       const result = await callApi<{ check: CheckDto }>(`/api/checks/${focusId}`);
       if (!active) return;
-      if (result.ok && result.data.check.alertVisible !== false) {
+      if (result.ok) {
         setExtraCheck(result.data.check);
       } else {
         setFocusMissing(true);

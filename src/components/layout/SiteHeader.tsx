@@ -1,7 +1,7 @@
 // The top of every page (redesign v3 „Ореол“, Phase 2): a floating glass pill 12 px
 // below the top edge, at most 1100 px wide and centred. In it: the logo (a link to
 // the home page), the menu with a sliding spotlight (desktop), the theme switch and
-// the one bright pill „Провери обаждане“. After 40 px of scrolling the pill shrinks a
+// the one bright pill „Провери“. After 40 px of scrolling the pill shrinks a
 // little and its glass gets more frosted (CSS only, globals.css .site-header-pill).
 //
 // On a phone the pill keeps only the logo and the bright pill; the menu moves to a
@@ -11,8 +11,8 @@
 // because older people do not look for hidden menus.
 //
 // The menu depends on who is looking:
-//   - a guest sees „Как работи измамата“, „Свържи телефон“, „Регистрация“, „Вход“
-//     and the bright pill;
+//   - a guest sees „Как работи“ (the three steps on the home page), „Вход“ and the
+//     bright pill „Провери“ (D35; everything else is in the footer);
 //   - a logged-in person sees the link to their own area (e.g. „Моите близки“; a
 //     family member also „Сигнали“), their name and „Изход“ (the older person's
 //     phone: area link, name and the bright pill, never „Изход“).
@@ -120,7 +120,7 @@ function HeaderNav({ account }: { account: HeaderAccount | null }) {
 }
 
 // The right-hand end of the pill: the person's name and „Изход“ when logged in, and
-// the bright „Провери обаждане“ pill for a guest and the older person's phone.
+// the bright „Провери“ pill for a guest and the older person's phone.
 function HeaderActions({ account }: { account: HeaderAccount | null }) {
   return (
     <>

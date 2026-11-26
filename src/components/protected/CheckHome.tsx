@@ -3,7 +3,9 @@
 // quiet line „Можете да проверите и след като затворите.“ with the button for a call
 // that has already ended, and „Обади се на …“ if we already know who to call.
 // Pressing a button starts the check (the family is alerted at once) and opens the
-// first question.
+// first question. At the very bottom, one quiet text button „Упражнение“ opens the
+// practice calls (PracticeCall.tsx) as their own view: the big button stays the only
+// main action on this screen (D35).
 //
 // The halo is plain CSS (protected.css .check-cta-halo): no WebGL on this screen. It
 // stands still with reduced motion and on weak phones (≤ 4 cores or ≤ 4 GB memory).
@@ -72,7 +74,9 @@ export function CheckHome({ contact, onStart, onPractice, children }: CheckHomeP
         {contact === null ? null : <CallContactButton contact={contact} variant="secondary" />}
       </div>
       {children}
-      <Button variant="secondary" size="xl" onClick={onPractice}>
+      {/* Quiet on purpose: a ghost button (text only, no glass). It is still 64 px
+          high, because every target on the older person's screens is (D35). */}
+      <Button variant="ghost" size="xl" className="self-center text-fg-muted" onClick={onPractice}>
         <BookOpen aria-hidden="true" className="size-5 shrink-0" />
         {bg.practice.entry}
       </Button>

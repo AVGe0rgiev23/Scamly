@@ -439,7 +439,7 @@ Common to all routes: JSON only, errors as `{ error: { code, messageBg } }`, a s
 | 34 | GET | `/api/admin/stats` | admin | `StatsQuery {days: 7–90}` | Checks per day, by script type, by risk level, reports per district |
 | 35 | GET | `/api/admin/audit-log` | admin | `AuditQuery {cursor?}` | Audit log |
 | **Cron (secret-protected)** ||||||
-| 36 | POST | `/api/cron/escalate` | `CRON_SECRET` header | none | *(Week 3 stretch)* Escalate unacknowledged alerts to the next contact |
+| 36 | POST | ~~`/api/cron/escalate`~~ | ~~`CRON_SECRET` header~~ | none | **Removed (P-02, D35)**: was the Week 3 stretch escalation job; replaced by the on-screen fallback in P-06 |
 
 Status codes: 200/201 OK, 400 validation, 401 not logged in, 403 wrong role or not your resource, 404 not found (we return 404 rather than 403 for resources you can't see, so we don't reveal that they exist), 409 conflict, 429 rate-limited, 500 with a friendly Bulgarian message.
 
@@ -693,6 +693,46 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 ---
 
+## 5b. „Провери истинския“ flow (D34, planned 21 Nov)
+
+The main feature. Nothing here is built yet; tasks P-05 and P-06 in section 6. The design reuses what exists: device sessions (section 5), the alert fan-out and Realtime (W2-03), web push (W2-05), contacts order (W2-08), RLS helpers (2.4).
+
+**Data (one new table + one column).**
+- `identity_checks`: `id`, `person_id` (→ protected person), `device_id`, `claimed_user_id` (the family member the caller claims to be; must be a linked family account of that person), `status` (`pending` | `not_me` | `its_me` | `expired`), `created_at`, `answered_at`. Time-to-answer = `answered_at − created_at` (#7).
+- RLS: the device of that person may insert and read its own rows; the claimed family member may read the row and update `status` once (`pending` → `not_me` / `its_me`, compare-and-set); other family members of that person may read. pgTAP tests for every rule, including IDOR.
+
+**API.**
+- `POST /api/identity-checks` (protected device): `{claimedUserId}` → row + push and a live alert to the claimed person only. Rate limit per device.
+- `PATCH /api/identity-checks/{id}` (claimed person): `{answer: "not_me" | "its_me"}`; only while `pending` and younger than 15 min, else 409. On `not_me`: push + alert to every other family member („Някой се представя за Иван…“, #38) and an audit row.
+- The protected screen follows the row through Realtime (with the same 10 s safety poll as W2-03).
+
+**Screens (one-button flow, improved 26 Nov).**
+- Protected: the **one big button** stays. First question: **„Казват ли, че са някой близък?“**
+  - **Yes** → family tiles („Казва, че е Иван“) → the request is sent at once (it covers a call and a „новият ми номер“ message), and **while waiting** (45 s ring) she answers the rest of the 30-second check.
+  - **„Не съм аз“** → red screen „Това НЕ е Иван. Затворете. Иван ви звъни сега.“, the words to end the call (#4, built), a call-back button that **always uses the number saved in the family, never the calling number**, „Някой идва към вас?“ → `tel:112` (#44), and one tap "send anonymously to the map".
+  - **„Аз съм“** → calm screen + a reminder of the hard rules.
+  - **No answer in 45 s** → the next family member gets the request, the screen reminds her „Попитайте го нещо, което само истинският Иван знае.“ (nothing stored), and she gets the verdict of the check.
+  - **No** → the normal 30-second check.
+- Family: a full-screen request from the push or the live page with two big buttons, **„Не съм аз — обаждам ти се сега!“** (saves `not_me` and then opens `tel:` to the protected person's number, so his call reaches her as a waiting call during the scam call) and **„Аз съм“**.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor M as Mum (protected phone)
+  participant API as Scamly API
+  participant DB as PostgreSQL (RLS, Realtime)
+  actor I as Ivan (real son, signed in)
+  actor F as Rest of the family
+  M->>API: POST /api/identity-checks {claimedUserId: Ivan}
+  API->>DB: insert identity_checks (pending)
+  API-->>I: web push + live alert „Ти ли си?“
+  I->>API: PATCH {answer: not_me}
+  API->>DB: status = not_me, answered_at = now() (only if pending)
+  DB-->>M: Realtime: not_me → red screen „Това не е Иван. Затворете.“
+  API-->>F: push + alert „Някой се представя за Иван“
+  Note over M: No answer in 45 s → next family member,<br/>reminder to ask something only Ivan knows, check verdict
+```
+
 ## 6. Week-by-week tasks
 
 **Assumptions.** About **10–12 hours per person per week** next to school. Estimates are *your* time: reviewing, testing, understanding and defending the code, plus any coding you do yourselves. They don't count the AI agent's typing time. Each task = 1 GitHub issue.
@@ -740,7 +780,7 @@ Week 1 totals (after D20): **A ≈ 45.5 h** (17 h already done: W1-01, W1-02, W1
 | W2-07 | Family dashboard UI: people list, create person, contacts order (drag or ↑↓), pairing screen with QR, devices + revoke, check history | A | 8 | W1-07, W2-02 | All actions work through the API; empty/loading/error states in Bulgarian |
 | W2-08 | Contacts + invite API: `PUT contacts`, invites create/redeem | A ✅ (`/pokana` page: W2-14) | 4 | W1-05 | A second family account receives alerts after redeeming an invite |
 | W2-09 | PWA: manifest, icons, install prompt, offline "what to do" card; also the push icons `/icons/icon-192.png` and `/icons/badge-72.png` and the offline card in `public/sw.js` | R | 3 | W2-01 | Lighthouse "installable" ✓; card shows in airplane mode |
-| W2-10 | ✂ Voice input (Web Speech API, `bg-BG`), hidden where unsupported, typing always available | A | 3 | W2-01 | Works in Chrome Android; button absent in unsupported browsers; no errors |
+| W2-10 | ✂ Voice input (Web Speech API, `bg-BG`), hidden where unsupported, typing always available. **Built, then hidden by D35** (`FEATURE_VOICE` off) | A | 3 | W2-01 | Works in Chrome Android; button absent in unsupported browsers; no errors |
 | W2-11 | E2E: protected device presses the button → family context sees the alert → acknowledges → protected sees the message (2 Playwright contexts) | A+R (Alex leads) | 4 (A 2 · R 2) | W2-04 | Green in CI against local Supabase |
 | W2-12 | `docs/learning/week-2.md` (Realtime, service workers, React state) | A+R (half each) | 2 (A 1 · R 1) | all | Written |
 | W2-13 | **Site layout + home page (added 4 Nov, D22):** top bar with the Scamly logo, a small theme switch (replaces the full-width „Изглед“ field) and links („Вход“, „Регистрация“, „Свържи телефон“); footer; a real home page (the problem in one sentence, the 3 steps: pair the phone → press the button → the family is alerted, start buttons). Do it **before** W2-01 so every new page gets the frame | R | 4 | W1-11 | Every page shows the header and footer at 360 px and 1366 px, in light and dark; no full-width theme field; all text in `bg.ts` |
@@ -758,13 +798,34 @@ Totals, remaining work after D23: **A ≈ 18 h, R ≈ 20 h**. Alex: W2-07 (8), W
 | W3-04 | Moderation: queue API + UI (approve/reject with reason), audited | R (API) + A (UI) | 4 (R 2 · A 2) | W3-01 | Approved report appears on the map; rejected never does |
 | W3-05 | Education pages from `scam_scripts` + moderator script editor (incl. extra keywords fed to the engine) | R (API + pages + editor UI) | 6 (API 2 · UI 4) | W1-05 | 4 script cards seeded; editor change appears after publish |
 | W3-06 | Admin: users + role change (audited, no self-demotion), stats charts, audit log view | A (API + admin UI, charts) | 7 (API 4 · UI 3) | W1-06 | Each admin action creates an audit row (tested) |
-| W3-07 | ✂ AI layer: `ScamClassifier`, Gemini + Groq providers, `ClassifierChain`, `combineVerdicts`, `/ai-review` | A | 7 | W2-02 | Tests with fake providers: timeout → next; invalid JSON → next; all down → rules; AI never lowers red |
+| W3-07 | ✂ **Dropped (D35).** AI layer: `ScamClassifier`, Gemini + Groq providers, `ClassifierChain`, `combineVerdicts`, `/ai-review` | A | 7 | W2-02 | Tests with fake providers: timeout → next; invalid JSON → next; all down → rules; AI never lowers red |
 | W3-08 | „Помощ“ pages per role (user documentation, with screenshots) | R | 3 | W2-07 | One page per role, linked from each dashboard |
-| W3-09 | ✂ Escalation: `pg_cron` every minute → `/api/cron/escalate`; contact #2 after N min; suggest 112 | R | 5 | W2-03 | Test: no acknowledgement in N min → alert to priority 2 |
+| W3-09 | ✂ **Replaced (D35)** by the on-screen fallback in P-06. Escalation: `pg_cron` every minute → `/api/cron/escalate`; contact #2 after N min; suggest 112 | R | 5 | W2-03 | Test: no acknowledgement in N min → alert to priority 2 |
 | W3-10 | ✂ Printable fridge card (A5, large text, QR) | R | 2 | W2-07 | Prints cleanly from the browser |
 | W3-11 | `docs/learning/week-3.md` | A+R | 2 (A 1 · R 1) | all | Written |
 
 Totals after D23: **A ≈ 23 h, R ≈ 26 h**. Alex: W3-01 (4), W3-02 (2), W3-04 UI (2), W3-06 (7), W3-07 ✂ (7), half of W3-11 (1). Roberta: W3-03 (7), W3-04 API (2), W3-05 (6), W3-08 (3), W3-09 ✂ (5), W3-10 ✂ (2), half of W3-11 (1). If behind on Sunday 22 Nov: drop W3-07 (AI, Alex) first, then W3-09 (escalation, Roberta), per D12.
+
+### Product focus + „Провери истинския“ (21 Nov – 1 Dec, D34, D35)
+
+Added after the product review. These tasks come **before** the remaining Week 4–5 tasks and the redesign Phases 6–7, except W4-09 (registration). Owners follow the spirit of D23 (both on backend and frontend); the split can be adjusted when the two of you talk.
+
+| ID | Task | Owner | h | Depends on | Done when |
+|---|---|---|---|---|---|
+| P-01 | **Push on real phones:** Android Chrome and an iPhone with the installed PWA; fix whatever breaks (open live checks of W2-05, W2-09) | A+R | 2 (A 1 · R 1) | none | A push arrives on both phones; screenshots in `docs/evidence/` |
+| P-02 | **Cuts (D35):** `FEATURE_VOICE` off and voice removed from texts; delete `CommandPalette` and `FEATURE_AI`; block `/dev/*` in production; remove the escalation job (route + `pg_cron` schedule) and its texts; Brevo: set up the free sender or remove every "по имейл" claim; navigation: header, phone dock and footer groups (D35) | A (backend, flags, dev block, escalation, Brevo) · R (navigation) | 5 (A 4 · R 1) | P-01 | `npm run check`, build and e2e green; no dead links; nothing on the live site promises a feature that does not work |
+| P-03 | **Landing page 10 → 5 sections:** hero with the hook „Гласът може да е фалшив. Близкият ти — не.“ and a two-phone scene, 3 steps, safety net (hard rules + engine demo), „Ти си истинският“, FAQ ≤ 5 + final call to action | R · FAQ texts by A | 6 (R 5 · A 1) | P-02 | ≤ 6 screens on a laptop; desktop + phone, both themes; e2e updated |
+| P-04 | **Story texts (D34):** `bg.ts` (no "only grandma"), samples, demo seed names, education card "fake relative" first, fridge card + phone sticker (#24), help texts, README | R · seed + README by A | 5 (R 4 · A 1) | none | No text says the product is only for grandparents; proofread |
+| P-05 | **„Провери истинския“ backend** (section 5b): migration `identity_checks`, RLS + pgTAP, `POST`/`PATCH` API, push + Realtime, circle warning (#38), audit | A (API, migration) · R (RLS tests) | 8 (A 6 · R 2) | P-01 | Integration + pgTAP tests incl. IDOR; live check with two real accounts |
+| P-06 | **„Провери истинския“ screens (one-button flow, section 5b):** first question „Казват ли, че са някой близък?“, family tiles, the check answered while waiting (45 s), not me / it's me / no answer, reuse the words to end the call (#4, built 25 Nov), call-back to the saved number, „Някой идва към вас?“ → 112 (#44); family answer screen „Не съм аз — обаждам ти се сега!“ that also starts the call | R (protected flow) · A (family answer screen) | 8 (R 6 · A 2) | P-05 | e2e: two browsers, request → „Не съм аз“ → red screen in < 3 s; 360 px; keyboard; reduced motion |
+| P-07 | ✂ **Removed 26 Nov:** the family question is one reminder line on the no-answer screen (in P-06), nothing stored | R | 0 | | |
+| P-08 | ✂ **Removed 26 Nov:** home-screen shortcut (the automatic trigger, `IDEAS.md` #22, solves the real problem) | R | 0 | | |
+| P-09 | **Time-to-answer (#7), evidence only:** median from `identity_checks` after rehearsals and family tests, no admin screen | A | 0.5 | P-05 | Numbers in `docs/evidence/` |
+| P-10 | **Family dashboard simplified:** devices and history in a settings tab; contact order labelled „Кой е истинският“ | R | 2 | P-06 | e2e updated |
+| P-11 | **Send to the map** from the red screen and after „Не съм аз“ (anonymous, moderated) | A | 2 | P-06 | A report from the verdict lands in the moderation queue |
+| P-12 | **Juror demo kit (#39):** a demo family whose invite QR turns a juror's phone into "the real son" in 20 s; reset script after the demo | A | 3 | P-05, P-06 | Rehearsed twice on two real phones |
+
+Totals: **A ≈ 20.5 h, R ≈ 21 h** (after removing P-07 and P-08 on 26 Nov). Order: P-01 and P-02 first (21–22 Nov), then P-04/P-05 in parallel, P-06, P-03, then P-07 … P-12. Redesign Phase 6 becomes a light restyle of moderator and admin (no new features), Phase 7 takes the final screenshots after P-03 and P-06.
 
 ### Week 4 (23–29 Nov): harden, test, validate, register
 
@@ -788,7 +849,7 @@ Totals after D23: **A ≈ 18 h, R ≈ 18 h**. Alex: W4-01 (6), W4-04 (4), half o
 |---|---|---|---|---|---|
 | W5-01 | 5-page documentation (exact regulation structure, TNR 12, 1.5 spacing), file named `Scamly.docx`/`.pdf` | A+R (each writes the sections about their own parts) | 8 (A 4 · R 4) | W4 | ≤ 5 pages, checked by our teacher |
 | W5-02 | Promo leaflet (1 page, printed) | R | 3 | none | Printed copy |
-| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team, future work: F-01 „Scamly Слух“ with a mock-up of the live screen) | A+R (half each) | 4 (A 2 · R 2) | none | ≤ 12 slides, rehearsed |
+| W5-03 | Slides (problem, demo plan, architecture, engine, security, tests, team, where Scamly goes next: the ringing prompt (`IDEAS.md` #22) as a mock-up, the scam immune system, partners and business model) | A+R (half each) | 4 (A 2 · R 2) | none | ≤ 12 slides, rehearsed |
 | W5-04 | Demo video of all flows + local build on a labelled flash drive (with offline instructions) | A | 3 | W4-08 | Video plays from the USB drive on another laptop |
 | W5-05 | Rehearse the defense ×5 (timed), Q&A drill with section 14 questions | A+R | 6 (A 3 · R 3) | all | Last two runs ≤ 8 min demo, every question answered by either of us |
 
@@ -809,7 +870,7 @@ Likelihood / impact: L = low, M = medium, H = high.
 | R3 | **Voice input** (Web Speech API) missing on Firefox and unreliable on iOS; needs internet | H | L | Feature-detect and hide the mic button when unsupported. Typing always available. Questions alone are enough for a verdict. First to cut after AI (D12) |
 | R4 | **Brevo limits**: 300 emails/day; single-sender emails may land in spam | M | L | Email is the third channel. Send at most 1 email per alert per recipient. `NoopEmailProvider` if blocked. Ask testers to whitelist the sender |
 | R5 | **Supabase built-in auth email is very limited** (a few emails per hour), so sign-up confirmation emails fail | H | M | Configure Supabase Auth to send through Brevo SMTP, or turn off email confirmation for the competition. Demo accounts are created already confirmed by the seed script |
-| R6 | **Free-tier LLM rate limits / outages / terms change** (Gemini, Groq) | H | L | `ClassifierChain` timeouts → rules always answer. AI is first to cut. Only redacted text is ever sent (free tiers may use inputs for training) |
+| R6 | ~~**Free-tier LLM rate limits / outages / terms change** (Gemini, Groq)~~ No longer a risk: the AI layer is dropped (D35) | H | L | `ClassifierChain` timeouts → rules always answer. AI is first to cut. Only redacted text is ever sent (free tiers may use inputs for training) |
 | R7 | **Timeline slip** (school, tests, illness) | H | H | D12 cut order. Weekly check every Sunday against this plan. Week 1 overflow allowed only into Monday. Register 2 days early. Both of us understand both halves, so one can cover for the other |
 | R8 | **Venue Wi-Fi or the jury's phone fails** during the live demo | M | H | Our own mobile hotspot. Backup phone already logged in as family. Offline engine fallback still shows the red verdict. Demo video on the USB drive |
 | R9 | **iOS Safari may log out the paired phone** if the site isn't opened for a long time (storage cleanup) | M | M | Session cookies set by the server, not by JavaScript. Installing to the home screen recommended. Re-pairing takes < 1 min. Android Chrome is the primary target |
@@ -820,6 +881,7 @@ Likelihood / impact: L = low, M = medium, H = high.
 | R14 | **Running local Supabase needs Docker** (CI and our laptops); Docker is not started automatically in the cloud session | L | M | Starting the Docker daemon in the cloud session works (checked 2 Nov). CI runs `supabase start` on GitHub's Ubuntu runners (Docker included). Locally: Docker Desktop |
 | R15 | **Bulgarian language mistakes** cost points | M | M | Single `bg.ts` file, proofread by us + a Bulgarian teacher in W4-06. AI text never shown to the protected person |
 | R16 | **Secrets leak** into git | L | H | `.env*` in `.gitignore`, GitHub secret scanning + push protection on, env vars validated at startup |
+| R18 | **Push on real phones fails on stage** (never tested before 21 Nov; the main feature depends on it) | M | H | P-01 first; the live page (Realtime) shows the request even without push; backup phone already signed in; rehearse with venue Wi-Fi and our own hotspot |
 | R17 | **GeoJSON licence / size** (too big for slow phones, or wrong attribution) | L | M | Use an OSM-derived dataset with clear ODbL terms, simplify to < 300 KB, show the attribution on the map, list it in `THIRD_PARTY_LICENSES.md` |
 
 ---

@@ -84,6 +84,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run end-to-end tests
+        # playwright.config.ts also sets these for its own build and server; written
+        # here too so the CI log shows that the /dev test pages are on only in tests.
+        env:
+          SCAMLY_DEV_PAGES: "1"
+          FEATURE_VOICE: "true"
         run: npm run e2e
 
       - name: Upload Playwright report

@@ -26,28 +26,22 @@ describe("parseBoolean", () => {
 describe("getFeatures", () => {
   it("uses the safe defaults when no variables are set", () => {
     expect(getFeatures({})).toEqual({
-      ai: false,
-      voice: true,
-      escalation: false,
+      voice: false,
       push: true,
-      email: true,
+      email: false,
     });
   });
 
   it("lets every switch be changed by its environment variable", () => {
     const features = getFeatures({
-      FEATURE_AI: "true",
-      FEATURE_VOICE: "false",
-      FEATURE_ESCALATION: "1",
+      FEATURE_VOICE: "true",
       FEATURE_PUSH: "0",
-      FEATURE_EMAIL: "false",
+      FEATURE_EMAIL: "1",
     });
     expect(features).toEqual({
-      ai: true,
-      voice: false,
-      escalation: true,
+      voice: true,
       push: false,
-      email: false,
+      email: true,
     });
   });
 });

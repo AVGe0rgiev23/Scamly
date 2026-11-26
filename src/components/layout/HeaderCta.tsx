@@ -1,4 +1,4 @@
-// The one bright pill of the header: „Провери обаждане“, with the icon disc at its
+// The one bright pill of the header: „Провери“, with the icon disc at its
 // end (the primary ButtonLink). It opens the check, /protected: a paired phone goes
 // straight in, any other visitor is sent to the pairing page first by the proxy
 // (the same target as the home page's start button).

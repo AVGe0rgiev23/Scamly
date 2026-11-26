@@ -17,7 +17,6 @@ describe("getServerEnv", () => {
     const env = getServerEnv(validEnv);
     expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe("http://127.0.0.1:54321");
     expect(env.EMAIL_PROVIDER).toBe("noop");
-    expect(env.GEMINI_API_KEY).toBeUndefined();
   });
 
   it("names the missing variables in the error", () => {

@@ -12,7 +12,7 @@ These are settled. Don't re-open them unless something blocks you; if it does, e
 
 | # | Topic | Decision |
 |---|---|---|
-| D1 | Product name | **Scamly**. Repo slug `scamly`. The name is in Latin script, but **all UI text is in correct literary Bulgarian**. Bulgarian tagline in the UI: „Обаждат ли ви се за пари? Проверете за 30 секунди.“ (can be refined). |
+| D1 | Product name | **Scamly**. Repo slug `scamly`. The name is in Latin script, but **all UI text is in correct literary Bulgarian**. Bulgarian tagline in the UI: „Обаждат ли ви се за пари? Проверете за 30 секунди.“ (replaced by D34: „Гласът може да е фалшив. Близкият ти — не.“) (can be refined). |
 | D2 | Team | **Alex Georgiev** (GitHub `AVGe0rgiev23`) and **Roberta Hristova** (GitHub `RFHirstova23`). Both are 11th grade. Both know **Python** well. Roberta is **not yet comfortable with TypeScript** and will learn it during the project. Both are fine with SQL, React concepts and the rest of the stack. |
 | D3 | Where we work | Directly **inside the GitHub repo**, using Claude Code in the cloud. Feature branches + pull requests, reviewed by the other teammate. Meaningful commits from **both** authors. |
 | D4 | Login for the older person | See section 6.1. The family member creates the protected person's profile; the older person's phone is **paired once** with a 6-digit code or QR code and then **stays signed in**. The older person never types a password or email. *Working decision; may be revised later.* |
@@ -45,6 +45,8 @@ These are settled. Don't re-open them unless something blocks you; if it does, e
 | D31 | Words to end a call (idea #4, 25 Nov) | Roberta approved a short phrase on the red verdict while the call is still active. The practice lesson uses the same wording. |
 | D32 | Relative-in-trouble drill (25 Nov) | Roberta approved a second practice scenario that teaches users to verify a relative's story by calling a number they already know. |
 | D33 | Practice choosing the next action (25 Nov) | Roberta approved a final choice in each drill. The result explains what to do after the warning signs are recognized. |
+| D34 | Main story: „Провери истинския“ (added 21 Nov) | Decided by Alex; Roberta to be told before the code changes (D17). Scammers pretend to be **someone close: any relationship** (son or daughter, grandchild, parent, sibling, spouse), not only "a grandchild calling grandma". Caller ID can be spoofed and a voice can be cloned, so **the voice is no longer proof; the relationship is**. The main feature becomes „Провери истинския“: one tap on the protected phone sends a request to the real loved one's signed-in phone, who answers „Не съм аз — затвори!“ or „Аз съм“. The 30-second check, the hard rules (D10) and the family alert stay as the **safety net**. Home-page hook: „Гласът може да е фалшив. Близкият ти — не.“ The tagline in D1 is replaced. Texts talk about „близък“, „родител“, „дете“, not only „баба“. `IDEAS.md` #36. |
+| D35 | Product focus after the review (added 21 Nov) | Decided by Alex after an end-to-end review: **few features, each one essential to the main story.** (1) Landing page cut from 10 sections to 5 (hero with the hook and a two-phone scene, 3 steps, safety net = hard rules + engine demo, „Ти си истинският“ for the family, FAQ ≤ 5 + final call to action). (2) Navigation: header = „Как работи“, „Вход“, button „Провери“; phone dock = Начало / Провери / Вход; map, report form, education and fridge card live in the footer. (3) Voice input hidden (`FEATURE_VOICE` off: never tested on a real phone). (4) The server-side escalation job (W3-09, `pg_cron` + `/api/cron/escalate`) is replaced by the on-screen fallback inside „Провери истинския“ (next family member + a reminder to ask something only the real person knows, after 45 s; changed 26 Nov). (5) `/dev/*` blocked in production; unused `CommandPalette` and the never-built `FEATURE_AI` removed; the AI layer (W3-07, D6) is dropped. (6) E-mail alerts: set up the free Brevo sender or remove every "по имейл" claim. (7) The report form becomes "send anonymously to the map" after a check. (8) Moderator and admin stay (roles, security, audit points) with no new features; redesign Phase 6 is a light restyle. (9) Every idea in `IDEAS.md` has a verdict; dropped ideas are listed there with the reason. Roberta's work of 24–25 Nov (D29–D33: practice call, district warning, words to end the call, export and deletion) stays; it is listed as built. **New cut order (replaces D12):** redesign Phase 6 → family dashboard tidy-up → time-to-answer → send-to-map → accessibility checks (family question and shortcut removed 26 Nov); **never cut:** „Провери истинския“, the call check, the family alert, the map, security and tests. |
 
 **Open items (we will decide as we go; propose a default and keep it easy to change):**
 - ~~Final work split between Alex and Roberta (see section 11).~~ Decided 3 Nov: D17, D18.
@@ -109,91 +111,81 @@ How we want you to work:
 
 ## 4. The problem (use in docs and presentation)
 
-- Phone scams against older people are one of the most widespread crimes in Bulgaria. Typical scripts:
-  - **„Полицай“**: "we are catching scammers, help us by handing over your money".
-  - **„Роднина в беда“**: "your son caused an accident" or "your daughter needs urgent surgery".
-  - **„Фалшив служител“**: bank, electricity company or NHIF (НЗОК) employee.
-  - **„Колет/куриер“**: fake courier.
-  - Victims often throw money from the balcony or hand it to a courier.
+- Phone scams are one of the most widespread crimes in Bulgaria. The script that hurts most is **„Роднина в беда“: the scammer pretends to be someone close.** „Мамо, катастрофирах, трябват ми пари“; „Дядо, аз съм, арестуваха ме“; „Мама е в болница, прати пари на този номер“; „Здравей, това е новият ми номер“. Often a second voice joins as a fake lawyer, police officer or doctor.
+- Other scripts use the same pressure: **„Полицай“** ("help us catch scammers with your money"), **„Фалшив служител“** (bank, electricity company, НЗОК), **„Колет/куриер“**. Victims throw money from the balcony or hand it to a courier.
+- **Anyone can be the target, any relationship can be faked.** Older people are hit most, but parents in their 50s and teenagers get the same calls.
+- **It is getting worse:** the caller's number can be spoofed, and an AI voice clone needs only seconds of a voice from a public video. Hearing the familiar voice is no longer proof.
 - Few perpetrators are caught (reports cite roughly 1 in 10 suspects identified). Prepaid SIM cards make tracing hard.
-- Bulgaria's population is ageing, and many older people live alone in villages while their children live in other cities or abroad. **The family isn't there in the critical 10 minutes of the call.**
-- Existing solutions are awareness campaigns (talks, leaflets) and police warnings. These don't help *during* the call.
+- Families live apart (children in other cities or abroad). **The real loved one is not there in the critical minutes of the call.**
+- Existing solutions are awareness campaigns (talks, leaflets) and police warnings. These do not help *during* the call.
 
 Sources to cite (**verify the current figures before using them**; never invent statistics):
 - AFP / Gulf News: *Brazen phone scammers terrorise Bulgaria's elderly*
 - BNT, Novinite, Sofia Globe police reports on telephone fraud (2024–2026)
 - Plovdiv24 / NOVA: losses of over 3.5 million (Jan 2023 – Sep 2024) to telephone fraud
+- A source on AI voice cloning used in "relative in trouble" scams (find a reliable one before using it)
 - Eurostat / NSI data on population ageing in Bulgaria
 
-**Our insight:** The scam works because the older person is **isolated and rushed**. Scammers keep them on the line and forbid them to tell anyone. **We break the isolation in under 30 seconds.** One button connects the person to their family and gives them a clear "this is a scam" signal.
+**Our insight (D34):** the scam borrows the identity of someone you love, and works because you are **isolated and rushed**. A number can be faked and a voice can be faked, but **the real person's signed-in phone cannot**. Scamly asks the real person in seconds and breaks the isolation: „Гласът може да е фалшив. Близкият ти — не.“
 
 ---
 
 ## 5. The product
 
 **Name:** Scamly.
-**One-liner:** One big button that lets an older person check a suspicious call and instantly alerts their family. It's backed by detection of the scam scripts actually used in Bulgaria and a public map of scam waves by region.
+**One-liner (D34):** When "someone close" calls asking for money, one tap asks the **real** person on their own phone: „Не съм аз — затвори!“ or „Аз съм“. If they do not answer, a 30-second check backed by hard rules gives a clear verdict, and the whole family is alerted. A public map shows scam waves by region.
 
 ### 5.1 Roles (each needs a demo account)
 
-1. **Защитен (protected person)**: the older person. An extremely simple interface. Signs in by device pairing (D4), not a password.
-2. **Близък (family member / trusted person)**: creates and pairs protected people, receives alerts, sees their history, can call back.
+1. **Защитен (protected person)**: the person who gets the scam call (often, but not only, an older person). An extremely simple interface. Signs in by device pairing (D4), not a password.
+2. **Близък (family member / trusted person)**: creates and pairs protected people, **answers „Провери истинския“ requests** („Не съм аз“ / „Аз съм“), receives alerts, sees their history, can call back.
 3. **Модератор (moderator)**: reviews public reports before they appear on the map, and manages the scam-script library.
 4. **Администратор (admin)**: users, roles, statistics, system settings, audit log.
 5. **Гост (guest, no login)**: can see the public map and the educational „Как работи измамата“ pages, and can submit an anonymous report.
 
-### 5.2 Core features (MVP, must work flawlessly)
+### 5.2 Core features (must work flawlessly; D34, D35)
 
-**A. „Проверка на обаждане“ (call check), the protected person's view**
-- Giant button: **„Обаждат ми се за пари!“**
-- Then 3–4 huge yes/no questions with icons:
-  - "Who do they say they are?" (police / relative / bank / courier / other)
-  - "Do they want money or valuables?"
-  - "Are they rushing you or telling you not to tell anyone?"
-- Optional: speak or type what the caller said (browser speech-to-text; text fallback). Voice works best in Chrome on Android; always offer typing.
-- Result screen in **under 5 seconds**: a big red / yellow / green verdict in plain words, e.g. **„ТОВА Е ИЗМАМА. Затворете телефона. Полицията никога не иска пари.“** Green follows D9. Then a one-tap button **„Обади се на [име]“** (a `tel:` link to the first trusted contact).
-- A check can also be started **after** the call has ended.
-- Accessibility: very large fonts (min 18px base, much larger on this screen), high contrast, minimal text, works on cheap Android phones, no complex navigation.
+**A. „Провери истинския“ (the main feature, one-button flow, D34, improved 26 Nov)**
+- The protected phone keeps **one big button**. Its first question: **„Казват ли, че са някой близък?“** Yes → large family tiles („Казва, че е Иван“); the request covers both a call and a „това е новият ми номер“ message. No → the normal 30-second check (B).
+- The request goes at once to the real loved one: **push + live alert** „На мама се обаждат от твое име и искат пари. Ти ли си?“. **While she waits** (45 s), the protected person answers the rest of the check.
+- **„Не съм аз — обаждам ти се сега!“** → the protected phone turns red: „Това НЕ е Иван. Затворете. Иван ви звъни сега.“; Ivan's phone **calls her straight away**, so his call arrives as a waiting call during the scam call; the call-back button always uses **the number saved in the family, never the calling number**; the words to end the call; „Някой идва към вас?“ → `tel:112`; **everyone else in the family is warned**; one tap sends an anonymous report to the map.
+- **„Аз съм“** → calm screen, **but the hard rules still apply** (no cash to a courier, no money by a link, no money thrown from the balcony).
+- **No answer in 45 s** → the next family member gets the request, the screen reminds her „Попитайте го нещо, което само истинският Иван знае.“ (nothing is stored), and she gets the verdict of the check she has been answering.
+- The time from the tap to the answer is measured (evidence for the slides).
+- **Before the call (future, not in the browser):** a web app cannot see incoming calls. The Android companion „Scamly Пазител“ (F-01) will show „Непознат номер — ако каже, че е близък, натиснете тук“ while the phone rings. It shortens the first step; it cannot remove it, because who the caller claims to be is only known once they speak.
 
-**B. Family alert („Семеен щит“)**
-- When a check is started, **every linked family member is notified immediately**: who, when, what the caller claims, and the risk level.
-- Channels (D7): **live status page via Supabase Realtime** (primary) + **web push** (PWA, VAPID) + **email via Brevo** (D5). Telegram or Viber bot as a stretch goal.
-- The family member sees a live status page and an **„Обаждам ѝ се сега“** button. The protected person's screen then shows „Иван ще ви се обади веднага“.
-- Linking accounts: see section 6.1.
+**B. „Проверка на обаждане“ (the 30-second check, the safety net)**
+- Huge yes/no questions with icons: who do they say they are, do they want money or valuables, are they rushing you or telling you not to tell anyone.
+- Result in **under 5 seconds**: a big red / yellow / green verdict in plain words, e.g. **„ТОВА Е ИЗМАМА. Затворете телефона.“** Green follows D9. Then **„Обади се на [име]“** (`tel:` to the first contact). Works offline (the engine also runs on the phone).
+- Accessibility: very large fonts, high contrast, minimal text, works on cheap Android phones at 360 px.
 
-**C. Detection engine („Разпознаване“)**
-- **Layer 1, rule-based (always works, explainable):** a weighted scoring of the yes/no answers, **hard rules** (D10), and a Bulgarian keyword/phrase matcher for known scripts. Handle word stems, **Latin-script Bulgarian („шльокавица“)**, and typos. Output: a score from 0–100, the risk level, the matched script type, the triggered hard rules, and a list of reasons in Bulgarian.
-- **Layer 2, AI (optional enhancement, Week 3, D6):** an LLM classifies free text into a script type and explains why. Every provider call has a **timeout** and the chain **falls back to Layer 1**. **Never send personal data** (names, phone numbers, addresses, IBANs) to the AI. Strip them first with a tested `redactPersonalData()` function.
-- The final verdict combines both layers. **The rules are the safety net: AI may raise the risk level but may never lower a red verdict from Layer 1.** The **explanation of *why* it's a scam** is shown to the user and is educational.
-- This engine is our "algorithm" for the defense. It must be **pure TypeScript with no framework dependencies**, clean, documented and **heavily unit-tested** (a test case for every known script, Cyrillic and Latin-script variants, typos, and legitimate calls that must NOT be flagged red, e.g. a real grandchild calling to say hi, a real bank appointment reminder that asks for nothing).
+**C. Family alert („Семеен щит“)**
+- Every request and every check notifies the linked family at once: **live page via Supabase Realtime** + **web push** (PWA, VAPID; iPhone after "Add to Home Screen"). E-mail via Brevo only once the free sender is set up (D35).
+- The family member taps **„Обаждам ѝ се сега“**; the protected screen shows „Иван ще ви се обади веднага“.
 
-**D. Public scam map („Карта на измамите“)**
-- Anonymous reports, aggregated by **district (област)**, never by exact address (privacy).
-- Shows "scam waves": e.g. „Тази седмица в област Бургас: 14 сигнала за схемата „Полицай““.
-- Moderation queue before publishing. Spam protection (rate limiting + honeypot field; CAPTCHA only if needed and free, e.g. Cloudflare Turnstile).
-- District GeoJSON from OpenStreetMap-derived data: **show the ODbL attribution on the map** and record it in `THIRD_PARTY_LICENSES.md`.
+**D. Detection engine („Разпознаване“)**
+- **Rule-based, explainable, heavily unit-tested:** weighted scoring of the answers, **hard rules** (D10) that force red, a Bulgarian keyword/phrase matcher (stems, шльокавица, typos), `redactPersonalData()`. Pure TypeScript, our "algorithm" for the defense. The AI layer is dropped (D35).
 
-**E. Education („Как работи измамата“)**
-- Short cards for each script: how it starts, what they say, what to do. Usable by grandchildren to explain to grandparents.
+**E. Public scam map („Карта на измамите“)** (secondary, linked from the verdict and the footer)
+- Anonymous reports by district only, moderation before publishing, scam-wave texts, spam protection (rate limit + honeypot). The report is sent from the verdict screen ("send anonymously to the map"); the stand-alone form stays for guests.
 
-**F. Dashboards**
-- Family: protected people, trusted-contact order, history of checks, alerts, paired devices (with "revoke").
-- Moderator: queue, script library editor.
-- Admin: users and roles, statistics charts (checks per day, script types, regions), audit log.
+**F. Education („Как работи измамата“)** (footer)
+- Short cards per script, **"fake relative" first**.
 
-### 5.3 Stretch goals (only after MVP is solid)
-- Escalation chain logic (D8).
-- Telegram / Viber bot notifications.
-- Family secret word: a question only the real relative knows, set in advance.
-- Weekly "scam wave" email digest for family members by region.
-- Large-text printable "fridge card" with what to do and the pairing QR code (also useful as promo material).
-- PWA offline display of the "what to do" card.
-- Multi-provider free-LLM router (D6).
+**G. Dashboards**
+- Family: people, **contact order („кой е истинският“)**, pairing, invite; devices and history in a settings tab.
+- Moderator: report queue, script library editor. Admin: users and roles, statistics (incl. time-to-answer), audit log. No new features (D35).
+
+### 5.3 After the tournament
+
+See `IDEAS.md` sections 4 and 5 (scam drill, faces, scam-wave push, message check with AI, Viber bot, „Семеен кръг“, partners and business model, native companion apps).
 
 ### 5.4 Explicitly out of scope
-- **No recording or intercepting of phone calls.** This is legally problematic and technically impossible from a browser. The user reports what was said.
+- **No recording or intercepting of phone calls.** Legally problematic and technically impossible from a browser. The user reports what was said.
+- **No voice or deepfake analysis.** Our answer to voice cloning is to ask the real person (D34).
 - No storing of caller phone numbers in public. Any number entered is stored privately and **hashed** for duplicate detection.
-- No real-time integration with the police or telecoms (mention it as future work).
+- No AI classification of calls or messages before the tournament (D35).
+- No real-time integration with the police or telecoms (future work, `IDEAS.md` #27, #41).
 
 ---
 
@@ -323,11 +315,11 @@ We are still in school during all of this. If something slips, follow the cut or
 
 ## 13. Defense plan (15 minutes total)
 
-1. **Hook (30 s):** a real anonymised news story: "a 78-year-old woman threw 15,000 leva from her balcony" (verify and use a real one).
-2. **Problem + insight (1 min):** isolation and pressure. The family isn't there.
-3. **Live demo (5–6 min):** one of us plays the scammer and phones the "grandmother" (the other teammate, using the protected role on a phone). She presses the button and answers 3 questions → a red verdict. **The family alert appears in real time** on a jury member's phone (logged in as the family member before we start) and on our backup phone (D7). Then show the map, the moderator view and the admin stats.
-4. **Under the hood (1.5 min):** architecture diagram, the detection engine, security slide, test evidence.
-5. **Impact and future (30 s):** police/municipality partnership, telecom integration, more languages.
+1. **Hook (30 s):** a real anonymised news story about a "relative in trouble" call (verify and use a real one), then the line „Гласът може да е фалшив. Близкият ти — не.“
+2. **Problem + insight (1 min):** the scammer borrows the identity of someone you love; numbers and voices can be faked; the real person is not there.
+3. **Live demo (5–6 min):** a juror's phone becomes "the real son" through the demo-kit QR (`IDEAS.md` #39). One of us calls the "mother" (the other teammate, protected role) and says „Мамо, катастрофирах…“. She taps „Провери истинския“ → the juror's phone lights up → „Не съм аз — затвори!“ → her screen turns red, the family is warned, a dot appears on the map. Second run: the "son" does not answer → the family question and the 30-second check give a red verdict. Then briefly the moderator queue and the admin stats (time-to-answer).
+4. **Under the hood (1.5 min):** architecture diagram (devices confirming each other in real time), the detection engine and hard rules, security slide, test evidence.
+5. **Where it goes next (30 s):** the ringing prompt „Непознат номер — ако каже, че е близък, натиснете тук“ (mock-up), „Семеен кръг“, the scam immune system, partners (banks, operators) as the business model (`IDEAS.md` sections 4 and 5).
 6. **Questions (≥ 5 min).** Prepare answers (section 14).
 
 ---
@@ -348,10 +340,14 @@ When we ask you to improve the idea, act as a **critical tournament jury member*
 
 - Why will an older person use an app at all? (The family installs and pairs it, it's one button, and it's a home-screen PWA. No password.)
 - What if the scammer tells them not to touch the phone? (The education cards and fridge card prepare them in advance, and a check can be started *after* the call too.)
-- How do you detect a new scam script? (Moderator script library, community reports and the AI layer.)
+- How do you detect a new scam script? (Moderator script library and community reports; the moderator's keywords feed the engine.)
+- What if the voice sounds exactly like my son? (That is the point: a voice can be cloned. Scamly asks the real son on his own signed-in phone.)
+- What if the loved one does not answer? (After 45 s: the next family member, a reminder to ask something only the real person knows, and the 30-second check with hard rules.)
+- Why not just ask a secret question? (A question alone fails exactly when it is needed: in panic people forget it, answers like a pet's name are on social media, and scammers dodge it („не мога да мисля, полицаят ще ви обясни“). It also leaves the victim alone. Scamly asks the real person on a device the scammer cannot control, warns the whole family, and still reminds her to ask that question.)
+- What if my son really calls from another number because his phone broke? (Then he cannot answer on his own phone either; Scamly asks the next family member within 45 s. A real emergency never needs cash to a courier within minutes, so the hard rules stay: verify first, pay never.)
+- Could the scammer answer the request? (Only a signed-in, paired family account receives it; the protected device and the family accounts are protected by RLS and server checks.)
 - Why not just block numbers? (Spoofing and prepaid SIM cards. We target the *behaviour*, not the number.)
 - How do you protect the data of vulnerable users? (Section 7.)
-- What happens if the AI is down? (The rule engine; show the test. AI can never lower a red verdict.)
 - Why does green not say "safe"? (D9: a false "safe" is the most dangerous mistake.)
 - How is the older person logged in without a password? Isn't that insecure? (Section 6.1: single-use expiring hashed code, rate limiting, revocable devices, RLS.)
 - How did you test it? (Unit and e2e tests, coverage, Lighthouse, usability test notes.)

@@ -3,6 +3,10 @@
 // each role, which link is the current page, and where the header stays quiet
 // (the older person's check screens).
 //
+// Few links on purpose (D35): a guest sees „Как работи“ and „Вход“ in the header and
+// Начало / Провери / Вход in the dock. Pairing, registration, the education cards,
+// the report form, the map and the fridge card are in the footer (SiteFooter.tsx).
+//
 // The logged-in links come from accountLinks.ts, so the header, the dock and the old
 // tests agree on one list.
 
@@ -12,40 +16,22 @@ import { accountLinkFor, extraLinksFor, type NavLink } from "./accountLinks";
 
 // The menu for a guest in the header pill, in the order it is shown. A list of
 // objects, like a Python list of dicts.
+// „Как работи“ jumps to the three steps on the home page (the section id="how").
+export const HOW_IT_WORKS_HREF = `${ROUTES.home}#how`;
+
 export const GUEST_LINKS: NavLink[] = [
-  { href: ROUTES.education, label: bg.layout.education },
-  { href: ROUTES.pair, label: bg.layout.pair },
-  { href: ROUTES.register, label: bg.layout.register },
+  { href: HOW_IT_WORKS_HREF, label: bg.layout.howItWorks },
   { href: ROUTES.login, label: bg.layout.login },
 ];
 
 // The picture of a dock link. A string, not a React component, so the server can
 // pass it to the client dock (like an enum value in Python).
-export type DockIcon =
-  | "home"
-  | "education"
-  | "map"
-  | "report"
-  | "login"
-  | "family"
-  | "alerts"
-  | "moderator"
-  | "admin"
-  | "check";
+export type DockIcon = "home" | "login" | "family" | "alerts" | "moderator" | "admin" | "check";
 
 export type DockLink = NavLink & { icon: DockIcon };
 
-// The dock has room for five labelled icons on a 360 px phone.
-export const DOCK_SIZE = 5;
-
 const HOME: DockLink = { href: ROUTES.home, label: bg.layout.dockHome, icon: "home" };
-const EDUCATION: DockLink = {
-  href: ROUTES.education,
-  label: bg.layout.dockEducation,
-  icon: "education",
-};
-const MAP: DockLink = { href: ROUTES.map, label: bg.layout.dockMap, icon: "map" };
-const REPORT: DockLink = { href: ROUTES.report, label: bg.layout.dockReport, icon: "report" };
+const CHECK: DockLink = { href: ROUTES.protected, label: bg.layout.dockCheck, icon: "check" };
 const LOGIN: DockLink = { href: ROUTES.login, label: bg.layout.dockLogin, icon: "login" };
 
 // The icon and the short dock word for each role's own area.
@@ -56,12 +42,12 @@ const AREA_ICON: Record<AppRole, DockIcon> = {
   protected: "check",
 };
 
-// The bottom bar of a phone: home, the person's own area (and its extra link), then
-// the public tools until five are shown. A guest gets the public tools and „Вход“
-// (the check itself is the bright pill at the top).
+// The bottom bar of a phone: Начало, then the main action. A guest gets
+// Начало / Провери / Вход; a logged-in person gets Начало and their own area (and its
+// extra link, e.g. a family member's „Сигнали“), so at most three icons.
 export function dockLinksFor(role: AppRole | null): DockLink[] {
   if (role === null) {
-    return [HOME, EDUCATION, MAP, REPORT, LOGIN];
+    return [HOME, CHECK, LOGIN];
   }
   const area = accountLinkFor(role);
   const own: DockLink[] = [
@@ -73,7 +59,7 @@ export function dockLinksFor(role: AppRole | null): DockLink[] {
     },
     ...extraLinksFor(role).map((link): DockLink => ({ ...link, icon: "alerts" })),
   ];
-  return [HOME, ...own, EDUCATION, MAP, REPORT].slice(0, DOCK_SIZE);
+  return [HOME, ...own];
 }
 
 // The bright „Провери обаждане“ pill is for a guest (a phone that may be paired)

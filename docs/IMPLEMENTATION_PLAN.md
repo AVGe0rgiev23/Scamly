@@ -153,11 +153,11 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W2-03 | Alert fan-out + Realtime (+ 5 s polling fallback) | Alex (backend + live alert page UI) | ✅ (Alex) · `/family/alerts` live page, header link „Сигнали“, `?check=` focus, sound only after a tap · Realtime fix: 10 s safety poll while connected · live 5/5, alert visible after 2.3–3.9 s |
 | W2-04 | Acknowledge „Обаждам ѝ се сега“ | Alex (backend + button UI) | ✅ (Alex) · button on each alert; phone shows the name 0.8–1.3 s after the tap (live) · two-browser e2e in W2-11 |
 | W2-05 | Web push | Alex (backend + opt-in UI + iOS hint) | ✅ backend (`src/lib/push.ts` ready) · smoke test 22/22 · ✅ opt-in UI + iOS hint (Alex, `PushOptIn` on `/family`; logout unsubscribes) · ⬜ real-phone test (Alex; iPhone only after "Add to Home Screen") · push icons: W2-09 (Roberta) |
-| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ✅ wording proofread by Roberta (6 Nov: `bg.alertEmail` and `bg.push`) · ⬜ real Brevo e-mail: Alex (no account yet) |
+| W2-06 | `EmailProvider` + Brevo | Alex (wording: Roberta) | ✅ backend, tested with fakes · ✅ wording proofread by Roberta (6 Nov: `bg.alertEmail` and `bg.push`) · 🔁 **off by default since P-02** (`FEATURE_EMAIL`, no Brevo account; no screen promises e-mail); the code stays · ⬜ real Brevo e-mail only if an account is made |
 | W2-07 | Family dashboard UI | Roberta (took it over from Alex on 5 Nov) | ✅ 5 Nov: people list, create person, contact order + invite, pairing + QR, devices + revoke, check history, e2e |
 | W2-08 | Contacts + invite API | Alex | ✅ backend · migration applied 4 Nov; live smoke test 44/44 · contacts UI in W2-07 (Alex), `/pokana` page is W2-14 (Roberta) |
 | W2-09 | PWA (+ push icons, offline card in `public/sw.js`) | Roberta | ✅ manifest + own icons, „Инсталирай Scamly“ card (Android + iPhone steps), offline card on failed page loads; `pwa.spec.ts` 7 × 2 · ⬜ real install + push on a phone (iPhone: needs this manifest) |
-| W2-10 | ✂ Voice input | Alex (D23) | ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
+| W2-10 | ✂ Voice input | Alex (D23) | 🔁 hidden by D35: `FEATURE_VOICE` off by default since P-02 (26 Nov), the code and `voice.spec.ts` stay (the browser tests switch it on) · was ✅ „Говорете“ (Web Speech API, `bg-BG`), only when supported and `FEATURE_VOICE` on · real Bulgarian recognition on a phone not yet tested |
 | W2-11 | E2E: button → alert → acknowledge → message | Alex (leads) + Roberta | ✅ (Alex, 12 Nov) · two browsers on a real local Supabase (Auth, RLS, Realtime), no faked API: login → add person → pairing code → pair → big button → red verdict → live alert → „Обаждам ѝ се сега“ → name on grandma's phone; `npm run e2e:roundtrip`, CI job *roundtrip*; green 3 × 3 |
 | W2-12 | `docs/learning/week-2.md` | Alex + Roberta | Roberta's screens and PWA notes written · Alex's Realtime, push and e-mail notes pending |
 | W2-13 | Site layout + home page (D22) | Roberta | ✅ 5 Nov: header + logo + nav, compact theme switch, footer, home page with the 3 steps, e2e |
@@ -175,12 +175,12 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W3-05 | Scam-script library: `/api/scripts` API, 4 starter cards (migration `20261109000001`), education pages `/kak-raboti`, moderator editor `/moderator/scripts`, moderator keywords fed to the engine | ✅ (Roberta, 9 Nov) · unit, pgTAP and browser tests pass · all four starter cards verified on the live education page 11 Nov |
 | W3-06 | Admin area `/admin`: users + role change (audited, compare-and-set, no own role, no phones), statistics with 4 hand-made charts (no Recharts), audit log | ✅ (Alex, 10 Nov) · 30 unit tests, `admin.spec.ts` 7 × 2 screens; live: 8 accounts, real stats, audit paging, role change on throwaway accounts (deleted) |
 | W3-08 | Role-specific help pages | ✅ (Roberta) · Bulgarian text guides, dashboard links and screenshots for all four roles |
-| W3-09 | Escalation to the next trusted contact after two minutes without acknowledgement, then 112 advice if in immediate danger | ✅ code (Roberta, 11 Nov) · database and browser checks pass locally · production migration, Cron setup and live check pending |
+| W3-09 | Escalation to the next trusted contact after two minutes without acknowledgement, then 112 advice if in immediate danger | 🔁 code done (Roberta, 11 Nov), never switched on in production · **replaced (D35)** by the on-screen fallback in P-06 (next contact + reminder line after 45 s) · ✂ app-side job removed in P-02 (26 Nov): route, `FEATURE_ESCALATION`, `CRON_SECRET`, ops script; the migration stays in the repo but no app code uses it |
 | W3-10 | Printable A5 fridge card with large Bulgarian instructions and pairing QR | ✅ (Roberta, 11 Nov) · one A5 portrait page verified in Edge |
 | W3-11 | `docs/learning/week-3.md` | Roberta's notes written · Alex's section pending |
-| W3-07 | ✂ AI second opinion (Gemini + Groq) | ✂ not built (first cut per D12); `FEATURE_AI` stays off · Alex's call idea → `IDEAS.md` #21 |
+| W3-07 | ✂ AI second opinion (Gemini + Groq) | ✂ dropped (D35); `FEATURE_AI` is removed in P-02 · call-listening idea → `IDEAS.md` #21 (slide) |
 | UI-v2 | Frontend redesign „Signal“ (D26): old visual layer deleted, new tokens, fonts, signal-line motif, landing page with a live engine demo, every screen redone, contrast unit test | ✅ (Alex, 12 Nov) · merged into `main` and live; 696 unit tests, 244 browser tests (desktop + phone) · Roberta: `git pull` before working on any screen |
-| UI-v3 | Redesign v3 „Ореол“ (D28, replaces D26): Phase 0 audit + deletion of the „Signal“ layer; Phase 1 Ореол tokens and themes, rebuilt primitives, WebGL HaloField + HaloRings, `motion`, interim halo icons, `/dev/ui` living style guide; Phases 2–7 rebuild the screens and brand assets | 🔄 (Alex) Phase 1 done on branch `redesign/scamly-v3` (19 Nov) · Phase 2/2A (site frame, landing) done · Phase 3 (the protected flow `/protected` and the verdict moment) done 20 Nov · Phase 4 (the family area `/family/*` and the live alert island) done 20 Nov · Phase 5 (public and sign-in pages: auth, 403/404, help, education, fridge card, report form, map) done 21 Nov · Phase 6 (moderator + admin, „Instrument glass“) and Phase 7 (verification, screenshots, help images) next · merge into `main` before 29 Nov |
+| UI-v3 | Redesign v3 „Ореол“ (D28, replaces D26): Phase 0 audit + deletion of the „Signal“ layer; Phase 1 Ореол tokens and themes, rebuilt primitives, WebGL HaloField + HaloRings, `motion`, interim halo icons, `/dev/ui` living style guide; Phases 2–7 rebuild the screens and brand assets | 🔄 (Alex) Phase 1 done on branch `redesign/scamly-v3` (19 Nov) · Phase 2/2A (site frame, landing) done · Phase 3 (the protected flow `/protected` and the verdict moment) done 20 Nov · Phase 4 (the family area `/family/*` and the live alert island) done 20 Nov · Phase 5 (public and sign-in pages: auth, 403/404, help, education, fridge card, report form, map) done 21 Nov · then the story change (order below) · then Phase 6 (moderator + admin, „Instrument glass“) and Phase 7 (verification, screenshots, help images) |
 
 ### Week 4 (16–22 Nov): security, quality, release, registration
 
@@ -209,21 +209,73 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 - **Week 5 (A ≈ 12 h, R ≈ 12 h).** Alex: W5-04 video + USB. Roberta: W5-02 leaflet. Both: W5-01 documentation (own parts), W5-03 slides, W5-05 rehearsals.
 - **Remaining total: Alex ≈ 71 h, Roberta ≈ 76 h.**
 
-### Future work (after the tournament)
+### Agreed order of work (Alex, updated 21 Nov)
 
-Not built before the defense; shown in the slides as the next big step (W5-03: a "Future work" slide with a mock-up of the live screen). Details and the technical findings: `IDEAS.md` #21.
+1. **Redesign Phase 5** (public pages). ✅ 21 Nov
+2. **Product review** (D35). ✅ 21 Nov: the whole app reviewed end to end; cuts, landing 10 → 5 sections, navigation, every `IDEAS.md` idea rated.
+3. **Tell Roberta** about D34 and D35 before any code changes (D17). ⬜
+4. **Product focus + „Провери истинския“** (tasks P-01 … P-12 below, D34). ⬜
+5. **Redesign Phase 6** (moderator + admin: light restyle only, no new features) and **Phase 7** (quality pass, final screenshots, help pictures, after P-03 and P-06). ⬜
+6. **Finish the project:** W4-02 … W4-09 (registration by 27.11 as planned, official deadline 29.11, using the new story), Week 5 (documentation, leaflet, slides, video, rehearsals). ⬜
+7. **Only after the defense:** ideas from `IDEAS.md` section 4.
+
+### Product focus + „Провери истинския“ (D34, D35; details in `BUILD_PLAN.md` section 6 and the flow in section 5b)
 
 | ID | Task | Owner | Status |
 |---|---|---|---|
-| F-01 | **„Scamly Слух“: live call guard.** A native Android app (plus a "listening station" mode on a second phone or tablet for iPhone users) that, with the person's permission, listens while a suspicious call is on speaker. Streaming Bulgarian speech-to-text feeds our engine and an LLM every few seconds. The screen shows the call live: the signal line reacts to what the caller says, the risk meter climbs, and the scam signs light up one by one as they are heard („Казаха, че са от полицията“, „Искат пари“). At danger level the whole screen turns red with „Затворете телефона!“, the phone vibrates, and the family gets the alert at once; after the call it shows a short summary in plain words. Needs: a legal check (the caller is told the call is checked, GDPR), paid speech/LLM APIs (ask first, D11), a usability test with older people. | Alex + Roberta | ⬜ after the tournament |
+| P-01 | Push on real phones (Android + iPhone with the installed PWA) | Alex + Roberta | ⬜ first |
+| P-02 | Cuts: voice hidden, `CommandPalette` + `FEATURE_AI` removed, `/dev/*` blocked in production, escalation job removed, Brevo set up or "по имейл" removed, navigation slimmed | Alex (backend) + Roberta (navigation) | ✅ (Alex, 26 Nov; navigation built in Alex's session, tell Roberta) · voice + e-mail off by default, e-mail promises removed, escalation route/switch/ops script removed (app no longer depends on the escalation migration), `/dev/*` 404 without `SCAMLY_DEV_PAGES=1`, header „Как работи“ / „Вход“ / „Провери“, dock Начало / Провери / Вход, practice behind „Упражнение“ |
+| P-03 | Landing page 10 → 5 sections with the hook and a two-phone scene | Roberta (FAQ texts: Alex) | ⬜ |
+| P-04 | Story texts: `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker, help texts, README | Roberta (seed + README: Alex) | ⬜ |
+| P-05 | „Провери истинския“ backend: `identity_checks`, RLS + pgTAP, API, push + Realtime, circle warning | Alex (RLS tests: Roberta) | ⬜ |
+| P-06 | „Провери истинския“ screens: one-button flow („Казват ли, че са някой близък?“), check answered while waiting (45 s), call-back to the saved number, „Някой идва към вас?“ → 112; family answer „Не съм аз — обаждам ти се сега!“ | Roberta (family answer screen: Alex) | ⬜ |
+| P-07 | ~~Family question~~ → one reminder line on the no-answer screen, inside P-06 | Roberta | ✂ 26 Nov |
+| P-08 | ~~Home-screen shortcut~~ (the automatic trigger, `IDEAS.md` #22, solves the real problem) | Roberta | ✂ 26 Nov |
+| P-09 | Time-to-answer as evidence only (median from the database, no admin screen) | Alex | ⬜ |
+| P-10 | Family dashboard simplified (settings tab, „Кой е истинският“) | Roberta | ⬜ |
+| P-11 | Send to the map from the red screen | Alex | ⬜ |
+| P-12 | Juror demo kit (QR → juror's phone is "the real son") | Alex | ⬜ |
+
+Remaining for this block: **Alex ≈ 20.5 h, Roberta ≈ 21 h** (P-07, P-08 removed 26 Nov).
+
+### Build phases for the "build now" package (Alex, 26 Nov)
+
+One phase at a time, one commit per task (Alex), all checks green before the next phase. Nothing is pushed until Alex says "push". Roberta's tasks (P-03, P-04, P-06) are built in Alex's session on 26 Nov at Alex's request; **Alex tells Roberta before she pulls** (D17, D23).
+
+| Phase | Tasks | What gets built | Done when |
+|---|---|---|---|
+| 1 | P-02 | **Cuts:** voice off; `CommandPalette` and `FEATURE_AI` removed; `/dev/*` answers 404 on the live site (still on for the browser tests); escalation job removed from the app; e-mail off and every "по имейл" text removed; navigation slimmed; practice calls behind a small „Упражнение“ link | `npm run check`, build and browser tests green |
+| 2 | P-05 | **„Провери истинския“ backend:** `identity_checks` table, RLS + pgTAP, `POST` / `PATCH` API, push + Realtime to the claimed person, 45 s timeout → next family member, „Предупреди кръга“ (#38) | Unit, API and database tests green |
+| 3 | P-06 | **Screens:** one big button → „Казват ли, че са някой близък?“ → family tiles → waiting screen (check answered meanwhile) → „Не съм аз“ red screen with the call-back to the saved number and „Някой идва към вас?“ → 112 (#44) / „Аз съм“ / no answer → next member + the reminder line; the family answer screen „Не съм аз — обаждам ти се сега!“ / „Аз съм“ | Browser tests for every path, 360 px, both themes |
+| 4 | P-04 | **Story texts:** `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker (#24), help texts, README | No text says the product is only for grandparents |
+| 5 | P-03 + navigation | **Landing page rewritten from scratch, same Ореол design** (Alex, 26 Nov): 5 sections, no repetition, only features that really work (no voice, no e-mail, no hidden features), numbers only if measured; the story told through interactive examples (hero two-phone scene „Мамо, катастрофирах“ → „Не съм аз“, the existing real-engine demo, the hard rules), the hook „Гласът може да е фалшив. Близкият ти — не.“. **Interactive navigation bar:** a glass bar with a sliding halo highlight on the current page, shrinks on scroll, role-aware links (guest: Как работи · Вход · Провери; protected: Провери · Помощ; family: Семейство · Сигнали with a live badge · Помощ · Изход; moderator/admin: their area · Помощ · Изход), the same items in the phone dock, keyboard + screen reader friendly, reduced motion respected | ≤ 6 screens on a laptop; browser tests green; every claim on the page matches a working feature |
+| 6 | P-12, P-09, P-11, P-10 | **Juror demo kit** (QR → the juror's phone is "the real son", reset script), time-to-answer as evidence, send to the map from the red screen, family dashboard tidy-up | Demo kit works in a two-browser test |
+| 7 | — | **Release check:** full checks, database tests, screenshots, docs; Alex runs the new migration in the Supabase SQL Editor, then says "push" | Live site shows the change and `/api/health` is OK |
+
+Manual tasks outside these phases (only Alex and Roberta can do them): P-01 push on real phones, W4-09 registration, W4-05 test with real families, Week 5 (documentation, leaflet, slides, video, rehearsals).
+
+### Future work (after the tournament)
+
+Not built before the defense; shown in the slides as the next big step (W5-03: "where Scamly goes next": the scam immune system, „Семеен кръг“, partners and business model, F-01). Details: `IDEAS.md` section 5.
+
+| ID | Task | Owner | Status |
+|---|---|---|---|
+| F-01 | **„Scamly Пазител“: the ringing prompt** (`IDEAS.md` #22, replaces „Scamly Слух“ on 26 Nov). A small Android companion app (call-screening role) shows „Непознат номер — ако каже, че е близък, натиснете тук“ over the ringing screen for numbers not in the contacts; one tap opens „Провери истинския“ on „Казва, че е…“. Reported numbers get a warning label; after a long unknown call the family gets a quiet note (time and length only). Never the audio. iPhone: labels for reported numbers only (paid Apple account, D11). Then: „Scamly Слух“ (F-02, #21), „Семеен кръг“ (#40), „Номерът ми се сменя само в Scamly“ (#43), faces (#2), family drill (#1). | Alex + Roberta | ⬜ after the tournament |
+| F-02 | **„Scamly Слух“: Scamly hears the claim, not the voice** (`IDEAS.md` #21, restored 26 Nov). With consent, on speaker: speech-to-text + our engine every few seconds; when it hears "someone close + money" it starts „Провери истинския“ by itself and shows the signs live; red „Затворете телефона!“ at danger level; summary after the call. Never judges the voice. Needs a legal check (GDPR, the caller is told), paid speech APIs (D11), a usability test. | Alex + Roberta | ⬜ after the tournament, after F-01 |
 
 ### Ideas accepted from `IDEAS.md`
 
-| Idea | Week | Owner | Status |
+| Idea | Week / task | Owner | Status |
 |---|---|---|---|
 | #25, first stage (district warning on the paired phone's home screen) | 4 | Roberta | ✅ In-app warning built. Push delivery follows physical-phone verification. |
 | #1, text-only practice call on the paired phone | 4 | Roberta | ✅ Two fictional scenarios with warning-sign questions, a final action choice and an exit at every step |
 | #4, words to end a call | 4 | Roberta | ✅ On an active red verdict and in the practice lesson |
+| #36 + #28 + #17 „Провери истинския“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
+| #37 „новият ми номер“ (merged into #36), #38 „Предупреди кръга“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
+| #7 time-to-answer (task P-09) | P | Alex | ⬜ |
+| #24 phone sticker (with the fridge card) (task P-04) | P | Roberta | ⬜ |
+| #39 juror demo kit (task P-12) | P | Alex | ⬜ |
+| #44 „Някой идва към вас?“ → 112 (task P-06) | P | Roberta | ⬜ |
 
 ---
 

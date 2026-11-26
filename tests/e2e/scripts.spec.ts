@@ -121,12 +121,13 @@ test("one card: how it starts, what they say, what to do, big text and print", a
   await expect(page).toHaveURL(/\/dev\/kak-raboti$/);
 });
 
-test("the header and the home page link to „Как работи измамата“", async ({ page, isMobile }) => {
+test("the footer and the home page link to „Как работи измамата“", async ({ page }) => {
   await page.goto("/");
-  // On a phone the menu is the dock at the bottom, with the short word „Измами“.
-  const menu = page.getByRole("banner").getByRole("navigation", { name: bg.layout.navLabel });
-  const label = isMobile ? bg.layout.dockEducation : bg.layout.education;
-  await menu.getByRole("link", { name: label, exact: true }).click();
+  // Since D35 the education cards are in the footer, not in the header or the dock.
+  await page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: bg.layout.education, exact: true })
+    .click();
   await expect(page).toHaveURL(/\/kak-raboti$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.education.title);
   await expect(page.getByText(bg.education.lead)).toBeVisible();

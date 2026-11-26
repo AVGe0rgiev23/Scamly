@@ -19,7 +19,6 @@
 // the tests can pass in-memory fakes (dependency injection).
 
 import "server-only";
-import { getFeatures } from "@/config/features";
 import {
   analyseCall,
   HARD_RULE_IDS,
@@ -43,7 +42,6 @@ import type {
 } from "@/schemas/checks";
 import type { Actor } from "@/server/auth/actor";
 import { conflict, forbidden, notFound } from "@/server/http/errors";
-import { listAlertedCheckIds } from "@/server/repositories/alertsRepository";
 import { writeAudit, type AuditEntry } from "@/server/repositories/auditRepository";
 import {
   acknowledgeCheck,
@@ -64,11 +62,8 @@ import {
 } from "@/server/security/rateLimit";
 import {
   createAlertDeps,
-  escalateAlerts,
   fanOut,
-  getEscalationSecret,
   notifyVerdict,
-  usesEscalation,
   type ContactRef,
 } from "@/server/services/alertService";
 import { loadModeratorKeywords } from "@/server/services/moderatorKeywords";
@@ -90,7 +85,6 @@ export type CheckDeps = {
   ) => Promise<CheckRow[]>;
   findPersonForCaller: (personId: string) => Promise<{ id: string; display_name: string } | null>;
   listContactsForCaller: (personId: string) => Promise<ContactRef[]>;
-  listAlertedChecksForCaller: (checkIds: string[]) => Promise<string[]>;
   // Writes with the service role (only after the checks above).
   insertCheck: (check: { protectedPersonId: string; deviceId: string }) => Promise<string>;
   saveAnswers: (checkId: string, fields: CheckAnswersUpdate) => Promise<"saved" | "not_started">;
@@ -235,7 +229,7 @@ function acknowledgementFromRow(row: CheckRow, contacts: ContactRef[]): Acknowle
 }
 
 // A check row -> what the API sends back (camelCase, Bulgarian reasons, names).
-function toCheckDto(row: CheckRow, contacts: ContactRef[], alertVisible = true): CheckDto {
+function toCheckDto(row: CheckRow, contacts: ContactRef[]): CheckDto {
   return {
     id: row.id,
     protectedPersonId: row.protected_person_id,
@@ -252,10 +246,6 @@ function toCheckDto(row: CheckRow, contacts: ContactRef[], alertVisible = true):
     },
     verdict: verdictFromRow(row),
     acknowledgement: acknowledgementFromRow(row, contacts),
-    ...(alertVisible ? {} : { alertVisible: false }),
-    ...(row.escalation_exhausted_at && row.acknowledged_at === null
-      ? { suggestEmergencyCall: true }
-      : {}),
   };
 }
 
@@ -391,11 +381,7 @@ export async function getCheck(deps: CheckDeps, actor: Actor, checkId: string): 
     check.acknowledged_by === null
       ? []
       : await deps.listContactsForCaller(check.protected_person_id);
-  const alertVisible =
-    actor.role !== "family" ||
-    !usesEscalation(check) ||
-    (await deps.listAlertedChecksForCaller([checkId])).includes(checkId);
-  return toCheckDto(check, contacts, alertVisible);
+  return toCheckDto(check, contacts);
 }
 
 // ---------------------------------------------------------------------------------
@@ -416,11 +402,7 @@ export async function listChecks(
     CHECKS_PAGE_SIZE,
   );
   const contacts = await deps.listContactsForCaller(query.personId);
-  const escalatingIds = rows.filter(usesEscalation).map((row) => row.id);
-  const alerted = await deps.listAlertedChecksForCaller(escalatingIds);
-  const checks = rows.map((row) =>
-    toCheckDto(row, contacts, !usesEscalation(row) || alerted.includes(row.id)),
-  );
+  const checks = rows.map((row) => toCheckDto(row, contacts));
   // A full page means there may be more: the next page starts before the last one.
   const last = rows[rows.length - 1];
   const nextCursor =
@@ -482,7 +464,6 @@ export async function acknowledge(
 // ---------------------------------------------------------------------------------
 export function createCheckDeps(user: DbClient, admin: DbClient): CheckDeps {
   const alertDeps = createAlertDeps(admin);
-  const escalationEnabled = getFeatures().escalation && getEscalationSecret() !== undefined;
   return {
     now: () => new Date(),
     hitCounter: databaseHitCounter(admin),
@@ -491,23 +472,13 @@ export function createCheckDeps(user: DbClient, admin: DbClient): CheckDeps {
       listChecksOfPerson(user, personId, before, limit),
     findPersonForCaller: (personId) => findPersonById(user, personId),
     listContactsForCaller: (personId) => listContacts(user, personId),
-    listAlertedChecksForCaller: (checkIds) => listAlertedCheckIds(user, checkIds),
-    insertCheck: (check) =>
-      insertCheck(
-        admin,
-        // The first contact is due immediately, even if the two servers' clocks differ.
-        escalationEnabled ? { ...check, escalationDueAt: new Date(0).toISOString() } : check,
-      ),
+    insertCheck: (check) => insertCheck(admin, check),
     saveAnswers: (checkId, fields) => saveCheckAnswers(admin, checkId, fields),
     markAcknowledged: (checkId, userId, at) => acknowledgeCheck(admin, checkId, userId, at),
     writeAudit: (entry) => writeAudit(admin, entry),
     loadExtraKeywords: loadModeratorKeywords,
     fanOutAlerts: async (checkId) => {
-      if (escalationEnabled) {
-        await escalateAlerts(admin, checkId);
-      } else {
-        await fanOut(alertDeps, checkId);
-      }
+      await fanOut(alertDeps, checkId);
     },
     notifyVerdict: (checkId) => notifyVerdict(alertDeps, checkId),
   };

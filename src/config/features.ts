@@ -1,8 +1,10 @@
 // Feature switches: one on/off switch for every optional feature.
 //
-// Why: decision D12 in docs/PROJECT_BRIEF.md says which features we cut first if we run
-// late (AI → voice → escalation ...). With these switches we can turn a feature off by
-// changing one environment variable (for example on Vercel), without changing any code.
+// Why: decisions D12 and D35 in docs/PROJECT_BRIEF.md say which features we cut. With
+// these switches we can turn a feature on or off by changing one environment variable
+// (for example on Vercel), without changing any code. Voice input and alert e-mails
+// are off by default (D35): voice was never tested on a real phone, and there is no
+// e-mail sender account yet. Their code stays, so one variable turns them back on.
 //
 // The switches are read on the server. A page that needs one passes the value down to
 // its components as a normal prop.
@@ -18,13 +20,11 @@ export function parseBoolean(value: string | undefined, defaultValue: boolean): 
   return cleaned === "true" || cleaned === "1";
 }
 
-// The shape of our switches: like a Python dataclass with five bool fields.
+// The shape of our switches: like a Python dataclass with three bool fields.
 export type Features = {
-  ai: boolean; // AI second opinion (Gemini / Groq), off until Week 3
-  voice: boolean; // speak instead of typing (Web Speech API)
-  escalation: boolean; // escalate an unanswered alert to more family members
+  voice: boolean; // speak instead of typing (Web Speech API), off by default (D35)
   push: boolean; // web push notifications
-  email: boolean; // alert e-mails
+  email: boolean; // alert e-mails, off by default until a sender is set up (D35)
 };
 
 // Environment variables can be missing, so every value may be undefined.
@@ -34,10 +34,8 @@ type Env = Record<string, string | undefined>;
 // Reads all switches. Tests pass their own `env` object; the app uses the real process.env.
 export function getFeatures(env: Env = process.env): Features {
   return {
-    ai: parseBoolean(env.FEATURE_AI, false),
-    voice: parseBoolean(env.FEATURE_VOICE, true),
-    escalation: parseBoolean(env.FEATURE_ESCALATION, false),
+    voice: parseBoolean(env.FEATURE_VOICE, false),
     push: parseBoolean(env.FEATURE_PUSH, true),
-    email: parseBoolean(env.FEATURE_EMAIL, true),
+    email: parseBoolean(env.FEATURE_EMAIL, false),
   };
 }

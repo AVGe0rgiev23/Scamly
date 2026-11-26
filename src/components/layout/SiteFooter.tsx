@@ -1,6 +1,8 @@
 // The bottom of every page (redesign v3 „Ореол“, Phase 2): a raised panel with two
 // columns of links (the app: check, pairing, registration, login; the public tools:
-// education cards, report form, scam map, fridge card), what Scamly is (a school
+// education cards, report form, scam map, fridge card, privacy). Since D35 the header
+// and the phone dock keep only the main links, so every other place is found here.
+// Also what Scamly is (a school
 // project for the „Джон Атанасов“ tournament, 2026), its authors, its licence and our
 // promise of no ads and no tracking. Under it all, a huge faint „Scamly“ is cut off
 // by the bottom edge, like a signature that runs off the page; a soft aurora rises
@@ -20,7 +22,7 @@ const COLUMNS: { title: string; links: NavLink[] }[] = [
   {
     title: bg.layout.footerColumnApp,
     links: [
-      { href: ROUTES.protected, label: bg.layout.checkCta },
+      { href: ROUTES.protected, label: bg.layout.footerCheck },
       { href: ROUTES.pair, label: bg.layout.pair },
       { href: ROUTES.register, label: bg.home.register },
       { href: ROUTES.login, label: bg.layout.login },

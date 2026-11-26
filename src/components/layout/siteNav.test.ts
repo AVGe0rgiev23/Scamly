@@ -3,8 +3,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  DOCK_SIZE,
   GUEST_LINKS,
+  HOW_IT_WORKS_HREF,
   dockLinksFor,
   isCurrentPath,
   isProtectedFlow,
@@ -14,20 +14,25 @@ import { ROUTES } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
 describe("GUEST_LINKS", () => {
-  it("keeps login, registration, pairing and the education cards", () => {
-    expect(GUEST_LINKS.map((link) => link.href).sort()).toEqual(
-      [ROUTES.education, ROUTES.login, ROUTES.pair, ROUTES.register].sort(),
-    );
+  it("shows only „Как работи“ and „Вход“ (D35)", () => {
+    expect(GUEST_LINKS).toEqual([
+      { href: "/#how", label: bg.layout.howItWorks },
+      { href: ROUTES.login, label: bg.layout.login },
+    ]);
+    expect(HOW_IT_WORKS_HREF).toBe("/#how");
   });
 });
 
 describe("dockLinksFor", () => {
-  it("gives a guest home, the public tools and „Вход“", () => {
+  it("gives a guest Начало / Провери / Вход (D35)", () => {
+    expect(dockLinksFor(null).map((link) => link.label)).toEqual([
+      bg.layout.dockHome,
+      bg.layout.dockCheck,
+      bg.layout.dockLogin,
+    ]);
     expect(dockLinksFor(null).map((link) => link.href)).toEqual([
       ROUTES.home,
-      ROUTES.education,
-      ROUTES.map,
-      ROUTES.report,
+      ROUTES.protected,
       ROUTES.login,
     ]);
   });
@@ -51,10 +56,19 @@ describe("dockLinksFor", () => {
     expect(area).toEqual({ href: ROUTES.protected, label: bg.layout.dockProtected, icon: "check" });
   });
 
-  it("never shows more than five links, each with an icon and no duplicates", () => {
+  it("shows home plus the person's own area, and nothing from the footer", () => {
+    expect(dockLinksFor("family").map((link) => link.href)).toEqual([
+      ROUTES.home,
+      ROUTES.family,
+      ROUTES.familyAlerts,
+    ]);
+    expect(dockLinksFor("admin").map((link) => link.href)).toEqual([ROUTES.home, ROUTES.admin]);
+  });
+
+  it("never shows more than three links, each with an icon and no duplicates", () => {
     for (const role of [null, "family", "moderator", "admin", "protected"] as const) {
       const links = dockLinksFor(role);
-      expect(links).toHaveLength(DOCK_SIZE);
+      expect(links.length).toBeLessThanOrEqual(3);
       expect(new Set(links.map((link) => link.href)).size).toBe(links.length);
       for (const link of links) {
         expect(link.label.length).toBeGreaterThan(0);

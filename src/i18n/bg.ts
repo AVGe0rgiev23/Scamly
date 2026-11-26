@@ -8,7 +8,8 @@ import { APP_NAME } from "@/config/app";
 // (TypeScript then also knows the exact text of each string).
 export const bg = {
   practice: {
-    entry: "Упражнете се с пробно обаждане",
+    // The small secondary button at the bottom of the phone's home screen (D35).
+    entry: "Упражнение",
     title: "Тренировъчно обаждане",
     intro: "Ще прочетете измислен разговор и ще отговорите на няколко въпроса.",
     noAlert: "Близките ви няма да получат известие.",
@@ -75,11 +76,11 @@ export const bg = {
     sections: [
       {
         title: "Профили и проверки",
-        text: "Използваме имейл и име за вход и известия. За добавения човек пазим име, област, списък с близки, свързани устройства и история на проверките. Обработваме отговорите и въведения текст, за да оценим риска. Преди да запазим текста, премахваме разпознатите лични данни.",
+        text: "Използваме имейл и име за вход. За добавения човек пазим име, област, списък с близки, свързани устройства и история на проверките. Обработваме отговорите и въведения текст, за да оценим риска. Преди да запазим текста, премахваме разпознатите лични данни.",
       },
       {
         title: "Известия и услуги",
-        text: "Достъпът до проверките е ограничен до свързаното устройство и близките с достъп. Използваме Supabase за профилите и базата данни, Vercel за сайта и доставчици на имейл или браузърни известия, когато съответният канал е включен. Използваме технически данни, за да поддържаме сесията и да ограничаваме злоупотребите.",
+        text: "Достъпът до проверките е ограничен до свързаното устройство и близките с достъп. Използваме Supabase за профилите и базата данни, Vercel за сайта и услугите за браузърни известия, когато известията са включени. Използваме технически данни, за да поддържаме сесията и да ограничаваме злоупотребите.",
       },
       {
         title: "Сигнали и карта",
@@ -116,8 +117,10 @@ export const bg = {
     login: "Вход",
     register: "Регистрация",
     pair: "Свържи телефон",
-    // The public education pages /kak-raboti (W3-05), for guests.
+    // The public education pages /kak-raboti (W3-05), in the footer.
     education: "Как работи измамата",
+    // The header link to the three steps on the home page (D35).
+    howItWorks: "Как работи",
     // When logged in, the menu shows the link to the person's own area (by role),
     // the name („Влезли сте като …“) and „Изход“ (not on the older person's phone).
     accountFamily: "Моите близки",
@@ -132,13 +135,13 @@ export const bg = {
     footerPrinciples: "Свободен софтуер с лиценз GPL-3.0. Без реклами и без проследяване.",
     // Redesign v3, Phase 2: the floating header, the phone dock and the footer.
     // The one bright pill in the header: it opens the check (an unpaired phone is
-    // sent to the pairing page first).
-    checkCta: "Провери обаждане",
+    // sent to the pairing page first). One short word, so it fits a 360 px phone (D35).
+    checkCta: "Провери",
+    // The same link in the footer, where there is room for the full words.
+    footerCheck: "Провери обаждане",
     // Short words under the icons of the bottom bar on a phone (about 70 px each).
     dockHome: "Начало",
-    dockEducation: "Измами",
-    dockMap: "Карта",
-    dockReport: "Сигнал",
+    dockCheck: "Провери",
     dockLogin: "Вход",
     dockProtected: "Проверка",
     // The footer: two columns of links, the tournament and the authors.
@@ -215,15 +218,11 @@ export const bg = {
       },
       alert: {
         title: "Семейството научава веднага",
-        text: "При натискането на бутона Scamly изпраща сигнал в приложението, известие на телефона и имейл.",
+        text: "При натискането на бутона Scamly изпраща сигнал в приложението и известие на телефона.",
       },
       pairing: {
         title: "Свързване без парола",
         text: "Свързвате телефона с шестцифрен код или QR код. Кодът е валиден 10 минути и се използва само веднъж.",
-      },
-      voice: {
-        title: "Може и с глас",
-        text: "Вместо да пише, човекът може да каже какво са му казали. Scamly не записва звук.",
       },
       offline: {
         title: "Работи и при слаб интернет",
@@ -274,7 +273,7 @@ export const bg = {
       {
         question: "Какво пази Scamly за едно обаждане?",
         answer:
-          "Scamly пази отговорите и текста след автоматично премахване на разпознатите лични данни. При диктовка браузърът преобразува речта в текст. Scamly не съхранява звук. За номерата в сигналите пазим само цифров отпечатък, който служи за сравнение.",
+          "Scamly пази отговорите и текста след автоматично премахване на разпознатите лични данни. За номерата в сигналите пазим само цифров отпечатък, който служи за сравнение.",
       },
       {
         question: "Какво става, ако няма интернет?",
@@ -447,7 +446,6 @@ export const bg = {
     islandText: "Баба Мария отговаря на въпросите. Ще ви известим веднага, ако има опасност.",
     avatarLabel: "Получават сигнала",
     avatarMore: "и още {count}",
-    openPalette: "Бързо търсене",
     // The halo („Ореол“) samples of the gallery: the live WebGL field and the still rings.
     sectionHalo: "Ореол",
     haloStateLabel: "Състояние на ореола",
@@ -459,14 +457,6 @@ export const bg = {
       "Изберете състояние: пръстените преминават плавно от едното в другото за около секунда.",
     haloLive: "Жив ореол",
     haloStill: "Неподвижни пръстени",
-  },
-  // The ⌘K / Ctrl K window for quick jumps (src/components/ui/CommandPalette.tsx).
-  commandPalette: {
-    title: "Бързо търсене",
-    placeholder: "Търсете страница или действие…",
-    empty: "Няма намерени резултати.",
-    moveHint: "избор",
-    openHint: "отваряне",
   },
   // Error messages of our API ({ error: { code, messageBg } }), shown by the forms.
   errors: {
@@ -1266,7 +1256,6 @@ export const bg = {
     // Offline fallback (BUILD_PLAN 4.9): the server did not answer within 4 s, so the
     // phone computed the verdict itself and keeps sending the answers in the background.
     localNote: "Резултатът е изчислен на телефона — семейството може още да не е уведомено.",
-    emergencyCallAdvice: "Ако сте в непосредствена опасност, обадете се на 112.",
     // The small pill at the top of the result screen when a family member answers;
     // it opens into a card with „Иван ще ви се обади веднага.“ and this hint.
     familyIslandLabel: "Семейството отговори",

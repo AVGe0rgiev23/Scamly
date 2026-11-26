@@ -1,6 +1,6 @@
-// The bottom bar of a phone or tablet (below 1024 px): a glass dock with five
-// labelled icons for the main places (Начало, Измами, Карта, Сигнал, Вход for a
-// guest; the person's own area for a logged-in person, see siteNav.ts).
+// The bottom bar of a phone or tablet (below 1024 px): a glass dock with a few
+// labelled icons for the main places (Начало, Провери, Вход for a guest; Начало and
+// the person's own area for a logged-in person, see siteNav.ts, D35).
 //
 // Why a dock and not a "hamburger" button: older people do not look for hidden menus,
 // and a thumb reaches the bottom of the screen. So every word is always visible,
@@ -13,18 +13,7 @@
 // needs the current page (usePathname, inside <Suspense> for Cache Components).
 "use client";
 
-import {
-  BookOpen,
-  Bell,
-  House,
-  LayoutDashboard,
-  LogIn,
-  Map as MapIcon,
-  Megaphone,
-  PhoneCall,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { Bell, House, LayoutDashboard, LogIn, PhoneCall, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
@@ -35,9 +24,6 @@ import { isCurrentPath, isProtectedFlow, type DockIcon, type DockLink } from "./
 // key per DockIcon value.
 const ICONS: Record<DockIcon, ReactNode> = {
   home: <House />,
-  education: <BookOpen />,
-  map: <MapIcon />,
-  report: <Megaphone />,
   login: <LogIn />,
   family: <Users />,
   alerts: <Bell />,

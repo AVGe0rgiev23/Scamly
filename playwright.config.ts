@@ -49,5 +49,10 @@ export default defineConfig({
     reuseExistingServer: !isCI,
     // Building can take a while on a slow machine: wait up to 3 minutes.
     timeout: 180_000,
+    // Added to the normal environment of the build and the server (like a Python dict
+    // update): the /dev preview pages exist only with SCAMLY_DEV_PAGES=1
+    // (src/app/dev/layout.tsx), and voice input is off by default (D35), so we switch
+    // it on here to keep its browser tests (tests/e2e/voice.spec.ts) running.
+    env: { SCAMLY_DEV_PAGES: "1", FEATURE_VOICE: "true" },
   },
 });

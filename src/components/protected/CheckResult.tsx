@@ -19,7 +19,6 @@
 // When a family member presses „Обаждам ѝ се сега“, „Иван ще ви се обади веднага.“
 // arrives at the top as a Dynamic Island (CallCheck watches the check live).
 
-import { PhoneCall } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
@@ -43,7 +42,6 @@ type CheckResultProps = {
   afterCall: boolean; // the call has already ended: no „Затворете телефона.“
   local: boolean; // computed on the phone (offline fallback): show the small note
   familyMessage: string | null; // „Иван ще ви се обади веднага.“, null until then
-  suggestEmergencyCall: boolean;
   onNewCheck: () => void;
 };
 
@@ -54,7 +52,6 @@ export function CheckResult({
   afterCall,
   local,
   familyMessage,
-  suggestEmergencyCall,
   onNewCheck,
 }: CheckResultProps) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -126,15 +123,6 @@ export function CheckResult({
           {bg.protectedCheck.localNote}
         </Notice>
       ) : null}
-
-      <div role="status">
-        {suggestEmergencyCall ? (
-          <p className="appear flex items-start gap-3 rounded-lg border border-caution-line bg-caution-bg p-5 font-display text-h3 font-bold text-fg">
-            <PhoneCall className="mt-[0.1em] size-7 shrink-0 text-caution-fg" aria-hidden="true" />
-            {bg.protectedCheck.emergencyCallAdvice}
-          </p>
-        ) : null}
-      </div>
 
       {reasons.length ? (
         <div className="check-reasons check-rise check-rise-3">
