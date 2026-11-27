@@ -133,7 +133,7 @@ Sources to cite (**verify the current figures before using them**; never invent 
 ## 5. The product
 
 **Name:** Scamly.
-**One-liner (D34):** When "someone close" calls asking for money, one tap asks the **real** person on their own phone: „Не съм аз — затвори!“ or „Аз съм“. If they do not answer, a 30-second check backed by hard rules gives a clear verdict, and the whole family is alerted. A public map shows scam waves by region.
+**One-liner (D34):** When "someone close" calls asking for money, one tap asks the **real** person on their own phone: „Не съм аз“ or „Аз съм“. If they do not answer, a 30-second check backed by hard rules gives a clear verdict, and the whole family is alerted. A public map shows scam waves by region.
 
 ### 5.1 Roles (each needs a demo account)
 
@@ -147,11 +147,11 @@ Sources to cite (**verify the current figures before using them**; never invent 
 
 **A. „Провери истинския“ (the main feature, one-button flow, D34, improved 26 Nov)**
 - The protected phone keeps **one big button**. Its first question: **„Казват ли, че са някой близък?“** Yes → large family tiles („Казва, че е Иван“); the request covers both a call and a „това е новият ми номер“ message. No → the normal 30-second check (B).
-- The request goes at once to the real loved one: **push + live alert** „На мама се обаждат от твое име и искат пари. Ти ли си?“. **While she waits** (45 s), the protected person answers the rest of the check.
-- **„Не съм аз — обаждам ти се сега!“** → the protected phone turns red: „Това НЕ е Иван. Затворете. Иван ви звъни сега.“; Ivan's phone **calls her straight away**, so his call arrives as a waiting call during the scam call; the call-back button always uses **the number saved in the family, never the calling number**; the words to end the call; „Някой идва към вас?“ → `tel:112`; **everyone else in the family is warned**; one tap sends an anonymous report to the map.
+- The request goes at once to the real loved one: **push + live alert** „Ти ли си? Някой се представя за теб пред Мама и иска пари.“ (as built: `/family/proveri`). **While she waits** (45 s), the protected person answers the rest of the check.
+- **„Не съм аз — обаждам ти се сега!“** → the protected phone turns red: „Това НЕ е Иван. Затворете. Иван ви звъни сега.“; Ivan's screen tells him to call her now on the number he knows (her number is not stored in Scamly), so his call arrives as a waiting call during the scam call; the call-back button always uses **the number saved in the family, never the calling number**; the words to end the call; „Някой идва ли към вас за парите?“ → `tel:112`; **everyone else in the family is warned**; one tap sends an anonymous report to the map.
 - **„Аз съм“** → calm screen, **but the hard rules still apply** (no cash to a courier, no money by a link, no money thrown from the balcony).
-- **No answer in 45 s** → the next family member gets the request, the screen reminds her „Попитайте го нещо, което само истинският Иван знае.“ (nothing is stored), and she gets the verdict of the check she has been answering.
-- The time from the tap to the answer is measured (evidence for the slides).
+- **No answer in 45 s** → the next family member is asked **about the same claimed person** („Наистина ли е Иван?“; a „Не е Иван“ still turns her screen into „Това НЕ е Иван.“), the screen reminds her „Попитайте нещо, което знае само Иван.“ (nothing is stored), and if nobody answers she gets the verdict of the check she has been answering.
+- The time from the tap to the answer is measured with a read-only SQL query (P-09, evidence for the slides; no admin screen).
 - **Before the call (future, not in the browser):** a web app cannot see incoming calls. The Android companion „Scamly Пазител“ (F-01) will show „Непознат номер — ако каже, че е близък, натиснете тук“ while the phone rings. It shortens the first step; it cannot remove it, because who the caller claims to be is only known once they speak.
 
 **B. „Проверка на обаждане“ (the 30-second check, the safety net)**
@@ -174,7 +174,7 @@ Sources to cite (**verify the current figures before using them**; never invent 
 
 **G. Dashboards**
 - Family: people, **contact order („кой е истинският“)**, pairing, invite; devices and history in a settings tab.
-- Moderator: report queue, script library editor. Admin: users and roles, statistics (incl. time-to-answer), audit log. No new features (D35).
+- Moderator: report queue, script library editor. Admin: users and roles, statistics, audit log. No new features (D35); not restyled after Redesign Phase 5.
 
 ### 5.3 After the tournament
 

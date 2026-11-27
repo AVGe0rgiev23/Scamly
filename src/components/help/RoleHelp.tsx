@@ -3,8 +3,9 @@
 // ordered list drawn as a timeline (halo-ringed number nodes on a thin line, each step
 // on a raised panel); beside it (under it on a phone) a glass "device frame" with the
 // screenshot of that area, and a ghost „back“ pill with an arrow.
-// The screenshots (public/help/<role>.jpg) are made again in Phase 7. Which ones exist
-// is the list HELP_SCREENSHOTS below (not a check of the disk: on Vercel the files in
+// The screenshots (public/help/<role>.jpg): protected + family were made again in the
+// release check (27 Nov) from the /dev preview pages. Which ones exist is the list
+// HELP_SCREENSHOTS below (not a check of the disk: on Vercel the files in
 // public/ are served from the CDN and are not next to the server code, so a disk
 // check would always say "missing"). Without a screenshot the frame shows a quiet
 // empty halo instead, as decoration only. A Server Component.
@@ -27,9 +28,9 @@ const SHOT_SIZE: Record<HelpRole, { width: number; height: number }> = {
   admin: { width: 1600, height: 1000 },
 };
 
-// The roles whose public/help/<role>.jpg exists. Empty until Phase 7 makes the new
-// screenshots; whoever adds a file adds its role here in the same commit.
-const HELP_SCREENSHOTS: readonly HelpRole[] = [];
+// The roles whose public/help/<role>.jpg exists (moderator and admin: not yet, their
+// areas were not restyled). Whoever adds a file adds its role here in the same commit.
+const HELP_SCREENSHOTS: readonly HelpRole[] = ["protected", "family"];
 
 function hasScreenshot(role: HelpRole): boolean {
   return HELP_SCREENSHOTS.includes(role);

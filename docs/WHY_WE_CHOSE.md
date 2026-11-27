@@ -44,7 +44,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
 4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · bottom dock vs hamburger · spotlight menu indicator · our own logo mark · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · landing v4: one interactive story in five sections (vs a feature catalogue) · role-aware navigation (same items in header and dock) · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
-6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
+6. [AI layer (dropped, D35)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
 8. [Testing and quality](#8-testing-and-quality): Vitest · Playwright · preview pages for browser tests · one round trip on a real local Supabase · pgTAP · local Postgres + shim runner · dependency-injected fakes · ESLint + Prettier · strict TypeScript · GitHub Actions
 9. [Hosting and operations](#9-hosting-and-operations): Vercel Hobby · Frankfurt region · health check on a public table (publishable key vs service-role key) · keep-alive (GitHub Actions vs Vercel cron vs only an uptime monitor) · cookie-less public client + 60 s CDN cache for the map · `pg_cron` · uptime monitor · pinned versions
@@ -1702,6 +1702,23 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** moderators needed to merge duplicates; then a server-side "same number" filter that still never sends the number.
 
+### Help screenshots from the preview pages with made-up data (vs screenshots of the live site)  (status: in use (release check 27 Nov: `public/help/protected.jpg`, `public/help/family.jpg`, list `HELP_SCREENSHOTS` in `RoleHelp.tsx`))
+
+**Used for:** the picture beside the steps on `/protected/pomosht` and `/family/pomosht`.
+
+**Alternatives we considered:** screenshots of the live site with the demo accounts; drawn mock-ups; no picture.
+
+**Why this one:**
+- **No real data in a public picture:** the preview pages (`/dev/*`, only with `SCAMLY_DEV_PAGES=1`) show the real components with fake API answers (Мама, Татко), the same way the browser tests do.
+- **Safe to redo:** a one-off Playwright run on a local production build (`SCAMLY_DEV_PAGES=1`) makes them again after a screen changes; nothing on the live database is touched.
+- Fixed sizes (800 × 1000 phone, 1600 × 1000 browser) match `SHOT_SIZE`, so the page does not jump while the picture loads.
+
+**What we give up:**
+- The header of the family picture shows the guest links (the preview page has no login).
+- Moderator and admin have no picture yet: their areas were not restyled (Redesign Phase 6 not done), so the frame keeps the quiet halo.
+
+**We would reconsider if:** the help pages needed one picture per step; then a small script in `scripts/` instead of a one-off run.
+
 ---
 
 ## 5. Notifications
@@ -1951,6 +1968,8 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 ## 6. AI layer (planned, week 3)
 
+The whole section is history: the AI layer was **dropped by D35 (21 Nov)** and never built; `FEATURE_AI` was removed in P-02. The heading keeps its old name so links stay valid.
+
 ### Rule-based engine first, AI only as an optional second opinion  (status: **dropped (D35, 21 Nov)**; never built. Kept here as the record of the choice: the rules engine stays the only verdict, and AI ideas are after-tournament work, `IDEAS.md` #33, #18)
 
 **Used for:** an AI model reads the (redacted) text and suggests the scam type and risk level.
@@ -1969,7 +1988,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** we had real labelled data and evidence that AI alone is more accurate (we don't).
 
-### Gemini + Groq free tiers behind `ScamClassifier` / `ClassifierChain`  (status: decided (D6), not built yet (week 3))
+### Gemini + Groq free tiers behind `ScamClassifier` / `ClassifierChain`  (status: decided (D6), **dropped (D35)**, never built)
 
 **Used for:** calling AI providers in order (Gemini → Groq → rule engine), each with a timeout.
 
@@ -1988,7 +2007,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** the free tiers disappeared; then we'd turn the feature off with `FEATURE_AI` and keep the rules.
 
-### AI can only raise the verdict, never lower it  (status: decided (brief 5.2 C, Q5), not built yet (week 3))
+### AI can only raise the verdict, never lower it  (status: decided (brief 5.2 C, Q5), **dropped (D35)**, never built)
 
 **Used for:** `combineVerdicts(rule, ai)`: AI may raise the level by at most one step (green → yellow, yellow → red), only when confident; it can never turn a red into anything else.
 
@@ -3229,6 +3248,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-27 · release check (Alex): new entry in section 4 "Help screenshots from the preview pages with made-up data"; the AI layer (section 6) marked dropped everywhere.
 - 2026-11-27 · Phase 6 (Alex): new entries in section 9 "Juror demo kit: an invite + a quick registration", "Time-to-answer as a read-only SQL file", "„Изпратете анонимно на картата“ from the red screen", "Family dashboard: two tabs"
 - 2026-11-26 · P-03 landing v4 + navigation (Alex): new entries in section 4 "Landing v4: five sections and an interactive story" and "Role-aware navigation with the same items in the header and the dock"; the sticky-storytelling and SVG-illustration entries marked replaced/removed; the real-engine demo moved to the safety net.
 - 2026-11-26 · P-04 story texts (Alex): new entry in section 10 "Neutral „someone close“ wording (vs „баба“ and „възрастни хора“)"

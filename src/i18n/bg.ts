@@ -105,7 +105,6 @@ export const bg = {
     yes: "Да",
     no: "Не",
     loading: "Зареждане…",
-    errorGeneric: "Нещо се обърка. Опитайте отново.",
     notFoundTitle: "Страницата не е намерена",
     notFoundText: "Няма страница на този адрес.",
     backHome: "Към началната страница",
@@ -328,7 +327,6 @@ export const bg = {
       engineNote: "Примерът използва същата проверка, която работи в приложението.",
       notAnswered: "без отговор",
     },
-    sampleScreen: "Примерни екрани",
   },
   theme: {
     label: "Изглед",
@@ -427,7 +425,6 @@ export const bg = {
     sectionButtons: "Бутони",
     sectionFields: "Полета",
     sectionStatus: "Състояния",
-    sectionSignal: "Сигнална линия",
     sectionLoading: "Зареждане, празно и грешка",
     fieldLabel: "Телефон",
     fieldHint: "Например 0888 123 456",
@@ -442,7 +439,6 @@ export const bg = {
     showToast: "Покажи съобщение",
     toastText: "Промените са запазени.",
     tooltip: "Подсказка",
-    signalStates: "Измама, съмнително, без признаци, покой",
     // Samples of the v3 „Ореол“ gallery (/dev/ui).
     sectionSurfaces: "Повърхности и светлина",
     surfaceRaised: "Повдигната повърхност",
@@ -643,7 +639,6 @@ export const bg = {
     seconds: "секунди",
     // No answer in 45 s: the next family member is asked.
     noAnswer: "{name} не отговори.",
-    askingNext: "Питаме {name}…",
     // The reminder line (P-07 became this line). Nothing is stored.
     askSomething: "Попитайте нещо, което знае само {name}.",
     nobody: "Никой не отговори. Довършете проверката — тя ще ви каже какво да правите.",
@@ -1332,7 +1327,6 @@ export const bg = {
     soundOn: "Включи звук и вибрация",
     soundOff: "Изключи звук и вибрация",
     soundEnabled: "Звукът и вибрацията при нов сигнал са включени.",
-    soundDisabled: "Звукът и вибрацията са изключени.",
     // W2-04: the family member tells the older person's phone that they are calling.
     callNow: "Обаждам ѝ се сега",
     // {name} = the protected person, {time} = when the check started. Read aloud.
@@ -1629,7 +1623,7 @@ export const bg = {
     guides: {
       protected: {
         title: "Проверка на обаждане",
-        screenshotAlt: "Началният екран с бутоните за текущо и приключило обаждане.",
+        screenshotAlt: "Началният екран с големия бутон „Обаждат ми се за пари!“.",
         steps: [
           "При съмнително обаждане натиснете големия бутон. Можете да проверите и след като затворите.",
           "Ако казват, че са ваш близък, докоснете името на човека, за когото се представят. Scamly ще попита истинския човек на собствения му телефон („Провери истинския“).",

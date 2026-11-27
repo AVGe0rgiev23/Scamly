@@ -10,6 +10,16 @@ big-button questions and hard rules is the safety net, and the whole family is a
 Guests can read about current scam scripts, see a map of reported scams by district and report a
 scam themselves.
 
+What works today (release check 27 Nov 2026): the big button „Обаждат ми се за пари!“ with the
+first question „Казват ли, че са някой близък?“, the family tiles, the 45-second wait for the real
+person (then the next person is asked about the same claimed person), the red „Това НЕ е …“ screen
+with a call-back to the saved number and „Някой идва ли към вас за парите?“ → 112, the 30-second check with
+hard rules, live family alerts (Realtime + web push) with „Обаждам ѝ се сега“, „Изпратете анонимно
+на картата“, the family dashboard („Кой е истинският“ / „Настройки“), device pairing with a code
+or QR, invites, the scam map, the report form, education cards, the fridge card with the phone
+sticker, moderation and admin areas, and an installable PWA. Switched off: voice input and e-mail
+alerts (code kept, D35); not built: AI second opinion and the escalation job (dropped, D35).
+
 The full project description is in [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md), and the
 build plan is in [`docs/BUILD_PLAN.md`](./docs/BUILD_PLAN.md).
 
@@ -54,6 +64,9 @@ them; each variable is explained in [`.env.example`](./.env.example).
 | `npm run test:watch`    | Runs the unit tests again on every file change                                                                                              |
 | `npm run test:coverage` | Runs the unit tests and writes a coverage report to `coverage/`                                                                             |
 | `npm run e2e`           | Builds the app and runs the browser tests (Playwright)                                                                                      |
+| `npm run e2e:roundtrip` | Runs the two-browser tests on a real local Supabase (pairing → alert → answer; the juror demo kit)                                          |
+| `npm run seed`          | Demo data for an empty database (see below)                                                                                                 |
+| `npm run demo:kit`      | Juror demo kit: invite + QR for the jury (`demo:reset` resets it; steps in `docs/evidence/demo-kit.md`)                                     |
 | `npm run test:db`       | Runs the database and RLS tests (pgTAP) on a throwaway local PostgreSQL 16 with pgTAP installed (Linux; CI uses `supabase test db` instead) |
 | `npm run format`        | Formats all files with Prettier                                                                                                             |
 | `npm run format:check`  | Checks that all files are formatted                                                                                                         |
@@ -86,7 +99,7 @@ The target must match `NEXT_PUBLIC_SUPABASE_URL`. The script refuses existing Au
 
 The human accounts are confirmed automatically. The seed creates the demo family of the main story (D34): the protected mother Мария Петрова, her son Иван Петров (the family owner, contact #1) and her daughter Ана Петрова (contact #2), plus one paired device using the existing pairing service, two sample checks and two reports. Check verdicts are synthetic fixtures marked `demo-fixture-1`; they are not detection-engine results.
 
-A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family code-generation screen is still planned; the owner-only API is `POST /api/persons/:id/pairing-codes`. **Status (4 Nov 2026):** the seed has been applied to the live Supabase project. All four human demo accounts log in through `/api/auth/login` with the expected roles (family, family, moderator, admin), and the protected person, two contacts, the paired demo device, two sample checks and two reports exist. That live data still has the earlier demo names; the names above apply to the next seed of an empty database (the live database is not changed).
+A CLI-created device session cannot become a cookie in your browser. Pair the actual demo phone separately using a fresh code and `/svarzhi`. The family member makes the code (with a QR) on the person's page under „Настройки“ (owner-only API `POST /api/persons/:id/pairing-codes`). **Status (4 Nov 2026):** the seed has been applied to the live Supabase project. All four human demo accounts log in through `/api/auth/login` with the expected roles (family, family, moderator, admin), and the protected person, two contacts, the paired demo device, two sample checks and two reports exist. That live data still has the earlier demo names; the names above apply to the next seed of an empty database (the live database is not changed).
 
 The demo password is **not** written in this public repository: anyone could then log in as the demo administrator on the live site. It is given to the jury privately (registration form and printed documentation).
 
@@ -103,7 +116,8 @@ Free Vercel Hobby plan, Frankfurt region. Done once by Alex (task W1-13).
 3. Under **Environment Variables**, add these 5 (values from the Supabase dashboard and from
    `openssl rand -hex 32`; see [`.env.example`](./.env.example)):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-   `PAIRING_PEPPER`, `HASH_PEPPER`. Never put them in git or in a chat.
+   `PAIRING_PEPPER`, `HASH_PEPPER`. For web push also `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+   `VAPID_SUBJECT`. Never put them in git or in a chat.
 4. **Deploy.** Then open `https://<project>.vercel.app/api/health`: it must answer
    `{"ok":true,"db":true,…}`. (After changing a variable, redeploy: Vercel applies variables to new
    deployments only.)

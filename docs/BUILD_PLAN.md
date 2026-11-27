@@ -613,7 +613,7 @@ Runs before saving any text **and** before sending anything to AI. It replaces m
 - **Server (authoritative):** `PUT /api/checks/:id/answers` runs it and stores the result. This is the verdict family members see.
 - **Phone (fallback) (proposal):** the check wizard imports the same engine. If the network request fails or takes longer than 4 s, the phone shows the locally computed verdict straight away and retries the upload in the background. The red "hang up" message never depends on Wi-Fi. This is a strong point for the defense.
 
-### 4.10 Layer 2 (AI): how it plugs in (Week 3)
+### 4.10 Layer 2 (AI): how it plugs in (Week 3, ✂ dropped by D35, never built)
 
 ```ts
 // like a Python Protocol / abstract base class
@@ -702,7 +702,7 @@ Why a 6-digit code is enough: there are 1,000,000 combinations. A code lives for
 
 ---
 
-## 5b. „Провери истинския“ flow (D34, planned 21 Nov)
+## 5b. „Провери истинския“ flow (D34, planned 21 Nov, built 26 Nov)
 
 The main feature. Backend built 26 Nov (P-05, HOW_IT_WORKS 3.48); screens in P-06 (section 6). The design reuses what exists: device sessions (section 5), the alert fan-out and Realtime (W2-03), web push (W2-05), contacts order (W2-08), RLS helpers (2.4).
 
@@ -834,7 +834,7 @@ Added after the product review. These tasks come **before** the remaining Week 4
 | P-11 | **Send to the map** from the red screen and after „Не съм аз“ (anonymous, moderated) | A | 2 | P-06 | A report from the verdict lands in the moderation queue |
 | P-12 | **Juror demo kit (#39):** a demo family whose invite QR turns a juror's phone into "the real son" in 20 s; reset script after the demo | A | 3 | P-05, P-06 | Rehearsed twice on two real phones |
 
-Totals: **A ≈ 20.5 h, R ≈ 21 h** (after removing P-07 and P-08 on 26 Nov). Order: P-01 and P-02 first (21–22 Nov), then P-04/P-05 in parallel, P-06, P-03, then P-07 … P-12. Redesign Phase 6 becomes a light restyle of moderator and admin (no new features), Phase 7 takes the final screenshots after P-03 and P-06.
+Totals: **A ≈ 20.5 h, R ≈ 21 h** (after removing P-07 and P-08 on 26 Nov). Order: P-01 and P-02 first (21–22 Nov), then P-04/P-05 in parallel, P-06, P-03, then P-07 … P-12. Redesign Phase 6 becomes a light restyle of moderator and admin (no new features), Phase 7 takes the final screenshots after P-03 and P-06. **As built (27 Nov):** P-02 … P-12 done except the manual P-01; Phase 7 was done as the release check of the build package (screenshots in `docs/evidence/release-2026-11-27/`, protected + family help pictures); Phase 6 (moderator/admin restyle) was **not** done: those areas keep the Phase 1 primitives.
 
 ### Week 4 (23–29 Nov): harden, test, validate, register
 

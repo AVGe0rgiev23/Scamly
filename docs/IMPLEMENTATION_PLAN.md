@@ -180,7 +180,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W3-11 | `docs/learning/week-3.md` | Roberta's notes written · Alex's section pending |
 | W3-07 | ✂ AI second opinion (Gemini + Groq) | ✂ dropped (D35); `FEATURE_AI` is removed in P-02 · call-listening idea → `IDEAS.md` #21 (slide) |
 | UI-v2 | Frontend redesign „Signal“ (D26): old visual layer deleted, new tokens, fonts, signal-line motif, landing page with a live engine demo, every screen redone, contrast unit test | ✅ (Alex, 12 Nov) · merged into `main` and live; 696 unit tests, 244 browser tests (desktop + phone) · Roberta: `git pull` before working on any screen |
-| UI-v3 | Redesign v3 „Ореол“ (D28, replaces D26): Phase 0 audit + deletion of the „Signal“ layer; Phase 1 Ореол tokens and themes, rebuilt primitives, WebGL HaloField + HaloRings, `motion`, interim halo icons, `/dev/ui` living style guide; Phases 2–7 rebuild the screens and brand assets | 🔄 (Alex) Phase 1 done on branch `redesign/scamly-v3` (19 Nov) · Phase 2/2A (site frame, landing) done · Phase 3 (the protected flow `/protected` and the verdict moment) done 20 Nov · Phase 4 (the family area `/family/*` and the live alert island) done 20 Nov · Phase 5 (public and sign-in pages: auth, 403/404, help, education, fridge card, report form, map) done 21 Nov · then the story change (order below) · then Phase 6 (moderator + admin, „Instrument glass“) and Phase 7 (verification, screenshots, help images) |
+| UI-v3 | Redesign v3 „Ореол“ (D28, replaces D26): Phase 0 audit + deletion of the „Signal“ layer; Phase 1 Ореол tokens and themes, rebuilt primitives, WebGL HaloField + HaloRings, `motion`, interim halo icons, `/dev/ui` living style guide; Phases 2–7 rebuild the screens and brand assets | 🔄 (Alex) Phase 1 done on branch `redesign/scamly-v3` (19 Nov) · Phase 2/2A (site frame, landing) done · Phase 3 (the protected flow `/protected` and the verdict moment) done 20 Nov · Phase 4 (the family area `/family/*` and the live alert island) done 20 Nov · Phase 5 (public and sign-in pages: auth, 403/404, help, education, fridge card, report form, map) done 21 Nov · then the story change (order below) · **Phase 7 superseded** by the release check of the build package (27 Nov: full checks, final screenshots `docs/evidence/release-2026-11-27/`, protected + family help pictures) · **Phase 6 (moderator + admin restyle) not done**: those areas keep the Phase 1 primitives; their help pages have no picture |
 
 ### Week 4 (16–22 Nov): security, quality, release, registration
 
@@ -196,7 +196,7 @@ Task details (dependencies, "done when", hours per person) are in `BUILD_PLAN.md
 | W4-08 | Release: freeze `main`, tag `v1.0.0`, production demo accounts | Alex + Roberta | ⬜ |
 | W4-09 | **Register on the tournament site by 27.11** | Alex + Roberta | ⬜ |
 
-Open items from Weeks 1–3 (live checks): W1-13 `HEALTH_URL` secret + Supabase Site URL (Alex) · W2-05 push on a real phone (Alex) · W2-06 real Brevo e-mail (Alex) · W2-09 install + push on a phone (Roberta) · W2-10 Bulgarian voice on a phone (Alex) · W2-14 live invite with two accounts (Roberta) · W3-09 production migration + Cron + live check (Roberta) · learning notes W1-14, W2-12, W3-11 (Alex's sections).
+Open items from Weeks 1–3 (live checks): W1-13 `HEALTH_URL` secret + Supabase Site URL (Alex) · W2-05 push on a real phone (Alex) · ~~W2-06 real Brevo e-mail~~ (e-mail off since P-02) · W2-09 install + push on a phone (Roberta, part of P-01) · ~~W2-10 Bulgarian voice on a phone~~ (voice hidden since P-02) · W2-14 live invite with two accounts (Roberta) · ~~W3-09 production migration + Cron~~ (escalation removed in P-02) · learning notes W1-14, W2-12, W3-11 (Alex's sections).
 
 | ID range | Theme | Status |
 |---|---|---|
@@ -214,8 +214,8 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 1. **Redesign Phase 5** (public pages). ✅ 21 Nov
 2. **Product review** (D35). ✅ 21 Nov: the whole app reviewed end to end; cuts, landing 10 → 5 sections, navigation, every `IDEAS.md` idea rated.
 3. **Tell Roberta** about D34 and D35 before any code changes (D17). ⬜
-4. **Product focus + „Провери истинския“** (tasks P-01 … P-12 below, D34). ⬜
-5. **Redesign Phase 6** (moderator + admin: light restyle only, no new features) and **Phase 7** (quality pass, final screenshots, help pictures, after P-03 and P-06). ⬜
+4. **Product focus + „Провери истинския“** (tasks P-01 … P-12 below, D34). ✅ 27 Nov except P-01 (real phones, manual)
+5. **Redesign Phase 6** (moderator + admin: light restyle only, no new features) and **Phase 7** (quality pass, final screenshots, help pictures, after P-03 and P-06). Phase 7 ✅ as the release check (27 Nov) · Phase 6 ⬜ not done (optional, after the defense if no time)
 6. **Finish the project:** W4-02 … W4-09 (registration by 27.11 as planned, official deadline 29.11, using the new story), Week 5 (documentation, leaflet, slides, video, rehearsals). ⬜
 7. **Only after the defense:** ideas from `IDEAS.md` section 4.
 
@@ -250,7 +250,9 @@ One phase at a time, one commit per task (Alex), all checks green before the nex
 | 4 | P-04 | **Story texts:** `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker (#24), help texts, README | No text says the product is only for grandparents |
 | 5 | P-03 + navigation | **Landing page rewritten from scratch, same Ореол design** (Alex, 26 Nov): 5 sections, no repetition, only features that really work (no voice, no e-mail, no hidden features), numbers only if measured; the story told through interactive examples (hero two-phone scene „Мамо, катастрофирах“ → „Не съм аз“, the existing real-engine demo, the hard rules), the hook „Гласът може да е фалшив. Близкият ти — не.“. **Interactive navigation bar:** a glass bar with a sliding halo highlight on the current page, shrinks on scroll, role-aware links (guest: Как работи · Вход · Провери; protected: Провери · Помощ; family: Семейство · Сигнали with a live badge · Помощ · Изход; moderator/admin: their area · Помощ · Изход), the same items in the phone dock, keyboard + screen reader friendly, reduced motion respected | ≤ 6 screens on a laptop; browser tests green; every claim on the page matches a working feature · ✅ done 26 Nov (5682 px with the footer at 1440 × 900; screenshots `docs/evidence/redesign-v3/landing-v4/`) |
 | 6 | P-12, P-09, P-11, P-10 | **Juror demo kit** (QR → the juror's phone is "the real son", reset script), time-to-answer as evidence, send to the map from the red screen, family dashboard tidy-up | Demo kit works in a two-browser test · ✅ done 27 Nov (`tests/roundtrip/demo-kit.spec.ts` on local Supabase) |
-| 7 | — | **Release check:** full checks, database tests, screenshots, docs; Alex runs the new migration in the Supabase SQL Editor, then says "push" | Live site shows the change and `/api/health` is OK |
+| 7 | — | **Release check:** full checks, database tests, screenshots, docs; Alex runs the new migration in the Supabase SQL Editor, then says "push" | Live site shows the change and `/api/health` is OK · ✅ checks done 27 Nov (see below); ⬜ commit, push + deploy check (Alex) |
+
+**Release check 27 Nov (Alex, phase 7):** ✅ `npm run check` (823 unit tests), `npm run test:db` (239 pgTAP assertions), `npm run build`, `npm run e2e` (299 passed, 1 skipped); live smoke test read-only (8 pages + `/api/health` 200, `/dev/*` 404, all security headers) in `docs/evidence/release-2026-11-27/smoke.md`; 24 final screenshots in the same folder; help pictures for protected + family; code sweep (no leftovers of AI, escalation, `CommandPalette`, e-mail promises; unused `HaloMark` and six unused `bg` keys removed); docs made consistent. **Still manual:** Alex confirms migrations `20261126000001` + `20261126000002` ran in the SQL Editor (their code is already live at `e9444a0`), then commits this check, says "push" and checks the deploy · P-01 push on real phones · W4-05 test with real families · W4-09 registration (deadline 29.11) · demo-kit rehearsals on two real phones (P-12, then P-09 numbers) · W4-08 tag `v1.0.0` (Alex + Roberta) · Week 5 (documentation, leaflet, slides, video, rehearsals) · Redesign Phase 6 not done.
 
 Manual tasks outside these phases (only Alex and Roberta can do them): P-01 push on real phones, W4-09 registration, W4-05 test with real families, Week 5 (documentation, leaflet, slides, video, rehearsals).
 
@@ -270,12 +272,12 @@ Not built before the defense; shown in the slides as the next big step (W5-03: "
 | #25, first stage (district warning on the paired phone's home screen) | 4 | Roberta | ✅ In-app warning built. Push delivery follows physical-phone verification. |
 | #1, text-only practice call on the paired phone | 4 | Roberta | ✅ Two fictional scenarios with warning-sign questions, a final action choice and an exit at every step |
 | #4, words to end a call | 4 | Roberta | ✅ On an active red verdict and in the practice lesson |
-| #36 + #28 + #17 „Провери истинския“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
-| #37 „новият ми номер“ (merged into #36), #38 „Предупреди кръга“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
+| #36 + #28 + #17 „Провери истинския“ (task P-05, P-06) | P | Alex + Roberta | ✅ (Alex, 26 Nov) |
+| #37 „новият ми номер“ (merged into #36), #38 „Предупреди кръга“ (task P-05, P-06) | P | Alex + Roberta | ✅ (Alex, 26 Nov) |
 | #7 time-to-answer (task P-09) | P | Alex | ✅ (27 Nov, SQL; numbers after rehearsals) |
 | #24 phone sticker (with the fridge card) (task P-04) | P | Roberta | ✅ (Alex, 26 Nov) |
 | #39 juror demo kit (task P-12) | P | Alex | ✅ (27 Nov; real-phone rehearsal open) |
-| #44 „Някой идва към вас?“ → 112 (task P-06) | P | Roberta | ⬜ |
+| #44 „Някой идва ли към вас за парите?“ → 112 (task P-06) | P | Roberta | ✅ (Alex, 26 Nov) |
 
 ---
 
