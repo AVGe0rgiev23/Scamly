@@ -42,7 +42,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 1. [Language and framework](#1-language-and-framework): TypeScript · Next.js 16 · React 19 · Node.js 22 · REST route handlers · layers
 2. [Database and backend services](#2-database-and-backend-services): Supabase / PostgreSQL · **SQL Server + SSMS (detailed)** · Firebase · MySQL/MariaDB · MongoDB · SQLite · own auth · plain SQL migrations (no ORM) · Supabase JS client · generated DB types (postgres-meta)
 3. [Security design](#3-security-design): two locks (RLS + API) · server-only writes · HMAC pairing codes · device pairing · `.invalid` device e-mails · Postgres rate limiting · Zod · auth through our API · HttpOnly cookies + three clients · proxy checks login only · same-origin check · CSP · personal-data redaction (regex + Luhn vs an NLP library) · server-side verdict · redact before storing · Realtime token endpoint · contact list through one SQL function (SECURITY INVOKER) · invite tokens · refusals don't burn invites · invite page (token sent at once, `replaceState`, `no-referrer`) · safe `next` redirect · push endpoint allowlist · push upsert = delete + insert · silent honeypot (vs an error, vs a CAPTCHA) · caller number only as an HMAC · off-screen honeypot field · compare-and-set role change · admins can't change their own role · allow-listed audit summary
-4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · bottom dock vs hamburger · spotlight menu indicator · our own logo mark · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
+4. [Frontend](#4-frontend): Tailwind CSS 4 · own design system v3 „Ореол“ (glass + light vs flat v2) · `motion` vs GSAP vs CSS · raw WebGL2 vs ogl vs Three.js · keeping Sofia Sans · studying paid libraries but writing our own · bottom dock vs hamburger · spotlight menu indicator · our own logo mark · v2 „Signal“ (replaced) · shared root layout for header and footer · compact theme switch in the header · home page that explains the 3 steps · landing v4: one interactive story in five sections (vs a feature catalogue) · role-aware navigation (same items in header and dock) · family dashboard: Client Components that call our API · ↑ / ↓ buttons for the contact order · `qrcode` in the browser · system fonts · `useSyncExternalStore` for `?check=` · Web Audio alert beep · PWA · manifest via the Next.js file convention · own generated icons · offline card only on failed page loads · Leaflet without base tiles · Natural Earth district shapes · Web Speech API · one sentence per tap · `FEATURE_VOICE` at request time · native select and date input on the report form · hand-made bar charts (vs Recharts) · one-click approve vs a reject window · quick-pick reject reasons · count-only repeat-number badge
 5. [Notifications](#5-notifications): Supabase Realtime · `AlertChannel` interface · Realtime as a doorbell + polling fallback · 10 s safety poll while connected · one Realtime channel for all people · own Realtime client with `accessToken` · `Promise.all` sends · Web Push (VAPID) through `web-push` · VAPID public key from a route · 1.5 s cap on the push unsubscribe at logout · Brevo behind `EmailProvider` · plain `fetch` for Brevo · Resend as a stub · no row when nothing was sent
 6. [AI layer (planned, week 3)](#6-ai-layer-planned-week-3): rules first + optional AI · Gemini + Groq chain · AI can only raise the verdict
 7. [Detection engine design](#7-detection-engine-design): pure TypeScript rules · deterministic pure function · prefix stems vs a full stemmer · Damerau-Levenshtein · шльокавица transliteration · transliterate-then-fuzzy vs a Latin dictionary · weights table + max per category · hard rules as data objects · offline fallback · green never says "safe" · shared types + `as const` lists · rolling 7/28-day windows for scam waves · admin statistics counted in TypeScript (vs a SQL function)
@@ -1078,7 +1078,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **We would reconsider if:** a designer drew a stronger mark with the same meaning.
 
-### Scroll-driven sticky storytelling on the landing page (vs scroll-jacking, vs a plain list)  (status: in use since redesign v3 Phase 2A, `src/components/landing/HowItWorks.tsx`)
+### Scroll-driven sticky storytelling on the landing page (vs scroll-jacking, vs a plain list)  (status: replaced 26 Nov by landing v4 (P-03): the three steps now have small live pictures; the principle "never take over the scroll" stays)
 
 **What it is:** in „Как работи“ the page scrolls normally; a phone stays in place with CSS `position: sticky` and shows the screen of the step at the middle of the window.
 
@@ -1090,7 +1090,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why:** it shows the real product step by step and stays an ordinary page. On phones it becomes a stacked list with one small phone per step.
 
-### Our own SVG line illustrations (vs stock photos, vs AI-generated pictures)  (status: in use since redesign v3 Phase 2A, `src/components/landing/Illustrations.tsx`)
+### Our own SVG line illustrations (vs stock photos, vs AI-generated pictures)  (status: removed 26 Nov with the public-tools section of the old landing page (P-03); the principle stays: the v4 pictures are drawn phones and CSS, no stock or AI images)
 
 | Option | For | Against |
 |---|---|---|
@@ -1100,7 +1100,7 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 
 **Why:** original work for the jury, light pages and one visual language. The map is drawn from our own `public/geo/bg-districts.json` (Natural Earth, public domain) on the server.
 
-### The landing demo runs the real engine (vs a recorded animation, vs typed-in results)  (status: in use since redesign v2, kept in v3 Phase 2A, `HeroStage.tsx`)
+### The landing demo runs the real engine (vs a recorded animation, vs typed-in results)  (status: in use since redesign v2; since landing v4 in the safety-net section, `SafetyNet.tsx`, where the six hard rules light up from the same verdict)
 
 | Option | For | Against |
 |---|---|---|
@@ -1109,6 +1109,28 @@ Status labels: **in use** = it's in the repo now. **decided, not built yet (week
 | Results typed into the page | Simplest | Could lie; jurors may ask "is this real?" |
 
 **Why:** the engine is a pure function, so it runs anywhere and needs no server. The halo's state is taken from the same verdict, so the most dramatic moment on the page is also a true one.
+
+### Landing v4: five sections and an interactive story (vs a feature catalogue)  (status: in use since 26 Nov, P-03, D35, `src/app/page.tsx`, `src/components/landing/`)
+
+**What it is:** the home page tells one story („Мамо, катастрофирах“ → „Ти ли си?“ → „Не съм аз“ → „Това НЕ е Иван. Затворете.“) in five sections: hero with a two-phone scene, three steps, the safety net (engine demo + hard rules), „Ти си истинският“ for the family, five questions and the final call to action.
+
+| Option | For | Against |
+|---|---|---|
+| **One story, five sections, interactive examples (chosen)** | A visitor understands the product in the first seconds and can play it (steps, keys, „try to fool it“, „вие сте Иван“); every claim is a working feature; ≈ 5.5 screens on a laptop | Fewer features shown (map, report, education are only in the footer) |
+| A feature catalogue (the old 10 sections: bento, one rule, during a call, public tools, …) | Shows everything we built | Repetition, the main idea is lost among side features, too long (≈ 10 screens), some cards described features that are now cut (voice) |
+| A video of the product | Cinematic | Cannot be tried, heavy, goes out of date with every text change, no screen reader version |
+
+**Why:** D35 "few features, each essential to the main story". The scene uses the app's real texts and plays once (then rests on the result), so it is entertaining but never a loop that distracts older visitors; with reduced motion it simply shows the result and step buttons.
+
+### Role-aware navigation with the same items in the header and the dock (vs one menu for everyone, vs a hamburger)  (status: in use since 26 Nov, phase 5, `src/components/layout/siteNav.ts`)
+
+| Option | For | Against |
+|---|---|---|
+| **Per role, same items on laptop and phone (chosen)** | Each person sees only what they can open (no „Нямате достъп“ dead ends); the same words on both screens; the family's „Сигнали“ can carry a badge | One list per role to keep in sync (one tested function) |
+| One menu for everyone | Simplest | Shows links that lead to „no access“; the older person would see „Вход“ / „Изход“ |
+| A hamburger menu | Fits anything | Older people do not look for hidden menus (see the dock entry) |
+
+**Badge: one GET per page (chosen) vs Realtime / polling in the menu.** The alert page is already live (Realtime + polling); a second live channel on every page for a small number would cost a connection and battery for little gain. One `GET /api/identity-checks` per navigation and when the tab returns is cheap and accurate enough for a hint. **Sliding light: CSS (chosen) vs `motion` layout.** The header already moves one clipped light with CSS; the dock's plate only needs "item i of n", so CSS `translate` does it without measuring and without the library on every page.
 
 ### A clip-path flood for the verdict (vs a full-screen video, vs a shader)  (status: in use since redesign v3 Phase 3, `src/components/protected/protected.css`)
 
@@ -3143,6 +3165,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-26 · P-03 landing v4 + navigation (Alex): new entries in section 4 "Landing v4: five sections and an interactive story" and "Role-aware navigation with the same items in the header and the dock"; the sticky-storytelling and SVG-illustration entries marked replaced/removed; the real-engine demo moved to the safety net.
 - 2026-11-26 · P-04 story texts (Alex): new entry in section 10 "Neutral „someone close“ wording (vs „баба“ and „възрастни хора“)"
 - 2026-11-26 · P-06 „Провери истинския“ screens (Alex): new entries in section 9 "One big button, then „Казват ли, че са някой близък?“", "Client-side 45 s countdown on the phone", "The call-back button uses only the saved number"; statuses of „Провери истинския“ updated
 - 2026-11-26 · P-05 „Провери истинския“ backend (Alex): new entries in section 9 "who moves to the next family member (the phone, not a server job)", "Compare-and-set answer within 15 minutes", "One `identity_checks` table, written with the user's own client"; statuses of „Провери истинския“ and the on-screen fallback updated

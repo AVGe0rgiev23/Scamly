@@ -10,8 +10,8 @@ describe("bg strings", () => {
     expect(bg.app.metaTitle).toContain(APP_NAME);
   });
 
-  it("uses the short call-check heading", () => {
-    expect(bg.app.tagline).toBe("Съмнително обаждане?");
+  it("uses the hook of D34 as the main heading", () => {
+    expect(bg.app.tagline).toBe("Гласът може да е фалшив. Близкият ти — не.");
   });
 
   it("never calls a green check safe (D9)", () => {

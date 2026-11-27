@@ -39,28 +39,41 @@ Tokens: `--ease-out cubic-bezier(.16,1,.3,1)`, `--ease-in-out cubic-bezier(.65,0
 | Dock press | `SiteDock` (`.site-dock-link`, `pressable`) | scale 0.97, 150 ms; colour/plate 150 ms linear | a tap on the bottom bar is felt; nothing grows under the finger |
 
 
-### Landing page `/` (Phase 2A, `src/components/landing/landing.css`)
+### Landing page `/` v4 (P-03, phase 5, `src/components/landing/landing.css`)
 
 | Animation | Where | How | Why it exists |
 | --- | --- | --- | --- |
-| Hero entrance (the only one) | demo phone | rises 48 px, rotateX 16° → pose, fade, 1100 ms ease-out, once; the headline never moves | the product arrives as an object; text is readable from frame one |
-| Phone tilt | hero stage (desktop mouse) | `--tilt-x/-y` ±6° + resting −6°/2° pose, 700 ms ease-out; reflection slides with `--glare` | the glass phone feels physical under the pointer |
-| Halo state from the verdict | HaloField behind the hero | green → calm, yellow → caution, red → danger (rings snap shut, one shockwave), shader blend ~1 s | the signature moment: a scam call closes the shield |
-| Horizon colour | `.landing-horizon` | three glow layers cross-fade by opacity, 900 ms | the aurora at the bottom turns amber/red with the risk |
-| Phone edge + island dot | `.landing-phone[data-level]` | box-shadow glow 700 ms; red dot blinks 1.2 s | the danger is felt at the phone too, not only in the field |
-| Gauge sweep | `RiskMeter` on the demo | `stroke-dasharray` 1100 ms ease-out (needle already turns) | the score is measured, not printed |
-| Word reveal | „Затворете телефона.“ | per word opacity .12 → 1, blur 14 → 0 px, 0.18 em rise, 140 ms stagger, once on entering view | the one rule lands word by word, like being said |
-| Sticky screens | „Как работи“ phone | the screen for the step at mid-window: fade + 16 px + blur 6 → 0, 450–600 ms | shows the product in the order the steps describe |
-| Progress line | `.landing-steps::after` | `scaleY(--how-progress)` from scroll | shows how far through the story you are |
-| Bento spotlight | bento cells (`GlassPanel spotlight`) | radial light follows the mouse | the glass reacts like glass |
-| Map glow | drawn districts | blurred copies pulse opacity, 4.5 s, staggered | a living map, without inventing data |
-| Voice rings | bento voice cell | three halo rings scale .4 → 1.15 and fade, 3 s, staggered | speech turning into a halo |
-| Rule-card morph | hard-rules deck (desktop mouse) | name fades/lifts + blur, explanation fades in, numeral lifts, 450–600 ms on hover/focus | the name becomes its reason; on touch both are always shown |
-| Island grows | family section | `DynamicIsland` opens once 450 ms after it is 60 % in view (motion layout spring) | the alert arrives the way it would on a phone |
-| Illustration reveal | tool cards (desktop) | `clip-path` inset 12 px → 0, art scale 1.05, glow up, 700–900 ms | invites the click on the whole card |
-| Accordion | FAQ `<details>` | `::details-content` block-size 0 → auto (`interpolate-size`), 400 ms; plus rotates 135° into a cross | the answer unfolds instead of jumping |
+| Scene entrance (the only one) | the two phones (`.landing-scene-phones`) | rise 40 px + fade, 1100 ms ease-out, once; the headline never moves | the story arrives as objects; text is readable from frame one |
+| Story autoplay | `HeroScene` | one step every 2.6 s, once, rests on the red frame; any choice stops it | the whole idea is told without a click, then the visitor takes over |
+| Screen change | `.landing-screen[data-shown]` | opacity 450 ms + 14 px rise + blur 6 → 0, 600 ms | each step's screen replaces the last softly, like an app |
+| Phone in front | `.landing-scene-slot` (below 640 px) | the speaking phone slides in front, the other moves 36 % aside, scale .84, opacity .5, 700 ms | two phones fit a 360 px screen and the eye follows who acts |
+| Phone steps back | same (wide screens) | the silent phone scale .95, opacity .72, 700 ms | the active phone is clear without hiding the other |
+| Question / answer dot | `.landing-scene-link > span` | a halo dot travels → (twice) on „Въпрос“, a red dot ← on „Резултат“, 1.2 s | shows the question going to Иван and the answer coming back |
+| Halo and horizon | HaloField + `.landing-horizon` | idle → caution → danger with the steps; horizon layers cross-fade 900 ms | the signature moment: the „Не съм аз“ closes the shield |
+| Phone edge + island dot | `.landing-phone[data-level]` | box-shadow glow 700 ms; red dot blinks 1.2 s | the danger is felt at the phone too |
+| Tap cue | `.landing-tile--cue::after` | a halo ring scales .96 → 1.12 and fades, 1.6 s loop | says "tap here" on the tile „Иван“ |
+| Countdown ring | `.landing-wait-value` | stroke-dashoffset, 2.6 s linear per step | the 45 s of waiting are seen |
+| Push arrives | `.landing-push` | from −24 px + scale .96 + fade, 600 ms | the notification drops in like on a lock screen |
+| „Не съм аз“ press | `.landing-answer--no` (hero) | scale .96 + red ring, 900 ms, once | the answer is "pressed" without a hand |
+| Step button | `.landing-step-button` | press scale .97, colour 150 ms | a click is felt |
+| Mini: ringing call | `.landing-mini-ring::after`, `.landing-mini-wave > i` | ring scale 1 → 1.7 fade, 1.6 s; bars scaleY .3 ↔ 1, 1.1 s staggered | a call is coming and a voice speaks |
+| Mini: tap and send | `.landing-mini-finger`, `-tile`, `-push` | finger in, press (scale .85/.95), question slides in, 3.2 s loop | one tap sends the question |
+| Mini: 45 s and the next | `.landing-mini-clock-value`, `.landing-mini-next` | ring empties in 4 s, then the next relative lights up | no answer → the next family member |
+| Rule lights up | `.landing-rule[data-fired]` | background/colour 300 ms; numeral pops from scale .6, 500 ms | shows which hard rule makes the example red |
+| Gauge sweep | `RiskMeter` on the demo | `stroke-dasharray` 1100 ms ease-out | the score is measured, not printed |
+| Try-out answer | `FamilyTry` | the existing `appear` (8 px + fade, 300 ms) | the result of „Не съм аз“ / „Аз съм“ arrives softly |
+| Accordion | FAQ `<details>` | `::details-content` block-size 0 → auto, 400 ms; plus rotates 135° | the answer unfolds instead of jumping |
 
-Reduced motion on the landing: no entrance (150 ms fade), no tilt, no blinking dot, no map pulse, still voice rings, screens/words/rule morph as 150 ms fades, gauge and accordion jump; the HaloField draws one still frame.
+Reduced motion on the landing: the scene opens on the final frame and never plays by itself, screens and phones change with a 150 ms fade, no entrance, no dots, cue, push, press or mini loops (each mini stands on its telling frame), rules light without the pop, the countdown and accordion jump; the HaloField draws one still frame.
+
+### Navigation bar (phase 5, `globals.css` section 8)
+
+| Animation | Where | How | Why it exists |
+| --- | --- | --- | --- |
+| Dock plate slides | `.site-dock-spot` | `translate: calc(i × (100 % + 2px))`, 420 ms ease-out, with its halo bar | the light moves from the old page to the new one, like the header's spotlight |
+| Press pulse | `.site-nav-link::after`, `.site-dock-link::after` | inner halo ring opacity 0 → 1 + scale .92 → 1 in 120 ms, fades 600 ms after release | a soft halo answers the press |
+
+Reduced motion in the navigation: the plate jumps (opacity only), no press pulse.
 
 ### Protected flow `/protected` (Phase 3, `src/components/protected/protected.css`)
 

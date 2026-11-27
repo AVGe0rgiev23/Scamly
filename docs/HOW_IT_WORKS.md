@@ -439,11 +439,11 @@ The frame around every page: a **floating glass header**, a **glass dock** at th
 
 #### How it works
 
-- **Header** (`src/components/layout/SiteHeader.tsx`, Server Component): a glass pill 12 px under the top edge, at most 1100 px wide, centred and `sticky`. Left the logo (`Logo.tsx`), in the middle the menu (desktop, from 1024 px), then the theme switch (`ThemeToggle`) and the one bright pill **„Провери“** (`HeaderCta.tsx`, the primary `ButtonLink` with the icon disc). The pill opens `/protected`, the same target as the home page's start button: a paired phone goes straight in, any other visitor is sent to `/svarzhi` by the proxy. It is shown to guests and to the older person's phone only (`showsCheckCta` in `siteNav.ts`; a relative would only reach „Нямате достъп“), and not on `/protected` itself. Logged in, the pill shows the area link (+ „Сигнали“), the name and „Изход“, exactly as before (`accountLinks.ts`).
+- **Header** (`src/components/layout/SiteHeader.tsx`, Server Component): a glass pill 12 px under the top edge, at most 1100 px wide, centred and `sticky`. Left the logo (`Logo.tsx`), in the middle the menu (desktop, from 1024 px), then the theme switch (`ThemeToggle`) and the one bright pill **„Провери“** (`HeaderCta.tsx`, the primary `ButtonLink` with the icon disc). The pill opens `/protected`, the same target as the home page's start button: a paired phone goes straight in, any other visitor is sent to `/svarzhi` by the proxy. It is shown to guests only since phase 5 (`showsCheckCta` in `siteNav.ts`; the older person's phone has „Провери“ as its first menu item, a relative would only reach „Нямате достъп“). Logged in, the pill shows the role's links (3.7.2a), the name and „Изход“ (`accountLinks.ts`).
 - **Who is logged in** is still read on the server with `getActor()` inside `<Suspense>`: the guest version is the fallback, pre-rendered into the static shell; the real one streams in. The header has three such parts (menu, right-hand actions, dock), so `readHeaderAccount` is wrapped in React's `cache()`: one `getActor` call per request (like Python's `functools.cache`, but only for one request).
 - **Spotlight** (`SpotlightNav.tsx`, small client island): one lit pill as wide as the whole row, cut down to one link with `clip-path: inset(0 R 0 L round 999px)`. Pointing at or tabbing to a link sets two CSS variables (`--spot-l`, `--spot-r`) and CSS animates the clip, so the light glides; it rests on the current page (`aria-current="page"`) and fades out when there is none. A halo hairline at its foot shows the part of the gradient under that link.
 - **Scroll state:** after 40 px the pill rises 4 px, shrinks to 97.5 % and a second, more frosted glass layer fades in. Pure CSS with a scroll timeline (`animation-timeline: scroll(root)`, `animation-range: 0 40px`), so no script runs while scrolling; with reduced motion or in browsers without scroll timelines the pill simply stays as it is. The navigation glass (`.site-glass`) has a denser tint of the page colour than the normal glass, so text scrolling behind it never fights with the menu.
-- **Dock** (`SiteDock.tsx`, below 1024 px): fixed to the bottom, 10 px above the home indicator (`env(safe-area-inset-bottom)`, enabled by `viewportFit: "cover"` in `layout.tsx`). At most three labelled icons (lucide, D35): a guest gets Начало, Провери, Вход; a logged-in person gets Начало and their area (+ „Сигнали“) (`dockLinksFor` in `siteNav.ts`). The guest's header menu is „Как работи“ (`/#how`) and „Вход“ (`GUEST_LINKS`). Labels are always visible, targets 56 px high, nothing grows under the finger. The current place gets a lit plate and a short halo bar on its top edge. The dock is the same `nav` landmark „Основно меню“ (only one of the two is ever shown). Hidden on `/protected` and `/dev/protected` (the older person's screen stays clean) and on paper. Toasts rise above it; Leaflet's layers are kept inside the map (`isolation: isolate` in `map.css`), so the dock and the header stay on top.
+- **Dock** (`SiteDock.tsx`, below 1024 px): fixed to the bottom, 10 px above the home indicator (`env(safe-area-inset-bottom)`, enabled by `viewportFit: "cover"` in `layout.tsx`). The same items as the header for each role (phase 5, see 3.7.2a; a guest gets Начало, Как работи, Провери, Вход). Labels are always visible, targets 56 px high (64 px on the older person's phone), nothing grows under the finger. A sliding plate with a halo bar marks the current place. The dock is the same `nav` landmark „Основно меню“ (only one of the two is ever shown). Hidden on `/protected` and `/dev/protected` (the older person's screen stays clean) and on paper. Toasts rise above it; Leaflet's layers are kept inside the map (`isolation: isolate` in `map.css`), so the dock and the header stay on top.
 - **Footer** (`SiteFooter.tsx`): a raised panel with the logo, what Scamly is and our promise (no ads, no tracking), two link columns („Приложението“: check, pairing, registration, login; „Обществени инструменти“: education cards, report form, scam map, fridge card, privacy; since D35 the only place for the links that are not in the header) in a `nav` landmark, then the tournament („Джон Атанасов“ 2026), the authors and the licence. A giant faint „Scamly“, lit from below by the aurora, runs off the bottom edge. On a phone (and between 1024 and 1280 px, where the header menu needs the room) the theme switch is here; the two switches follow each other through a small browser event.
 - **Skip link** (`layout.tsx`): still the first element in `<body>`, hidden until focused; then a bright pill over the header's top-left corner.
 - **Logo** (`src/components/ui/HaloLogo.tsx`, used by `layout/Logo.tsx`): three concentric arcs that close into a ring around a dot (outer arc 54 % of the circle, middle 77 %, inner ring full; the openings face right and are staggered). The gradient reads the theme's `--halo-1/2/3`, so the light theme gets the deeper Porcelain colours; `tone="mono"` draws it in one colour. At 20 px and below a simpler "small" drawing is used (one arc and the ring), because three arcs blur together at 16 px. The wordmark is Sofia Sans Semi Condensed 700, tracking −0.035 em. On hover the mark turns 28°.
@@ -458,57 +458,73 @@ Older people do not look for hidden menus, and a thumb reaches the bottom of a p
 
 `src/components/layout/siteNav.test.ts` (dock links per role, the check pill, current page, protected flow) and `accountLinks.test.ts`. `tests/e2e/layout.spec.ts`: header, menu (pill on a desktop, dock on a phone) and footer on every public page, the check pill leads to pairing, the current page is marked, the theme switch is remembered, no sideways scroll at 360 px and 48 px targets, the dock is hidden on `/dev/protected`. `pwa.spec.ts`: every icon loads at its size. Screenshots: `docs/evidence/redesign-v3/phase-2/` (`nav-footer__*`, `og-image.png`, `icons-sheet.png`).
 
-### 3.7.2 The landing page `/` (redesign v3 „Ореол“, Phase 2A)
+### 3.7.2 The landing page `/` v4 (P-03, D35, phase 5; replaces the Phase 2A page)
 
 #### What it does
 
-The home page tells the story "a phone call is a sound wave; Scamly turns it into a halo that closes around the person" in ten sections between the header and the footer, each with a different layout:
+The home page tells ONE story, „Провери истинския“ (D34), in five sections, and describes only what works today (no voice, no e-mail, no escalation job, no AI, no invented numbers). The map, the report form, the education cards and the fridge card are linked from the footer only.
 
 | # | Section | What you see |
 |---|---|---|
-| 1 | Hero stage | The rounded `Stage` with the live `HaloField`, an aurora glow rising from its bottom edge, a glass eyebrow chip, the headline „Съмнително **обаждане?**“ (light, the last word bold in the halo gradient), the problem sentence, „Провери обаждането“ (→ `/protected`, a phone that is not paired goes to `/svarzhi`) and „Как работи“ (→ `#how`), the pairing note; on the right (below on phones) a drawn glass phone with the live demo. |
-| 2 | The one rule | Only „Затворете телефона.“ in display size, then one line of advice. |
-| 3 | Как работи | The 3 steps; on a wide screen a sticky phone next to them changes screen as you scroll (pairing code → big button → a question → the verdict → the family's alert) and a halo line fills up. On phones: each step with its own small phone. |
-| 4 | Какво прави Scamly | An uneven bento grid: a verdict computed by the engine, the family alert as a `DynamicIsland`, a drawn map, the 6-digit code, a "voice wave" of halo rings, the offline fallback. |
-| 5 | Шестте твърди правила | A sideways deck of tall glass cards (scroll snap) with large numerals; the names and explanations come from `bg.engine.hardRules`. |
-| 6 | За близките | What a relative sets up (left); the alert island that grows from a pill into the full card, and the call order as an `AvatarStack` (right). |
-| 7 | По време на обаждане | The three rules, large and quiet, on an inverted panel (porcelain in the dark theme, ink in the light one). |
-| 8 | Публични инструменти | Education, report and map as cards led by our own line illustrations. |
-| 9 | Въпроси | A native `<details>` accordion; the height animates and the plus turns into a cross. |
-| 10 | Начало | A smaller `Stage` with the calm halo: register, pair a phone, log in, and the install card. |
+| 1 | Hero | The hook „Гласът може да е фалшив. **Близкият ти — не.**“ (`bg.app.tagline`, the second sentence in the halo gradient), one line, „Провери обаждане“ (→ `/protected`; an unpaired phone goes to `/svarzhi`) and „Как работи“ (→ `#how`). Beside it (below on a phone) the **two-phone scene**: Мама's phone rings („Мамо, катастрофирах, трябват ми пари.“, tile „Иван“) → „Питаме Иван…“ with the 45 s ring while she answers a question, and the push on Иван's phone „Някой се представя за теб пред мама и иска пари. Ти ли си?“ → Иван presses „Не съм аз — обаждам ти се сега!“ → Мама's phone turns red „Това НЕ е Иван. Затворете.“ with „Някой идва ли към вас за парите?“ → 112 and the call-back; Иван sees that Ана and Георги were warned. |
+| 2 | Как работи (`#how`) | Three glass cards, each with a small live picture instead of a paragraph: a ringing „Иван?“ with a sound wave; a finger tapping „Иван“ and „Ти ли си?“ flying off; the two answers and a 45 s ring that names the next relative. |
+| 3 | Предпазна мрежа | „Дори никой да не отговори, проверката отговаря.“ The real-engine demo in a drawn phone („Опитайте да я заблудите“: sample calls, editable text, gauge, reasons) and the six hard rules beside it; the rules the example breaks light up red (`verdict.hardRules`). Green says „Без типични признаци“, never "safe" (D9). |
+| 4 | Ти си истинският | What the family member sees and does (three lines), how to set up (create the person, pair with a 6-digit code or QR, invite relatives), and a phone with the real answer screen „Ти ли си?“ whose two buttons work on the page: „Не съм аз“ shows the answer and the warned relatives, „Аз съм“ the calm answer with „Дори и така — никога: …“. |
+| 5 | Въпроси + start | Five `<details>` questions (the cloned voice, nobody answers, why not a secret question (brief section 14), no recording, free/no install), then a smaller `Stage` „Свържете семейството си“ with register / pair / log in and the install card. |
+
+At 1440 × 900 the page is 5682 px including the footer (about 6.3 screens; the five sections about 5.5).
 
 #### How it works
 
 | File | Job |
 |---|---|
-| `src/app/page.tsx` | Server Component: the ten sections, all text from `bg.landing` / `bg.home`, imports `landing.css`. |
-| `src/components/landing/HeroStage.tsx` | The hero as one client island. Holds the chosen sample call and the edited text, runs `analyseCall()` (the real engine) and gives the same verdict to the phone and to the halo. |
-| `src/components/landing/CallDemo.tsx` | The phone's screen (controlled component): sample-call radios, risk gauge + verdict pill (live region), reasons, the editable text, the answers. |
-| `src/components/landing/PhoneFrame.tsx` | The drawn phone: bezel lit from above, glass screen, black island, reflection. |
-| `src/components/landing/RevealWords.tsx` | Section 2's word-by-word reveal (client island). |
-| `src/components/landing/HowItWorks.tsx` + `MockScreens.tsx` | Section 3: the steps, the sticky phone and the five sample screens made with our primitives (Server Components passed into the client island as props). |
-| `src/components/landing/FeatureGrid.tsx` | Section 4, the bento (Server Component; the alert cell's island is a client primitive). |
-| `src/components/landing/RulesDeck.tsx` | Section 5 (client island only for the two scroll buttons). |
-| `src/components/landing/FamilyAlert.tsx` | Section 6's island that opens once when it scrolls into view. |
-| `src/components/landing/Illustrations.tsx`, `bgOutline.ts` | Our SVG line illustrations; `bgOutline.ts` turns `public/geo/bg-districts.json` into simplified SVG paths on the server at build time. |
+| `src/app/page.tsx` | Server Component: the five sections; all text from `bg.landing` / `bg.home`; imports `landing.css`. |
+| `src/components/landing/HeroScene.tsx` | The hero as one client island: the `Stage` with the live `HaloField`, the two phones, the caption and the step buttons. |
+| `src/components/landing/HowSteps.tsx` | Section 2 (Server Component; the pictures loop with CSS only). |
+| `src/components/landing/SafetyNet.tsx` + `CallDemo.tsx` | Section 3: runs `analyseCall()` (the real engine) on the chosen sample and gives the same verdict to the phone and to the rules list. |
+| `src/components/landing/FamilyTry.tsx` | Section 4's answer screen to try (client island, nothing is sent). |
+| `src/components/landing/PhoneFrame.tsx` | The drawn phone (bezel, glass, black island, reflection). |
 | `src/components/landing/landing.css` | All landing styles, every class starts with `.landing-`. |
+| `src/content/placeholders.ts` | The only made-up content: the sample calls (new: „Катастрофирах“, the hero's story), the names Мама / Иван / Ана / Георги, the sample code and clock. |
 
-- **The demo ↔ halo link (the signature moment).** `HeroStage` computes `verdict = analyseCall({...call.input, text})` on every render and maps the level to a halo state: green → `calm`, yellow → `caution`, red → `danger` (`HALO_FOR_LEVEL`). The same `verdict` goes to `CallDemo` (the gauge's needle and arc sweep to the score) and `data-level` goes on the stage and the phone, so CSS cross-fades the bottom horizon to amber or red, tints the phone's edge and blinks the island's dot. Picking „Фалшив полицай“ therefore makes the rings snap shut around the phone. The page opens on the harmless sample („Обаждане от внучката“, green → calm), so the visitor causes the change. The green wording is `bg.verdictBadge.green` („Без типични признаци“, D9).
-- **Tilt.** On a desktop with a mouse, moving over the stage sets `--tilt-x/--tilt-y` (±6°) and `--glare` on the phone's wrapper directly (no React re-render); CSS turns them into `rotateX/rotateY` inside a `perspective`. Off for touch, a non-mouse pointer and reduced motion.
-- **Halo centre.** `useSyncExternalStore` reads the media query `(min-width: 64rem)`: on wide screens the rings start at the phone on the right (x 0.75), on phones lower in the middle (y 0.72). A soft shade (`.landing-hero-scrim`) keeps the rings from crossing the headline at full strength.
-- **Scroll storytelling without scroll-jacking.** The page scrolls normally. One passive scroll listener, at most once per frame (`requestAnimationFrame`), measures which step is at the middle of the window; React re-renders only when the screen changes, and the progress line moves through a CSS variable (`transform: scaleY`). The phone stays in place with CSS `position: sticky`.
-- **Readable without JavaScript.** All text is in the server HTML. The word reveal only "arms" (softens) the words after the page starts and only if they are still below the screen; the accordion is native `<details>`.
-- **The engine at build time.** The bento's verdict cell calls `analyseCall()` on the sample police call on the server while the page is built, so its score and reasons are real, not typed in.
-- **Performance.** The HaloField is loaded lazily (`HaloFieldLazy`, `next/dynamic` with `ssr: false`), draws at most one pixel per CSS pixel and pauses off-screen; the second field (section 10) uses the same chunk. Illustrations and the map are inline SVG (no requests); the GeoJSON never reaches the browser. Only `transform`, `opacity`, `filter` and `clip-path` are animated. `main.landing` has `overflow-x: clip`, so glows never make the page scroll sideways (clip, unlike hidden, keeps `sticky` working).
-- **Motion** (each effect with one line in `docs/redesign-v3/02-motion.md`): one hero entrance (the phone rises into its pose, 1.1 s; the headline does not move), the danger switch, the gauge sweep, the word reveal, the sticky screens, the bento spotlight, the rule-card morph, the island growing, the illustration reveal, the accordion. With reduced motion: 150 ms fades, no tilt, no entrance, the shader shows one still frame.
+- **The scene's state machine.** One number, `step` 0–3. Autoplay: a `setTimeout` per step (2.6 s; the first a little longer), once, resting on the red frame. A button press or ← / → on the step buttons sets `chosen` and stops the autoplay; „Пусни отначало“ resets both. Reduced motion (read with `useSyncExternalStore` from the media query) starts on the final frame and never plays by itself. Each phone has all its screens stacked; `data-shown` fades the step's screen in (opacity + 14 px + blur). The step also drives the halo (`idle → caution → caution → danger`), the horizon glow and the phones' edge light.
+- **Two phones on a small screen.** Below 640 px both phones share one grid cell: the one that "speaks" in this step is in front, the other waits behind it, smaller and dimmed (transform + opacity). From 640 px they stand side by side with a dashed line between them, on which a dot carries the question (→) and the answer (←). Between 1024 and 1280 px the pair is drawn at 82 % (`zoom`).
+- **Accessibility.** The phones are pictures (`aria-hidden`); the caption under them says each step in words and is a polite live region; the step buttons mark the current one with `aria-current="step"`. The answer buttons of section 4 are real buttons; after a press focus moves to „Отначало“.
+- **Readable without JavaScript.** All text is in the server HTML; the FAQ is native `<details>`.
+- **Performance.** One lazy `HaloField` for the hero and one for the final stage (same chunk); no images, no remote assets; only `transform`, `opacity`, `filter`, `clip-path` and SVG stroke offsets move.
 
 #### Why it works like that
 
-- Comparisons in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md): "Scroll-driven sticky storytelling (vs scroll-jacking)", "Our own SVG illustrations (vs stock photos)", "The landing demo runs the real engine (vs a recorded animation)".
+- Comparisons in [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md): "Landing v4: five sections and an interactive story (vs a feature catalogue)", "The landing demo runs the real engine (vs a recorded animation)".
 
 #### How we know it works
 
-`tests/e2e/home.spec.ts` (heading, language, title), `layout.spec.ts` (the 3 steps are still the first list in `main`, the 3 rules, the start buttons ≥ 64 px and their targets, no sideways scrolling at 360 px), `map.spec.ts` (the map link), `pwa.spec.ts` (the install card on `/`, also at 360 px on an iPhone). `layout.spec.ts` and `scripts.spec.ts` now wait until the page is quiet before measuring the menu links, because the streamed header replaces its first copy while the heavier page starts. Screenshots (desktop 1440 × 900 and Pixel 5, both themes, plus the hero in the danger state): `docs/evidence/redesign-v3/phase-2/landing*`.
+`tests/e2e/layout.spec.ts`: the five section headings in order, the three steps, six rules with three lit for the story's example, at most five questions, the start buttons ≥ 64 px and their targets; the scene plays once to the red frame, steps with buttons and the arrow keys, stops the autoplay on a choice and replays; with reduced motion it opens on the final frame; „Опитайте: вие сте Иван“ answers and moves focus. `home.spec.ts` (hook, language, title), `pwa.spec.ts` (the install card at 360 px). Screenshots (1440 × 900 and Pixel 5, Night and Porcelain, the four hero states, the full page, the phone scene on a phone): `docs/evidence/redesign-v3/landing-v4/`.
+
+### 3.7.2a Navigation bar (phase 5)
+
+#### What it does
+
+The same glass header pill and phone dock on every page, now **role-aware** with the same items in both: guest „Как работи“ · „Вход“ + the bright „Провери“ (dock: Начало · Как работи · Провери · Вход); the older person's phone „Провери“ · „Помощ“ (never „Изход“); a family member „Семейство“ · „Сигнали“ (with a live badge) · „Помощ“ + name and „Изход“; a moderator „Модерация“ · „Сигнали“ · „Помощ“; an admin „Администрация“ · „Помощ“ (+ name and „Изход“).
+
+#### How it works
+
+- **One model** (`src/components/layout/siteNav.ts`): `navLinksFor(role)` (header) and `dockLinksFor(role)` (dock) return plain lists of `{href, label, icon, badge?}`; `currentHref()` lights only the most specific match, so on `/family/alerts` „Сигнали“ is lit, not „Семейство“ too; a `#` link is never "current". The role is still read on the server (`getActor()` in `SiteHeader.tsx`, inside `<Suspense>`, shared by `cache()`).
+- **Sliding highlight.** Header: the existing spotlight (one lit pill clipped to a link with `clip-path`), now re-placed by a `ResizeObserver` when the row changes size. Dock: one plate `.site-dock-spot` placed as "item i of n" (`--dock-i`, `--dock-n`) and moved with `translate: calc(i × (100 % + 2px))`, 420 ms; the halo bar rides on its top edge. On a client navigation the layout stays, so the light glides from the old page to the new one.
+- **Press pulse.** A halo ring inside each link lights up on `:active` (120 ms) and fades after release (600 ms). CSS only.
+- **Shrinks on scroll.** The existing scroll timeline (translate −4 px, scale 0.975, a frostier glass), no script.
+- **Live badge** (`NavBadge.tsx`): one `GET /api/identity-checks` on load, after each navigation and when the tab comes back (one shared request for the header and the dock); it shows the number of open „Ти ли си?“ questions, read aloud as „1 въпрос чака отговор“. No Realtime channel and no polling for the menu; the alert page itself stays live.
+- **Targets.** Dock items ≥ 56 px, 64 px on the older person's phone (`data-size="large"`). The dock is hidden only on `/protected` itself (the one big button), so on `/protected/pomosht` „Провери“ is one tap away.
+- **Preview page** `/dev/nav` (only with `SCAMLY_DEV_PAGES=1`): the pill and dock of every role (`HeaderPreview`), for the tests and screenshots, because the real header is always the guest one without a database.
+- **Reduced motion:** the light and the plate jump (opacity fade only), no press pulse, no scroll shrink.
+
+#### Why it works like that
+
+The person sees only what they can use; switching from a laptop to a phone shows the same words. Comparison in `WHY_WE_CHOSE.md`: "Role-aware navigation with the same items in the header and the dock".
+
+#### How we know it works
+
+`siteNav.test.ts` (items per role, same items in the dock, ≤ 4 items, current link, protected flow, the badge words), `accountLinks.test.ts`, `layout.spec.ts` (guest menu on desktop and phone, current page, dock hidden on `/dev/protected`, 48 px targets at 360 px). Screenshots `docs/evidence/redesign-v3/landing-v4/nav-*`.
 
 ### 3.7.3 The protected flow `/protected` and the verdict moment (redesign v3 „Ореол“, Phase 3)
 

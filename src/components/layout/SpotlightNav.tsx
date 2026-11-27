@@ -10,6 +10,11 @@
 // (globals.css .site-spot). No React re-render, no layout animation. With reduced
 // motion the light jumps instead of gliding.
 //
+// Only ONE link is the current page: the most specific one (currentHref), so on
+// /family/alerts „Сигнали“ is lit, not „Семейство“ as well. Pressing a link sends a
+// soft halo pulse through it (CSS :active, globals.css .site-nav-link::after). The
+// family's „Сигнали“ carries a small live badge (NavBadge).
+//
 // usePathname (which page is open) needs a <Suspense> boundary with Cache Components
 // on pages with an unknown dynamic part (/kak-raboti/[slug]): the fallback is the
 // same row without a current page, pre-rendered into the static shell.
@@ -19,16 +24,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/components/ui/cn";
-import type { NavLink } from "./accountLinks";
-import { isCurrentPath } from "./siteNav";
+import { NavBadge } from "./NavBadge";
+import { currentHref, type NavItem } from "./siteNav";
 
 type SpotlightNavProps = {
   label: string; // the name of the nav landmark, read aloud
-  links: NavLink[];
+  links: NavItem[];
   className?: string;
+  // Only for the preview page /dev/nav: pretend this page is open.
+  previewPath?: string;
 };
 
 export function SpotlightNav(props: SpotlightNavProps) {
+  if (props.previewPath !== undefined) {
+    return <SpotlightRow {...props} pathname={props.previewPath} />;
+  }
   return (
     <Suspense fallback={<SpotlightRow {...props} pathname={null} />}>
       <SpotlightNavAtPath {...props} />
@@ -47,6 +57,7 @@ function SpotlightRow({
   className,
   pathname,
 }: SpotlightNavProps & { pathname: string | null }) {
+  const current = currentHref(pathname, links);
   // A ref is a box that keeps the real DOM element between renders (like an
   // attribute on a Python object that React fills in).
   const trackRef = useRef<HTMLDivElement>(null);
@@ -71,19 +82,22 @@ function SpotlightRow({
     moveTo(trackRef.current?.querySelector('[aria-current="page"]') ?? null);
   }, [moveTo]);
 
-  // Place the light on the current page after every navigation and when the window
-  // changes size. The first placement happens before transitions are switched on, so
-  // the light does not fly in from the edge when the page opens.
+  // Place the light on the current page after every navigation and whenever the row
+  // changes size (a new window width, or the badge appearing). The first placement
+  // happens before transitions are switched on, so the light does not fly in from
+  // the edge when the page opens. On a new page it glides from the old link.
   useEffect(() => {
     const track = trackRef.current;
     rest();
     const frame = requestAnimationFrame(() => {
       if (track !== null) track.dataset.ready = "true";
     });
-    window.addEventListener("resize", rest);
+    // ResizeObserver calls `rest` when the row's size changes (like a file watcher).
+    const observer = new ResizeObserver(() => rest());
+    if (track !== null) observer.observe(track);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("resize", rest);
+      observer.disconnect();
     };
   }, [rest, pathname]);
 
@@ -102,20 +116,21 @@ function SpotlightRow({
         <span aria-hidden="true" className="site-spot" />
         <ul className="relative flex items-center">
           {links.map((link) => {
-            const current = isCurrentPath(pathname, link.href);
+            const isCurrent = link.href === current;
             return (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  aria-current={current ? "page" : undefined}
+                  aria-current={isCurrent ? "page" : undefined}
                   onPointerEnter={(event) => moveTo(event.currentTarget)}
                   onFocus={(event) => moveTo(event.currentTarget)}
                   className={cn(
-                    "site-nav-link relative flex min-h-12 items-center rounded-full px-3.5 text-[0.9375rem] font-medium whitespace-nowrap no-underline transition-colors duration-150",
-                    current ? "text-fg" : "text-fg-muted hover:text-fg",
+                    "site-nav-link relative flex min-h-12 items-center gap-2 rounded-full px-3.5 text-[0.9375rem] font-medium whitespace-nowrap no-underline transition-colors duration-150",
+                    isCurrent ? "text-fg" : "text-fg-muted hover:text-fg",
                   )}
                 >
                   {link.label}
+                  {link.badge === "identity" ? <NavBadge pathname={pathname} /> : null}
                 </Link>
               </li>
             );

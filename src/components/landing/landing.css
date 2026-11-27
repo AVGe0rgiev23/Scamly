@@ -1,24 +1,36 @@
-/* The home page's own styles (Redesign v3 „Ореол“, Phase 2A). Imported only by
+/* The home page's own styles (landing page v4, P-03, Ореол design). Imported only by
    src/app/page.tsx. Every class starts with .landing-, so nothing here can change
    another screen. Colours, radii and curves come from the tokens in globals.css.
    Motion rules (one line each) are listed in docs/redesign-v3/02-motion.md.
-   Only transform, opacity, filter and clip-path are animated. */
+   Only transform, opacity, filter and clip-path (and SVG stroke offsets) move. */
 
-/* The page never scrolls sideways: decorative glows and rings that reach past the
-   edge are cut off (clip, unlike hidden, keeps position: sticky working). */
+/* The page never scrolls sideways: decorative glows and the phone that waits behind
+   the other one are cut off (clip, unlike hidden, keeps position: sticky working). */
 .landing {
   overflow-x: clip;
 }
 
-/* ── Hero stage ─────────────────────────────────────────────────────────────── */
+/* ── Hero ───────────────────────────────────────────────────────────────────── */
+
+/* The hook: two short sentences, the second one glows (halo-word). */
+.landing-hook {
+  font-family: var(--font-display);
+  font-size: clamp(2.6rem, 1.5rem + 3.9vw, 5.25rem);
+  font-weight: 300;
+  line-height: 0.98;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
+}
+.landing-hook .halo-word {
+  display: inline-block;
+}
 
 /* The aurora horizon: a wide glow rising from the stage's bottom edge, with a thin
-   bright rim, like the edge of a planet at dawn. Three copies (calm, caution, danger)
-   cross-fade, because a gradient's colours cannot be transitioned directly. */
+   bright rim. Three copies (calm, caution, danger) cross-fade with the story's step. */
 .landing-horizon {
   position: absolute;
   inset: auto 0 0;
-  height: 70%;
+  height: 60%;
   z-index: -1;
   pointer-events: none;
 }
@@ -36,52 +48,43 @@
     ),
     radial-gradient(
       70% 70% at 50% 120%,
-      color-mix(in oklab, var(--tone-a) 46%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      45% 55% at 18% 110%,
-      color-mix(in oklab, var(--tone-b) 34%, transparent),
+      color-mix(in oklab, var(--tone-a) 42%, transparent),
       transparent 70%
     ),
     radial-gradient(
       45% 55% at 84% 110%,
-      color-mix(in oklab, var(--tone-c) 30%, transparent),
+      color-mix(in oklab, var(--tone-b) 30%, transparent),
       transparent 70%
     );
 }
 .landing-horizon > [data-tone="calm"] {
   --tone-a: var(--halo-2);
   --tone-b: var(--halo-1);
-  --tone-c: var(--halo-3);
 }
 .landing-horizon > [data-tone="caution"] {
   --tone-a: var(--caution-solid);
-  --tone-b: var(--caution-solid);
-  --tone-c: var(--halo-1);
+  --tone-b: var(--halo-1);
 }
 .landing-horizon > [data-tone="danger"] {
   --tone-a: var(--danger-solid);
   --tone-b: var(--danger-solid);
-  --tone-c: var(--halo-1);
 }
-.landing-hero[data-level="green"] .landing-horizon > [data-tone="calm"],
-.landing-hero[data-level="yellow"] .landing-horizon > [data-tone="caution"],
-.landing-hero[data-level="red"] .landing-horizon > [data-tone="danger"] {
+.landing-hero[data-step="0"] .landing-horizon > [data-tone="calm"],
+.landing-hero[data-step="1"] .landing-horizon > [data-tone="caution"],
+.landing-hero[data-step="2"] .landing-horizon > [data-tone="caution"],
+.landing-hero[data-step="3"] .landing-horizon > [data-tone="danger"] {
   opacity: 1;
 }
-/* Porcelain: the same glow, softer, so the light stage stays bright. */
 [data-theme="light"] .landing-horizon {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) .landing-horizon {
-    opacity: 0.7;
+    opacity: 0.6;
   }
 }
 
-/* The shade behind the hero's words: from the stage colour at the words' side to
-   clear over the phone (top → bottom on phones, left → right on wide screens). */
+/* The shade behind the hero's words (top → bottom on phones, left → right on wide). */
 .landing-hero-scrim {
   position: absolute;
   inset: 0;
@@ -89,39 +92,19 @@
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--bg-elevated) 78%, transparent) 0%,
-    color-mix(in oklab, var(--bg-elevated) 62%, transparent) 38%,
-    transparent 58%
+    color-mix(in oklab, var(--bg-elevated) 80%, transparent) 0%,
+    color-mix(in oklab, var(--bg-elevated) 60%, transparent) 34%,
+    transparent 52%
   );
 }
 @media (min-width: 64rem) {
   .landing-hero-scrim {
     background: linear-gradient(
       90deg,
-      color-mix(in oklab, var(--bg-elevated) 80%, transparent) 0%,
-      color-mix(in oklab, var(--bg-elevated) 58%, transparent) 36%,
-      transparent 58%
+      color-mix(in oklab, var(--bg-elevated) 82%, transparent) 0%,
+      color-mix(in oklab, var(--bg-elevated) 55%, transparent) 38%,
+      transparent 56%
     );
-  }
-}
-
-/* The 3D scene: the phone leans towards the pointer (HeroStage sets --tilt-x/-y). On
-   wide screens it rests turned a little, so it reads as an object, not a picture. */
-.landing-tilt-scene {
-  perspective: 1600px;
-}
-.landing-tilt {
-  --rest-x: 0deg;
-  --rest-y: 0deg;
-  transform: rotateX(calc(var(--rest-x) + var(--tilt-x, 0deg)))
-    rotateY(calc(var(--rest-y) + var(--tilt-y, 0deg)));
-  transform-style: preserve-3d;
-  transition: transform 700ms var(--ease-out);
-}
-@media (min-width: 64rem) {
-  .landing-tilt {
-    --rest-x: 2deg;
-    --rest-y: -6deg;
   }
 }
 
@@ -131,8 +114,8 @@
   position: relative;
   width: min(var(--phone-w), 100%);
   margin-inline: auto;
-  padding: 0.5rem;
-  border-radius: 3.25rem;
+  padding: 0.45rem;
+  border-radius: 3rem;
   background-image: linear-gradient(
     160deg,
     color-mix(in oklab, var(--text) 18%, var(--surface-3)),
@@ -148,7 +131,6 @@
     0 0 0 0 transparent;
   transition: box-shadow 700ms var(--ease-out);
 }
-/* Danger: a red light from inside the glass edge, the colour of the closed halo. */
 .landing-phone[data-level="red"] {
   box-shadow:
     var(--highlight),
@@ -168,7 +150,7 @@
 .landing-phone-screen {
   position: relative;
   overflow: hidden;
-  border-radius: 2.75rem;
+  border-radius: 2.6rem;
   background-color: var(--bg);
   background-image:
     radial-gradient(120% 60% at 15% 0%, var(--light-source), transparent 60%),
@@ -177,22 +159,22 @@
 }
 /* The island at the top of the screen: always black, like the hardware. */
 .landing-phone-island {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   width: fit-content;
-  min-width: 7.5rem;
-  min-height: 2rem;
-  margin: 0.65rem auto 0;
-  padding: 0 0.9rem;
+  min-width: 6.5rem;
+  min-height: 1.75rem;
+  margin: 0.6rem auto 0;
+  padding: 0 0.85rem;
   border-radius: 999px;
   background: #05060a;
   color: #f3f4f8;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  position: relative;
-  z-index: 2;
 }
 .landing-island-dot {
   width: 0.5rem;
@@ -213,11 +195,11 @@
     opacity: 0.35;
   }
 }
-/* The reflection: a soft diagonal light across the glass that slides with the tilt. */
+/* The reflection on the glass. */
 .landing-phone-glare {
   position: absolute;
-  inset: 0.5rem;
-  border-radius: 2.75rem;
+  inset: 0.45rem;
+  border-radius: 2.6rem;
   pointer-events: none;
   background: linear-gradient(
     118deg,
@@ -225,357 +207,787 @@
     rgb(255 255 255 / 0.03) 26%,
     transparent 40%
   );
-  transform: translateX(calc(var(--glare, 0) * 1px));
-  transition: transform 700ms var(--ease-out);
 }
 /* The risk arc sweeps to the new score (the needle already turns in globals.css). */
 .landing-phone [role="meter"] path {
   transition: stroke-dasharray 1100ms var(--ease-out);
 }
 
-/* The hero's one entrance (≤ 1.2 s): the phone rises and settles into its 3D pose.
-   The headline is not animated, so the words are readable from the first frame. */
-.landing-tilt > .landing-phone {
-  animation: landing-phone-in 1100ms var(--ease-out) 100ms both;
+/* ── The two-phone scene ─────────────────────────────────────────────────────── */
+.landing-phone--scene {
+  --phone-w: 16.5rem;
 }
-@keyframes landing-phone-in {
-  from {
-    opacity: 0;
-    transform: translateY(48px) rotateX(16deg) scale(0.96);
-  }
+.landing-phone--scene .landing-phone-screen {
+  height: 31rem;
 }
-
-/* Smaller phones for „Как работи“. */
-.landing-phone--sm {
-  --phone-w: 18.5rem;
+/* Whose phone it is, under the island. */
+.landing-phone-owner {
+  margin-top: 0.6rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
-.landing-phone--sm .landing-phone-screen {
-  height: 34rem;
-}
-.landing-phone--how {
-  --phone-w: 21rem;
-}
-.landing-phone--how .landing-phone-screen {
-  height: min(42rem, calc(100svh - 9rem));
-}
-.landing-phone--how .landing-screen {
+/* The screens of one phone lie on top of each other; the step's one fades in. */
+.landing-screen {
   position: absolute;
-  inset: 2.75rem 0 0;
+  inset: 4.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 1rem 1.25rem;
   opacity: 0;
-  transform: translateY(16px) scale(0.98);
+  transform: translateY(14px) scale(0.98);
   filter: blur(6px);
+  pointer-events: none;
   transition:
     opacity 450ms var(--ease-out),
     transform 600ms var(--ease-out),
     filter 600ms var(--ease-out);
 }
-.landing-phone--how .landing-screen[data-shown] {
+.landing-screen[data-shown] {
   opacity: 1;
   transform: none;
   filter: none;
 }
-.landing-phone--sm .landing-screen {
-  height: calc(100% - 2.65rem);
+.landing-avatar {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
 }
-
-/* ── The one rule: words from soft to sharp ─────────────────────────────────── */
-.landing-reveal-word {
-  display: inline-block;
-  transition:
-    opacity 900ms var(--ease-out),
-    filter 900ms var(--ease-out),
-    transform 1000ms var(--ease-out);
+.landing-avatar svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
-.landing-reveal[data-reveal="armed"] .landing-reveal-word {
-  opacity: 0.12;
-  filter: blur(14px);
-  transform: translateY(0.18em);
+/* What the caller says, as a speech bubble. */
+.landing-bubble {
+  position: relative;
+  margin-top: 0.9rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 1.1rem 1.1rem 1.1rem 0.3rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
-
-/* ── How it works: progress line and steps ──────────────────────────────────── */
-.landing-steps::before,
-.landing-steps::after {
+.landing-card {
+  padding: 0.85rem;
+  border-radius: 1.1rem;
+  background: var(--surface-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+}
+.landing-tile {
+  position: relative;
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  font-weight: 700;
+}
+.landing-tile--on {
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1.5px var(--halo-2);
+}
+/* The tap cue on „Иван“: a halo ring that breathes, as if a finger is on its way. */
+.landing-tile--cue {
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1.5px var(--halo-2);
+}
+.landing-tile--cue::after {
   content: "";
   position: absolute;
-  top: 0.75rem;
-  bottom: 0;
-  left: 0;
-  width: 1px;
+  inset: -4px;
+  border-radius: 1rem;
+  border: 2px solid var(--halo-2);
+  animation: landing-cue 1.6s var(--ease-out) infinite;
 }
-.landing-steps::before {
-  background: var(--border);
-}
-.landing-steps::after {
-  width: 2px;
-  margin-left: -0.5px;
-  background: linear-gradient(180deg, var(--halo-1), var(--halo-2) 55%, var(--halo-3));
-  transform-origin: top;
-  transform: scaleY(var(--how-progress, 0));
-  box-shadow: 0 0 12px color-mix(in oklab, var(--halo-2) 60%, transparent);
-}
-.landing-step-dot {
-  z-index: 1;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  transition:
-    background-color 300ms var(--ease-out),
-    box-shadow 300ms var(--ease-out);
-}
-.landing-step[data-active] .landing-step-dot {
-  background: var(--halo-2);
-  border-color: transparent;
-  box-shadow: 0 0 0 5px color-mix(in oklab, var(--halo-2) 22%, transparent);
-}
-@media (min-width: 64rem) {
-  .landing-step {
-    opacity: 0.55;
-    transition: opacity 500ms var(--ease-out);
+@keyframes landing-cue {
+  from {
+    opacity: 0.8;
+    transform: scale(0.96);
   }
-  .landing-step[data-active] {
-    opacity: 1;
+  to {
+    opacity: 0;
+    transform: scale(1.12);
   }
 }
-
-/* ── Bento ──────────────────────────────────────────────────────────────────── */
-.landing-map {
-  width: 100%;
-  height: auto;
+/* „Питаме Иван…“: the 45-second ring. */
+.landing-wait {
+  position: relative;
+  display: grid;
+  width: 8.5rem;
+  height: 8.5rem;
+  margin: 1.5rem auto 0;
+  place-items: center;
 }
-.landing-map--bento {
-  margin-block: 0.5rem -0.5rem;
-  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
-  mask-image: linear-gradient(180deg, #000 60%, transparent);
+.landing-wait-ring {
+  position: absolute;
+  inset: 0;
+  rotate: -90deg;
 }
-.landing-map-land path {
-  fill: color-mix(in oklab, var(--text) 4%, transparent);
-  stroke: color-mix(in oklab, var(--text) 26%, transparent);
-  stroke-width: 0.8;
-  stroke-linejoin: round;
+.landing-wait-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 6;
 }
-.landing-map-land path[data-glow] {
-  fill: color-mix(in oklab, var(--halo-2) 30%, transparent);
+.landing-wait-value {
+  fill: none;
   stroke: var(--halo-2);
-  stroke-width: 1.2;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 4;
+  transition: stroke-dashoffset 2600ms linear;
 }
-.landing-map-glow path {
-  fill: var(--halo-2);
-  opacity: 0.55;
-  animation: landing-map-pulse 4.5s var(--ease-in-out) infinite;
+.landing-wait-value[data-step="2"] {
+  stroke-dashoffset: 16;
 }
-.landing-map-glow path:nth-child(2) {
-  fill: var(--halo-1);
-  animation-delay: -1.5s;
+/* The red result on Мама's phone. */
+.landing-red {
+  margin-top: 0.25rem;
+  padding: 1rem;
+  border-radius: 1.1rem;
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  box-shadow: inset 0 0 0 1px var(--danger-line);
 }
-.landing-map-glow path:nth-child(3) {
-  fill: var(--halo-3);
-  animation-delay: -3s;
+.landing-pill {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 700;
 }
-@keyframes landing-map-pulse {
-  50% {
-    opacity: 0.2;
+.landing-pill--danger {
+  min-height: 2.5rem;
+  background: var(--danger-solid);
+  color: var(--danger-on);
+}
+/* The push on Иван's lock screen. */
+.landing-push {
+  margin-top: 1.5rem;
+  padding: 0.85rem;
+  border-radius: 1.1rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border),
+    0 18px 40px -18px rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.landing-screen[data-shown] .landing-push {
+  animation: landing-push-in 600ms var(--ease-out) 200ms both;
+}
+@keyframes landing-push-in {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
   }
+}
+/* The two answer buttons (the hero picture and the family section's try-out). */
+.landing-answer {
+  position: relative;
+  display: flex;
+  min-height: 3.5rem;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 1rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+}
+.landing-answer--no {
+  background: var(--danger-solid);
+  color: var(--danger-on);
+  box-shadow: var(--highlight);
+}
+button.landing-answer {
+  min-height: 4rem;
+  font-size: 1.0625rem;
+  cursor: pointer;
+}
+button.landing-answer:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+/* In the hero, the pressed „Не съм аз“ glows once. */
+.landing-screen[data-shown] .landing-answer--no {
+  animation: landing-press 900ms var(--ease-out) 700ms both;
+}
+@keyframes landing-press {
+  40% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--danger-solid) 30%, transparent);
+  }
+}
+button.landing-answer--no {
+  animation: none !important;
+}
+.landing-chip {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  padding-inline: 0.65rem;
+  border-radius: 999px;
+  background: var(--caution-bg);
+  color: var(--caution-fg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--caution-line);
 }
 
-/* ── Hard rules deck ────────────────────────────────────────────────────────── */
-.landing-deck {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  /* Lines the first card up with the page column, and lets the last one scroll in. */
-  --deck-edge: max(1rem, calc((100% - 77.5rem) / 2 + 1rem));
-  padding: 0.5rem var(--deck-edge) 1.5rem;
-  scroll-padding-inline: var(--deck-edge);
-  scrollbar-width: none;
+/* The two phones: on a phone screen they share one place, the one that matters now
+   is in front and the other waits behind it; on a wide screen they stand side by
+   side, the son's a little lower, joined by the line the question travels on. */
+.landing-scene-phones {
+  position: relative;
+  display: grid;
+  justify-items: center;
 }
-@media (min-width: 48rem) {
-  .landing-deck {
-    --deck-edge: max(2rem, calc((100% - 77.5rem) / 2 + 2rem));
-  }
+.landing-scene-slot {
+  grid-area: 1 / 1;
+  width: min(16.5rem, 74vw);
+  transition:
+    transform 700ms var(--ease-out),
+    opacity 500ms var(--ease-out),
+    filter 700ms var(--ease-out);
 }
-.landing-deck::-webkit-scrollbar {
+.landing-scene-link {
   display: none;
 }
-.landing-rule {
-  position: relative;
-  flex: 0 0 min(17.5rem, 82%);
-  min-height: 27rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.75rem;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  scroll-snap-align: start;
-  outline-offset: 4px;
+.landing-scene-phones[data-front="mom"] [data-who="mom"],
+.landing-scene-phones[data-front="son"] [data-who="son"] {
+  z-index: 2;
 }
-.landing-rule-numeral {
-  font-family: var(--font-display);
-  font-size: 9rem;
-  line-height: 0.8;
-  font-weight: 200;
-  letter-spacing: -0.06em;
-  color: transparent;
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--text) 55%, transparent),
-    color-mix(in oklab, var(--text) 6%, transparent)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  transition: transform 600ms var(--ease-out);
+.landing-scene-phones[data-front="mom"] [data-who="mom"] {
+  transform: translateX(-10%);
 }
-.landing-rule-name {
-  /* Long words such as „Предаване“ must fit a 17.5 rem card without breaking. */
-  font-size: clamp(1.75rem, 1.45rem + 1vw, 2.375rem);
-  overflow-wrap: normal;
-  line-height: 1.05;
-  font-weight: 600;
+.landing-scene-phones[data-front="mom"] [data-who="son"] {
+  transform: translateX(36%) scale(0.84);
+  opacity: 0.5;
+  filter: blur(1px);
 }
-.landing-rule-text {
-  margin-top: 0.75rem;
-  font-size: 1.125rem;
-  line-height: 1.5;
-  color: var(--text-muted);
+.landing-scene-phones[data-front="son"] [data-who="son"] {
+  transform: translateX(10%);
 }
-/* A desktop with a mouse: the name morphs into the explanation on hover or focus. */
-@media (hover: hover) and (pointer: fine) {
-  .landing-rule-morph {
-    display: grid;
+.landing-scene-phones[data-front="son"] [data-who="mom"] {
+  transform: translateX(-36%) scale(0.84);
+  opacity: 0.5;
+  filter: blur(1px);
+}
+@media (min-width: 40rem) {
+  .landing-scene-phones {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
   }
-  .landing-rule-name,
-  .landing-rule-text {
-    grid-area: 1 / 1;
-    align-self: end;
-    transition:
-      opacity 450ms var(--ease-out),
-      transform 600ms var(--ease-out),
-      filter 600ms var(--ease-out);
-  }
-  .landing-rule-text {
-    margin-top: 0;
-    color: var(--text);
-    font-size: 1.25rem;
-    opacity: 0;
-    transform: translateY(0.75rem);
-    filter: blur(6px);
-  }
-  .landing-rule:hover .landing-rule-name,
-  .landing-rule:focus-visible .landing-rule-name {
-    opacity: 0;
-    transform: translateY(-1.25rem) scale(0.96);
-    filter: blur(6px);
-  }
-  .landing-rule:hover .landing-rule-text,
-  .landing-rule:focus-visible .landing-rule-text {
-    opacity: 1;
+  .landing-scene-slot,
+  .landing-scene-phones[data-front] [data-who] {
+    width: 16.5rem;
     transform: none;
+    opacity: 1;
     filter: none;
   }
-  .landing-rule:hover .landing-rule-numeral,
-  .landing-rule:focus-visible .landing-rule-numeral {
-    transform: translateY(-0.5rem);
+  .landing-scene-phones [data-who="son"] {
+    margin-top: 3rem;
+  }
+  /* The one that is not "speaking" steps back a little. */
+  .landing-scene-phones[data-front="mom"] [data-who="son"],
+  .landing-scene-phones[data-front="son"] [data-who="mom"] {
+    transform: scale(0.95);
+    opacity: 0.72;
+  }
+  .landing-scene-link {
+    position: relative;
+    display: block;
+    align-self: center;
+    width: 3.5rem;
+    height: 2px;
+    margin-inline: -0.5rem;
+    background-image: linear-gradient(90deg, var(--border-strong) 50%, transparent 50%);
+    background-size: 8px 2px;
+    opacity: 0.6;
+  }
+  /* The dot that carries the question (→) and the answer (←). */
+  .landing-scene-link > span {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-top: -0.3rem;
+    border-radius: 999px;
+    background: var(--halo-2);
+    box-shadow: 0 0 14px var(--halo-2);
+    opacity: 0;
+  }
+  .landing-scene-link[data-step="1"] > span {
+    animation: landing-travel 1.2s var(--ease-in-out) 2 both;
+  }
+  .landing-scene-link[data-step="3"] > span {
+    background: var(--danger-solid);
+    box-shadow: 0 0 14px var(--danger-solid);
+    animation: landing-travel-back 1.2s var(--ease-in-out) 1 both;
+  }
+}
+@keyframes landing-travel {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(3rem);
+  }
+}
+@keyframes landing-travel-back {
+  0% {
+    opacity: 0;
+    transform: translateX(3rem);
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+.landing-caption {
+  min-height: 3.2em;
+  text-wrap: balance;
+}
+.landing-step-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding-inline: 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-1);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 150ms linear,
+    color 150ms linear;
+}
+.landing-step-button:not(.landing-step-button--on):hover {
+  color: var(--text);
+}
+.landing-step-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.landing-step-button--on {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+/* The first appearance: both phones rise into place once (≤ 1.1 s). */
+.landing-scene-phones {
+  animation: landing-scene-in 1100ms var(--ease-out) 100ms both;
+}
+@keyframes landing-scene-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
   }
 }
 
-/* ── For the family ─────────────────────────────────────────────────────────── */
-.landing-family-stage {
-  position: relative;
-  isolation: isolate;
-}
-.landing-family-stage::before {
-  content: "";
-  position: absolute;
-  inset: -10% 0 20%;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(
-    50% 50% at 40% 30%,
-    color-mix(in oklab, var(--danger-solid) 12%, transparent),
-    transparent 70%
-  );
-}
-
-/* ── During a call: porcelain on ink (the colours of the page, inverted) ───── */
-.landing-ink {
-  background-color: var(--text);
-  background-image: radial-gradient(
-    80% 120% at 0% 0%,
-    color-mix(in oklab, var(--bg) 8%, transparent),
-    transparent 60%
-  );
-  color: var(--bg);
-  box-shadow: var(--shadow-long);
-}
-.landing-ink-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--bg) 68%, var(--text));
-}
-.landing-ink-rule {
-  display: grid;
-  grid-template-columns: 3rem 1fr;
-  align-items: baseline;
-  padding-block: 1.75rem;
-  border-top: 1px solid color-mix(in oklab, var(--bg) 18%, transparent);
-}
-.landing-ink-rule > span {
-  color: color-mix(in oklab, var(--bg) 60%, var(--text));
-}
-
-/* ── Public tools: image-led cards, the picture opens up on hover ───────────── */
-.landing-tool-art {
-  position: relative;
+/* ── How it works: cards with small live pictures ───────────────────────────── */
+.landing-how-card {
   overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+.landing-how-art {
+  display: grid;
+  min-height: 11rem;
+  margin: 0.5rem 0.5rem 0;
+  place-items: center;
+  border-radius: var(--radius-lg);
   background-image:
     radial-gradient(
-      70% 80% at 50% 110%,
-      color-mix(in oklab, var(--halo-2) 14%, transparent),
+      70% 80% at 50% 115%,
+      color-mix(in oklab, var(--halo-2) 16%, transparent),
       transparent 70%
     ),
     linear-gradient(180deg, var(--surface-2), var(--surface-1));
   box-shadow: inset 0 0 0 1px var(--glass-border);
-  clip-path: inset(0 round var(--radius-lg));
-  transition: clip-path 700ms var(--ease-out);
 }
-.landing-art {
-  width: min(100%, 32rem);
-  height: auto;
-  padding: 1rem;
-  transition:
-    transform 900ms var(--ease-out),
-    opacity 600ms var(--ease-out);
+.landing-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
-.landing-art-glow {
-  transition: opacity 600ms var(--ease-out);
-  opacity: 0.75;
+/* 1. A ringing call: a pulsing ring around the icon and a sound wave. */
+.landing-mini-ring {
+  position: relative;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--safe-solid);
+  color: var(--safe-on);
 }
-@media (hover: hover) and (pointer: fine) {
-  .landing-tool-art {
-    clip-path: inset(0.75rem round var(--radius-lg));
+.landing-mini-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--safe-solid);
+  animation: landing-ripple 1.6s var(--ease-out) infinite;
+}
+@keyframes landing-ripple {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
   }
-  .landing-tool:hover .landing-tool-art,
-  .landing-tool:focus-within .landing-tool-art {
-    clip-path: inset(0 round var(--radius-lg));
+  to {
+    opacity: 0;
+    transform: scale(1.7);
   }
-  .landing-tool:hover .landing-art,
-  .landing-tool:focus-within .landing-art {
-    transform: scale(1.05);
+}
+.landing-mini-wave {
+  display: flex;
+  height: 2rem;
+  align-items: center;
+  gap: 3px;
+}
+.landing-mini-wave > i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--halo-2);
+  transform: scaleY(0.3);
+  animation: landing-wave 1.1s var(--ease-in-out) infinite alternate;
+}
+.landing-mini-wave > i:nth-child(2n) {
+  animation-delay: -0.35s;
+  background: var(--halo-1);
+}
+.landing-mini-wave > i:nth-child(3n) {
+  animation-delay: -0.7s;
+}
+@keyframes landing-wave {
+  to {
+    transform: scaleY(1);
   }
-  .landing-tool:hover .landing-art-glow,
-  .landing-tool:focus-within .landing-art-glow {
+}
+/* 2. A finger taps „Иван“, then the question flies off to his phone. */
+.landing-mini-tile {
+  position: relative;
+  display: grid;
+  min-width: 5.5rem;
+  min-height: 3.25rem;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1.5px var(--halo-2);
+  font-weight: 700;
+  animation: landing-tile-press 3.2s var(--ease-out) infinite;
+}
+.landing-mini-finger {
+  position: absolute;
+  right: -0.6rem;
+  bottom: -0.6rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--text) 85%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--halo-2) 25%, transparent);
+  animation: landing-finger 3.2s var(--ease-out) infinite;
+}
+@keyframes landing-finger {
+  0%,
+  10% {
+    opacity: 0;
+    transform: translate(10px, 10px);
+  }
+  25%,
+  40% {
+    opacity: 1;
+    transform: none;
+  }
+  32% {
+    transform: scale(0.85);
+  }
+  55%,
+  100% {
+    opacity: 0;
+    transform: translate(10px, 10px);
+  }
+}
+@keyframes landing-tile-press {
+  32% {
+    transform: scale(0.95);
+  }
+  40%,
+  100% {
+    transform: none;
+  }
+}
+.landing-mini-arrow {
+  color: var(--text-subtle);
+}
+.landing-mini-push {
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.8rem;
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  box-shadow: inset 0 0 0 1px var(--danger-line);
+  font-weight: 700;
+  animation: landing-push-loop 3.2s var(--ease-out) infinite;
+}
+@keyframes landing-push-loop {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  50%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* 3. The answers and the 45-second ring that hands over to the next relative. */
+.landing-mini--answer {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 17rem;
+}
+.landing-mini-chip {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding-inline: 0.75rem;
+  border-radius: 999px;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.landing-mini-chip--no {
+  background: var(--danger-solid);
+  color: var(--danger-on);
+}
+.landing-mini-clock {
+  position: relative;
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+}
+.landing-mini-clock svg {
+  position: absolute;
+  inset: 0;
+  rotate: -90deg;
+}
+.landing-mini-clock-value {
+  fill: none;
+  stroke: var(--halo-2);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  animation: landing-clock 4s linear infinite;
+}
+@keyframes landing-clock {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 100;
+  }
+}
+.landing-mini-next {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  animation: landing-next 4s var(--ease-out) infinite;
+}
+@keyframes landing-next {
+  0%,
+  80% {
+    opacity: 0.25;
+  }
+  88%,
+  100% {
     opacity: 1;
   }
 }
-.landing-tool-link {
-  transition: background-color 300ms var(--ease-out);
+
+/* ── Safety net: the engine demo and the six hard rules ─────────────────────── */
+.landing-phone--demo {
+  --phone-w: 23rem;
 }
-.landing-tool:hover .landing-tool-link {
-  background-color: var(--primary);
-  color: var(--on-primary);
+.landing-rules {
+  display: grid;
+  gap: 0.5rem;
+}
+@media (min-width: 40rem) {
+  .landing-rules {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.landing-rule {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--glass-1);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  transition:
+    background-color 300ms var(--ease-out),
+    box-shadow 300ms var(--ease-out);
+}
+.landing-rule-n {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  transition:
+    background-color 300ms var(--ease-out),
+    color 300ms var(--ease-out);
+}
+/* A rule the example breaks: red tint, red number, and the number pops once. */
+.landing-rule[data-fired] {
+  background: var(--danger-bg);
+  box-shadow: inset 0 0 0 1px var(--danger-line);
+}
+.landing-rule[data-fired] .landing-rule-n {
+  border-color: transparent;
+  background: var(--danger-solid);
+  color: var(--danger-on);
+  animation: landing-rule-pop 500ms var(--ease-out);
+}
+@keyframes landing-rule-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+
+/* ── For the family ─────────────────────────────────────────────────────────── */
+.landing-sees {
+  position: relative;
+  max-width: 54ch;
+  padding: 0.65rem 0 0.65rem 1.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 1.0625rem;
+}
+.landing-sees::before {
+  content: "";
+  position: absolute;
+  top: 1.15rem;
+  left: 0.25rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--halo);
+}
+.landing-setup {
+  display: grid;
+  gap: 1rem;
+}
+.landing-setup > li {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.75rem;
+}
+.landing-setup-n {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--halo-ink-1);
+}
+.landing-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 0.7rem;
+  background: var(--glass-2);
+  box-shadow:
+    var(--highlight),
+    inset 0 0 0 1px var(--glass-border);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.landing-phone--try {
+  --phone-w: 21rem;
+}
+.landing-warned {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.8rem;
+  background: var(--caution-bg);
+  box-shadow: inset 0 0 0 1px var(--caution-line);
+  font-size: 0.875rem;
+  line-height: 1.35;
 }
 
 /* ── Questions: height animates open and closed; the plus turns into a cross ── */
@@ -628,35 +1040,46 @@
 
 /* ── Reduced motion: movement goes, short fades stay ────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .landing-tilt,
-  .landing-phone-glare {
-    transform: none;
-    transition: none;
-  }
-  .landing-tilt > .landing-phone {
-    animation: landing-fade 150ms linear both;
-  }
-  .landing-phone[data-level="red"] .landing-island-dot,
-  .landing-map-glow path {
-    animation: none;
-  }
-  .landing-phone--how .landing-screen,
-  .landing-rule-name,
-  .landing-rule-text,
-  .landing-reveal-word,
-  .landing-horizon > span {
+  .landing-screen,
+  .landing-horizon > span,
+  .landing-scene-slot {
     transform: none !important;
     filter: none !important;
     transition: opacity 150ms linear;
   }
-  .landing-rule-numeral,
-  .landing-art,
-  .landing-tool-art,
-  .landing-steps::after,
-  .landing-faq-icon,
-  .landing-phone [role="meter"] path {
-    transition: none;
+  .landing-scene-phones {
+    animation: landing-fade 150ms linear both;
   }
+  .landing-tile--cue::after,
+  .landing-phone[data-level="red"] .landing-island-dot,
+  .landing-screen[data-shown] .landing-push,
+  .landing-screen[data-shown] .landing-answer--no,
+  .landing-scene-link > span,
+  .landing-mini-ring::after,
+  .landing-mini-wave > i,
+  .landing-mini-tile,
+  .landing-mini-finger,
+  .landing-mini-push,
+  .landing-mini-clock-value,
+  .landing-mini-next,
+  .landing-rule[data-fired] .landing-rule-n {
+    animation: none !important;
+  }
+  /* The still frames tell the story: the wave half up, the finger on the tile, the
+     question sent, the ring a third gone, the next relative named. */
+  .landing-mini-wave > i {
+    transform: scaleY(0.65);
+  }
+  .landing-mini-finger,
+  .landing-mini-next {
+    opacity: 1;
+  }
+  .landing-mini-clock-value {
+    stroke-dashoffset: 35;
+  }
+  .landing-wait-value,
+  .landing-faq-icon,
+  .landing-phone [role="meter"] path,
   .landing-faq details::details-content {
     transition: none;
   }
@@ -664,5 +1087,13 @@
 @keyframes landing-fade {
   from {
     opacity: 0;
+  }
+}
+
+/* Between 1024 and 1280 px the hero's column is narrow: the two phones are drawn a
+   little smaller as a whole (zoom keeps their inner proportions). */
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .landing-scene-phones {
+    zoom: 0.82;
   }
 }

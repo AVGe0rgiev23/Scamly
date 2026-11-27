@@ -1235,13 +1235,57 @@
       max(12px, env(safe-area-inset-left));
     pointer-events: none;
   }
+  /* The preview page /dev/nav draws the dock in the page. */
+  .site-dock[data-preview] {
+    position: relative;
+    z-index: auto;
+  }
   .site-dock-bar {
+    position: relative;
     width: 100%;
     max-width: 30rem;
     gap: 2px;
     padding: 6px;
     border-radius: 30px;
     pointer-events: auto;
+  }
+  /* The sliding plate under the current dock item: item i of n (SiteDock sets
+     --dock-i/--dock-n). The bar's padding is 6 px and the items have 2 px gaps. */
+  .site-dock-spot {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: calc((100% - 12px - (var(--dock-n) - 1) * 2px) / var(--dock-n));
+    border-radius: 24px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      light-dark(rgb(10 12 20 / 0.07), rgb(255 255 255 / 0.11)),
+      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
+    );
+    box-shadow: var(--highlight);
+    translate: calc(var(--dock-i) * (100% + 2px)) 0;
+    opacity: 0;
+    transition:
+      translate 420ms var(--ease-out),
+      opacity 150ms linear;
+  }
+  .site-dock-spot[data-shown] {
+    opacity: 1;
+  }
+  /* The halo bar at the plate's top edge, like light falling on it. */
+  .site-dock-spot::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--halo);
+    box-shadow: 0 2px 10px color-mix(in oklab, var(--halo-2) 55%, transparent);
+    transform: translateX(-50%);
   }
   .site-dock-link {
     position: relative;
@@ -1258,29 +1302,64 @@
       color 150ms linear,
       background-color 150ms linear;
   }
-  .site-dock-link:hover {
-    background-color: light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04));
+  @media (hover: hover) {
+    .site-dock-link:not([aria-current="page"]):hover {
+      background-color: light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04));
+    }
   }
-  .site-dock-link[aria-current="page"] {
-    background: linear-gradient(
-      180deg,
-      light-dark(rgb(10 12 20 / 0.07), rgb(255 255 255 / 0.11)),
-      light-dark(rgb(10 12 20 / 0.035), rgb(255 255 255 / 0.04))
-    );
-    box-shadow: var(--highlight);
+  /* The older person's phone: 64 px targets and a larger word. */
+  .site-dock[data-size="large"] .site-dock-link {
+    min-height: 64px;
   }
-  /* The current place: a short halo bar at the top edge, like light falling on it. */
-  .site-dock-link[aria-current="page"]::before {
+  .site-dock[data-size="large"] .site-dock-label {
+    font-size: 0.875rem;
+  }
+
+  /* Press: a soft halo ring lights up inside the link and fades after release
+     (a transition on :active, so no script). Header links and dock items alike. */
+  .site-nav-link::after,
+  .site-dock-link::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 50%;
-    width: 22px;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--halo);
-    box-shadow: 0 2px 10px color-mix(in oklab, var(--halo-2) 55%, transparent);
-    transform: translateX(-50%);
+    inset: 3px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in oklab, var(--halo-2) 70%, transparent),
+      0 0 18px color-mix(in oklab, var(--halo-1) 40%, transparent);
+    opacity: 0;
+    scale: 0.92;
+    transition:
+      opacity 600ms var(--ease-out),
+      scale 600ms var(--ease-out);
+  }
+  .site-nav-link:active::after,
+  .site-dock-link:active::after {
+    opacity: 1;
+    scale: 1;
+    transition-duration: 120ms;
+  }
+
+  /* The live badge on „Сигнали“: a small danger pill with the number. */
+  .site-badge {
+    display: inline-grid;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    place-items: center;
+    padding-inline: 0.3rem;
+    border-radius: 999px;
+    background: var(--danger-solid);
+    color: var(--danger-on);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .site-dock-link .site-badge {
+    position: absolute;
+    top: 5px;
+    left: calc(50% + 6px);
   }
   .site-dock-icon svg {
     width: 22px;
@@ -1377,6 +1456,13 @@
   .site-spot-track[data-ready] > .site-spot {
     transition: opacity 150ms linear;
   }
+  .site-dock-spot {
+    transition: opacity 150ms linear;
+  }
+  .site-nav-link::after,
+  .site-dock-link::after {
+    display: none;
+  }
   .brand-logo-mark,
   .brand-logo:hover .brand-logo-mark {
     transform: none;
@@ -1386,8 +1472,11 @@
 
 @media (forced-colors: active) {
   .site-spot::after,
-  .site-dock-link[aria-current="page"]::before {
+  .site-dock-spot::before {
     background: Highlight;
+  }
+  .site-dock-link[aria-current="page"] {
+    outline: 2px solid Highlight;
   }
   .site-footer-word {
     display: none;

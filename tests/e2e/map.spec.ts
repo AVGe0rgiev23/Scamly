@@ -144,10 +144,9 @@ test("an API error shows a Bulgarian message and „Опитай отново“
   await expect(page.locator("path.map-district")).toHaveCount(28);
 });
 
-test("linked from the home page and the footer", async ({ page }) => {
+test("linked from the footer (D35: not from the home page any more)", async ({ page }) => {
   await fakeApi(page);
   await page.goto("/");
-  await expect(page.getByRole("link", { name: bg.map.homeLink })).toHaveAttribute("href", "/karta");
   await expect(
     page.getByRole("contentinfo").getByRole("link", { name: bg.map.footerLink }),
   ).toHaveAttribute("href", "/karta");

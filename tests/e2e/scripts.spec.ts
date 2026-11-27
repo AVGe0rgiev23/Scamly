@@ -156,7 +156,7 @@ test("the fridge card tells the D34 story and has the phone sticker on a second 
   await page.emulateMedia({ media: "screen" });
 });
 
-test("the footer and the home page link to „Как работи измамата“", async ({ page }) => {
+test("the footer links to „Как работи измамата“", async ({ page }) => {
   await page.goto("/");
   // Since D35 the education cards are in the footer, not in the header or the dock.
   await page
@@ -166,13 +166,6 @@ test("the footer and the home page link to „Как работи измамат
   await expect(page).toHaveURL(/\/kak-raboti$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.education.title);
   await expect(page.getByText(bg.education.lead)).toBeVisible();
-
-  await page.goto("/");
-  await page
-    .getByRole("main")
-    .getByRole("link", { name: bg.education.homeLink, exact: true })
-    .click();
-  await expect(page).toHaveURL(/\/kak-raboti$/);
 });
 
 test("the moderator hub links to the scripts and to the report queue", async ({ page }) => {

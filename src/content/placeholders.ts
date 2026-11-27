@@ -1,7 +1,7 @@
 // PLACEHOLDERS: the ONLY made-up content shown on the public site.
 //
-// The home page shows small example screens (a sample call, a sample alert, a
-// sample pairing code). None of this is real data and none of it is a statistic:
+// The home page shows small example screens (the two-phone scene, sample calls for
+// the real engine, a sample pairing code). None of this is real data and none of it is a statistic:
 // the names, times and texts below are examples, and each example screen is
 // labelled „Примерен екран“. Change the examples here, in one place.
 
@@ -16,6 +16,18 @@ export type SampleCall = {
 };
 
 export const SAMPLE_CALLS: SampleCall[] = [
+  {
+    id: "crash",
+    label: "„Катастрофирах“",
+    input: {
+      claimedIdentity: "relative",
+      asksMoney: "yes",
+      handover: "courier_or_stranger",
+      rushing: "yes",
+      secrecy: "yes",
+      text: "Мамо, катастрофирах, трябват ми пари. Ще дойде човек да ги вземе. Не казвай на никого.",
+    },
+  },
   {
     id: "police",
     label: "Фалшив полицай",
@@ -54,20 +66,16 @@ export const SAMPLE_CALLS: SampleCall[] = [
   },
 ];
 
-// The example people and values in the small feature screens.
+// The example people and values on the home page (D34): the mother is protected, her
+// son Иван is asked first; Ана and Георги are the rest of the family.
 export const SAMPLE = {
-  // The demo family (D34): the mother Мария is protected, her son Иван is called first.
   protectedName: "Мария",
+  // How the son's phone calls her: the title of her phone, and inside a sentence.
+  momTitle: "Мама",
+  momInSentence: "мама",
   familyName: "Иван",
+  otherFamily: ["Ана", "Георги"],
   pairingCode: "482 915",
-  pairingTimeLeft: "9:42",
-  alertTime: "14:32",
-  // The times of the four steps of the sample alert (hours:minutes:seconds).
-  timelineTimes: ["14:32:05", "14:32:06", "14:32:41", "14:33:10"],
-  // The sample family on the home page, in the order Scamly calls them (AvatarStack).
-  familyOrder: [
-    { id: "f1", name: "Иван Петров" },
-    { id: "f2", name: "Ана Петрова" },
-    { id: "f3", name: "Георги Петров" },
-  ],
+  // The time on the son's lock screen in the hero.
+  clock: "14:32",
 } as const;

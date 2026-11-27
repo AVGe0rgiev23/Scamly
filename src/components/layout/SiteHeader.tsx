@@ -10,12 +10,16 @@
 // needs its room). Nothing is hidden behind a "hamburger" button,
 // because older people do not look for hidden menus.
 //
-// The menu depends on who is looking:
-//   - a guest sees „Как работи“ (the three steps on the home page), „Вход“ and the
+// The menu depends on who is looking (siteNav.ts, phase 5), and the phone dock shows
+// the same items:
+//   - a guest: „Как работи“ (the three steps on the home page), „Вход“ and the
 //     bright pill „Провери“ (D35; everything else is in the footer);
-//   - a logged-in person sees the link to their own area (e.g. „Моите близки“; a
-//     family member also „Сигнали“), their name and „Изход“ (the older person's
-//     phone: area link, name and the bright pill, never „Изход“).
+//   - the older person's phone: „Провери“ · „Помощ“ (never „Изход“);
+//   - a family member: „Семейство“ · „Сигнали“ (with a live badge for waiting „Ти
+//     ли си?“ questions) · „Помощ“, their name and „Изход“;
+//   - a moderator / an admin: their area · „Помощ“, their name and „Изход“.
+// The current page has a sliding halo light under it (SpotlightNav, the dock's
+// sliding plate); a press sends a soft halo pulse; the bar shrinks on scroll.
 //
 // A Server Component: plain HTML with links. Who is logged in is read on the server
 // (getActor), so the login cookie never has to be read by browser code. Reading the
@@ -28,52 +32,82 @@
 
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
-import { cache, Suspense } from "react";
+import { cache, Suspense, type ReactNode } from "react";
 import { LogoutButton } from "@/components/auth/forms";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import type { AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 import { readPublicEnv } from "@/lib/publicEnv";
 import { getActor } from "@/server/auth/actor";
-import { accountLinkFor, extraLinksFor, showsLogout } from "./accountLinks";
+import { showsLogout } from "./accountLinks";
 import { HeaderCta } from "./HeaderCta";
 import { Logo } from "./Logo";
 import { SiteDock } from "./SiteDock";
-import { dockLinksFor, GUEST_LINKS, showsCheckCta } from "./siteNav";
+import { dockLinksFor, navLinksFor, showsCheckCta } from "./siteNav";
 import { SpotlightNav } from "./SpotlightNav";
 
 // The little the header needs to know about a logged-in person.
-type HeaderAccount = { role: AppRole; displayName: string };
+export type HeaderAccount = { role: AppRole; displayName: string };
 
 export function SiteHeader() {
   return (
     <header className="site-header sticky top-0 z-(--z-index-header) px-3 pt-3 print:hidden">
-      <div className="site-header-pill relative mx-auto max-w-[68.75rem] rounded-full">
-        {/* Two glass layers: the normal glass, and a more frosted one on top that
-            fades in while the page scrolls (its opacity is the only thing animated). */}
-        <span aria-hidden="true" className="site-header-glass site-glass" />
-        <span aria-hidden="true" className="site-header-frost" />
-        <div className="relative flex min-h-15 items-center gap-2 py-1.5 pr-1.5 pl-2 lg:min-h-16 lg:gap-3">
-          <Logo />
-          <div className="flex min-w-0 flex-1 justify-center max-lg:hidden">
-            <Suspense fallback={<HeaderNav account={null} />}>
-              <AccountHeaderNav />
-            </Suspense>
-          </div>
-          {/* Between 1024 and 1280 px the menu needs the room, so the switch is in the
-              footer there (and on a phone). */}
-          <ThemeToggle className="ml-auto max-md:hidden lg:ml-0 lg:max-xl:hidden" />
-          <div className="flex min-w-0 items-center gap-2 max-md:ml-auto">
-            <Suspense fallback={<HeaderActions account={null} />}>
-              <AccountHeaderActions />
-            </Suspense>
-          </div>
-        </div>
-      </div>
+      <HeaderPill
+        nav={
+          <Suspense fallback={<HeaderNav account={null} />}>
+            <AccountHeaderNav />
+          </Suspense>
+        }
+        actions={
+          <Suspense fallback={<HeaderActions account={null} />}>
+            <AccountHeaderActions />
+          </Suspense>
+        }
+      />
       <Suspense fallback={<SiteDock label={bg.layout.navLabel} links={dockLinksFor(null)} />}>
         <AccountDock />
       </Suspense>
     </header>
+  );
+}
+
+// The floating glass pill itself: logo, the menu, the theme switch and the actions.
+function HeaderPill({ nav, actions }: { nav: ReactNode; actions: ReactNode }) {
+  return (
+    <div className="site-header-pill relative mx-auto w-full max-w-[68.75rem] rounded-full">
+      {/* Two glass layers: the normal glass, and a more frosted one on top that
+          fades in while the page scrolls (its opacity is the only thing animated). */}
+      <span aria-hidden="true" className="site-header-glass site-glass" />
+      <span aria-hidden="true" className="site-header-frost" />
+      <div className="relative flex min-h-15 items-center gap-2 py-1.5 pr-1.5 pl-2 lg:min-h-16 lg:gap-3">
+        <Logo />
+        <div className="flex min-w-0 flex-1 justify-center max-lg:hidden">{nav}</div>
+        {/* Between 1024 and 1280 px the menu needs the room, so the switch is in the
+            footer there (and on a phone). */}
+        <ThemeToggle className="ml-auto max-md:hidden lg:ml-0 lg:max-xl:hidden" />
+        <div className="flex min-w-0 items-center gap-2 max-md:ml-auto">{actions}</div>
+      </div>
+    </div>
+  );
+}
+
+// The preview page /dev/nav: the pill and the dock of one role, as if `path` were
+// open. Not a <header> (the page has its real one); the dock is drawn in place.
+export function HeaderPreview({ account, path }: { account: HeaderAccount | null; path: string }) {
+  const role = account?.role ?? null;
+  return (
+    <div className="flex flex-col gap-4">
+      <HeaderPill
+        nav={<HeaderNav account={account} previewPath={path} />}
+        actions={<HeaderActions account={account} />}
+      />
+      <SiteDock
+        label={bg.layout.navLabel}
+        links={dockLinksFor(role)}
+        size={role === "protected" ? "large" : "normal"}
+        previewPath={path}
+      />
+    </div>
   );
 }
 
@@ -108,19 +142,35 @@ async function AccountHeaderActions() {
 }
 
 async function AccountDock() {
-  const account = await readHeaderAccount();
-  return <SiteDock label={bg.layout.navLabel} links={dockLinksFor(account?.role ?? null)} />;
+  const role = (await readHeaderAccount())?.role ?? null;
+  return (
+    <SiteDock
+      label={bg.layout.navLabel}
+      links={dockLinksFor(role)}
+      size={role === "protected" ? "large" : "normal"}
+    />
+  );
 }
 
-// The menu in the pill: the guest links, or the person's area link (+ extra link).
-function HeaderNav({ account }: { account: HeaderAccount | null }) {
-  const links =
-    account === null ? GUEST_LINKS : [accountLinkFor(account.role), ...extraLinksFor(account.role)];
-  return <SpotlightNav label={bg.layout.navLabel} links={links} />;
+// The menu in the pill: the guest links, or the person's own links (siteNav.ts).
+function HeaderNav({
+  account,
+  previewPath,
+}: {
+  account: HeaderAccount | null;
+  previewPath?: string;
+}) {
+  return (
+    <SpotlightNav
+      label={bg.layout.navLabel}
+      links={navLinksFor(account?.role ?? null)}
+      previewPath={previewPath}
+    />
+  );
 }
 
 // The right-hand end of the pill: the person's name and „Изход“ when logged in, and
-// the bright „Провери“ pill for a guest and the older person's phone.
+// the bright „Провери“ pill for a guest.
 function HeaderActions({ account }: { account: HeaderAccount | null }) {
   return (
     <>
@@ -128,7 +178,7 @@ function HeaderActions({ account }: { account: HeaderAccount | null }) {
         <p
           className={
             "flex min-h-12 min-w-0 items-center px-2 text-sm whitespace-nowrap text-fg-muted " +
-            (showsCheckCta(account.role) ? "max-lg:hidden" : "")
+            (account.role === "protected" ? "max-lg:hidden" : "")
           }
         >
           {/* „Влезли сте като“ is only read aloud on smaller screens, to save space. */}

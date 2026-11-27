@@ -7,8 +7,9 @@
 // On a phone (the "android-phone" project, isMobile) the menu is the glass dock at the
 // bottom (still inside the header landmark, with the same name) and the theme switch
 // is in the footer; on a desktop both are in the header pill. Since D35 a guest's menu
-// is short: „Как работи“ and „Вход“ (desktop), Начало / Провери / Вход (phone); every
-// other page is linked from the footer.
+// is short: „Как работи“ and „Вход“ (desktop), Начало / Как работи / Провери / Вход
+// (phone); every other page is linked from the footer. The landing page v4 (P-03) has
+// its own test at the end of this file.
 
 import { expect, test, type Page } from "@playwright/test";
 import { bg } from "@/i18n/bg";
@@ -30,7 +31,7 @@ async function fitsScreen(page: Page): Promise<boolean> {
 // on a phone.
 function guestMenuLabels(isMobile: boolean): string[] {
   return isMobile
-    ? [bg.layout.dockHome, bg.layout.dockCheck, bg.layout.dockLogin]
+    ? [bg.layout.dockHome, bg.layout.howItWorks, bg.layout.dockCheck, bg.layout.dockLogin]
     : [bg.layout.howItWorks, bg.layout.login];
 }
 
@@ -70,7 +71,9 @@ test("a guest's header shows no account link, no name and no „Изход“", 
     await page.goto(path);
     const header = page.getByRole("banner");
     await expect(header.getByRole("link", { name: bg.layout.login, exact: true })).toBeVisible();
-    for (const label of [bg.layout.accountFamily, bg.layout.accountProtected]) {
+    // („Провери“ is also the guest's bright pill, so the protected menu is told apart
+    // by „Помощ“.)
+    for (const label of [bg.layout.accountFamily, bg.layout.navHelp]) {
       await expect(header.getByRole("link", { name: label })).toHaveCount(0);
     }
     await expect(header.getByText(bg.layout.signedInAs)).toHaveCount(0);
@@ -164,7 +167,9 @@ test("the phone dock is hidden on the older person's check screen", async ({ pag
   // Back on a public page the dock is there, with a word under every icon.
   await page.goto("/karta-za-hladilnik");
   const dock = page.getByRole("banner").getByRole("navigation", { name: bg.layout.navLabel });
-  await expect(dock.getByRole("link")).toHaveCount(3);
+  await expect(dock.getByRole("link")).toHaveCount(4);
+  // The current page is not in the dock, so its sliding plate is hidden.
+  await expect(dock.locator('[aria-current="page"]')).toHaveCount(0);
   for (const link of await dock.getByRole("link").all()) {
     expect((await link.innerText()).trim().length).toBeGreaterThan(0);
   }
@@ -183,22 +188,35 @@ test("no sideways scrolling at 360 px and large tap targets in the menu", async 
   }
 });
 
-test("the home page shows the 3 steps, the rules and the start buttons", async ({ page }) => {
+test("the landing page tells one story in five sections", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(bg.home.problem)).toBeVisible();
+  const main = page.getByRole("main");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(bg.app.tagline);
+  await expect(main.getByText(bg.landing.hero.lead)).toBeVisible();
+  // Five sections: the hero + four with a level-2 heading (+ the final call to action).
+  await expect(main.getByRole("heading", { level: 2 })).toHaveText([
+    bg.landing.how.title,
+    bg.landing.safety.title,
+    bg.landing.family.title,
+    bg.landing.faqTitle,
+    bg.landing.ctaTitle,
+  ]);
 
-  const steps = page.getByRole("main").getByRole("list").first().getByRole("listitem");
-  await expect(steps).toHaveCount(3);
-  for (const [index, step] of bg.home.steps.entries()) {
-    await expect(steps.nth(index)).toContainText(step.title);
-    await expect(steps.nth(index)).toContainText(step.text);
+  // How it works: three steps.
+  for (const step of bg.landing.how.steps) {
+    await expect(main.getByRole("heading", { name: step.title, exact: true })).toBeVisible();
   }
-  for (const rule of bg.home.rules) {
-    await expect(page.getByText(rule, { exact: true })).toBeVisible();
-  }
+  // The safety net: the six hard rules, the story's example lights three of them.
+  const rules = main
+    .getByRole("list", { name: bg.landing.safety.rulesTitle })
+    .getByRole("listitem");
+  await expect(rules).toHaveCount(6);
+  await expect(main.locator(".landing-rule[data-fired]")).toHaveCount(3);
+  // At most five questions.
+  await expect(main.locator("details")).toHaveCount(bg.landing.faq.length);
+  expect(bg.landing.faq.length).toBeLessThanOrEqual(5);
 
   // The check is the main action and sends an unpaired phone to setup.
-  const main = page.getByRole("main");
   const register = main.getByRole("link", { name: bg.home.register, exact: true });
   const pair = main.getByRole("link", { name: bg.home.pair, exact: true });
   await expect(main.getByRole("link", { name: bg.home.login, exact: true })).toBeVisible();
@@ -212,4 +230,58 @@ test("the home page shows the 3 steps, the rules and the start buttons", async (
   await page.goBack();
   await pair.click();
   await expect(page).toHaveURL(/\/svarzhi$/);
+});
+
+test("the two-phone scene plays once and can be stepped with buttons and keys", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const steps = page.getByRole("group", { name: bg.landing.hero.stepsLabel });
+  const caption = page.locator(".landing-caption");
+  const last = bg.landing.hero.steps.at(-1);
+  const first = bg.landing.hero.steps[0];
+  if (last === undefined || first === undefined) throw new Error("no steps");
+  // It plays by itself and stops on the red frame.
+  await expect(caption).toContainText(last.caption, { timeout: 15_000 });
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "3");
+
+  await steps.getByRole("button", { name: first.label }).click();
+  await expect(caption).toContainText(first.caption);
+  await expect(steps.getByRole("button", { name: first.label })).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+  await page.keyboard.press("ArrowRight");
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "1");
+  // The visitor's choice stops the autoplay.
+  await page.waitForTimeout(3_000);
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "1");
+  await steps.getByRole("button", { name: bg.landing.hero.replay }).click();
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "0");
+});
+
+test("with reduced motion the scene opens on its final frame", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "3");
+  await page.waitForTimeout(3_000);
+  await expect(page.locator(".landing-hero")).toHaveAttribute("data-step", "3");
+});
+
+test("„Опитайте: вие сте Иван“ answers and warns the family on the page", async ({ page }) => {
+  await page.goto("/");
+  const main = page.getByRole("main");
+  await main.getByRole("button", { name: bg.identityAnswer.notMe }).click();
+  await expect(
+    page
+      .locator(".landing-phone--try")
+      .getByText(bg.identityAnswer.answeredNotMe.replace("{person}", "мама")),
+  ).toBeVisible();
+  const again = main.getByRole("button", { name: bg.landing.family.again, exact: true });
+  await expect(again).toBeFocused();
+  await again.click();
+  await main.getByRole("button", { name: bg.identityAnswer.itsMe, exact: true }).click();
+  await expect(
+    page.locator(".landing-phone--try").getByText(bg.identityAsk.itsMeLead),
+  ).toBeVisible();
 });

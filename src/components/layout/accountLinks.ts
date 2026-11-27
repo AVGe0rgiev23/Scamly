@@ -1,8 +1,9 @@
 // What the header menu shows for a logged-in person: the link to their own area
-// (by role) and whether the „Изход“ button is shown.
+// (by role) and whether the „Изход“ button is shown. The rest of the menu (alerts,
+// help) is built in siteNav.ts.
 // Plain functions without React or Supabase, so they can be unit-tested.
 
-import { homePathForRole, ROUTES, type AppRole } from "@/config/routes";
+import { homePathForRole, type AppRole } from "@/config/routes";
 import { bg } from "@/i18n/bg";
 
 // One menu entry: where it goes and its text.
@@ -20,20 +21,6 @@ const AREA_LABELS: Record<AppRole, string> = {
 // The link to the person's own area: the same start page that opens after login.
 export function accountLinkFor(role: AppRole): NavLink {
   return { href: homePathForRole(role), label: AREA_LABELS[role] };
-}
-
-// More links after the area link. A family member also gets „Сигнали“, the live
-// alert page (W2-03), so it is one tap away on every page. A moderator gets
-// „Сигнали“ too: the report queue (W3-04). An admin's menu stays short (the admin
-// reaches the queue at /moderator/reports; the menu must fit on a phone).
-export function extraLinksFor(role: AppRole): NavLink[] {
-  if (role === "family") {
-    return [{ href: ROUTES.familyAlerts, label: bg.layout.accountFamilyAlerts }];
-  }
-  if (role === "moderator") {
-    return [{ href: ROUTES.moderatorReports, label: bg.layout.accountModeratorReports }];
-  }
-  return [];
 }
 
 // The older person's phone never shows „Изход“: one wrong tap would log it out, and

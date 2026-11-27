@@ -153,11 +153,8 @@ test("too many reports: shows the 429 message", async ({ page }) => {
   await expect(alert).toBeFocused();
 });
 
-test("home page and footer link to the form", async ({ page }) => {
+test("the footer links to the form (D35)", async ({ page }) => {
   await page.goto("/");
-  await expect(
-    page.getByRole("link", { name: bg.reportForm.homeLink, exact: true }),
-  ).toHaveAttribute("href", "/signal");
   const footerLink = page.getByRole("contentinfo").getByRole("link", {
     name: bg.reportForm.footerLink,
   });

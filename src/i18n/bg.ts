@@ -96,7 +96,8 @@ export const bg = {
     name: APP_NAME,
     // Shown in the browser tab and in search results.
     metaTitle: `${APP_NAME} – защита от телефонни измами`,
-    tagline: "Съмнително обаждане?",
+    // The hook of the home page (D34); the part after the dash glows on the page.
+    tagline: "Гласът може да е фалшив. Близкият ти — не.",
     // D34: the product is for anyone whose „близък“ a scammer can pretend to be.
     description: `${APP_NAME} помага, когато някой се представя за ваш близък и иска пари: пита истинския човек на неговия телефон и предупреждава семейството.`,
   },
@@ -122,15 +123,20 @@ export const bg = {
     education: "Как работи измамата",
     // The header link to the three steps on the home page (D35).
     howItWorks: "Как работи",
-    // When logged in, the menu shows the link to the person's own area (by role),
+    // When logged in, the menu shows the person's own links (by role, siteNav.ts),
     // the name („Влезли сте като …“) and „Изход“ (not on the older person's phone).
-    accountFamily: "Моите близки",
+    accountFamily: "Семейство",
     // The family's live alert page /family/alerts (W2-03).
     accountFamilyAlerts: "Сигнали",
     accountModerator: "Модерация",
     accountModeratorReports: "Сигнали",
     accountAdmin: "Администрация",
-    accountProtected: "Проверка на обаждане",
+    accountProtected: "Провери",
+    // The help page of each area (/family/pomosht, /protected/pomosht, …).
+    navHelp: "Помощ",
+    // The small badge on „Сигнали“: open „Ти ли си?“ questions, read aloud after the word.
+    navBadgeOne: "1 въпрос чака отговор",
+    navBadgeMany: "{count} въпроса чакат отговор",
     signedInAs: "Влезли сте като",
     footerProject: `${APP_NAME} е училищен проект за ИТ турнира „Джон Атанасов“.`,
     footerPrinciples: "Свободен софтуер с лиценз GPL-3.0. Без реклами и без проследяване.",
@@ -140,11 +146,10 @@ export const bg = {
     checkCta: "Провери",
     // The same link in the footer, where there is room for the full words.
     footerCheck: "Провери обаждане",
-    // Short words under the icons of the bottom bar on a phone (about 70 px each).
+    // Short words under the icons of the bottom bar on a phone (about 80 px each).
     dockHome: "Начало",
     dockCheck: "Провери",
     dockLogin: "Вход",
-    dockProtected: "Проверка",
     // The footer: two columns of links, the tournament and the authors.
     footerNavLabel: "Връзки в долната част на страницата",
     footerColumnApp: "Приложението",
@@ -152,36 +157,26 @@ export const bg = {
     footerTournament: "ИТ турнир „Джон Атанасов“ 2026",
     footerAuthors: "Автори: Алекс Георгиев и Роберта Христова",
     footerLicence: "Лиценз GPL-3.0",
+    // The preview page /dev/nav (browser tests and screenshots only).
+    previewTitle: "Менюто според ролята",
+    previewRoles: {
+      guest: "Гост",
+      protected: "Телефонът на близкия",
+      family: "Член на семейството",
+      moderator: "Модератор",
+      admin: "Администратор",
+    },
   },
-  // The home page „/“ (W2-13, src/app/page.tsx). Its main heading is app.tagline.
+  // The home page „/“ (src/app/page.tsx). Its main heading is app.tagline. The
+  // rules are also on the offline card and the education list; `register` is also in
+  // the footer.
   home: {
-    eyebrow: "Защита от телефонни измами",
-    startCheck: "Провери обаждането",
+    startCheck: "Провери обаждане",
     setupLinks: "Свързване и вход",
-    problem:
-      "Някой се представя за ваш близък и иска пари? Scamly пита истинския човек на неговия телефон, проверява обаждането за около 30 секунди и предупреждава семейството.",
     register: "Регистрация за близки",
     pair: "Свържи телефон",
     login: "Вход",
     pairNote: "Ако телефонът още не е свързан, ще ви трябва код от близък.",
-    adviceTitle: "Затворете телефона",
-    advice: "Обадете се сами на близък на номер, който знаете. Не давайте пари или лични данни.",
-    stepsTitle: "Как работи",
-    // The 3 steps, in order. A list of objects, like a Python list of dicts.
-    steps: [
-      {
-        title: "Свързване",
-        text: "Свързвате телефона на близкия си с код от 6 цифри. Парола не е нужна.",
-      },
-      {
-        title: "Проверка",
-        text: "При съмнително обаждане близкият ви натиска един голям бутон, отговаря на няколко въпроса и веднага вижда дали има признаци на измама.",
-      },
-      {
-        title: "Сигнал",
-        text: "Семейството получава сигнал веднага и може да се обади на близкия си навреме.",
-      },
-    ],
     rulesTitle: "Какво да правите при съмнително обаждане",
     rules: [
       "Полицията никога не иска пари по телефона.",
@@ -189,12 +184,139 @@ export const bg = {
       "Затворете и се обадете сами на близък на номера, който знаете.",
     ],
   },
-  // The new sections of the home page (redesign v2, src/components/landing/). Every
-  // sentence describes a feature that exists; no numbers or quotes are invented.
+  // The landing page v4 (P-03, D35, src/components/landing/): five sections, one story.
+  // Every sentence describes a feature that works today; no numbers or quotes are
+  // invented. The small eyebrows are written in normal case; CSS shows them in capitals.
   landing: {
     howLink: "Как работи",
+    // 1. The hero and its two-phone scene (HeroScene.tsx). The names come from
+    // src/content/placeholders.ts.
+    hero: {
+      eyebrow: "Провери истинския",
+      lead: "Когато някой се представи за ваш близък и поиска пари, Scamly пита истинския човек. На неговия собствен телефон.",
+      sceneLabel: "Пример: как Scamly пита истинския",
+      incoming: "Входящо обаждане",
+      unknownNumber: "Непознат номер",
+      callerSays: "Мамо, катастрофирах, трябват ми пари.",
+      // The time of the push on the son's lock screen.
+      pushNow: "сега",
+      hangUp: "Затворете.",
+      // The step buttons under the phones and what each step shows, read aloud.
+      stepsLabel: "Стъпки на примера",
+      steps: [
+        { label: "Обаждане", caption: "Звънят на мама от името на Иван и искат пари." },
+        {
+          label: "Въпрос",
+          caption: "Мама докосва „Иван“. Scamly пита истинския Иван на неговия телефон.",
+        },
+        { label: "Отговор", caption: "Иван отговаря: „Не съм аз.“" },
+        {
+          label: "Резултат",
+          caption: "На телефона на мама: „Това НЕ е Иван. Затворете.“ Иван ѝ се обажда веднага.",
+        },
+      ],
+      replay: "Пусни отначало",
+      keysHint: "Стрелките ← и → също сменят стъпките.",
+    },
+    // 2. How it works: three steps, each with a small live picture.
+    how: {
+      eyebrow: "Три стъпки",
+      title: "Как работи",
+      steps: [
+        {
+          title: "Звънят ви „от името“ на близък",
+          text: "Гласът звучи познато. Номерът може да е подменен.",
+        },
+        {
+          title: "Едно докосване пита истинския",
+          text: "Докосвате името му. Въпросът отива на неговия телефон.",
+        },
+        {
+          title: "Истинският отговаря за секунди",
+          text: "Ако не отговори до 45 секунди, питаме следващия близък.",
+        },
+      ],
+      // Words inside the small pictures.
+      miniCaller: "Иван?",
+      miniPush: "Ти ли си?",
+      miniNotMe: "Не съм аз",
+      miniItsMe: "Аз съм",
+      miniSeconds: "45 с",
+      miniNext: "Следващ",
+    },
+    // 3. The safety net: the real engine demo and the six hard rules.
+    safety: {
+      eyebrow: "Предпазна мрежа",
+      title: "Дори никой да не отговори, проверката отговаря.",
+      text: "Докато чакате, отговаряте на няколко въпроса. За около 30 секунди получавате ясен отговор. Шест твърди правила винаги дават червено.",
+      rulesTitle: "Шестте твърди правила",
+      rulesHint: "Светва правилото, което примерът нарушава.",
+      // Read aloud after a lit rule.
+      ruleFired: "нарушено в примера",
+      tryTitle: "Опитайте да я заблудите",
+    },
+    // 4. For the family: „Ти си истинският“.
+    family: {
+      eyebrow: "За семейството",
+      title: "Ти си истинският.",
+      text: "Когато някой се представи за вас, Scamly пита вас. Отговорът ви стига до телефона на близкия ви веднага.",
+      sees: [
+        "Известие „Някой се представя за теб“ и екран с два бутона.",
+        "„Не съм аз“ предупреждава и останалите от семейството.",
+        "На телефона на мама: „Иван ви звъни сега“ и бутон за 112, ако някой идва за парите.",
+      ],
+      tryLabel: "Опитайте: вие сте Иван",
+      warnedLabel: "Предупредени близки",
+      again: "Отначало",
+      setupTitle: "Настройвате веднъж",
+      setup: [
+        {
+          title: "Създайте профил на близкия",
+          text: "Добавете семейството в реда, в който да го търсим.",
+        },
+        { title: "Свържете телефона му", text: "С код от 6 цифри или QR код. Без парола." },
+        {
+          title: "Поканете роднините",
+          text: "Изпратете им връзка. Който приеме, също може да бъде питан.",
+        },
+      ],
+      codeLabel: "Код за свързване",
+    },
+    // 5. Questions (at most five) and the final call to action.
+    faqEyebrow: "Въпроси",
+    faqTitle: "Какво питат хората",
+    faq: [
+      {
+        question: "Ами ако гласът звучи точно като неговия?",
+        answer:
+          "Точно затова питаме истинския. Глас може да се подправи с програма. Телефонът, в който близкият ви е влязъл в Scamly, не може.",
+      },
+      {
+        question: "Ами ако близкият не отговори?",
+        answer:
+          "След 45 секунди питаме следващия от семейството. Екранът ви напомня да попитате нещо, което знае само истинският човек. А проверката с твърдите правила ви казва какво да правите.",
+      },
+      {
+        question: "Защо не просто таен въпрос?",
+        answer:
+          "В паника хората забравят въпроса. Отговори като името на домашния любимец често са в социалните мрежи. Измамниците го заобикалят: „Не мога да мисля, полицаят ще ви обясни.“ И човекът остава сам. Scamly пита истинския на устройство, което измамникът не контролира, предупреждава семейството и пак ви напомня за въпроса.",
+      },
+      {
+        question: "Записва ли Scamly разговора?",
+        answer:
+          "Не. Scamly не слуша и не записва обаждания. Пази само отговорите и текста, който напишете, след като премахне разпознатите лични данни.",
+      },
+      {
+        question: "Безплатен ли е и трябва ли да се инсталира?",
+        answer:
+          "Да, безплатен е: свободен софтуер без реклами и без проследяване. Работи в браузъра на телефона. Можете да го добавите на началния екран.",
+      },
+    ],
+    ctaEyebrow: "Започнете",
+    ctaTitle: "Свържете семейството си",
+    ctaText: "Създайте семеен профил, добавете близкия си и свържете телефона му с код от 6 цифри.",
+    // The real-engine demo (CallDemo.tsx); also used by the style guide /dev/ui.
     demo: {
-      title: "Опитайте с примерно обаждане",
       scenarioLabel: "Примерни обаждания",
       textLabel: "Какво казва обаждащият се",
       textHint: "Променете текста и вижте как се променя оценката.",
@@ -206,116 +328,7 @@ export const bg = {
       engineNote: "Примерът използва същата проверка, която работи в приложението.",
       notAnswered: "без отговор",
     },
-    featuresTitle: "Какво прави Scamly",
-    sampleScreen: "Примерен екран",
-    features: {
-      check: {
-        title: "Един бутон, няколко въпроса",
-        text: "Човекът, когото пазите, натиска един голям бутон и отговаря с по едно докосване. Без пароли и без писане.",
-      },
-      verdict: {
-        title: "Ясен отговор с обяснение",
-        text: "Scamly показва едно от три нива на риск и обяснява оценката с прости думи.",
-      },
-      alert: {
-        title: "Семейството научава веднага",
-        text: "При натискането на бутона Scamly изпраща сигнал в приложението и известие на телефона.",
-      },
-      pairing: {
-        title: "Свързване без парола",
-        text: "Свързвате телефона с шестцифрен код или QR код. Кодът е валиден 10 минути и се използва само веднъж.",
-      },
-      offline: {
-        title: "Работи и при слаб интернет",
-        text: "Ако сървърът не отговори до 4 секунди, телефонът сам изчислява резултата и изпраща отговорите, когато връзката се върне.",
-      },
-    },
-    hardRulesTitle: "Шест признака, при които Scamly предупреждава за измама",
-    hardRulesText: "При всеки от тях резултатът е червен, каквито и да са останалите отговори.",
-    familyTitle: "За близките",
-    familyText:
-      "Свързвате телефона веднъж. След това получавате сигнал, когато близкият ви започне проверка.",
-    familyPoints: [
-      "Подреждате до 5 близки в реда, в който да бъдат търсени.",
-      "Изпращате връзка за покана на други членове на семейството.",
-      "Виждате историята на проверките и причините за всяка оценка.",
-      "Натискате „Обаждам ѝ се сега“ и близкият ви вижда на телефона си, че ще му се обадите.",
-    ],
-    timelineTitle: "Как изглежда един сигнал",
-    timeline: [
-      "Натиска големия бутон.",
-      "Близките получават сигнал.",
-      "Проверката показва признаци на измама.",
-      "Близък потвърждава, че се обажда.",
-    ],
-    resourcesTitle: "Отворено за всички",
-    resourcesText: "Без профил и без регистрация.",
-    faqTitle: "Често задавани въпроси",
-    faq: [
-      {
-        question: "Безплатен ли е Scamly?",
-        answer: "Да. Scamly е свободен софтуер с лиценз GPL-3.0, без реклами и без проследяване.",
-      },
-      {
-        question: "Трябва ли човекът, когото пазите, да помни парола?",
-        answer:
-          "Не. Близък създава код от 6 цифри и го въвежда на телефона му веднъж. След това телефонът остава свързан.",
-      },
-      {
-        question: "Спира ли Scamly обажданията от измамници?",
-        answer:
-          "Не. Scamly не блокира обаждания и не ги слуша. Той помага на човека да провери съмнително обаждане и предупреждава близките му.",
-      },
-      {
-        question: "Означава ли зеленият резултат, че обаждането е безопасно?",
-        answer:
-          "Не. Зеленият резултат означава, че Scamly не е открил типични признаци на измама. При съмнение затворете и се обадете на близък на познат номер.",
-      },
-      {
-        question: "Какво пази Scamly за едно обаждане?",
-        answer:
-          "Scamly пази отговорите и текста след автоматично премахване на разпознатите лични данни. За номерата в сигналите пазим само цифров отпечатък, който служи за сравнение.",
-      },
-      {
-        question: "Какво става, ако няма интернет?",
-        answer:
-          "Телефонът изчислява резултата сам и го показва веднага. Близките получават сигнала, когато връзката се върне.",
-      },
-      {
-        question: "Трябва ли да се инсталира приложение?",
-        answer:
-          "Не е задължително. Scamly работи в браузъра на телефона. Добавете го на началния екран, за да го отваряте с едно докосване. Известията зависят от устройството и разрешенията му.",
-      },
-    ],
-    ctaTitle: "Свържете телефона на близкия си",
-    ctaText: "Създайте семеен профил, добавете човека и въведете кода на неговия телефон.",
-    // Redesign v3 „Ореол“, Phase 2A: the extra words of the new landing page. The small
-    // eyebrows are written in normal case here; CSS shows them in capitals (`eyebrow`).
-    heroEyebrow: "Срещу телефонните измами в България",
-    demoHint: "Изберете примерно обаждане. Ореолът около телефона показва риска.",
-    phoneIncoming: "Входящо обаждане",
-    oneRuleEyebrow: "Едно правило",
-    oneRule: "Затворете телефона.",
-    howEyebrow: "Три стъпки",
-    howIntro: "Вие настройвате всичко веднъж. Вашият близък натиска само един бутон.",
-    featuresEyebrow: "Възможности",
-    hardRulesEyebrow: "Твърди правила",
-    rulesDeck: {
-      // {n} = the number of the sign, {total} = 6. Read aloud before each card.
-      card: "Признак {n} от {total}",
-      prev: "Предишен признак",
-      next: "Следващ признак",
-      swipe: "Плъзнете настрани, за да видите всички.",
-    },
-    familyEyebrow: "За семейството",
-    // {name} = the sample protected person, e.g. „Мария“.
-    familyIsland: "{name} провери обаждане",
-    callOrderLabel: "Редът, в който Scamly търси близките",
-    callOrderHint: "Посочете кръгче, за да видите името.",
-    duringEyebrow: "По време на обаждане",
-    resourcesEyebrow: "Публични инструменти",
-    faqEyebrow: "Въпроси",
-    ctaEyebrow: "Начало",
+    sampleScreen: "Примерни екрани",
   },
   theme: {
     label: "Изглед",
@@ -798,11 +811,7 @@ export const bg = {
     successEducation: "Как работи измамата",
     successHome: "Към началната страница",
     another: "Подай още един сигнал",
-    // On the home page and in the footer.
-    homeTitle: "Обадиха ли ви се измамници?",
-    homeText:
-      "Подайте анонимен сигнал. След проверка от модератор той ще предупреди хората от вашата област.",
-    homeLink: "Подай сигнал",
+    // In the footer.
     footerLink: "Подай сигнал за измама",
   },
   // The scam-script library (W3-05): error messages of POST/PATCH /api/scripts, also
@@ -877,11 +886,6 @@ export const bg = {
     // Shown when the cards can't be loaded, so the page still helps.
     rulesTitle: "Запомнете",
     printNote: `${APP_NAME} · Проверете съмнително обаждане за 30 секунди.`,
-    // A link on the home page.
-    homeTitle: "Научете схемите на измамниците",
-    homeText:
-      "Кратки карти за „Роднина в беда“, „Полицай“, „Фалшив служител“ и „Колет или куриер“: как започват и какво да направите.",
-    homeLink: "Как работи измамата",
   },
   // The moderator's area (W3-05): the hub /moderator and the scam-script editor
   // /moderator/scripts. Error messages of the API come from bg.scripts.
@@ -1028,10 +1032,7 @@ export const bg = {
     attribution: `Граници на областите: Natural Earth (обществено достояние). Данни: сигнали, одобрени от модераторите на ${APP_NAME}.`,
     mapAttribution: "Граници: Natural Earth",
     reportLink: "Подай сигнал за измама",
-    // On the home page, in the footer and after sending a report.
-    homeTitle: "Карта на измамите",
-    homeText: "Вижте в кои области хората получават най-много обаждания от измамници тази седмица.",
-    homeLink: "Отвори картата",
+    // In the footer and after sending a report.
     footerLink: "Карта на измамите",
     successLink: "Виж картата на измамите",
   },

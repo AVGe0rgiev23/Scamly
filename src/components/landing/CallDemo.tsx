@@ -1,7 +1,8 @@
-// The live demo on the hero's phone: three sample calls and an editable text of what
-// the caller says. The REAL detection engine (src/engine, the same code the app and the
-// server use) computes the score, the level and the reasons; HeroStage.tsx runs it and
-// passes the result here, because the hero's halo reacts to the same verdict.
+// The live demo of the safety net („Опитайте да я заблудите“): sample calls and an
+// editable text of what the caller says. The REAL detection engine (src/engine, the
+// same code the app and the server use) computes the score, the level and the
+// reasons; SafetyNet.tsx runs it and passes the result here, because the list of the
+// six hard rules next to the phone lights up from the same verdict.
 // This file only draws the phone screen (a controlled component: the state lives in
 // the parent, like a Python function that gets its data as arguments).
 //
@@ -21,7 +22,7 @@ import { MAX_TEXT_LENGTH, type Verdict } from "@/engine";
 import { bg } from "@/i18n/bg";
 
 const t = bg.landing.demo;
-const MAX_SHOWN_REASONS = 3;
+const MAX_SHOWN_REASONS = 2; // the lit hard rules beside the phone show the rest
 
 // The small dot in front of each reason, in the verdict's colour.
 const DOT = {
@@ -70,9 +71,9 @@ export function CallDemo({ call, text, verdict, onCallChange, onTextChange }: Ca
 
   return (
     <section aria-labelledby={`${textId}-title`} className="px-4 pt-3 pb-5">
-      <h2 id={`${textId}-title`} className="font-sans text-base font-semibold tracking-normal">
-        {t.title}
-      </h2>
+      <h3 id={`${textId}-title`} className="font-sans text-base font-semibold tracking-normal">
+        {bg.landing.safety.tryTitle}
+      </h3>
       {/* Sample calls: native radios, so the arrow keys move between them. */}
       <div role="radiogroup" aria-label={t.scenarioLabel} className="mt-3 flex flex-wrap gap-1.5">
         {SAMPLE_CALLS.map((item) => (
@@ -114,7 +115,7 @@ export function CallDemo({ call, text, verdict, onCallChange, onTextChange }: Ca
           label={t.riskLabel}
           className="mt-1 max-w-[11.5rem]"
         />
-        <div className="mt-3 min-h-[5.75rem] border-t border-line pt-2.5">
+        <div className="mt-3 min-h-[4.5rem] border-t border-line pt-2.5">
           <p className="text-xs font-semibold text-fg-muted">{t.reasonsTitle}</p>
           {reasons.length === 0 ? (
             <p className="mt-1 text-sm text-fg-muted">{t.noReasons}</p>
