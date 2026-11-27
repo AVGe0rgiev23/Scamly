@@ -6,13 +6,31 @@
 // An async Server Component: `await connection()` means "only when a request comes
 // in, never at `next build`", so it must sit inside <Suspense> (the /protected layout
 // has one; the preview page adds its own).
+//
+// withDistrict (the real /protected only): also reads the paired person's district,
+// so „Изпратете анонимно на картата“ on a red screen needs no question (P-11). The
+// preview has no paired phone and asks for the district instead.
 
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { getFeatures } from "@/config/features";
 import { CallCheck } from "./CallCheck";
+import { loadPairedDistrict } from "./pairedDistrict";
 
-export async function CallCheckPage({ districtNotice }: { districtNotice?: ReactNode }) {
+export async function CallCheckPage({
+  districtNotice,
+  withDistrict = false,
+}: {
+  districtNotice?: ReactNode;
+  withDistrict?: boolean;
+}) {
   await connection();
-  return <CallCheck voiceEnabled={getFeatures().voice} districtNotice={districtNotice} />;
+  const districtCode = withDistrict ? await loadPairedDistrict() : null;
+  return (
+    <CallCheck
+      voiceEnabled={getFeatures().voice}
+      districtNotice={districtNotice}
+      districtCode={districtCode}
+    />
+  );
 }

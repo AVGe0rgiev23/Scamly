@@ -127,8 +127,8 @@ async function mockPerson(page: Page, isOwner: boolean, checks = CHECKS_PAGE_1) 
   );
 }
 
-// The person page has tabs (Проверки / Телефони / Близки / Настройки); the other
-// panels stay in the page but hidden, so a test opens the tab it needs first.
+// The person page has two tabs (Кой е истинският / Настройки, P-10); the other
+// panel stays in the page but hidden, so a test opens the tab it needs first.
 async function openTab(page: Page, label: string) {
   const tab = page.getByRole("tab", { name: new RegExp(`^${label}`) });
   await tab.click();
@@ -288,13 +288,54 @@ test("a new contact needs a phone number before it is added", async ({ page }) =
   await expect(page.getByRole("button", { name: bg.family.saveContacts })).toBeEnabled();
 });
 
+test("the person page opens on „Кой е истинският“; phones and history are in „Настройки“", async ({
+  page,
+}) => {
+  await mockPerson(page, true);
+  await page.goto("/dev/family/person");
+  const tabs = page.getByRole("tab");
+  await expect(tabs).toHaveCount(2);
+  await expect(tabs.nth(0)).toHaveText(new RegExp(`^${bg.family.tabContacts}`));
+  await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.nth(1)).toHaveText(bg.family.tabSettings);
+  // The everyday view: the call order with its one-line hint, nothing about phones.
+  await expect(
+    page.getByRole("heading", { level: 2, name: bg.family.contactsTitle }),
+  ).toBeVisible();
+  await expect(page.getByText(bg.family.realHint)).toBeVisible();
+  await expect(page.locator(".contact-list > li")).toHaveCount(2);
+  await expect(page.getByText(DEVICE.label)).toBeHidden();
+  await expect(page.locator(".check-list")).toBeHidden();
+
+  // With the keyboard: → moves to „Настройки“, which holds the phones, the history,
+  // then name and district; the address remembers it.
+  await tabs.nth(0).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(page).toHaveURL(/#nastroyki$/);
+  await expect(page.getByText(DEVICE.label)).toBeVisible();
+  await expect(page.locator(".check-list > li")).toHaveCount(3);
+  await expect(page.getByRole("heading", { name: bg.family.settingsTitle })).toBeVisible();
+
+  // An old link to the history tab opens „Настройки“.
+  await page.evaluate(() => window.history.replaceState(null, "", "#proverki"));
+  await page.reload();
+  await expect(page.getByRole("tab", { name: bg.family.tabSettings })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});
+
 test("a trusted contact sees everything read-only", async ({ page }) => {
   await mockPerson(page, false);
   await page.goto("/dev/family/person");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Баба Елена");
   await expect(page.getByText(bg.family.readOnlyNote)).toBeVisible();
-  // A trusted contact has no „Настройки“ tab.
-  await expect(page.getByRole("tab", { name: bg.family.tabSettings })).toHaveCount(0);
+  // A trusted contact sees „Настройки“ (phones and history) without the owner's forms.
+  await openTab(page, bg.family.tabSettings);
+  await expect(page.getByText(DEVICE.label)).toBeVisible();
+  await expect(page.getByRole("heading", { name: bg.family.settingsTitle })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: bg.family.pairingTitle })).toHaveCount(0);
   await openTab(page, bg.family.tabContacts);
   await expect(page.getByRole("link", { name: "+359888123456" })).toHaveAttribute(
     "href",
@@ -325,7 +366,7 @@ test("the pairing code is shown big, with a QR code and a 10-minute countdown", 
     },
   );
   await page.goto("/dev/family/person");
-  await openTab(page, bg.family.tabPhones);
+  await openTab(page, bg.family.tabSettings);
   await page.getByRole("button", { name: bg.family.pairingButton, exact: true }).click();
 
   await expect(page.locator(".pairing-code")).toContainText("482 915");
@@ -357,7 +398,7 @@ test("removing a phone asks first and sends DELETE only after „Да, прем�
     },
   );
   await page.goto("/dev/family/person");
-  await openTab(page, bg.family.tabPhones);
+  await openTab(page, bg.family.tabSettings);
   await expect(page.getByText(DEVICE.label)).toBeVisible();
   const remove = page.getByRole("button", { name: `Премахни ${DEVICE.label}`, exact: true });
 
@@ -382,6 +423,7 @@ test("the check history shows badges with icon and word, more pages and details"
 }) => {
   await mockPerson(page, true);
   await page.goto("/dev/family/person");
+  await openTab(page, bg.family.tabSettings);
   const items = page.locator(".check-list > li");
   await expect(items).toHaveCount(3);
 
@@ -439,12 +481,11 @@ test("no sideways scrolling at 360 px on every family page", async ({ page }) =>
     expect(await fitsScreen(page)).toBe(true);
   }
   await page.goto("/dev/family/person");
-  await openTab(page, bg.family.tabPhones);
+  await openTab(page, bg.family.tabSettings);
   await page.getByRole("button", { name: bg.family.pairingButton, exact: true }).click();
   await expect(page.locator(".pairing-code")).toContainText("482 915");
   expect(await fitsScreen(page)).toBe(true);
-  // The pairing code survives a tab switch (the panels stay mounted, only hidden).
-  await openTab(page, bg.family.tabChecks);
+  // The history sits under the pairing code in „Настройки“.
   await page
     .locator(".check-list > li")
     .first()
@@ -460,6 +501,8 @@ test("no sideways scrolling at 360 px on every family page", async ({ page }) =>
   for (const button of targets) {
     expect((await button.boundingBox())?.height).toBeGreaterThanOrEqual(48);
   }
-  await openTab(page, bg.family.tabPhones);
+  // The pairing code survives a tab switch (the panels stay mounted, only hidden).
+  await openTab(page, bg.family.tabContacts);
+  await openTab(page, bg.family.tabSettings);
   await expect(page.locator(".pairing-code")).toContainText("482 915");
 });

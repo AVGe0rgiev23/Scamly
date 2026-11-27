@@ -250,6 +250,50 @@ test("„Не съм аз“ → red screen, call-back to the saved number, then
   await expect(page.getByRole("button", { name: bg.protectedCheck.bigButton })).toBeVisible();
 });
 
+test("„Не съм аз“ → „Изпратете анонимно на картата“ as „Роднина в беда“, no names or numbers", async ({
+  page,
+}) => {
+  const api = await mockPhone(page);
+  const reports: unknown[] = [];
+  await page.route(
+    (url) => url.pathname === "/api/reports",
+    (route) => {
+      reports.push(route.request().postDataJSON());
+      return route.fulfill({ status: 201, json: { ok: true } });
+    },
+  );
+  await askIvan(page);
+  api.status.set(IVAN_ID, "not_me");
+  await expect(heading(page, "Това НЕ е Иван.")).toBeVisible({ timeout: 8_000 });
+
+  // A quiet secondary action, after the call-back and the 112 question.
+  const open = page.getByRole("button", { name: bg.sendToMap.button });
+  await expect(open).toBeVisible();
+  await open.click();
+  await expect(page.getByRole("heading", { level: 2, name: bg.sendToMap.title })).toBeVisible();
+  // „Отказ“ closes it without sending anything.
+  await page.getByRole("button", { name: bg.sendToMap.cancel }).click();
+  expect(reports).toHaveLength(0);
+  await open.click();
+  await page.getByLabel(bg.sendToMap.districtLabel).selectOption("BG-22");
+  await page.getByRole("button", { name: bg.sendToMap.send, exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: bg.sendToMap.sent })).toBeVisible();
+
+  expect(reports).toHaveLength(1);
+  const body = reports[0] as Record<string, unknown>;
+  expect(body).toMatchObject({
+    districtCode: "BG-22",
+    scriptType: "relative_in_trouble",
+    description: null,
+    callerNumber: null,
+    website: "",
+  });
+  // Nothing personal: not the name, not the saved number.
+  expect(JSON.stringify(body)).not.toMatch(/Иван|888/);
+  // The red screen stays; „Към началото“ still goes home.
+  await expect(heading(page, "Това НЕ е Иван.")).toBeVisible();
+});
+
 test("„Аз съм“ → calm screen with the hard rules, never „безопасно“; back to the check", async ({
   page,
 }) => {

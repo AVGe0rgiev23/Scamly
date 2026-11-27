@@ -21,10 +21,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { callApi } from "@/components/family/api";
-import { analyseCall, type RiskLevel } from "@/engine";
+import { analyseCall, type RiskLevel, type ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
 import { watchCheck } from "@/lib/realtime";
 import type { CallContactDto } from "@/schemas/checks";
+import type { DistrictCode } from "@/schemas/reports";
 import { familyMessage } from "./acknowledgement";
 import { CallerText } from "./CallerText";
 import { CheckResult } from "./CheckResult";
@@ -47,6 +48,7 @@ type Stage = "home" | "practice" | "relative" | "family" | "questions" | "text" 
 // What the result screen shows. Like a small Python dataclass.
 type ShownResult = {
   level: RiskLevel;
+  scriptType: ScriptType; // which known script it looks like (for the map report, P-11)
   reasons: string[]; // Bulgarian "why" lines
   callContact: CallContactDto | null;
   local: boolean; // true = computed on the phone; the family may not know yet
@@ -67,12 +69,15 @@ const UPLOAD_DEPS: UploadDeps = {
 };
 
 // voiceEnabled: the FEATURE_VOICE switch, read on the server (CallCheckPage.tsx).
+// districtCode: the paired person's district for the map report (null = ask, P-11).
 export function CallCheck({
   voiceEnabled = false,
   districtNotice,
+  districtCode = null,
 }: {
   voiceEnabled?: boolean;
   districtNotice?: ReactNode;
+  districtCode?: DistrictCode | null;
 }) {
   const contact = useCallContact();
   const [stage, setStage] = useState<Stage>("home");
@@ -187,6 +192,7 @@ export function CallCheck({
       const verdict = analyseCall(final);
       show({
         level: verdict.level,
+        scriptType: verdict.scriptType,
         reasons: verdict.reasons.map((reason) => reason.textBg),
         callContact: contact, // the one remembered from an earlier check, if any
         local: true,
@@ -211,6 +217,7 @@ export function CallCheck({
       saveCallContact(outcome.result.callContact);
       show({
         level: outcome.result.verdict.level,
+        scriptType: outcome.result.verdict.scriptType,
         reasons: outcome.result.verdict.reasons.map((reason) => reason.textBg),
         callContact: outcome.result.callContact,
         local: false,
@@ -265,7 +272,7 @@ export function CallCheck({
         {announcement}
       </p>
       {ask !== null && ask.phase === "not_me" ? (
-        <IdentityNotMe state={ask} onDone={goHome} />
+        <IdentityNotMe state={ask} districtCode={districtCode} onDone={goHome} />
       ) : null}
       {ask !== null && ask.phase === "its_me" && !ask.dismissed ? (
         <IdentityItsMe state={ask} onContinue={identity.dismiss} onDone={goHome} />
@@ -320,6 +327,8 @@ export function CallCheck({
           {stage === "result" && result !== null ? (
             <CheckResult
               level={result.level}
+              scriptType={result.scriptType}
+              districtCode={districtCode}
               reasons={result.reasons}
               callContact={result.callContact}
               afterCall={afterCall}

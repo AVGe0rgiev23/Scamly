@@ -23,6 +23,8 @@
     "icons": "node scripts/icons/generate.mjs",
     "og": "node scripts/og/generate.mjs",
     "seed": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs --tsconfig scripts/tsconfig.seed.json scripts/seed.ts",
+    "demo:kit": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs --tsconfig scripts/tsconfig.seed.json scripts/demo-kit.ts kit",
+    "demo:reset": "node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs --tsconfig scripts/tsconfig.seed.json scripts/demo-kit.ts reset",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run lint && npm run typecheck && npm run format:check && npm run test"

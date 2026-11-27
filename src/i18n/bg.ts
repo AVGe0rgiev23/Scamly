@@ -673,6 +673,25 @@ export const bg = {
   // „Провери истинския“ for the family member who is asked (/family/proveri, P-06).
   // {person} = the protected person's name. The "Other" texts are for a family member
   // who is asked about SOMEONE ELSE ({claimed}, who did not answer in 45 s).
+  // „Изпратете анонимно на картата“ on the protected phone's red screens (P-11):
+  // the red verdict of the check and the „Не съм аз“ screen. Goes to the moderated
+  // public reports (POST /api/reports) with only the district and the kind of scam.
+  sendToMap: {
+    button: "Изпратете анонимно на картата",
+    title: "Предупредете другите",
+    intro:
+      "Ще изпратим само областта и вида на измамата — без телефонни номера и без имена. Модератор проверява всеки сигнал, преди да се появи на картата.",
+    // {district} = „Бургас“, the district saved for the person.
+    districtKnown: "Област: {district}",
+    districtLabel: "В коя област живеете?",
+    districtPlaceholder: "Изберете област",
+    districtMissing: "Изберете област.",
+    send: "Изпрати",
+    sending: "Изпращаме…",
+    cancel: "Отказ",
+    sent: "Благодарим! Сигналът е изпратен. Ще се появи на картата, след като го прегледа модератор.",
+    retry: "Опитайте отново",
+  },
   identityAnswer: {
     eyebrow: "Провери истинския",
     title: "Ти ли си?",
@@ -1097,11 +1116,10 @@ export const bg = {
     devicesNone: "Няма свързан телефон",
     devicesOne: "1 свързан телефон",
     devicesMany: "{n} свързани телефона",
-    // The tabs of one person's page.
+    // The tabs of one person's page (P-10): the everyday view and the rest.
     tabsLabel: "Раздели на профила",
-    tabChecks: "Проверки",
     tabPhones: "Телефони",
-    tabContacts: "Близки",
+    tabContacts: "Кой е истинският",
     tabSettings: "Настройки",
     // The create form (/family/new): the two steps, the progress and the live preview
     // of the fridge card. {n} = filled steps, {total} = all steps.
@@ -1153,8 +1171,10 @@ export const bg = {
     deleteConfirm: "Да, изтрий завинаги",
     deleting: "Изтриване…",
     cancel: "Отказ",
-    // The ordered contact list (who is called first).
-    contactsTitle: "Ред за обаждане",
+    // The ordered contact list (who is called first, and asked first in „Провери
+    // истинския“), with its one-line hint (P-10).
+    contactsTitle: "Кой е истинският",
+    realHint: "Първият в списъка е питан пръв, ако някой се представи за близък.",
     contactsIntro:
       "Подредете близките в реда, в който трябва да бъдат търсени. Първият близък с телефонен номер се показва на телефона на човека, когото пазите, като бутон за обаждане.",
     // {n} = the place in the list, 1 to 5.
@@ -1661,5 +1681,10 @@ export const bg = {
     bankCheckText: "От банката напомниха, че документът ми е готов в клона. Не поискаха нищо.",
     pendingReportText: "Обаждащият се поиска спешно пари и каза да не споделям с никого.",
     approvedReportText: "Представиха се за полицаи и поискаха пари за залавяне на измамници.",
+  },
+  // The juror demo kit (P-12, scripts/demo-kit.ts): the name of the juror's place in
+  // the demo Мария's list (the juror plays her real son and is asked first).
+  demoKit: {
+    jurorName: "Георги",
   },
 } as const;

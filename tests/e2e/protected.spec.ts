@@ -249,6 +249,71 @@ test("big button → questions (Q3 only after „Да“) → text → red verdi
   await expect(page.getByRole("link", { name: "Обади се на Иван" })).toBeVisible();
 });
 
+test("red verdict: „Изпратете анонимно на картата“ sends only district + script, retries after 429", async ({
+  page,
+}) => {
+  await mockApi(page);
+  const reports: unknown[] = [];
+  await page.route(
+    (url) => url.pathname === "/api/reports",
+    (route) => {
+      reports.push(route.request().postDataJSON());
+      if (reports.length === 1) {
+        return route.fulfill({
+          status: 429,
+          json: { error: { code: "rate_limited", messageBg: bg.reportForm.rateLimited } },
+        });
+      }
+      return route.fulfill({ status: 201, json: { ok: true } });
+    },
+  );
+  await page.goto("/dev/protected");
+  await answerPoliceMoney(page);
+  await page.getByRole("button", { name: bg.protectedCheck.skip, exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: bg.verdict.red.title })).toBeVisible();
+
+  await page.getByRole("button", { name: bg.sendToMap.button }).click();
+  await expect(page.getByText(bg.sendToMap.intro)).toBeVisible();
+  // The preview has no paired person, so it asks for the district first.
+  await page.getByRole("button", { name: bg.sendToMap.send, exact: true }).click();
+  await expect(page.getByText(bg.sendToMap.districtMissing)).toBeVisible();
+  expect(reports).toHaveLength(0);
+  await page.getByLabel(bg.sendToMap.districtLabel).selectOption({ label: "Бургас" });
+  await page.getByRole("button", { name: bg.sendToMap.send, exact: true }).click();
+  // 429: the API's message, and the same button tries again.
+  await expect(
+    page.getByRole("alert").filter({ hasText: bg.reportForm.rateLimited }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: bg.sendToMap.retry, exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: bg.sendToMap.sent })).toBeVisible();
+  await expect(page.getByRole("button", { name: bg.sendToMap.button })).toHaveCount(0);
+
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia" }).format(new Date());
+  const expected = {
+    districtCode: "BG-02",
+    scriptType: "police",
+    occurredOn: today,
+    description: null,
+    callerNumber: null,
+    website: "",
+  };
+  expect(reports).toEqual([expected, expected]);
+});
+
+test("green and yellow verdicts offer no map report", async ({ page }) => {
+  await mockApi(page);
+  await page.goto("/dev/protected");
+  await page.getByRole("button", { name: bg.protectedCheck.bigButton }).click();
+  await tap(page, bg.protectedCheck.tri.no);
+  await tap(page, bg.protectedCheck.identities.official);
+  await tap(page, bg.protectedCheck.tri.no);
+  await tap(page, bg.protectedCheck.tri.no);
+  await tap(page, bg.protectedCheck.tri.no);
+  await page.getByRole("button", { name: bg.protectedCheck.skip, exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  await expect(page.getByRole("button", { name: bg.sendToMap.button })).toHaveCount(0);
+});
+
 test("green uses the exact D9 wording, never „безопасно“; keys choose, „Напред“ goes on", async ({
   page,
 }) => {

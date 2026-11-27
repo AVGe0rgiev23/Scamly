@@ -16,17 +16,22 @@
 // comes before the explanation and the reassurance („Добре направихте, че
 // проверихте.“). The reasons appear one by one below.
 //
+// Red also offers „Изпратете анонимно на картата“ (P-11, SendToMap) as a quiet
+// secondary action under the praise, before „Нова проверка“.
+//
 // When a family member presses „Обаждам ѝ се сега“, „Иван ще ви се обади веднага.“
 // arrives at the top as a Dynamic Island (CallCheck watches the check live).
 
 import { useEffect, useRef, type CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
-import type { RiskLevel } from "@/engine";
+import type { RiskLevel, ScriptType } from "@/engine";
 import { bg } from "@/i18n/bg";
 import type { CallContactDto } from "@/schemas/checks";
+import type { DistrictCode } from "@/schemas/reports";
 import { CallContactButton } from "./CallContactButton";
 import { FamilyIsland } from "./FamilyIsland";
+import { SendToMap } from "./SendToMap";
 import { VerdictEmblem } from "./VerdictEmblem";
 
 // How many "why" lines we show: more would be too much to read in a hurry.
@@ -37,6 +42,8 @@ const RED_VIBRATION = [200, 100, 200];
 
 type CheckResultProps = {
   level: RiskLevel;
+  scriptType: ScriptType; // the script it looks like, for the map report
+  districtCode: DistrictCode | null; // the person's district, null = ask
   reasons: string[]; // Bulgarian "why" lines from the engine
   callContact: CallContactDto | null;
   afterCall: boolean; // the call has already ended: no „Затворете телефона.“
@@ -47,6 +54,8 @@ type CheckResultProps = {
 
 export function CheckResult({
   level,
+  scriptType,
+  districtCode,
   reasons,
   callContact,
   afterCall,
@@ -147,6 +156,14 @@ export function CheckResult({
 
       {level === "red" ? (
         <p className="check-praise check-rise check-rise-3">{bg.protectedCheck.praise}</p>
+      ) : null}
+
+      {level === "red" ? (
+        <SendToMap
+          scriptType={scriptType}
+          districtCode={districtCode}
+          className="check-rise check-rise-3"
+        />
       ) : null}
 
       <Button

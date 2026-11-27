@@ -9,7 +9,7 @@
 >
 > **The rule (decision D19):** every time anything is used, added, changed or removed, **this file is updated in the same commit**, and a line is added to the [change history](#9-change-history).
 
-Last updated: **2026-11-26**
+Last updated: **2026-11-27**
 
 **26 November, P-02 „Cuts“ (D35).** Fewer features, each one essential to the main story:
 
@@ -167,6 +167,10 @@ Green = works now, yellow = partly built, grey dashed = planned.
 | „Провери истинския“ backend: `identity_checks`, RLS, API, push + Realtime, circle warning (3.48) | ✅ (P-05, Alex, 26 Nov; claimed vs asked fixed 26 Nov) · screens ✅ (P-06, 3.49) | `supabase/migrations/20261126000001_identity_checks.sql`, `20261126000002_identity_checks_asked_user.sql`, `src/app/api/identity-checks/`, `src/server/services/identityCheckService.ts`, `src/server/repositories/identityChecksRepository.ts`, `src/schemas/identityChecks.ts`, `src/lib/realtime.ts` | `identityCheckService` (27), `identity-checks/route.test.ts` (14), `15_identity_checks` (44) |
 | „Провери истинския“ screens: first question after the big button, family tiles, 45 s waiting ring, „Не съм аз“ / „Аз съм“ / no answer, family answer screen `/family/proveri`, questions on `/family/alerts` (3.49) | ✅ (P-06, built in Alex's session 26 Nov; protected flow is Roberta's task, tell her) | `src/components/protected/{CallCheck,IdentityQuestion,IdentityWaiting,IdentityAnswered}.tsx`, `useIdentityAsk.ts`, `identityFlow.ts`, `protected.css` 5b, `src/components/family/{IdentityAnswerPage,IdentityRequests,AlertsPage}.tsx`, `family.css` 10, `src/app/family/proveri/`, `src/app/dev/family/proveri/` | `identityFlow.test.ts` (7), `tests/e2e/identity.spec.ts` (13 × 2 screens) |
 | Story texts (D34): neutral „близък“ wording, demo family Мария / Иван / Ана, fake-relative education card first, fridge card + phone sticker, OG image (3.50) | ✅ (P-04, Alex, 26 Nov; Roberta's former task, tell her) | `src/i18n/bg.ts`, `src/content/placeholders.ts`, `src/components/education/{order,ScriptList}.ts(x)`, `src/app/karta-za-hladilnik/`, `scripts/og/og.html`, `src/app/opengraph-image.*`, `README.md` | `order.test.ts` (2), `tests/e2e/scripts.spec.ts` (fake-relative tile first; fridge card + sticker on a second printed page) |
+| Juror demo kit `npm run demo:kit` / `demo:reset`: demo family, juror invite + QR at place 1, safe reset (3.51) | ✅ (P-12, Alex, 27 Nov) · two-browser test on local Supabase · rehearsal on two real phones open | `scripts/demo-kit{,-core,-supabase}.ts`, `package.json`, `.gitignore` (`/demo-kit/`), `bg.demoKit` | `scripts/demo-kit.test.ts`, `tests/roundtrip/demo-kit.spec.ts`, `docs/evidence/demo-kit.md` |
+| Time-to-answer as evidence: read-only SQL (3.52) | ✅ (P-09, Alex, 27 Nov) · numbers after the rehearsals | `supabase/ops/time_to_answer.sql` | run on local Supabase; `docs/evidence/demo-kit.md` |
+| „Изпратете анонимно на картата“ on the red verdict and the „Не съм аз“ screen (3.53) | ✅ (P-11, Alex, 27 Nov) | `src/components/protected/{SendToMap.tsx,mapReport.ts,pairedDistrict.ts}`, `CheckResult.tsx`, `IdentityAnswered.tsx`, `CallCheckPage.tsx`, `bg.sendToMap` | `mapReport.test.ts`, `tests/e2e/protected.spec.ts`, `tests/e2e/identity.spec.ts` |
+| Family person page: two tabs „Кой е истинският“ / „Настройки“ (3.54) | ✅ (P-10, Alex, 27 Nov) | `src/components/family/{PersonDashboard.tsx,personTabs.ts}`, `bg.family` | `personTabs.test.ts`, `tests/e2e/family.spec.ts` |
 | Security hardening (CSP, headers, attack tests) | ⬜ planned (week 4, W4-01, W4-02) | | |
 
 ---
@@ -581,7 +585,7 @@ The family member's pages (an adult son or daughter, often abroad) get the Ор�
 |---|---|
 | Home `/family` | An eyebrow „Семейно табло“, the title, „Добави човек“ (primary) and „Към сигналите“. Each person is a **glass card**: the initials in a halo ring (the ring takes the colour of the last verdict), the name (the link covers the card), district and role, then two facts from our API only: the **last check** (verdict badge + time) and **how many phones** are paired. Under the cards the **push banner** (`PushOptIn`): our own drawing of a phone with a bell and halo waves (mint when on, amber when blocked, still when unavailable), the state pill, one sentence and the button or the iPhone steps. |
 | Alerts `/family/alerts` | A glass toolbar (live / every 5 s pill, „Включи звук и вибрация“). Then the **alert island**: an alert that needs attention arrives as a small pill („Нов сигнал: Дядо Петър проверява съмнително обаждане.“) and after 450 ms grows into a big card: „ТОВА Е ИЗМАМА.“ and the time, a **pulsing red halo** (`HaloRings` danger + two rings going out) around the **risk arc** (`RiskMeter`), the name, the verdict badge, who the caller claimed to be as a quote, and a huge „Обаждам ѝ се сега“ (72 px). Red is always dark (like the older person's red verdict). After somebody answers, the card **settles into one calm line** with a mint tick („Вие поехте обаждането.“). Under it „Всички сигнали“: a **timeline** with a coloured halo node per alert. |
-| Person `/family/[personId]` | A head with the initials in a big halo ring, the name, district, role, the call order as an `AvatarStack` and the number of paired phones. **Tabs** with the sliding pill: **Проверки** (the history as a timeline with halo nodes; details open on a sunken panel), **Телефони** (the pairing code on a glass slab: six digit tiles that **flip** in one by one, a halo countdown bar, the QR in a frame with corner marks and a **scan line**; the phones as small device cards with „Премахни“ behind the confirm dialog), **Близки** (the call order as an editable list of glass cards with ↑ / ↓, the first place in the primary colour, the add form as a dashed "empty slot"; the invite form and the link as a "ticket"), **Настройки** (owner only: name and district, then the **danger zone** in red-tinted glass). On a narrow phone the four tabs form a 2 × 2 grid. |
+| Person `/family/[personId]` | A head with the initials in a big halo ring, the name, district, role, the call order as an `AvatarStack` and the number of paired phones. **Tabs** with the sliding pill: **Проверки** (the history as a timeline with halo nodes; details open on a sunken panel), **Телефони** (the pairing code on a glass slab: six digit tiles that **flip** in one by one, a halo countdown bar, the QR in a frame with corner marks and a **scan line**; the phones as small device cards with „Премахни“ behind the confirm dialog), **Близки** (the call order as an editable list of glass cards with ↑ / ↓, the first place in the primary colour, the add form as a dashed "empty slot"; the invite form and the link as a "ticket"), **Настройки** (owner only: name and district, then the **danger zone** in red-tinted glass). On a narrow phone the four tabs form a 2 × 2 grid. **Changed by P-10 (27 Nov, 3.54):** two tabs, „Кой е истинският“ (the call order + invite, opens first) and „Настройки“ (phones, history, name and district, danger zone). |
 | New person `/family/new` | Two numbered **steps** on a rail (1 „Как го наричате“, 2 „Къде живее“), a **progress halo** that fills as each step becomes valid, „Добави“ as the last stop, and a live **preview of the fridge card** (paper, always light) with the typed name and district on top. |
 
 #### How it works
@@ -592,7 +596,7 @@ The family member's pages (an adult son or daughter, often abroad) get the Ор�
 | `FamilyFrame.tsx` | The `<main>` with a soft aurora behind the top, and `FamilyHeader` (eyebrow, title, intro, actions) shared by the pages. |
 | `PeopleList.tsx` | One `PersonCard` per person; each card asks `GET /api/checks?personId=…` (the newest item) and `GET /api/persons/:id` (its `devices`) at the same time (`Promise.all`, like `asyncio.gather`). If they fail, the card leaves the facts out; the name and link always work. |
 | `AlertsPage.tsx` | The same watch as before. New: the alerts that need attention (a new one, the one from `?check=`, or the newest unanswered one of the first load) are drawn in the island list, the rest in the timeline. Both are `ol.check-list`, so `.check-list > li`, `#alert-<id>`, `.alert-new`, `.alert-focused` and `.alerts > [role=status]` stay. The island is a `motion.div` with `layout`: pill → card → calm line are three sizes of one box, animated with a spring (`SPRING_UI`). |
-| `PersonDashboard.tsx` | `Tabs` + one panel per tab. Every panel stays mounted and is only `hidden`, so a half-edited contact list or a running pairing countdown survives a tab switch. The tab is kept in the address (`#proverki`, `#telefoni`, `#blizki`, `#nastroyki`). |
+| `PersonDashboard.tsx` | `Tabs` + one panel per tab. Every panel stays mounted and is only `hidden`, so a half-edited contact list or a running pairing countdown survives a tab switch. The tab is kept in the address. **Since P-10 (27 Nov) only two tabs, `#blizki` „Кой е истинският“ and `#nastroyki` „Настройки“ (3.54); `#proverki` and `#telefoni` open „Настройки“.** |
 | `CheckHistory.tsx`, `ContactsEditor.tsx`, `DevicesList.tsx`, `PairingPanel.tsx`, `PersonSettings.tsx`, `InviteForm.tsx`, `PushOptIn.tsx` | New markup and classes only. The pairing digits are one `<span>` each with `--i` for the flip delay; the `key` is the code, so a new code flips again; screen readers still get „4 8 2 9 1 5“. The pairing slab uses a CSS **container query**: code and QR sit side by side only when the panel itself is wide enough. |
 | `CreatePersonForm.tsx` | The same Zod check on submit. Two small states (`name`, `district`) only feed the progress halo and the preview; a step is "done" when its field passes the same schema field the API uses. |
 
@@ -1483,7 +1487,7 @@ The logged-in family member's area. **`/family`** lists the people they protect 
 | „Проверки на обаждания“: history, newest first, time in Bulgarian time, verdict badge (symbol + word), who the caller claimed to be, who answered „Обаждам ѝ се сега“; „Покажи още“; „Подробности“ with the reasons and answers | everyone with access | `GET /api/checks?personId=…&cursor=…`, `GET /api/checks/:id` |
 | „Свързани телефони“: name, paired date, status; „Премахни“ with a confirmation window; „Обнови списъка“ | list: everyone · remove: owner | `GET /api/persons/:id`, `DELETE /api/devices/:id` |
 | „Свързване на телефона“: big code „482 915“, QR code with `<site>/svarzhi?kod=482915`, 10-minute countdown, „Нов код“ | owner | `POST /api/persons/:id/pairing-codes` |
-| „Ред за обаждане“: places 1–5, ↑ / ↓ buttons, edit name and phone, remove, add a relative with a phone, „Запази списъка“; who has an account | edit: owner · read-only: others | `PUT /api/persons/:id/contacts` |
+| „Ред за обаждане“ (titled „Кой е истинският“ since P-10): places 1–5, ↑ / ↓ buttons, edit name and phone, remove, add a relative with a phone, „Запази списъка“; who has an account | edit: owner · read-only: others | `PUT /api/persons/:id/contacts` |
 | „Покани близък“: name + place → a link with a copy button and its expiry | owner | `POST /api/persons/:id/invites` |
 | „Име и област“: rename, change district; „Изтрий профила“ with a confirmation window | owner | `PATCH` / `DELETE /api/persons/:id` |
 
@@ -2218,6 +2222,93 @@ The scam borrows any close relationship, so „баба“-only wording would hi
 - `src/components/education/order.test.ts` (2 tests): the fake-relative card first, the others in order; no change without one.
 - `tests/e2e/scripts.spec.ts`: the list shows „Роднина в беда“ first although the API sends police first; the fridge card shows the hook and the sticker, and in print the button and hints are hidden and the sticker area starts a new page.
 - Every other test reads its expected text from `bg`, so changed wording is checked where it is shown.
+
+### 3.51 Juror demo kit: `npm run demo:kit` and `npm run demo:reset` (P-12, IDEAS #39)
+
+#### What it does
+
+For the defense: a QR code on a slide turns a juror's own phone into "the real Георги" of a demo family. The juror scans it, registers in a few taps and is placed **first** in Мария's list; Мария's demo phone presses the big button, says the caller claims to be Георги, and the juror answers „Не съм аз“ live. After the demo one command removes the juror again. Step by step: [`docs/evidence/demo-kit.md`](./evidence/demo-kit.md).
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `scripts/demo-kit.ts` | The command line: guards first, then `kit`, `reset` or `reset --all`; prints the database origin, the pairing code (only while no phone is paired), the invite link and the QR path; never a key or a password |
+| `scripts/demo-kit-core.ts` | Pure rules: `assertDemoKitAllowed` (only with `SCAMLY_DEMO_KIT=1`, never in CI), `parseDemoArgs`, `demoSiteUrl` (origin only, default the live site), `demoOwnerPassword` (12–72 or random), `canDeleteJurorAccount`, `DemoKitError` + `safeErrorMessage` (only our own messages are printed) |
+| `scripts/demo-kit-supabase.ts` | The database work with the service role from `.env.local`, run on Alex's computer only (`tsx`, `scripts/tsconfig.seed.json`, like the seed) |
+
+`demo:kit`: (1) finds `ivan@demo-kit.scamly.invalid` (the reserved `.invalid` domain is the tag of the kit) or creates him (confirmed, display name `bg.seed.familyName`), gives him a fresh random password (or `SCAMLY_DEMO_PASSWORD`) and logs him in with a normal user client; (2) finds his person or creates **Мария Петрова** (BG-22) with the real `createPerson` (the trigger adds Иван as contact 1); (3) clears the last run (below); (4) moves Иван to place 2; (5) creates the juror's invite „Георги“ at place 1 with the real `createInvite` (HMAC token, audit line) and shortens it from 7 days to **3 hours**; (6) writes the QR (`qrcode` `toFile`, 768 px) to `demo-kit/juror-invite.png` (git-ignored); (7) if Мария has no active phone, makes a pairing code with the real `createPairingCode` for the demo phone. The juror then uses the ordinary `/pokana` → `/registratsia?next=…` → back to `/pokana` flow (3.37) and lands at place 1, the first tile on Мария's phone.
+
+`demo:reset`: for Иван's person deletes every contact row except Иван's; for each linked account it reads the facts with the service role (role, an `invite_redeemed` audit line for this person, persons it owns, other contact rows) and deletes the account only when `canDeleteJurorAccount` says it exists only for the demo (else it only unlinks and reports "kept"); deletes the person's `identity_checks`, `checks` (alerts go with them) and `contact_invites`; puts Иван back to place 1. The paired phone stays. `--all` deletes Иван's account: the database deletes Мария, her phone's account (trigger `delete_paired_device_accounts`, migration `20261124000001`) and the rest.
+
+#### Why it works like that
+
+The QR carries an ordinary single-use invite, not a login: photographing the slide gives nobody an account, and the app gets no new "login by link" path. The kit only drives the existing services, so the demo shows the real product. Comparison: [`WHY_WE_CHOSE.md`](./WHY_WE_CHOSE.md) "Juror demo kit: an invite + a quick registration".
+
+#### How we know it works
+
+`scripts/demo-kit.test.ts` (9 tests: the guard refuses without the flag and in CI before anything is printed, arguments, site URL, password length, safe error messages, which juror accounts may be deleted, the kit's domain). `tests/roundtrip/demo-kit.spec.ts` (two browsers on a real local Supabase via `npm run e2e:roundtrip`): kit output without keys, the demo phone pairs, the juror registers through the invite at place 1, Мария picks „Георги“, „Не съм аз“ → „Това НЕ е Георги.“, `demo:reset` unlinks and deletes 1 juror account, a second kit run keeps the phone. Real phones: rehearsal still open.
+
+### 3.52 Time-to-answer as evidence: `supabase/ops/time_to_answer.sql` (P-09, IDEAS #7)
+
+#### What it does
+
+One read-only `SELECT` Alex pastes into the Supabase SQL Editor after rehearsals and family tests: how many „Провери истинския“ questions were answered (`not_me`, `its_me`), the **median** and **p90** seconds from question to answer, the fastest and the slowest, optionally only since a date. No admin screen.
+
+#### How it works
+
+`answered_at − created_at` of `identity_checks` rows with `status in ('not_me','its_me')` and `answered_at` set; `percentile_cont(0.5)` and `(0.9) within group (order by seconds)`; the date is one constant in the `since` CTE. Both times are set by the database (default `now()`, the answer trigger, 3.48). `supabase/ops/` is not a migration folder: no tool applies it.
+
+#### Why it works like that
+
+The number is needed a few times for the slides, not as a feature. WHY_WE_CHOSE "Time-to-answer as a read-only SQL file".
+
+#### How we know it works
+
+Ran on the local Supabase with all migrations (0 rows → count 0, empty median). The numbers go into `docs/evidence/demo-kit.md`.
+
+### 3.53 „Изпратете анонимно на картата“ from the red screens (P-11)
+
+#### What it does
+
+On the protected phone's **red verdict** and on the **„Не съм аз“** screen (3.49), under the main actions, a quiet secondary button „Изпратете анонимно на картата“. A tap opens a small card „Предупредете другите“: „Ще изпратим само областта и вида на измамата — без телефонни номера и без имена…“, the district („Област: Бургас“) or, when it is not known, one district picker, „Изпрати“ and „Отказ“. After sending: „Благодарим! Сигналът е изпратен. Ще се появи на картата, след като го прегледа модератор.“ Green and yellow verdicts have no such button.
+
+#### How it works
+
+| File | Job |
+|---|---|
+| `src/components/protected/SendToMap.tsx` | The button and the card (phases closed → open → sending → sent); `POST /api/reports` with `callApi`; the API's Bulgarian message on any error (e.g. 429) and „Опитайте отново“; the thank-you in a `role="status"` live region; every target ≥ 64 px |
+| `src/components/protected/mapReport.ts` | Pure: `buildMapReport` → `{ districtCode, scriptType, occurredOn: todayInBulgaria(now), description: null, callerNumber: null, website: "" }`; `scriptForIdentityNotMe()` = `relative_in_trouble`; `asDistrictCode` |
+| `src/components/protected/pairedDistrict.ts` | Server only: the paired person's district through the phone's own client (RLS), `null` on any error; shared with the district warning (#25, `DistrictWaveNotice.tsx`) |
+| `CallCheckPage.tsx` (`withDistrict`), `CallCheck.tsx`, `CheckResult.tsx`, `IdentityAnswered.tsx` | The real `/protected` reads the district on the server (inside the existing `<Suspense>`) and passes it down; the verdict's `scriptType` is kept in the shown result. The `/dev/protected` preview has no paired phone, so it asks for the district |
+
+The report is an ordinary public report: the same Zod schema, 3 per network per hour, honeypot (sent empty), global cap and redaction as `/signal` (3.39), stored as `pending` for the moderators (3.43). Texts in `bg.sendToMap`.
+
+#### Why it works like that
+
+One way in for public reports, nothing new to secure; only the fields the map shows; the person chooses to send (no automatic public data from a private check). WHY_WE_CHOSE "„Изпратете анонимно на картата“ from the red screen".
+
+#### How we know it works
+
+`mapReport.test.ts` (3 tests: today's Sofia date after 23:30 UTC, the body passes `createReportSchema` with nothing personal, only the 28 codes). `tests/e2e/protected.spec.ts`: red verdict → the picker is required → Бургас → 429 message → „Опитайте отново“ → thank-you; both bodies `{BG-02, police, today, null, null, ""}`; green/yellow have no button. `tests/e2e/identity.spec.ts`: „Не съм аз“ → „Отказ“ sends nothing → София-град → `relative_in_trouble`, no name or saved number in the body; the 360 px test still sees every target ≥ 64 px.
+
+### 3.54 Family person page: „Кой е истинският“ and „Настройки“ (P-10)
+
+#### What it does
+
+`/family/[personId]` has two tabs instead of four. **„Кой е истинският“** opens first: the call order (titled „Кой е истинският“ with the hint „Първият в списъка е питан пръв, ако някой се представи за близък.“) and, for the owner, the invite. **„Настройки“**: the pairing code (owner) and the paired phones, the check history, then name and district and the danger zone (owner). A trusted contact sees „Настройки“ too, read-only (phones and history, no forms).
+
+#### How it works
+
+`src/components/family/personTabs.ts` (pure): `TabId = "contacts" | "settings"`, `HASH_OF` (`#blizki`, `#nastroyki`) and `tabFromHash` (old `#proverki` / `#telefoni` → „Настройки“, anything else → „Кой е истинският“). `PersonDashboard.tsx` keeps every panel mounted and only hidden (the pairing countdown survives a tab switch), the same `ui/Tabs` with ← → keys.
+
+#### Why it works like that
+
+The everyday question is "who is asked first"; set-up and history are rare. WHY_WE_CHOSE "Family dashboard: two tabs".
+
+#### How we know it works
+
+`personTabs.test.ts` (2 tests). `tests/e2e/family.spec.ts`: the page opens on „Кой е истинският“ with the hint and no phones or history visible; → with the keyboard opens „Настройки“ (`#nastroyki`) with the phone, the 3 checks and „Име и област“; an old `#proverki` link opens „Настройки“; the trusted contact sees the phone but no pairing or settings form; pairing, phone removal, history and 360 px tests open „Настройки“ first. `tests/roundtrip/roundtrip.spec.ts` opens „Настройки“ for the pairing code.
 
 ## 4. Code quality, tests and CI
 
@@ -3257,3 +3348,4 @@ The homepage leads to the protected check route. An unpaired phone is redirected
 - 2026-11-26 · new section 3.49: „Провери истинския“ screens (P-06, Alex): first question after the big button, family tiles, 45 s waiting ring with the chain to the next person, „Не съм аз“ red screen with the saved-number call-back and 112, „Аз съм“ calm screen, the family answer screen `/family/proveri` and the questions on `/family/alerts`
 - 2026-11-26 · 3.48, 3.49: claimed vs asked („Провери истинския“ fix, Alex): new column `asked_user_id` (migration `20261126000002`), `POST {claimedUserId, askedUserId?}`, the next person is asked about the claimed one, texts for „Наистина ли е Иван?“; known-limit note removed.
 - 2026-11-26 · new section 3.50: the main story in every text (P-04, Alex, D34): neutral „близък“ wording in `bg.ts`, demo family Мария / Иван / Ана (samples and seed), fake-relative education card first (UI sort), fridge card rewritten + phone sticker on a second printed page (#24), help steps for „Провери истинския“, OG image and alt text with the hook, README.
+- 2026-11-27 · Phase 6 (Alex): new sections 3.51 juror demo kit (P-12), 3.52 time-to-answer SQL (P-09), 3.53 „Изпратете анонимно на картата“ from the red screens (P-11), 3.54 the person page's two tabs (P-10); status table rows; 3.32 notes on the tabs

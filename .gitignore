@@ -41,6 +41,9 @@ yarn-error.log*
 # ...except the example file, which has no real values.
 !.env.example
 
+# juror demo kit output (npm run demo:kit): the QR picture holds a live invite link
+/demo-kit/
+
 # vercel
 .vercel
 

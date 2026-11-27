@@ -85,9 +85,9 @@ test("grandma checks a call, the family is alerted live and answers, grandma see
   await family.getByRole("button", { name: bg.family.createButton, exact: true }).click();
   await expect(family).toHaveURL(/\/family\/[0-9a-f-]{36}$/);
 
-  // 2. A pairing code for grandma's phone (the person page has tabs; codes live
-  //    under „Телефони“).
-  const phonesTab = family.getByRole("tab", { name: new RegExp(`^${bg.family.tabPhones}`) });
+  // 2. A pairing code for grandma's phone (the person page has two tabs; codes live
+  //    under „Настройки“, P-10).
+  const phonesTab = family.getByRole("tab", { name: new RegExp(`^${bg.family.tabSettings}`) });
   await phonesTab.click();
   await expect(phonesTab).toHaveAttribute("aria-selected", "true");
   await family.getByRole("button", { name: bg.family.pairingButton, exact: true }).click();

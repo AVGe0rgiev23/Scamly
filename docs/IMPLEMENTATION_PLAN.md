@@ -231,10 +231,10 @@ Owners per week after D23 (remaining hours from `BUILD_PLAN.md` section 6; share
 | P-06 | „Провери истинския“ screens: one-button flow („Казват ли, че са някой близък?“), check answered while waiting (45 s), call-back to the saved number, „Някой идва към вас?“ → 112; family answer „Не съм аз — обаждам ти се сега!“ | Roberta (family answer screen: Alex) | ✅ (Alex, 26 Nov; protected flow built in Alex's session, tell Roberta) · first question → tiles → 45 s ring with the check below → not me / it's me / next person / nobody, `/family/proveri`, questions on `/family/alerts`; family side has no `tel:` (the older person's number is not stored) · **fixed 26 Nov:** the next person is asked about the claimed one („Наистина ли е Иван?“), red screen always „Това НЕ е Иван.“ |
 | P-07 | ~~Family question~~ → one reminder line on the no-answer screen, inside P-06 | Roberta | ✂ 26 Nov |
 | P-08 | ~~Home-screen shortcut~~ (the automatic trigger, `IDEAS.md` #22, solves the real problem) | Roberta | ✂ 26 Nov |
-| P-09 | Time-to-answer as evidence only (median from the database, no admin screen) | Alex | ⬜ |
-| P-10 | Family dashboard simplified (settings tab, „Кой е истинският“) | Roberta | ⬜ |
-| P-11 | Send to the map from the red screen | Alex | ⬜ |
-| P-12 | Juror demo kit (QR → juror's phone is "the real son") | Alex | ⬜ |
+| P-09 | Time-to-answer as evidence only (median from the database, no admin screen) | Alex | ✅ (Alex, 27 Nov) · read-only `supabase/ops/time_to_answer.sql` (count, median, p90, since a date) for the SQL Editor; numbers go into `docs/evidence/demo-kit.md` after the rehearsals |
+| P-10 | Family dashboard simplified (settings tab, „Кой е истинският“) | Roberta | ✅ (Alex, 27 Nov; built in Alex's session, tell Roberta) · two tabs: „Кой е истинският“ (call order + hint „Първият в списъка е питан пръв…“, invite; opens first) and „Настройки“ (phones, history, name and district); old `#proverki` / `#telefoni` links open „Настройки“ |
+| P-11 | Send to the map from the red screen | Alex | ✅ (Alex, 27 Nov) · „Изпратете анонимно на картата“ on the red verdict and the „Не съм аз“ screen → existing `POST /api/reports` (district of the person or one picker, script type, today; no numbers, no names) → moderation queue |
+| P-12 | Juror demo kit (QR → juror's phone is "the real son") | Alex | ✅ (Alex, 27 Nov) · `SCAMLY_DEMO_KIT=1 npm run demo:kit` / `demo:reset` (invite + QR at place 1, quick registration, safe reset; steps in `docs/evidence/demo-kit.md`); two-browser test on local Supabase passed · open: rehearse twice on two real phones against the live site |
 
 Remaining for this block: **Alex ≈ 20.5 h, Roberta ≈ 21 h** (P-07, P-08 removed 26 Nov).
 
@@ -249,7 +249,7 @@ One phase at a time, one commit per task (Alex), all checks green before the nex
 | 3 | P-06 | **Screens:** one big button → „Казват ли, че са някой близък?“ → family tiles → waiting screen (check answered meanwhile) → „Не съм аз“ red screen with the call-back to the saved number and „Някой идва към вас?“ → 112 (#44) / „Аз съм“ / no answer → next member + the reminder line; the family answer screen „Не съм аз — обаждам ти се сега!“ / „Аз съм“ | Browser tests for every path, 360 px, both themes |
 | 4 | P-04 | **Story texts:** `bg.ts`, samples, demo names, education "fake relative" first, fridge card + phone sticker (#24), help texts, README | No text says the product is only for grandparents |
 | 5 | P-03 + navigation | **Landing page rewritten from scratch, same Ореол design** (Alex, 26 Nov): 5 sections, no repetition, only features that really work (no voice, no e-mail, no hidden features), numbers only if measured; the story told through interactive examples (hero two-phone scene „Мамо, катастрофирах“ → „Не съм аз“, the existing real-engine demo, the hard rules), the hook „Гласът може да е фалшив. Близкият ти — не.“. **Interactive navigation bar:** a glass bar with a sliding halo highlight on the current page, shrinks on scroll, role-aware links (guest: Как работи · Вход · Провери; protected: Провери · Помощ; family: Семейство · Сигнали with a live badge · Помощ · Изход; moderator/admin: their area · Помощ · Изход), the same items in the phone dock, keyboard + screen reader friendly, reduced motion respected | ≤ 6 screens on a laptop; browser tests green; every claim on the page matches a working feature · ✅ done 26 Nov (5682 px with the footer at 1440 × 900; screenshots `docs/evidence/redesign-v3/landing-v4/`) |
-| 6 | P-12, P-09, P-11, P-10 | **Juror demo kit** (QR → the juror's phone is "the real son", reset script), time-to-answer as evidence, send to the map from the red screen, family dashboard tidy-up | Demo kit works in a two-browser test |
+| 6 | P-12, P-09, P-11, P-10 | **Juror demo kit** (QR → the juror's phone is "the real son", reset script), time-to-answer as evidence, send to the map from the red screen, family dashboard tidy-up | Demo kit works in a two-browser test · ✅ done 27 Nov (`tests/roundtrip/demo-kit.spec.ts` on local Supabase) |
 | 7 | — | **Release check:** full checks, database tests, screenshots, docs; Alex runs the new migration in the Supabase SQL Editor, then says "push" | Live site shows the change and `/api/health` is OK |
 
 Manual tasks outside these phases (only Alex and Roberta can do them): P-01 push on real phones, W4-09 registration, W4-05 test with real families, Week 5 (documentation, leaflet, slides, video, rehearsals).
@@ -272,9 +272,9 @@ Not built before the defense; shown in the slides as the next big step (W5-03: "
 | #4, words to end a call | 4 | Roberta | ✅ On an active red verdict and in the practice lesson |
 | #36 + #28 + #17 „Провери истинския“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
 | #37 „новият ми номер“ (merged into #36), #38 „Предупреди кръга“ (task P-05, P-06) | P | Alex + Roberta | ⬜ |
-| #7 time-to-answer (task P-09) | P | Alex | ⬜ |
+| #7 time-to-answer (task P-09) | P | Alex | ✅ (27 Nov, SQL; numbers after rehearsals) |
 | #24 phone sticker (with the fridge card) (task P-04) | P | Roberta | ✅ (Alex, 26 Nov) |
-| #39 juror demo kit (task P-12) | P | Alex | ⬜ |
+| #39 juror demo kit (task P-12) | P | Alex | ✅ (27 Nov; real-phone rehearsal open) |
 | #44 „Някой идва към вас?“ → 112 (task P-06) | P | Roberta | ⬜ |
 
 ---

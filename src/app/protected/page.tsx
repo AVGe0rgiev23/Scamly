@@ -17,6 +17,7 @@ export default function ProtectedPage() {
   return (
     <>
       <CallCheckPage
+        withDistrict
         districtNotice={
           <Suspense fallback={null}>
             <DistrictWaveNotice />

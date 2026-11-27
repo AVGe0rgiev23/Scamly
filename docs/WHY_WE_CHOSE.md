@@ -2,7 +2,7 @@
 
 > **Rule (decision D19): this file is updated in the same commit every time anything is used, added, changed or removed** (a library, a service, a tool, or an important design choice). If a commit adds a package to `package.json` and this file doesn't change, the commit isn't finished.
 >
-> Last updated: 2026-11-26
+> Last updated: 2026-11-27
 
 **25 November, D33.** The last drill question lets people rehearse deciding what to do after spotting a scam. It uses existing large buttons and shows feedback immediately after the choice.
 
@@ -2753,6 +2753,70 @@ The claim and Realtime insert share one database transaction so two job runs can
 
 **We would reconsider if:** the project were maintained long-term (then automated update pull requests, e.g. Dependabot).
 
+### Juror demo kit: an invite + a quick registration (vs a pre-made juror login in the QR)  (status: in use (P-12, 27 Nov))
+
+**Used for:** `npm run demo:kit` / `npm run demo:reset` (`scripts/demo-kit*.ts`): a juror's phone becomes "the real Георги" of a demo family in about 20 s, so the juror can answer „Не съм аз“ live (`IDEAS.md` #39).
+
+**Alternatives we considered:** (a) the script pre-creates a juror account and the QR logs the phone in at once (a one-time login link or a password in the QR); (b) Alex's own second phone plays the son; (c) a special "demo" mode in the app.
+
+**Why this one:**
+- **Nothing in the app becomes weaker.** The QR holds an ordinary invite: single use, only its HMAC stored, rate-limited redeem, audit line, now valid only 3 hours. A login link in a QR would be a bearer credential for an account: whoever photographs the slide is logged in. We would also need a new "login by link" path that real users never use.
+- **It shows the real product.** The juror goes through the same invite page, registration and answer screen a real relative uses; the kit only calls the existing services (`createPerson`, `createInvite`, `createPairingCode`) as Иван, through RLS.
+- **Safe to run by mistake:** it refuses without `SCAMLY_DEMO_KIT=1` and in CI, touches only the family of `ivan@demo-kit.scamly.invalid` (a reserved `.invalid` domain is the tag), never prints keys or passwords, and the reset deletes a juror's account only when it exists only for the demo.
+- Place 1 for the juror (Иван moves to place 2), so the juror is the first tile, without changing the identity-check backend.
+
+**What we give up:**
+- The juror types a name, an e-mail and a password (≈ 20–40 s instead of 5 s). Live "Confirm email" must stay off (it is, risk R5).
+- The juror's account is a real account until `demo:reset`; if they also joined someone else's family, the reset keeps it (and says so).
+
+**We would reconsider if:** juries had to try it without registering at all; then a separate demo project with throwaway accounts, never the live database.
+
+### Time-to-answer as a read-only SQL file (vs an admin screen)  (status: in use (P-09, 27 Nov))
+
+**Used for:** the median and p90 seconds from „Провери истинския“ question to answer, for the slides (`supabase/ops/time_to_answer.sql`, `IDEAS.md` #7).
+
+**Alternatives we considered:** an admin chart, an API endpoint, counting by hand.
+
+**Why this one:**
+- We need the number a few times (after rehearsals and the family tests), not a feature. One `SELECT` pasted into the SQL Editor costs nothing to build or secure.
+- Both times are written by the database (`created_at` default, `answered_at` trigger), so the measurement does not depend on a phone's clock. `percentile_cont` gives median and p90 in standard SQL.
+- Not a migration: `supabase/ops/` is never applied by a tool, so it cannot change the database.
+
+**What we give up:** nobody sees it in the app; Alex copies the numbers into `docs/evidence/demo-kit.md` by hand.
+
+**We would reconsider if:** families used Scamly for real and the time had to be watched every week.
+
+### „Изпратете анонимно на картата“ from the red screen: the existing public report (vs a new endpoint or an automatic report)  (status: in use (P-11, 27 Nov))
+
+**Used for:** on the protected phone's red verdict and the „Не съм аз“ screen, one quiet button sends an anonymous report to the map.
+
+**Alternatives we considered:** a new `POST /api/checks/:id/report` that copies the check's data; sending every red verdict to the map automatically; a link to the public form `/signal`.
+
+**Why this one:**
+- **One way in for reports.** It posts to `POST /api/reports` exactly like `/signal`: the same Zod schema, rate limit (3 per network per hour), honeypot, global cap, redaction and the moderation queue (`pending`). Nothing new to secure or test on the server.
+- **Only what the map shows:** the district (already saved for the person, read on the server; asked with one picker only when unknown) and the script type (from the verdict, or „Роднина в беда“ after „Не съм аз“). Never the caller's number, a name or the words of the call.
+- **The person decides.** Automatic reports would put private checks on a public map without asking, and a wrong tap in the check would become a public data point.
+- A link to `/signal` would make a frightened person fill in a whole form on the red screen.
+
+**What we give up:** the map does not learn the date of the call (always "today") or the number that called (the form can still be used for that).
+
+**We would reconsider if:** moderators asked for the call's details; then an opt-in "add details" step, still without numbers in clear text.
+
+### Family dashboard: two tabs, „Кой е истинският“ and „Настройки“ (vs four tabs)  (status: in use (P-10, 27 Nov))
+
+**Used for:** the person page `/family/[personId]`.
+
+**Alternatives we considered:** the four tabs Проверки / Телефони / Близки / Настройки (until 26 Nov); one long page without tabs.
+
+**Why this one:**
+- What a family member needs every day is **who is asked first** when someone pretends to be close. That list now opens first, named after the feature, with one line of explanation.
+- Pairing a phone, the check history and the name/district are set up once or looked up rarely; one „Настройки“ tab keeps them together and out of the way. Old links (`#proverki`, `#telefoni`) still open the right tab.
+- A trusted contact now also gets „Настройки“, read-only (phones and history), instead of separate tabs.
+
+**What we give up:** the check history is one tap further away (the live alerts page `/family/alerts` still shows new checks at once).
+
+**We would reconsider if:** the usability test (W4-05) shows families looking for the history first.
+
 ---
 
 ## 10. Project process and documentation
@@ -3165,6 +3229,7 @@ If you're not sure about a free-tier limit or a price, don't write a number: wri
 
 ## 13. Change history
 
+- 2026-11-27 · Phase 6 (Alex): new entries in section 9 "Juror demo kit: an invite + a quick registration", "Time-to-answer as a read-only SQL file", "„Изпратете анонимно на картата“ from the red screen", "Family dashboard: two tabs"
 - 2026-11-26 · P-03 landing v4 + navigation (Alex): new entries in section 4 "Landing v4: five sections and an interactive story" and "Role-aware navigation with the same items in the header and the dock"; the sticky-storytelling and SVG-illustration entries marked replaced/removed; the real-engine demo moved to the safety net.
 - 2026-11-26 · P-04 story texts (Alex): new entry in section 10 "Neutral „someone close“ wording (vs „баба“ and „възрастни хора“)"
 - 2026-11-26 · P-06 „Провери истинския“ screens (Alex): new entries in section 9 "One big button, then „Казват ли, че са някой близък?“", "Client-side 45 s countdown on the phone", "The call-back button uses only the saved number"; statuses of „Провери истинския“ updated

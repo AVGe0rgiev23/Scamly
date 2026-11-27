@@ -6,14 +6,17 @@
 //
 // Look (Redesign v3 Phase 4, family.css): a head with the initials in a big halo
 // ring, the name, the district, who gets the alerts (AvatarStack of the call order)
-// and how many phones are paired; then tabs with a sliding pill (ui/Tabs):
-//   Проверки   the check history as a timeline;
-//   Телефони   the pairing code (owner) and the paired phones;
-//   Близки     the call order and, for the owner, the invite;
-//   Настройки  name and district, and the red-tinted danger zone last (owner only).
+// and how many phones are paired; then two tabs with a sliding pill (ui/Tabs, P-10):
+//   Кой е истинският  the everyday view: the call order (who is asked first when
+//                     someone pretends to be close, „Провери истинския“) and, for the
+//                     owner, the invite;
+//   Настройки         everything set up once or looked up rarely: the pairing code
+//                     (owner) and the paired phones, the check history, then name
+//                     and district and the red-tinted danger zone last (owner only).
 // Every panel stays mounted and is only hidden, so a half-edited contact list or a
 // running pairing countdown survives a tab switch. The address remembers the tab
-// (#proverki, #telefoni, #blizki, #nastroyki), so a link can open a tab directly.
+// (#blizki, #nastroyki), so a link can open a tab directly; the old links #proverki
+// and #telefoni open „Настройки“, where the history and the phones are now.
 "use client";
 
 import { ArrowLeft, Smartphone } from "lucide-react";
@@ -43,28 +46,16 @@ import { InviteForm } from "./InviteForm";
 import { PairingPanel } from "./PairingPanel";
 import { devicesText } from "./PeopleList";
 import { PersonSettings } from "./PersonSettings";
+import { HASH_OF, tabFromHash, type TabId } from "./personTabs";
 
 type DashboardState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "ready"; details: PersonDetailsDto };
 
-type TabId = "checks" | "phones" | "contacts" | "settings";
-
-// The tab <-> the part of the address after "#" (Latin letters, like our routes).
-const HASH_OF: Record<TabId, string> = {
-  checks: "proverki",
-  phones: "telefoni",
-  contacts: "blizki",
-  settings: "nastroyki",
-};
-
 function tabFromAddress(): TabId {
-  if (typeof window === "undefined") return "checks";
-  const wanted = window.location.hash.slice(1);
-  // Object.keys gives plain strings; `as` tells TypeScript they are tab ids.
-  const found = (Object.keys(HASH_OF) as TabId[]).find((id) => HASH_OF[id] === wanted);
-  return found ?? "checks";
+  if (typeof window === "undefined") return "contacts";
+  return tabFromHash(window.location.hash);
 }
 
 // One titled part of the page. aria-labelledby names the <section> after its <h2>,
@@ -92,7 +83,7 @@ export function Section({
 export function PersonDashboard({ personId }: { personId: string }) {
   const [state, setState] = useState<DashboardState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
-  // The tab named in the address (#telefoni …), else „Проверки“. Safe to read the
+  // The tab named in the address (#nastroyki …), else „Кой е истинският“. Safe to read the
   // address here: the tabs are drawn only after the data has loaded in the browser.
   const [tab, setTab] = useState<TabId>(tabFromAddress);
   const baseId = useId();
@@ -195,15 +186,10 @@ export function PersonDashboard({ personId }: { personId: string }) {
     .map((contact) => ({ id: contact.id, name: contact.displayName }));
 
   const tabs: TabItem<TabId>[] = [
-    { id: "checks", label: bg.family.tabChecks },
-    { id: "phones", label: bg.family.tabPhones, count: activeDevices },
     { id: "contacts", label: bg.family.tabContacts, count: contacts.length },
+    { id: "settings", label: bg.family.tabSettings },
   ];
-  if (person.isOwner) {
-    tabs.push({ id: "settings", label: bg.family.tabSettings });
-  }
-  // A trusted contact has no „Настройки“: an old #nastroyki link opens „Проверки“.
-  const current: TabId = tabs.some((item) => item.id === tab) ? tab : "checks";
+  const current: TabId = tab;
   const tabId = (id: TabId) => `${baseId}-tab-${id}`;
   const panelId = (id: TabId) => `${baseId}-panel-${id}`;
 
@@ -267,41 +253,13 @@ export function PersonDashboard({ personId }: { personId: string }) {
       />
 
       {panel(
-        "checks",
-        <Section title={bg.family.historyTitle} className="max-w-3xl">
-          <CheckHistory personId={person.id} />
-        </Section>,
-      )}
-
-      {panel(
-        "phones",
-        <div className="family-panel-grid">
-          {person.isOwner ? (
-            <Section title={bg.family.pairingTitle} className="lg:col-span-7">
-              <PairingPanel personId={person.id} />
-            </Section>
-          ) : null}
-          <Section
-            title={bg.family.devicesTitle}
-            className={person.isOwner ? "lg:col-span-5" : "lg:col-span-8"}
-          >
-            <DevicesList
-              personId={person.id}
-              devices={devices}
-              canEdit={person.isOwner}
-              onChange={updateDevices}
-            />
-          </Section>
-        </div>,
-      )}
-
-      {panel(
         "contacts",
         <div className="family-panel-grid">
           <Section
             title={bg.family.contactsTitle}
             className={person.isOwner ? "lg:col-span-7" : "lg:col-span-8"}
           >
+            <p className="mb-5 text-lg text-fg-muted">{bg.family.realHint}</p>
             <ContactsEditor
               personId={person.id}
               contacts={contacts}
@@ -317,14 +275,37 @@ export function PersonDashboard({ personId }: { personId: string }) {
         </div>,
       )}
 
-      {person.isOwner
-        ? panel(
-            "settings",
+      {panel(
+        "settings",
+        <div className="flex flex-col gap-12">
+          <div className="family-panel-grid">
+            {person.isOwner ? (
+              <Section title={bg.family.pairingTitle} className="lg:col-span-7">
+                <PairingPanel personId={person.id} />
+              </Section>
+            ) : null}
+            <Section
+              title={bg.family.devicesTitle}
+              className={person.isOwner ? "lg:col-span-5" : "lg:col-span-8"}
+            >
+              <DevicesList
+                personId={person.id}
+                devices={devices}
+                canEdit={person.isOwner}
+                onChange={updateDevices}
+              />
+            </Section>
+          </div>
+          <Section title={bg.family.historyTitle} className="max-w-3xl">
+            <CheckHistory personId={person.id} />
+          </Section>
+          {person.isOwner ? (
             <Section title={bg.family.settingsTitle} className="max-w-2xl">
               <PersonSettings person={person} onUpdated={updatePerson} />
-            </Section>,
-          )
-        : null}
+            </Section>
+          ) : null}
+        </div>,
+      )}
     </>
   );
 }

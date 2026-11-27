@@ -5,7 +5,8 @@
 //   IdentityNotMe  „Не съм аз“: the red flood. „Това НЕ е Иван. Затворете телефона.
 //                  Иван ви звъни сега.“, the words to end the call (#4), the call-back
 //                  button to the SAVED number (claimedPhone, never the calling number)
-//                  and „Някой идва ли към вас за парите?“ → „Обадете се на 112“ (#44).
+//                  and „Някой идва ли към вас за парите?“ → „Обадете се на 112“ (#44),
+//                  then „Изпратете анонимно на картата“ (P-11, "relative in trouble").
 //   IdentityItsMe  „Аз съм“: the calm mint glow and the hard rules that still apply
 //                  (D10). Green never says "safe" (D9).
 //
@@ -21,6 +22,9 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { bg } from "@/i18n/bg";
 import { withIcons } from "./answerIcons";
 import { CallContactButton } from "./CallContactButton";
+import type { DistrictCode } from "@/schemas/reports";
+import { scriptForIdentityNotMe } from "./mapReport";
+import { SendToMap } from "./SendToMap";
 import type { IdentityAskState } from "./useIdentityAsk";
 import { VerdictEmblem } from "./VerdictEmblem";
 
@@ -57,7 +61,15 @@ function answeredThemselves(state: IdentityAskState): boolean {
   return state.answer === null || state.answer.askedUserId === state.answer.claimedUserId;
 }
 
-export function IdentityNotMe({ state, onDone }: { state: IdentityAskState; onDone: () => void }) {
+export function IdentityNotMe({
+  state,
+  districtCode,
+  onDone,
+}: {
+  state: IdentityAskState;
+  districtCode: DistrictCode | null;
+  onDone: () => void;
+}) {
   const heading = useHeadlineFocus();
   const [coming, setComing] = useState<string | null>(null);
   const name = claimedName(state);
@@ -112,6 +124,12 @@ export function IdentityNotMe({ state, onDone }: { state: IdentityAskState; onDo
         ) : null}
         {coming === "no" ? <p className="text-xl">{bg.identityAsk.notComing}</p> : null}
       </div>
+
+      <SendToMap
+        scriptType={scriptForIdentityNotMe()}
+        districtCode={districtCode}
+        className="check-rise check-rise-3"
+      />
 
       <Button variant="secondary" size="xl" className="check-rise check-rise-3" onClick={onDone}>
         {bg.identityAsk.toStart}
